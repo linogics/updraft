@@ -10,3 +10,4 @@ coverage/
 .codegraph/
 *.log
 static/cesium/
+.claude/settings.local.json
