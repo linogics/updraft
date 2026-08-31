@@ -32,3 +32,32 @@ export function positionAt(fixes: Fix[], t: number): Position {
     alt: a.alt + (b.alt - a.alt) * k
   };
 }
+
+export interface ResampledAltitudes {
+  /** Unix seconds. */
+  x: number[];
+  series: (number | null)[][];
+}
+
+/**
+ * Samples every track's altitude on one shared time grid so several flights fit a
+ * single chart. Values outside a flight's time range are null.
+ */
+export function resampleAltitudes(tracks: Fix[][], stepSeconds: number, maxSamples = 5000): ResampledAltitudes {
+  const start = Math.min(...tracks.map((f) => f[0].t));
+  const end = Math.max(...tracks.map((f) => f[f.length - 1].t));
+  const step = Math.max(stepSeconds * 1000, (end - start) / maxSamples);
+
+  const x: number[] = [];
+  for (let t = start; t <= end + 1e-6; t += step) x.push(t / 1000);
+
+  const series = tracks.map((fixes) => {
+    const first = fixes[0].t;
+    const last = fixes[fixes.length - 1].t;
+    return x.map((s) => {
+      const t = s * 1000;
+      return t < first || t > last ? null : positionAt(fixes, t).alt;
+    });
+  });
+  return { x, series };
+}

@@ -32,3 +32,32 @@ describe('positionAt', () => {
     expect(positionAt(fixes, 5000)).toEqual({ lat: 3, lon: 4, alt: 400 });
   });
 });
+
+describe('resampleAltitudes', () => {
+  const a: Fix[] = [
+    { t: 0, lat: 0, lon: 0, alt: 100 },
+    { t: 10_000, lat: 0, lon: 0, alt: 200 }
+  ];
+  const b: Fix[] = [
+    { t: 5_000, lat: 0, lon: 0, alt: 50 },
+    { t: 15_000, lat: 0, lon: 0, alt: 150 }
+  ];
+
+  it('builds a shared time axis in seconds with nulls outside each flight', async () => {
+    const { resampleAltitudes } = await import('./timeline');
+
+    const { x, series } = resampleAltitudes([a, b], 5);
+
+    expect(x).toEqual([0, 5, 10, 15]);
+    expect(series[0]).toEqual([100, 150, 200, null]);
+    expect(series[1]).toEqual([null, 50, 100, 150]);
+  });
+
+  it('caps the number of samples', async () => {
+    const { resampleAltitudes } = await import('./timeline');
+
+    const { x } = resampleAltitudes([a, b], 0.001, 100);
+
+    expect(x.length).toBeLessThanOrEqual(101);
+  });
+});
