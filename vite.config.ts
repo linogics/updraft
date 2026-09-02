@@ -25,9 +25,5 @@ export default defineConfig({
       adapter: adapter({ fallback: 'index.html' })
     }),
     devRuntimeConfig()
-  ],
-  define: {
-    // Cesium loads workers and assets relative to this path (copied by scripts/copy-cesium.mjs).
-    CESIUM_BASE_URL: JSON.stringify('/cesium/')
-  }
+  ]
 });
