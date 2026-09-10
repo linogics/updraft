@@ -10,7 +10,7 @@ describe('computeStats', () => {
     (f) => straight(f, { headingDeg: 0, speed: 10, climb: -1, duration: 100 }),
     (f) => straight(f, { headingDeg: 180, speed: 10, climb: -1, duration: 50 })
   );
-  const vario = fixes.map((_, i) => (i <= 100 ? 3 : -1));
+  const vario = fixes.map((_, i): number => (i <= 100 ? 3 : -1));
   vario[120] = -2.5;
   const phases: Phase[] = [
     { kind: 'thermalling', start: 0, end: 100 },

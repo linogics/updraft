@@ -9,7 +9,7 @@ describe('extractThermals', () => {
     (f) => circle(f, { radius: 40, period: 25, climb: 2.5, duration: 100 }),
     (f) => straight(f, { headingDeg: 90, speed: 10, climb: -1, duration: 60 })
   );
-  const vario = fixes.map((_, i) => (i >= 60 && i <= 160 ? 2.5 : -1));
+  const vario = fixes.map((_, i): number => (i >= 60 && i <= 160 ? 2.5 : -1));
   vario[100] = 4.2;
   const phases: Phase[] = [
     { kind: 'gliding', start: 0, end: 59 },
