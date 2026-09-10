@@ -22,7 +22,9 @@ export default defineConfig({
   plugins: [
     sveltekit({
       // SPA: Cesium is browser-only, every route renders client-side.
-      adapter: adapter({ fallback: 'index.html' })
+      adapter: adapter({ fallback: 'index.html' }),
+      // SvelteKit 3 dropped the implicit $lib alias.
+      alias: { '#lib': 'src/lib' }
     }),
     devRuntimeConfig()
   ]

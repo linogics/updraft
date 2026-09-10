@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
-import { headingDelta } from '$lib/domain/geo';
-import type { CameraMode } from '$lib/domain/scene';
+import { headingDelta } from '#lib/domain/geo';
+import type { CameraMode } from '#lib/domain/scene';
 
 /** Per-frame heading smoothing factor; keeps the chase cam calm while circling. */
 const HEADING_SMOOTHING = 0.03;

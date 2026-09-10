@@ -1,8 +1,8 @@
 import * as Cesium from 'cesium';
-import { indexAt, positionAt } from '$lib/domain/timeline';
-import type { ColorMode } from '$lib/domain/scene';
-import type { LoadedFlight } from '$lib/state/replay.svelte';
-import { phaseColor, varioColor } from '$lib/ui/colors';
+import { indexAt, positionAt } from '#lib/domain/timeline';
+import type { ColorMode } from '#lib/domain/scene';
+import type { LoadedFlight } from '#lib/state/replay.svelte';
+import { phaseColor, varioColor } from '#lib/ui/colors';
 
 /** Length of the bright trail behind the pilot, ms. */
 const TAIL_MS = 60_000;
@@ -139,6 +139,12 @@ export class FlightLayer {
         })
       );
     }
+  }
+
+  /** Swaps in the latest state snapshot of this flight (state replaces objects on change). */
+  update(loaded: LoadedFlight) {
+    this.loaded = loaded;
+    this.setVisible(loaded.visible);
   }
 
   setVisible(visible: boolean) {
