@@ -4,6 +4,8 @@
   import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
   import type { FeatureCollection } from 'geojson';
   import 'maplibre-gl/dist/maplibre-gl.css';
+  // MapLibre derives its worker URL at runtime, which Vite cannot follow; bundle it explicitly.
+  import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import { distance } from '#lib/domain/geo';
   import { positionAt } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
@@ -71,6 +73,7 @@
   }
 
   onMount(() => {
+    maplibregl.setWorkerUrl(maplibreWorkerUrl);
     const bounds = new maplibregl.LngLatBounds();
     for (const f of replay.flights) for (const x of f.flight.fixes) bounds.extend([x.lon, x.lat]);
 
