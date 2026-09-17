@@ -30,7 +30,7 @@ export function encodeScene(scene: SceneConfig): string {
   return params.toString();
 }
 
-export function decodeScene(params: URLSearchParams): SceneConfig {
+export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): SceneConfig {
   return {
     flightIds: params.getAll('f'),
     camera: pick(CAMERA_MODES, params.get('camera'), DEFAULT_SCENE.camera),

@@ -1,8 +1,8 @@
-import { analyzeFlight } from '$lib/domain/analysis/analyze';
-import type { Flight, FlightAnalysis } from '$lib/domain/model';
-import { DEFAULT_SCENE, type CameraMode, type ColorMode, type Layout } from '$lib/domain/scene';
-import { indexAt } from '$lib/domain/timeline';
-import { pilotColor } from '$lib/ui/colors';
+import { analyzeFlight } from '#lib/domain/analysis/analyze';
+import type { Flight, FlightAnalysis } from '#lib/domain/model';
+import { DEFAULT_SCENE, type CameraMode, type ColorMode, type Layout } from '#lib/domain/scene';
+import { indexAt } from '#lib/domain/timeline';
+import { pilotColor } from '#lib/ui/colors';
 
 export interface LoadedFlight {
   flight: Flight;
@@ -20,7 +20,8 @@ export const SPEEDS = [1, 5, 10, 25, 50, 100, 200] as const;
  * 2D-only layout keeps playing without a 3D viewer mounted.
  */
 export class ReplayState {
-  flights = $state<LoadedFlight[]>([]);
+  // Raw (not deeply reactive): tracks hold tens of thousands of fixes. Replace the array to update.
+  flights = $state.raw<LoadedFlight[]>([]);
   /** Unix ms. */
   time = $state(0);
   playing = $state(false);
@@ -47,6 +48,15 @@ export class ReplayState {
     }));
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
+  }
+
+  setVisible(id: string, visible: boolean) {
+    this.flights = this.flights.map((f) => (f.flight.id === id ? { ...f, visible } : f));
+  }
+
+  /** Sets the vertical 3D correction per flight (terrain alignment). */
+  setAltOffsets(offsets: Map<string, number>) {
+    this.flights = this.flights.map((f) => ({ ...f, altOffset: offsets.get(f.flight.id) ?? f.altOffset }));
   }
 
   seek(t: number) {
