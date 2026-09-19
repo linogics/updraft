@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import uPlot from 'uplot';
   import 'uplot/dist/uPlot.min.css';
   import { resampleAltitudes } from '#lib/domain/timeline';
@@ -71,7 +71,7 @@
             stroke: INK,
             grid: { stroke: GRID },
             ticks: { stroke: GRID },
-            size: 56,
+            size: 64,
             values: (_u, vals) => vals.map((v) => `${v} m`)
           }
         ],
@@ -122,7 +122,8 @@
   $effect(() => {
     void replay.flights;
     void replay.selected;
-    build();
+    // build() reads and replaces `plot`; untrack it so the effect does not re-trigger itself.
+    untrack(build);
   });
 
   // Current-time marker, positioned in plot (CSS px) coordinates.

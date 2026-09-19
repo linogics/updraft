@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { page } from '$app/state';
-  import { replaceState } from '$app/navigation';
+  import { goto } from '$app/navigation';
   import AltitudeChart from '#lib/components/AltitudeChart.svelte';
   import CesiumView from '#lib/components/CesiumView.svelte';
   import MiniMap from '#lib/components/MiniMap.svelte';
@@ -47,7 +47,7 @@
       colorBy: replay.colorBy,
       layout: replay.layout
     });
-    replaceState(`?${query}`, {});
+    goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });
 
   function onKey(e: KeyboardEvent) {
