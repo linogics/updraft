@@ -115,24 +115,31 @@ export class FlightLayer {
     for (const e of this.thermals) this.viewer.entities.remove(e);
     this.thermals = [];
     if (!show) return;
+    const { fixes } = this.loaded.flight;
     for (const th of this.loaded.analysis.thermals) {
       if (th.gain <= 0) continue;
       const mid = (th.entryAlt + th.exitAlt) / 2;
+      // Hide the column while the pilot is circling in it, otherwise it blocks the chase camera.
+      const outside = new Cesium.CallbackProperty(() => {
+        const i = indexAt(fixes, this.getTime());
+        return i < th.start || i > th.end;
+      }, false);
       this.thermals.push(
         this.viewer.entities.add({
           position: this.cartesian(th.centerLon, th.centerLat, mid, new Cesium.Cartesian3()),
           cylinder: {
+            show: outside,
             length: th.gain,
-            topRadius: 60,
-            bottomRadius: 60,
-            material: Cesium.Color.ORANGE.withAlpha(0.18),
+            topRadius: 35,
+            bottomRadius: 35,
+            material: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.15),
             outline: false
           },
           label: {
             text: `+${Math.round(th.gain)} m · ${th.avgClimb.toFixed(1)} m/s`,
             font: '12px sans-serif',
             showBackground: true,
-            backgroundColor: Cesium.Color.fromCssColorString('#ff8c42').withAlpha(0.75),
+            backgroundColor: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.8),
             pixelOffset: new Cesium.Cartesian2(0, -10),
             distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 30_000)
           }
