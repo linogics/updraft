@@ -1,47 +1,62 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import * as Cesium from 'cesium';
-  import { createViewer, sampleGroundHeight } from '#lib/cesium/viewer';
+  import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
   import { CameraController } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
   import { altitudeOffset } from '#lib/domain/align';
+  import type { BasemapId, TerrainSource } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
   let container: HTMLDivElement;
+  let viewer: Cesium.Viewer | undefined = $state.raw();
   let ready = $state(false);
   let notice = $state('Loading 3D view…');
   const layers = new Map<string, FlightLayer>();
 
+  /** Loads a terrain source and re-aligns every track so takeoff sits on the ground. */
+  let terrainRequest = 0;
+  let appliedTerrain: TerrainSource | undefined;
+  let appliedBasemap: BasemapId | undefined;
+  async function applyTerrain(v: Cesium.Viewer, source: TerrainSource) {
+    const request = ++terrainRequest;
+    appliedTerrain = source;
+    notice = 'Loading terrain…';
+    const used = await setTerrain(v, source);
+    appliedTerrain = used;
+    const offsets = new Map<string, number>();
+    await Promise.all(
+      replay.flights.map(async ({ flight }) => {
+        const f0 = flight.fixes[0];
+        offsets.set(flight.id, altitudeOffset(f0.alt, await sampleGroundHeight(v, used, f0.lat, f0.lon)));
+      })
+    );
+    if (request !== terrainRequest || v.isDestroyed()) return;
+    replay.setAltOffsets(offsets);
+    if (used !== source) replay.terrain = used;
+    notice = used !== source ? 'Cesium ion terrain failed to load: using AWS Terrain Tiles instead.' : '';
+  }
+
   onMount(() => {
     let alive = true;
-    let viewer: Cesium.Viewer | undefined;
     let camera: CameraController | undefined;
 
     (async () => {
       const { cesiumIonToken } = await loadRuntimeConfig();
-      const handle = await createViewer(container, cesiumIonToken);
-      viewer = handle.viewer;
-      if (!alive) return viewer.destroy();
+      if (!alive) return;
+      appliedBasemap = replay.basemap;
+      const v = createViewer(container, appliedBasemap, cesiumIonToken);
+      viewer = v;
+      await applyTerrain(v, replay.terrain);
+      if (!alive) return;
 
-      if (handle.hasTerrain) {
-        const offsets = new Map<string, number>();
-        await Promise.all(
-          replay.flights.map(async ({ flight }) => {
-            const f0 = flight.fixes[0];
-            offsets.set(flight.id, altitudeOffset(f0.alt, await sampleGroundHeight(handle.viewer, f0.lat, f0.lon)));
-          })
-        );
-        if (!alive) return;
-        replay.setAltOffsets(offsets);
-      }
+      for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time));
+      camera = new CameraController(v);
 
-      for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(handle.viewer, lf, () => replay.time));
-      camera = new CameraController(handle.viewer);
-
-      handle.viewer.scene.preRender.addEventListener(() => {
+      v.scene.preRender.addEventListener(() => {
         const sel = replay.selected;
         const layer = sel && layers.get(sel.flight.id);
         camera!.update(
@@ -52,9 +67,8 @@
 
       const spheres = [...layers.values()].map((l) => l.boundingSphere());
       if (spheres.length) {
-        handle.viewer.camera.flyToBoundingSphere(Cesium.BoundingSphere.fromBoundingSpheres(spheres), { duration: 0 });
+        v.camera.flyToBoundingSphere(Cesium.BoundingSphere.fromBoundingSpheres(spheres), { duration: 0 });
       }
-      notice = handle.hasTerrain ? '' : 'No Cesium ion token configured: showing a flat map without terrain.';
       ready = true;
     })().catch((err) => {
       console.error(err);
@@ -70,13 +84,31 @@
     };
   });
 
-  // Keep layers in sync with state snapshots (visibility, altitude offsets).
+  // Terrain dropdown: switch source after the initial load.
+  $effect(() => {
+    const source = replay.terrain;
+    if (!ready || !viewer || source === appliedTerrain) return;
+    const v = viewer;
+    untrack(() => applyTerrain(v, source)).catch((err) => {
+      console.error(err);
+      notice = `Terrain failed to load: ${err instanceof Error ? err.message : err}`;
+    });
+  });
+
+  $effect(() => {
+    const id = replay.basemap;
+    if (!ready || !viewer || id === appliedBasemap) return;
+    appliedBasemap = id;
+    setBasemap(viewer, id);
+  });
+
+  // Keep layers in sync with state snapshots (visibility, altitude and time offsets).
   $effect(() => {
     if (!ready) return;
     for (const lf of replay.flights) layers.get(lf.flight.id)?.update(lf);
   });
 
-  // Rebuild tracks when colour mode or offsets change.
+  // Rebuild tracks when colour mode or altitude offsets change (layers skip unchanged input).
   $effect(() => {
     if (!ready) return;
     const colorBy = replay.colorBy;
