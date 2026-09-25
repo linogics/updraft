@@ -47,6 +47,24 @@ describe('parseIgc', () => {
     expect(parseIgc(text, { id: 'f', sourceName: 'x.igc' }).fixes).toHaveLength(2);
   });
 
+  it('falls back to V-flagged fixes when a logger never reports A fixes', () => {
+    const text = buildIgc([
+      { sec: 36000, ...base, gpsAlt: 1500, valid: false },
+      { sec: 36001, ...base, gpsAlt: 1501, valid: false }
+    ]);
+
+    expect(parseIgc(text, { id: 'f', sourceName: 'x.igc' }).fixes).toHaveLength(2);
+  });
+
+  it('drops fixes at 0°/0° (no position)', () => {
+    const text = buildIgc([
+      { sec: 36000, lat: 0, lon: 0, gpsAlt: 0, pressureAlt: 1500, valid: false },
+      { sec: 36001, ...base, gpsAlt: 1501, valid: false }
+    ]);
+
+    expect(parseIgc(text, { id: 'f', sourceName: 'x.igc' }).fixes).toHaveLength(1);
+  });
+
   it('keeps timestamps increasing across midnight UTC', () => {
     const text = buildIgc([
       { sec: 86399, ...base, gpsAlt: 1500 },
