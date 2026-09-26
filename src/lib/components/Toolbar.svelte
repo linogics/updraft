@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { CAMERA_MODES, COLOR_MODES, LAYOUTS } from '#lib/domain/scene';
+  import { BASEMAP_IDS, CAMERA_MODES, COLOR_MODES, LAYOUTS } from '#lib/domain/scene';
+  import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
   const LAYOUT_LABELS = { '3d': '3D', '2d': '2D', split: 'Split' } as const;
+  const ION_HINT = 'Needs CESIUM_ION_TOKEN in the runtime config';
 </script>
 
 <div class="toolbar">
@@ -26,6 +28,24 @@
     Track colour
     <select bind:value={replay.colorBy}>
       {#each COLOR_MODES as m (m)}<option value={m}>{m}</option>{/each}
+    </select>
+  </label>
+
+  <label>
+    Map
+    <select bind:value={replay.basemap}>
+      {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label}</option>{/each}
+    </select>
+  </label>
+
+  <label title={replay.ionAvailable ? undefined : ION_HINT}>
+    Terrain
+    <select bind:value={replay.terrain}>
+      <option value="ion" disabled={!replay.ionAvailable}>
+        Cesium World Terrain{replay.ionAvailable ? '' : ' (needs token)'}
+      </option>
+      <option value="terrarium">AWS Terrain Tiles (free)</option>
+      <option value="none">Flat</option>
     </select>
   </label>
 </div>

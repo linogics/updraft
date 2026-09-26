@@ -1,29 +1,48 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as maplibregl from 'maplibre-gl';
-  import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
+  import type { GeoJSONSource, LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl';
   import type { FeatureCollection } from 'geojson';
   import 'maplibre-gl/dist/maplibre-gl.css';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow; bundle it explicitly.
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import { distance } from '#lib/domain/geo';
+  import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { positionAt } from '#lib/domain/timeline';
+  import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
 
   let { replay, follow = false }: { replay: ReplayState; follow?: boolean } = $props();
 
-  const OSM_STYLE: StyleSpecification = {
-    version: 8,
-    sources: {
-      osm: {
-        type: 'raster',
-        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+  /** Topo is already shaded and satellite shows real relief; hillshade only helps the flat OSM map. */
+  const shaded = (id: BasemapId) => id === 'osm';
+
+  function baseStyle(active: BasemapId): StyleSpecification {
+    const sources: Record<string, SourceSpecification> = {
+      dem: {
+        type: 'raster-dem',
+        tiles: [TERRARIUM_URL],
+        encoding: 'terrarium',
         tileSize: 256,
-        attribution: '© OpenStreetMap contributors'
+        maxzoom: TERRARIUM_MAX_ZOOM,
+        attribution: TERRARIUM_ATTRIBUTION
       }
-    },
-    layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-  };
+    };
+    const layers: LayerSpecification[] = [];
+    for (const id of BASEMAP_IDS) {
+      const { tiles, maxZoom, attribution } = BASEMAPS[id];
+      sources[id] = { type: 'raster', tiles, tileSize: 256, maxzoom: maxZoom, attribution };
+      layers.push({ id, type: 'raster', source: id, layout: { visibility: id === active ? 'visible' : 'none' } });
+    }
+    layers.push({
+      id: 'hillshade',
+      type: 'hillshade',
+      source: 'dem',
+      layout: { visibility: shaded(active) ? 'visible' : 'none' },
+      paint: { 'hillshade-exaggeration': 0.35 }
+    });
+    return { version: 8, sources, layers };
+  }
 
   let container: HTMLDivElement;
   let map: maplibregl.Map | undefined;
@@ -79,7 +98,7 @@
 
     map = new maplibregl.Map({
       container,
-      style: OSM_STYLE,
+      style: baseStyle(replay.basemap),
       bounds: bounds.isEmpty() ? undefined : bounds,
       fitBoundsOptions: { padding: 30 },
       attributionControl: { compact: true }
@@ -152,6 +171,13 @@
       const p = positionAt(sel.flight.fixes, t);
       map.setCenter([p.lon, p.lat]);
     }
+  });
+
+  $effect(() => {
+    const active = replay.basemap;
+    if (!ready || !map) return;
+    for (const id of BASEMAP_IDS) map.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none');
+    map.setLayoutProperty('hillshade', 'visibility', shaded(active) ? 'visible' : 'none');
   });
 
   $effect(() => {
