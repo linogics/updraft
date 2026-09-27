@@ -10,6 +10,8 @@ const TAIL_MS = 60_000;
 /** One flight in the 3D scene: coloured track, live pilot marker with trail, thermal markers. */
 export class FlightLayer {
   private track: Cesium.Primitive | undefined;
+  /** Inputs the current track primitive was built from; time shifts do not change it. */
+  private trackKey = '';
   private pilot: Cesium.Entity;
   private tail: Cesium.Entity;
   private thermals: Cesium.Entity[] = [];
@@ -21,7 +23,6 @@ export class FlightLayer {
     private getTime: () => number
   ) {
     const color = Cesium.Color.fromCssColorString(loaded.color);
-    const { fixes } = loaded.flight;
 
     this.pilot = viewer.entities.add({
       position: new Cesium.CallbackPositionProperty(
@@ -51,6 +52,8 @@ export class FlightLayer {
       polyline: {
         positions: new Cesium.CallbackProperty(() => {
           const t = this.getTime();
+          // Read fixes on each call: update() swaps in time-shifted flights.
+          const { fixes } = this.loaded.flight;
           const from = indexAt(fixes, t - TAIL_MS);
           const to = indexAt(fixes, t);
           const pts: Cesium.Cartesian3[] = [];
@@ -82,6 +85,9 @@ export class FlightLayer {
 
   /** Rebuilds the static track polyline, e.g. after colour mode or altitude offset changes. */
   renderTrack(colorBy: ColorMode) {
+    const key = `${colorBy}|${this.loaded.altOffset}`;
+    if (this.track && key === this.trackKey) return;
+    this.trackKey = key;
     if (this.track) this.viewer.scene.primitives.remove(this.track);
     const { flight, analysis, color } = this.loaded;
 
@@ -115,13 +121,12 @@ export class FlightLayer {
     for (const e of this.thermals) this.viewer.entities.remove(e);
     this.thermals = [];
     if (!show) return;
-    const { fixes } = this.loaded.flight;
     for (const th of this.loaded.analysis.thermals) {
       if (th.gain <= 0) continue;
       const mid = (th.entryAlt + th.exitAlt) / 2;
       // Hide the column while the pilot is circling in it, otherwise it blocks the chase camera.
       const outside = new Cesium.CallbackProperty(() => {
-        const i = indexAt(fixes, this.getTime());
+        const i = indexAt(this.loaded.flight.fixes, this.getTime());
         return i < th.start || i > th.end;
       }, false);
       this.thermals.push(

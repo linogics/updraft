@@ -2,7 +2,7 @@
   import { distance } from '#lib/domain/geo';
   import { indexAt, positionAt } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
-  import { formatAlt, formatDistance, formatVario } from '#lib/ui/format';
+  import { formatAlt, formatClock, formatDistance, formatVario } from '#lib/ui/format';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -20,7 +20,9 @@
         alt: formatAlt(p.alt),
         vario: formatVario(inFlight ? f.analysis.vario[i] : 0),
         varioUp: f.analysis.vario[i] > 0.2,
-        dist: formatDistance(distance(fixes[0], p))
+        dist: formatDistance(distance(fixes[0], p)),
+        // Recorded clock time, shown when the flight is shifted on the replay clock.
+        local: f.timeOffset ? `${f.source.date} ${formatClock(replay.localTime(f))}` : null
       };
     })
   );
@@ -49,6 +51,7 @@
           <span>{r.alt}</span>
           <span class:up={r.varioUp}>{r.vario}</span>
           <span class="muted">{r.dist}</span>
+          {#if r.local}<span class="muted" title="Recorded time of this flight">{r.local}</span>{/if}
         </span>
       </li>
     {/each}
