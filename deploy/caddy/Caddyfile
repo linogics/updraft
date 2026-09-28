@@ -1,0 +1,48 @@
+# Static SPA server for the runtime image. Runs as non-root on :8080; TLS is the ingress' job.
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:8080 {
+	root * /srv
+	encode zstd gzip
+
+	log
+	log_skip /healthz
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+
+	# Liveness/readiness probe for Kubernetes.
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	# Runtime config: same image runs in every environment, values come from env at request time.
+	handle /config.json {
+		header Content-Type application/json
+		header Cache-Control no-store
+		respond `{"cesiumIonToken":"{env.CESIUM_ION_TOKEN}"}` 200
+	}
+
+	# Hashed build assets can be cached forever.
+	header /_app/immutable/* Cache-Control "public, max-age=31536000, immutable"
+	header /cesium/* Cache-Control "public, max-age=86400"
+
+	# Static assets: a missing file is a 404, never the SPA page.
+	@assets path /_app/immutable/* /cesium/*
+	handle @assets {
+		file_server
+	}
+
+	# SPA fallback for client-side routes.
+	handle {
+		try_files {path} {path}/ /index.html
+		file_server
+	}
+}

@@ -17,9 +17,9 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
-        runAsGroup: 101
-        fsGroup: 101
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -60,13 +60,17 @@ spec:
             capabilities:
               drop: ["ALL"]
           volumeMounts:
-            # nginx renders /etc/nginx/templates into conf.d at start-up and needs /tmp for pid and caches.
-            - name: nginx-conf
-              mountPath: /etc/nginx/conf.d
+            # Caddy's data/config dirs (XDG_*) and /tmp must be writable with a read-only root filesystem.
+            - name: caddy-data
+              mountPath: /data
+            - name: caddy-config
+              mountPath: /config
             - name: tmp
               mountPath: /tmp
       volumes:
-        - name: nginx-conf
+        - name: caddy-data
+          emptyDir: {}
+        - name: caddy-config
           emptyDir: {}
         - name: tmp
           emptyDir: {}

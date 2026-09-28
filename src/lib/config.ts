@@ -4,7 +4,7 @@ export interface RuntimeConfig {
 
 let cached: Promise<RuntimeConfig> | undefined;
 
-/** Runtime config served as /config.json (nginx in prod, Vite middleware in dev). */
+/** Runtime config served as /config.json (Caddy in prod, Vite middleware in dev). */
 export function loadRuntimeConfig(): Promise<RuntimeConfig> {
   cached ??= fetch('/config.json')
     .then((r) => (r.ok ? r.json() : {}))

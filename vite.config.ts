@@ -4,7 +4,7 @@ import { defineConfig, type Plugin } from 'vite';
 
 /**
  * Serves /config.json in dev so the app reads runtime config the same way
- * it does behind nginx in production (see deploy/nginx/default.conf.template).
+ * it does behind Caddy in production (see deploy/caddy/Caddyfile).
  */
 function devRuntimeConfig(): Plugin {
   return {

@@ -18,10 +18,14 @@ FROM deps AS build
 COPY . .
 RUN npm run postinstall && npm run check && npm test && npm run build
 
-# ---- runtime: unprivileged nginx serving the static bundle on :8080 ----
-FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
-COPY deploy/nginx/default.conf.template /etc/nginx/templates/default.conf.template
-COPY --from=build /app/build /usr/share/nginx/html
-# Runtime config, rendered into /config.json by nginx's envsubst template step.
+# ---- runtime: unprivileged Caddy serving the static bundle on :8080 ----
+FROM caddy:2.11-alpine AS runtime
+# Port 8080 needs no privileges. Drop the binary's file capability, otherwise exec fails
+# under Kubernetes' `capabilities: drop: [ALL]` with no_new_privs.
+RUN apk add --no-cache --virtual .caps libcap-utils  && setcap -r /usr/bin/caddy  && apk del .caps  && chown -R 65532:65532 /data /config
+COPY deploy/caddy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/build /srv
+# Runtime config, served as /config.json by the Caddyfile.
 ENV CESIUM_ION_TOKEN=""
+USER 65532:65532
 EXPOSE 8080
