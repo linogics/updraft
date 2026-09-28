@@ -9,8 +9,10 @@
   import PlayerBar from '#lib/components/PlayerBar.svelte';
   import StatsPanel from '#lib/components/StatsPanel.svelte';
   import ThermalList from '#lib/components/ThermalList.svelte';
+  import Timeline from '#lib/components/Timeline.svelte';
   import Toolbar from '#lib/components/Toolbar.svelte';
-  import { decodeScene, encodeScene } from '#lib/domain/scene';
+  import { loadRuntimeConfig } from '#lib/config';
+  import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
   import type { Flight } from '#lib/domain/model';
   import { ReplayState } from '#lib/state/replay.svelte';
   import { flightRepository } from '#lib/storage';
@@ -18,12 +20,17 @@
   const replay = new ReplayState();
   let error = $state('');
   let loaded = $state(false);
+  let footerTab = $state<'altitude' | 'timeline'>('altitude');
 
   onMount(async () => {
     const scene = decodeScene(page.url.searchParams);
     replay.camera = scene.camera;
     replay.colorBy = scene.colorBy;
     replay.layout = scene.layout;
+    replay.basemap = scene.basemap;
+    const { cesiumIonToken } = await loadRuntimeConfig();
+    replay.ionAvailable = !!cesiumIonToken;
+    replay.terrain = resolveTerrain(scene.terrain, replay.ionAvailable);
 
     const flights = (await Promise.all(scene.flightIds.map((id) => flightRepository.get(id)))).filter(
       (f): f is Flight => !!f
@@ -32,7 +39,9 @@
       error = 'None of the requested flights were found in this browser.';
       return;
     }
-    replay.setFlights(flights);
+    replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges });
+    // Flights from different days need aligning, so open the timeline first.
+    if (replay.multiDay) footerTab = 'timeline';
     loaded = true;
   });
 
@@ -45,7 +54,11 @@
       flightIds: replay.flights.map((f) => f.flight.id),
       camera: replay.camera,
       colorBy: replay.colorBy,
-      layout: replay.layout
+      layout: replay.layout,
+      basemap: replay.basemap,
+      terrain: replay.terrain,
+      sync: replay.syncMode,
+      nudges: replay.nudges
     });
     goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });
@@ -88,7 +101,15 @@
 
     <footer>
       <PlayerBar {replay} />
-      <div class="chart"><AltitudeChart {replay} /></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>Altitude</button>
+        <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
+          Timeline{replay.multiDay ? ' · multi-day' : ''}
+        </button>
+      </div>
+      <div class="chart">
+        {#if footerTab === 'altitude'}<AltitudeChart {replay} />{:else}<Timeline {replay} />{/if}
+      </div>
     </footer>
   </div>
 {:else}
@@ -145,6 +166,24 @@
   .chart {
     height: 150px;
     padding: 0 8px 6px;
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 12px;
+  }
+  .tabs button {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    padding: 2px 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .tabs button[aria-selected='true'] {
+    color: var(--text);
+    border-bottom-color: #3987e5;
   }
   .error {
     display: grid;
