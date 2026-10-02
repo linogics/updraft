@@ -12,6 +12,9 @@ Web app that replays IGC flight logs in 3D and analyses them: thermals, glides, 
 - Flight analysis: thermalling / gliding / searching phases, thermal list (gain, average climb, duration), stats (distance, altitudes, max climb/sink, glide ratio).
 - Multi-pilot replay on a shared clock.
 - Layouts: 3D, 2D map (MapLibre), or split view.
+- 3D terrain without any account (AWS Terrain Tiles); Cesium World Terrain when an ion token is configured. Terrain dropdown: ion, free tiles, or flat.
+- Base maps: satellite (Esri), topo (OpenTopoMap) or OSM with hillshade, in 3D and 2D.
+- Timeline for flights from different days, similar to a video editor: one clip per pilot, drag clips to shift them in time (snapping to other clips and the playhead, Alt disables it), Ctrl+wheel to zoom. Quick alignment: real time, same day (keeps time of day) or aligned takeoffs. The alignment is stored in the URL.
 - Demo flights to try the app without own files.
 
 ## Running locally (Docker only, no Node on the host)
@@ -24,19 +27,27 @@ docker compose up dev
 docker compose run --rm dev npm test
 docker compose run --rm dev npm run check
 
-# Production image (nginx) on http://localhost:8080
+# Production image (Caddy) on http://localhost:8080
 docker compose --profile prod up --build web
 ```
 
 `node_modules` lives in a Docker volume, so editors on the host will not resolve imports. After changing `package.json`, run `docker compose run --rm dev npm install`.
 
-### Terrain (optional)
+### Terrain and maps
 
-Real 3D terrain and satellite imagery need a free [Cesium ion](https://ion.cesium.com) token. Copy `.env.example` to `.env` and set `CESIUM_ION_TOKEN`. Without a token, the globe is flat with OpenStreetMap imagery. With terrain, each track is shifted vertically so takeoff sits on the ground (at most ±150 m), which compensates for loggers that record MSL instead of ellipsoidal heights.
+| Terrain source | Needs | Notes |
+|---|---|---|
+| AWS Terrain Tiles (default without token) | nothing | Free global elevation (Terrarium PNG, SRTM and national DEMs), up to zoom 15 |
+| Cesium World Terrain (default with token) | free [Cesium ion](https://ion.cesium.com) token | Higher resolution. Set `CESIUM_ION_TOKEN` in `.env` (copy `.env.example`). If ion fails, the app falls back to AWS Terrain Tiles |
+| Flat | nothing | Ellipsoid, no relief |
+
+Each track is shifted vertically so takeoff sits on the ground (at most ±150 m). This compensates for loggers that record a different height reference than the terrain.
+
+The keyless tile services (AWS Terrain Tiles, Esri World Imagery, OpenTopoMap, OpenStreetMap) require attribution, which the map shows. They are meant for moderate traffic. For heavy public use, self-host tiles or switch to a keyed provider (for example MapTiler). The sources are configured in `src/lib/map/basemaps.ts`.
 
 ## Kubernetes
 
-The runtime image is static nginx (`nginxinc/nginx-unprivileged`) on port 8080. It runs as a non-root user with a read-only root filesystem and exposes `/healthz` for probes. Configuration is read at runtime from `/config.json`, which nginx renders from environment variables. One image therefore serves every environment.
+The runtime image is [Caddy](https://caddyserver.com) (`caddy:2.11-alpine`, config in `deploy/caddy/Caddyfile`) serving the static build on port 8080. It runs as uid 65532 with a read-only root filesystem and no capabilities, and exposes `/healthz` for probes. Configuration is read at runtime from `/config.json`, which Caddy fills from environment variables per request. One image therefore serves every environment. TLS is left to the ingress.
 
 ```sh
 docker build --target runtime -t <registry>/paragliding-replay:<tag> .
@@ -47,7 +58,7 @@ cd deploy/k8s && kustomize edit set image paragliding-replay=<registry>/paraglid
 kubectl apply -k deploy/k8s
 ```
 
-Edit the host and ingress class in `deploy/k8s/ingress.yaml` before applying.
+Edit the host and ingress class in `deploy/k8s/ingress.yaml` before applying (`ingressClassName: nginx` refers to the cluster's ingress controller, not to the app image).
 
 ## Architecture
 
@@ -55,7 +66,8 @@ Edit the host and ingress class in `deploy/k8s/ingress.yaml` before applying.
 src/lib/
   domain/     framework-free TypeScript: IGC parsing, analysis, timeline, scene config (unit tested)
   storage/    FlightRepository interface + IndexedDB implementation
-  cesium/     3D viewer, flight layer, camera modes
+  cesium/     3D viewer, terrain providers, flight layer, camera modes
+  map/        shared tile sources (base maps, terrain)
   state/      replay state (Svelte runes) incl. the replay clock
   components/ Svelte UI
   ui/         colour scales and formatting
@@ -74,4 +86,4 @@ The dependency direction is `domain → storage / cesium / ui`. The domain layer
 
 ## Roadmap
 
-Video export, accounts and share links, logbook with XContest import, airspaces (openAIP), XC scoring and route planner with XCTrack/SeeYou export, thermal heatmap from many flights, live tracking.
+See [docs/feature-gaps.md](docs/feature-gaps.md) for a comparison with skyviz.io, ogoy.app, flyxc.app and xcfinder.com.
