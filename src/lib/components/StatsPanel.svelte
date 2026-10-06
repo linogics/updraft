@@ -1,22 +1,25 @@
 <script lang="ts">
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
-  import { formatAlt, formatDistance, formatDuration, formatVario } from '#lib/ui/format';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { formatDuration } from '#lib/ui/format';
+  import { formatAlt, formatDistance, formatVario } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
 
   const stats = $derived(replay.selected?.analysis.stats);
+  const u = $derived(unitPrefs.units);
   const items = $derived(
     stats
       ? [
           ['Duration', formatDuration(stats.duration)],
-          ['Track', formatDistance(stats.trackLength)],
-          ['Max from takeoff', formatDistance(stats.maxDistanceFromTakeoff)],
-          ['Takeoff → landing', formatDistance(stats.straightDistance)],
-          ['Max altitude', formatAlt(stats.maxAlt)],
-          ['Takeoff altitude', formatAlt(stats.takeoffAlt)],
-          ['Max climb', formatVario(stats.maxClimb)],
-          ['Max sink', formatVario(stats.maxSink)],
+          ['Track', formatDistance(stats.trackLength, u)],
+          ['Max from takeoff', formatDistance(stats.maxDistanceFromTakeoff, u)],
+          ['Takeoff → landing', formatDistance(stats.straightDistance, u)],
+          ['Max altitude', formatAlt(stats.maxAlt, u)],
+          ['Takeoff altitude', formatAlt(stats.takeoffAlt, u)],
+          ['Max climb', formatVario(stats.maxClimb, u)],
+          ['Max sink', formatVario(stats.maxSink, u)],
           ['Glide ratio', stats.glideRatio ? `${stats.glideRatio.toFixed(1)} : 1` : '–']
         ]
       : []

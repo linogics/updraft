@@ -2,7 +2,9 @@
   import { distance } from '#lib/domain/geo';
   import { indexAt, positionAt } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
-  import { formatAlt, formatClock, formatDistance, formatVario } from '#lib/ui/format';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { formatClock } from '#lib/ui/format';
+  import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -14,13 +16,15 @@
       const inFlight = t >= fixes[0].t && t <= fixes[fixes.length - 1].t;
       const i = indexAt(fixes, t);
       const p = positionAt(fixes, t);
+      const u = unitPrefs.units;
       return {
         f,
         inFlight,
-        alt: formatAlt(p.alt),
-        vario: formatVario(inFlight ? f.analysis.vario[i] : 0),
+        alt: formatAlt(p.alt, u),
+        vario: formatVario(inFlight ? f.analysis.vario[i] : 0, u),
+        speed: formatSpeed(inFlight ? f.analysis.speed[i] : 0, u),
         varioUp: f.analysis.vario[i] > 0.2,
-        dist: formatDistance(distance(fixes[0], p)),
+        dist: formatDistance(distance(fixes[0], p), u),
         // Recorded clock time, shown when the flight is shifted on the replay clock.
         local: f.timeOffset ? `${f.source.date} ${formatClock(replay.localTime(f))}` : null
       };
@@ -50,6 +54,7 @@
         <span class="live">
           <span>{r.alt}</span>
           <span class:up={r.varioUp}>{r.vario}</span>
+          <span>{r.speed}</span>
           <span class="muted">{r.dist}</span>
           {#if r.local}<span class="muted" title="Recorded time of this flight">{r.local}</span>{/if}
         </span>

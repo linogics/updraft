@@ -8,6 +8,7 @@
   import { altitudeOffset } from '#lib/domain/align';
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import { unitPrefs } from '#lib/state/units.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -118,8 +119,9 @@
   $effect(() => {
     if (!ready) return;
     const id = replay.selected?.flight.id;
+    const units = unitPrefs.units;
     void replay.flights;
-    for (const [key, layer] of layers) layer.renderThermals(key === id);
+    for (const [key, layer] of layers) layer.renderThermals(key === id, units);
   });
 </script>
 

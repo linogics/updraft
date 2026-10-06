@@ -1,7 +1,9 @@
 <script lang="ts">
   import { indexAt } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
-  import { formatAlt, formatClock, formatDuration, formatVario } from '#lib/ui/format';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { formatClock, formatDuration } from '#lib/ui/format';
+  import { formatAlt, formatVario } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -22,9 +24,9 @@
             <button onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
               <span class="n">{i + 1}</span>
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
-              <span class="gain">+{Math.round(t.gain)} m</span>
-              <span class="climb">{formatVario(t.avgClimb)}</span>
-              <span class="meta">{formatDuration(t.duration)} · top {formatAlt(t.exitAlt)}</span>
+              <span class="gain">+{formatAlt(t.gain, unitPrefs.units)}</span>
+              <span class="climb">{formatVario(t.avgClimb, unitPrefs.units)}</span>
+              <span class="meta">{formatDuration(t.duration)} · top {formatAlt(t.exitAlt, unitPrefs.units)}</span>
             </button>
           </li>
         {/each}

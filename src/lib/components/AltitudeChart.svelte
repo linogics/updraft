@@ -5,7 +5,9 @@
   import { resampleAltitudes } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
-  import { formatAlt, formatClock } from '#lib/ui/format';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { formatClock } from '#lib/ui/format';
+  import { formatAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -72,7 +74,11 @@
             grid: { stroke: GRID },
             ticks: { stroke: GRID },
             size: 64,
-            values: (_u, vals) => vals.map((v) => `${v} m`)
+            // Data stays in metres; only the labels follow the unit preference.
+            values: (_u, vals) => {
+              const alt = unitPrefs.units.alt;
+              return vals.map((v) => `${Math.round(toAlt(v, alt))} ${UNIT_LABELS.alt[alt]}`);
+            }
           }
         ],
         hooks: {
@@ -87,7 +93,7 @@
                 rows: flights
                   .map((f, i) => ({ name: f.flight.pilot, color: f.color, v: series[i][idx] }))
                   .filter((r) => r.v != null)
-                  .map((r) => ({ name: r.name, color: r.color, alt: formatAlt(r.v!) }))
+                  .map((r) => ({ name: r.name, color: r.color, alt: formatAlt(r.v!, unitPrefs.units) }))
               };
             }
           ]
@@ -124,6 +130,12 @@
     void replay.selected;
     // build() reads and replaces `plot`; untrack it so the effect does not re-trigger itself.
     untrack(build);
+  });
+
+  // Relabel the axis when the altitude unit changes.
+  $effect(() => {
+    void unitPrefs.units.alt;
+    untrack(() => plot?.redraw(false, true));
   });
 
   // Current-time marker, positioned in plot (CSS px) coordinates.

@@ -3,6 +3,7 @@ import { indexAt, positionAt } from '#lib/domain/timeline';
 import type { ColorMode } from '#lib/domain/scene';
 import type { LoadedFlight } from '#lib/state/replay.svelte';
 import { phaseColor, varioColor } from '#lib/ui/colors';
+import { formatAlt, formatVario, type Units } from '#lib/ui/units';
 
 /** Length of the bright trail behind the pilot, ms. */
 const TAIL_MS = 60_000;
@@ -117,7 +118,7 @@ export class FlightLayer {
   }
 
   /** Thermal columns with climb labels; shown for the selected pilot only to limit clutter. */
-  renderThermals(show: boolean) {
+  renderThermals(show: boolean, units: Units) {
     for (const e of this.thermals) this.viewer.entities.remove(e);
     this.thermals = [];
     if (!show) return;
@@ -141,7 +142,7 @@ export class FlightLayer {
             outline: false
           },
           label: {
-            text: `+${Math.round(th.gain)} m · ${th.avgClimb.toFixed(1)} m/s`,
+            text: `+${formatAlt(th.gain, units)} · ${formatVario(th.avgClimb, units)}`,
             font: '12px sans-serif',
             showBackground: true,
             backgroundColor: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.8),

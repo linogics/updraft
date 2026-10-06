@@ -4,6 +4,12 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 
 **Already covered:** 3D replay, multi-pilot comparison, camera modes incl. smooth follow, flight phases, thermal detection, flight stats, altitude chart, 2D map and split view, free 3D terrain, base map picker, multi-day timeline alignment.
 
+## Done since the comparison
+
+| Feature | Delivered | Notes |
+|---|---|---|
+| Unit preferences (flyXC) | 2026-10-14 | Metric, imperial and aviation presets, or each unit on its own: km/mi/nm, m/ft, m/s, ft/min or kt, km/h, mph or kt. Stored per browser, not in the scene URL. |
+
 ## Possible without a backend
 
 | Gap | Seen at |
@@ -24,7 +30,6 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | National topo maps: IGN France (incl. OACI chart), IGN Spain | flyXC |
 | Chart metric switch altitude / speed / vario, ground elevation fill, wheel zoom | flyXC |
 | Live readout: altitude, height above ground, vertical and horizontal speed | flyXC |
-| Unit preferences: km/mi, m/ft, m/s or ft/min, km/h or mph | flyXC |
 | 3D height exaggeration slider, sun lighting | flyXC |
 | Pilot label toggle, place search, "my location", full screen, installable PWA | flyXC |
 | Languages: German/English, French | skyviz, xcfinder |
