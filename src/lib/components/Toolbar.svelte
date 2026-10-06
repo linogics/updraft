@@ -2,6 +2,7 @@
   import { BASEMAP_IDS, CAMERA_MODES, COLOR_MODES, LAYOUTS } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import UnitsMenu from './UnitsMenu.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -48,6 +49,8 @@
       <option value="none">Flat</option>
     </select>
   </label>
+
+  <UnitsMenu />
 </div>
 
 <style>
