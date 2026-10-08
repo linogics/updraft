@@ -60,9 +60,7 @@
     replay.flights.map((f) => ({
       f,
       path: sparkline(f),
-      thermals: f.analysis.thermals
-        .filter((th) => th.gain > 0)
-        .map((th) => (f.source.fixes[th.start].t - f.source.fixes[0].t) / Math.max(1, duration(f)))
+      thermals: f.climbs.thermals.map((th) => (f.source.fixes[th.start].t - f.source.fixes[0].t) / Math.max(1, duration(f)))
     }))
   );
 

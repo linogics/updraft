@@ -81,13 +81,11 @@
     const sel = replay.selected;
     return {
       type: 'FeatureCollection',
-      features: (sel?.analysis.thermals ?? [])
-        .filter((t) => t.gain > 0)
-        .map((t) => ({
-          type: 'Feature',
-          properties: { label: `+${Math.round(t.gain)}` },
-          geometry: { type: 'Point', coordinates: [t.centerLon, t.centerLat] }
-        }))
+      features: (sel?.climbs.thermals ?? []).map((t) => ({
+        type: 'Feature',
+        properties: { label: `+${Math.round(t.gain)}` },
+        geometry: { type: 'Point', coordinates: [t.centerLon, t.centerLat] }
+      }))
     };
   }
 

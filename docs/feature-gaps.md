@@ -9,6 +9,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Feature | Delivered | Notes |
 |---|---|---|
 | Unit preferences (flyXC) | 2026-10-14 | Metric, imperial and aviation presets, or each unit on its own: km/mi/nm, m/ft, m/s, ft/min or kt, km/h, mph or kt. Stored per browser, not in the scene URL. |
+| Thermal filter by gain and climb rate (xcfinder) | 2026-10-14 | Min gain and min average climb sliders in display units. Applies to the list, 3D columns, 2D markers, timeline ticks and "next thermal"; saved in the URL (`tgain`, `tclimb`). |
 
 ## Possible without a backend
 
@@ -19,7 +20,6 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Track styling: width, style, colours | skyviz (Pro) |
 | FIT import (skyviz has a GPX/FIT→IGC converter) | skyviz |
 | More formats: GPX, KML, TRK, GeoJSON, XCTSK; load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
-| Thermal filter by gain and climb rate | xcfinder |
 | Transition altitudes and a transition phase | xcfinder |
 | XC route optimised from a flight (up to 30 turnpoints), editable waypoints, turnpoints shown on the route | xcfinder |
 | XC scoring of a track (free distance, flat and FAI triangle) for XContest, CFD, Leonardo, UK XC League, Czech ČPP, Norway, World XC | flyXC (`@flyxc/optimizer`) |

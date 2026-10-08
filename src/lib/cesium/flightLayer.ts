@@ -122,8 +122,7 @@ export class FlightLayer {
     for (const e of this.thermals) this.viewer.entities.remove(e);
     this.thermals = [];
     if (!show) return;
-    for (const th of this.loaded.analysis.thermals) {
-      if (th.gain <= 0) continue;
+    for (const th of this.loaded.climbs.thermals) {
       const mid = (th.entryAlt + th.exitAlt) / 2;
       // Hide the column while the pilot is circling in it, otherwise it blocks the chase camera.
       const outside = new Cesium.CallbackProperty(() => {
