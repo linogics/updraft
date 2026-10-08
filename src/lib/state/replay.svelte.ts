@@ -1,9 +1,15 @@
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
-import type { Flight, FlightAnalysis } from '#lib/domain/model';
+import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
+import type { Flight, FlightAnalysis, Thermal } from '#lib/domain/model';
 import { DEFAULT_SCENE, type BasemapId, type CameraMode, type ColorMode, type Layout, type TerrainSource } from '#lib/domain/scene';
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
 import { pilotColor } from '#lib/ui/colors';
+
+/** Climbs that pass the thermal filter. Index-based, like the analysis. */
+export interface Climbs {
+  thermals: Thermal[];
+}
 
 export interface LoadedFlight {
   /** Flight as stored, real timestamps. */
@@ -14,6 +20,7 @@ export interface LoadedFlight {
   timeOffset: number;
   /** Indices and durations only, so it is valid for source and shifted flight alike. */
   analysis: FlightAnalysis;
+  climbs: Climbs;
   color: string;
   visible: boolean;
   /** Vertical correction applied in 3D, metres (terrain alignment + manual). */
@@ -25,6 +32,7 @@ export const SPEEDS = [1, 5, 10, 25, 50, 100, 200] as const;
 export interface SceneInit {
   syncMode?: SyncMode | null;
   nudges?: Record<string, number>;
+  thermalFilter?: ThermalFilter;
 }
 
 /**
@@ -49,6 +57,7 @@ export class ReplayState {
   syncMode = $state<SyncMode>('real');
   /** Manual time shift per flight id on top of the sync mode, ms. */
   nudges = $state.raw<Record<string, number>>({});
+  thermalFilter = $state.raw<ThermalFilter>(DEFAULT_FILTER);
 
   start = $derived(this.flights.length ? Math.min(...this.flights.map((f) => f.flight.fixes[0].t)) : 0);
   end = $derived(this.flights.length ? Math.max(...this.flights.map((f) => f.flight.fixes.at(-1)!.t)) : 0);
@@ -62,18 +71,37 @@ export class ReplayState {
   setFlights(flights: Flight[], init: SceneInit = {}) {
     this.syncMode = init.syncMode ?? defaultSyncMode(flights.map((f) => f.fixes));
     this.nudges = init.nudges ?? {};
+    this.thermalFilter = init.thermalFilter ?? DEFAULT_FILTER;
     const offsets = this.offsets(flights);
-    this.flights = flights.map((source, i) => ({
-      source,
-      flight: { ...source, fixes: shiftFixes(source.fixes, offsets[i]) },
-      timeOffset: offsets[i],
-      analysis: analyzeFlight(source),
-      color: pilotColor(i),
-      visible: true,
-      altOffset: 0
-    }));
+    this.flights = flights.map((source, i) => {
+      const analysis = analyzeFlight(source);
+      return {
+        source,
+        flight: { ...source, fixes: shiftFixes(source.fixes, offsets[i]) },
+        timeOffset: offsets[i],
+        analysis,
+        climbs: this.climbsOf(source, analysis),
+        color: pilotColor(i),
+        visible: true,
+        altOffset: 0
+      };
+    });
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
+  }
+
+  private climbsOf(_source: Flight, analysis: FlightAnalysis): Climbs {
+    return { thermals: filterThermals(analysis.thermals, this.thermalFilter) };
+  }
+
+  /** Sets the thermal thresholds (SI units) and recomputes the climbs of every flight. */
+  setThermalFilter(filter: ThermalFilter) {
+    // Round so display-unit sliders do not leave float noise in the URL.
+    this.thermalFilter = {
+      minGain: Math.max(0, Math.round(filter.minGain * 10) / 10),
+      minClimb: Math.max(0, Math.round(filter.minClimb * 100) / 100)
+    };
+    this.flights = this.flights.map((f) => ({ ...f, climbs: this.climbsOf(f.source, f.analysis) }));
   }
 
   private offsets(flights: Flight[]): number[] {
@@ -157,7 +185,7 @@ export class ReplayState {
     if (!sel) return;
     const { fixes } = sel.flight;
     const i = indexAt(fixes, this.time);
-    const next = sel.analysis.thermals.find((t) => t.start > i + 1);
+    const next = sel.climbs.thermals.find((t) => t.start > i + 1);
     if (next) this.seek(fixes[next.start].t);
   }
 

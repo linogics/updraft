@@ -11,7 +11,8 @@ describe('scene config', () => {
       basemap: 'topo',
       terrain: 'none',
       sync: 'takeoff',
-      nudges: { b: 90_000 }
+      nudges: { b: 90_000 },
+      thermalFilter: { minGain: 250, minClimb: 1.2 }
     };
 
     expect(decodeScene(new URLSearchParams(encodeScene(scene)))).toEqual(scene);
@@ -55,5 +56,21 @@ describe('resolveTerrain', () => {
   it('keeps an explicit choice that is available', () => {
     expect(resolveTerrain('none', true)).toBe('none');
     expect(resolveTerrain('terrarium', true)).toBe('terrarium');
+  });
+
+  it('writes the thermal filter only when it differs from the default', () => {
+    const plain = new URLSearchParams(encodeScene({ ...DEFAULT_SCENE, flightIds: ['a'] }));
+    expect(plain.has('tgain')).toBe(false);
+    expect(plain.has('tclimb')).toBe(false);
+
+    const query = new URLSearchParams(encodeScene({ ...DEFAULT_SCENE, thermalFilter: { minGain: 300, minClimb: 0 } }));
+    expect(query.get('tgain')).toBe('300');
+    expect(query.has('tclimb')).toBe(false);
+  });
+
+  it('ignores invalid or negative thermal filter values', () => {
+    const scene = decodeScene(new URLSearchParams('tgain=-5&tclimb=fast'));
+
+    expect(scene.thermalFilter).toEqual(DEFAULT_SCENE.thermalFilter);
   });
 });

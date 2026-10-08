@@ -39,7 +39,7 @@
       error = 'None of the requested flights were found in this browser.';
       return;
     }
-    replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges });
+    replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges, thermalFilter: scene.thermalFilter });
     // Flights from different days need aligning, so open the timeline first.
     if (replay.multiDay) footerTab = 'timeline';
     loaded = true;
@@ -58,7 +58,8 @@
       basemap: replay.basemap,
       terrain: replay.terrain,
       sync: replay.syncMode,
-      nudges: replay.nudges
+      nudges: replay.nudges,
+      thermalFilter: replay.thermalFilter
     });
     goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });

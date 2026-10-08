@@ -1,5 +1,6 @@
 // Serialisable replay scene. Lives in the URL today; becomes a shareable server-side scene later.
 
+import { DEFAULT_FILTER, type ThermalFilter } from './analysis/filter';
 import { SYNC_MODES, type SyncMode } from './sync';
 
 export const CAMERA_MODES = ['follow', 'cockpit', 'orbit', 'free'] as const;
@@ -26,6 +27,7 @@ export interface SceneConfig {
   sync: SyncMode | null;
   /** Manual time shift per flight id, ms. */
   nudges: Record<string, number>;
+  thermalFilter: ThermalFilter;
 }
 
 export const DEFAULT_SCENE: SceneConfig = {
@@ -36,7 +38,8 @@ export const DEFAULT_SCENE: SceneConfig = {
   basemap: 'satellite',
   terrain: null,
   sync: null,
-  nudges: {}
+  nudges: {},
+  thermalFilter: DEFAULT_FILTER
 };
 
 function pick<T extends string>(allowed: readonly T[], value: string | null, fallback: T): T;
@@ -58,6 +61,9 @@ export function encodeScene(scene: SceneConfig): string {
     const seconds = Math.round(ms / 1000);
     if (seconds !== 0) params.append('nudge', `${id}:${seconds}`);
   }
+  const { minGain, minClimb } = scene.thermalFilter;
+  if (minGain !== DEFAULT_FILTER.minGain) params.set('tgain', String(minGain));
+  if (minClimb !== DEFAULT_FILTER.minClimb) params.set('tclimb', String(minClimb));
   return params.toString();
 }
 
@@ -72,6 +78,12 @@ function decodeNudges(values: string[]): Record<string, number> {
   return nudges;
 }
 
+/** Non-negative finite number, else the fallback. */
+function threshold(value: string | null, fallback: number): number {
+  const n = Number(value);
+  return value !== null && Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
 export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): SceneConfig {
   return {
     flightIds: params.getAll('f'),
@@ -81,7 +93,11 @@ export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): Sc
     basemap: pick(BASEMAP_IDS, params.get('map'), DEFAULT_SCENE.basemap),
     terrain: pick(TERRAIN_SOURCES, params.get('terrain'), null),
     sync: pick(SYNC_MODES, params.get('sync'), null),
-    nudges: decodeNudges(params.getAll('nudge'))
+    nudges: decodeNudges(params.getAll('nudge')),
+    thermalFilter: {
+      minGain: threshold(params.get('tgain'), DEFAULT_FILTER.minGain),
+      minClimb: threshold(params.get('tclimb'), DEFAULT_FILTER.minClimb)
+    }
   };
 }
 
