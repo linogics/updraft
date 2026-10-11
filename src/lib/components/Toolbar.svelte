@@ -7,6 +7,7 @@
   let { replay }: { replay: ReplayState } = $props();
 
   const LAYOUT_LABELS = { '3d': '3D', '2d': '2D', split: 'Split' } as const;
+  const COLOR_LABELS = { vario: 'Vario', phase: 'Phase', climb: 'Climb / transition', pilot: 'Pilot' } as const;
   const ION_HINT = 'Needs CESIUM_ION_TOKEN in the runtime config';
 </script>
 
@@ -28,7 +29,7 @@
   <label>
     Track colour
     <select bind:value={replay.colorBy}>
-      {#each COLOR_MODES as m (m)}<option value={m}>{m}</option>{/each}
+      {#each COLOR_MODES as m (m)}<option value={m}>{COLOR_LABELS[m]}</option>{/each}
     </select>
   </label>
 

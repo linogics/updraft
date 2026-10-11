@@ -11,6 +11,7 @@
   import { positionAt } from '#lib/domain/timeline';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import { colorRuns, trackColorAt } from '#lib/ui/trackColors';
 
   let { replay, follow = false }: { replay: ReplayState; follow?: boolean } = $props();
 
@@ -51,13 +52,21 @@
   function trackData(): FeatureCollection {
     return {
       type: 'FeatureCollection',
+      // One line per colour run, so the 2D track follows the colour mode like the 3D one.
       features: replay.flights
         .filter((f) => f.visible)
-        .map((f) => ({
-          type: 'Feature',
-          properties: { color: f.color, selected: f.flight.id === replay.selected?.flight.id },
-          geometry: { type: 'LineString', coordinates: f.flight.fixes.map((x) => [x.lon, x.lat]) }
-        }))
+        .flatMap((f) => {
+          const { fixes } = f.flight;
+          const selected = f.flight.id === replay.selected?.flight.id;
+          return colorRuns(fixes.length, trackColorAt(f, replay.colorBy, true)).map((run) => ({
+            type: 'Feature' as const,
+            properties: { color: run.color, selected },
+            geometry: {
+              type: 'LineString' as const,
+              coordinates: fixes.slice(run.start, run.end + 1).map((x) => [x.lon, x.lat])
+            }
+          }));
+        })
     };
   }
 
@@ -181,6 +190,7 @@
   $effect(() => {
     void replay.flights;
     void replay.selected;
+    void replay.colorBy;
     if (!ready || !map) return;
     (map.getSource('tracks') as GeoJSONSource).setData(trackData());
     (map.getSource('thermals') as GeoJSONSource).setData(thermalData());

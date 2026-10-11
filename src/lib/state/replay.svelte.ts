@@ -1,6 +1,13 @@
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
 import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
-import type { Flight, FlightAnalysis, Thermal } from '#lib/domain/model';
+import {
+  climbKinds,
+  extractTransitions,
+  summarizeTransitions,
+  type Transition,
+  type TransitionSummary
+} from '#lib/domain/analysis/transitions';
+import type { Flight, FlightAnalysis, PhaseKind, Thermal } from '#lib/domain/model';
 import { DEFAULT_SCENE, type BasemapId, type CameraMode, type ColorMode, type Layout, type TerrainSource } from '#lib/domain/scene';
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
@@ -9,6 +16,11 @@ import { pilotColor } from '#lib/ui/colors';
 /** Climbs that pass the thermal filter. Index-based, like the analysis. */
 export interface Climbs {
   thermals: Thermal[];
+  /** Glides between the filtered thermals. */
+  transitions: Transition[];
+  summary: TransitionSummary;
+  /** Per-fix climb / transition phase, for the 'climb' colour mode. */
+  kinds: PhaseKind[];
 }
 
 export interface LoadedFlight {
@@ -90,8 +102,15 @@ export class ReplayState {
     this.time = this.start;
   }
 
-  private climbsOf(_source: Flight, analysis: FlightAnalysis): Climbs {
-    return { thermals: filterThermals(analysis.thermals, this.thermalFilter) };
+  private climbsOf(source: Flight, analysis: FlightAnalysis): Climbs {
+    const thermals = filterThermals(analysis.thermals, this.thermalFilter);
+    const transitions = extractTransitions(source.fixes, thermals);
+    return {
+      thermals,
+      transitions,
+      summary: summarizeTransitions(transitions),
+      kinds: climbKinds(source.fixes.length, thermals, transitions)
+    };
   }
 
   /** Sets the thermal thresholds (SI units) and recomputes the climbs of every flight. */

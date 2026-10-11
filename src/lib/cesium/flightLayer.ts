@@ -2,7 +2,7 @@ import * as Cesium from 'cesium';
 import { indexAt, positionAt } from '#lib/domain/timeline';
 import type { ColorMode } from '#lib/domain/scene';
 import type { LoadedFlight } from '#lib/state/replay.svelte';
-import { phaseColor, varioColor } from '#lib/ui/colors';
+import { trackColorAt } from '#lib/ui/trackColors';
 import { formatAlt, formatVario, type Units } from '#lib/ui/units';
 
 /** Length of the bright trail behind the pilot, ms. */
@@ -13,6 +13,8 @@ export class FlightLayer {
   private track: Cesium.Primitive | undefined;
   /** Inputs the current track primitive was built from; time shifts do not change it. */
   private trackKey = '';
+  /** Climbs the track was coloured from; the 'climb' mode rebuilds when the thermal filter changes. */
+  private trackClimbs: LoadedFlight['climbs'] | undefined;
   private pilot: Cesium.Entity;
   private tail: Cesium.Entity;
   private thermals: Cesium.Entity[] = [];
@@ -87,16 +89,15 @@ export class FlightLayer {
   /** Rebuilds the static track polyline, e.g. after colour mode or altitude offset changes. */
   renderTrack(colorBy: ColorMode) {
     const key = `${colorBy}|${this.loaded.altOffset}`;
-    if (this.track && key === this.trackKey) return;
+    const climbs = this.loaded.climbs;
+    if (this.track && key === this.trackKey && (colorBy !== 'climb' || climbs === this.trackClimbs)) return;
     this.trackKey = key;
+    this.trackClimbs = climbs;
     if (this.track) this.viewer.scene.primitives.remove(this.track);
-    const { flight, analysis, color } = this.loaded;
+    const { flight } = this.loaded;
 
     const positions = flight.fixes.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()));
-    const phaseAt = new Array<string>(flight.fixes.length);
-    for (const p of analysis.phases) for (let i = p.start; i <= p.end; i++) phaseAt[i] = phaseColor(p.kind);
-    const css = (i: number) =>
-      colorBy === 'vario' ? varioColor(analysis.vario[i]) : colorBy === 'phase' ? phaseAt[i] : color;
+    const css = trackColorAt(this.loaded, colorBy);
     const colors = flight.fixes.map((_, i) => Cesium.Color.fromCssColorString(css(i)).withAlpha(0.9));
 
     const track: Cesium.Primitive = new Cesium.Primitive({
