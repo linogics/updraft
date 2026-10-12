@@ -109,11 +109,11 @@
     for (const lf of replay.flights) layers.get(lf.flight.id)?.update(lf);
   });
 
-  // Rebuild tracks when colour mode or altitude offsets change (layers skip unchanged input).
+  // Rebuild tracks when colour mode, style, width, colours or altitude offsets change (layers skip unchanged input).
   $effect(() => {
     if (!ready) return;
-    const colorBy = replay.colorBy;
-    for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy);
+    const { colorBy, trackStyle, trackWidth } = replay;
+    for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth);
   });
 
   $effect(() => {

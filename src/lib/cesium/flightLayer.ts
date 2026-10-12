@@ -1,16 +1,51 @@
 import * as Cesium from 'cesium';
 import { indexAt, positionAt } from '#lib/domain/timeline';
-import type { ColorMode } from '#lib/domain/scene';
+import type { ColorMode, TrackStyle } from '#lib/domain/scene';
 import type { LoadedFlight } from '#lib/state/replay.svelte';
 import { trackColorAt } from '#lib/ui/trackColors';
 import { formatAlt, formatVario, type Units } from '#lib/ui/units';
 
 /** Length of the bright trail behind the pilot, ms. */
 const TAIL_MS = 60_000;
+/** Spacing of curtain wall posts; denser adds vertices without visible gain. */
+const CURTAIN_STEP_MS = 5_000;
+/** Dark casing on each side of an outlined track, px. */
+const OUTLINE_PX = 2;
+
+/**
+ * Per-vertex coloured polyline with a dark casing drawn in the fragment shader. A second, wider
+ * line underneath z-fights with the track (same depth), so the casing is part of the same line:
+ * the vertex shader passes the side (-1..1 across the line) and the outer band is painted dark.
+ */
+function outlinedAppearance(width: number): Cesium.PolylineColorAppearance {
+  const base = new Cesium.PolylineColorAppearance({ translucent: false });
+  const vs = base.vertexShaderSource
+    .replace('out vec4 v_color;', 'out vec4 v_color;\nout float v_side;')
+    .replace('v_color = color;', 'v_color = color;\n    v_side = expandAndWidth.x;');
+  // Cesium changed its shader: draw the plain line rather than break the track.
+  if (!vs.includes('v_side = expandAndWidth.x')) return base;
+  const inner = (width / (width + OUTLINE_PX * 2)).toFixed(4);
+  return new Cesium.PolylineColorAppearance({
+    translucent: false,
+    vertexShaderSource: vs,
+    fragmentShaderSource: `
+in vec4 v_color;
+in float v_side;
+
+void main()
+{
+    vec4 casing = vec4(0.043, 0.047, 0.059, 1.0);
+    out_FragColor = czm_gammaCorrect(abs(v_side) > ${inner} ? casing : v_color);
+}
+`
+  });
+}
 
 /** One flight in the 3D scene: coloured track, live pilot marker with trail, thermal markers. */
 export class FlightLayer {
-  private track: Cesium.Primitive | undefined;
+  /** Track primitives: optional curtain, then the line. */
+  private track: Cesium.Primitive[] = [];
+  private tailWidth = 6;
   /** Inputs the current track primitive was built from; time shifts do not change it. */
   private trackKey = '';
   /** Climbs the track was coloured from; the 'climb' mode rebuilds when the thermal filter changes. */
@@ -64,7 +99,7 @@ export class FlightLayer {
           pts.push(this.cartesianAt(t, new Cesium.Cartesian3()));
           return pts;
         }, false),
-        width: 6,
+        width: new Cesium.CallbackProperty(() => this.tailWidth, false),
         arcType: Cesium.ArcType.NONE,
         material: new Cesium.PolylineGlowMaterialProperty({ color, glowPower: 0.25 })
       }
@@ -86,36 +121,89 @@ export class FlightLayer {
     return this.loaded.analysis.heading[indexAt(this.loaded.flight.fixes, t)];
   }
 
-  /** Rebuilds the static track polyline, e.g. after colour mode or altitude offset changes. */
-  renderTrack(colorBy: ColorMode) {
-    const key = `${colorBy}|${this.loaded.altOffset}`;
+  /** Rebuilds the static track, e.g. after colour mode, style, width or altitude offset changes. */
+  renderTrack(colorBy: ColorMode, style: TrackStyle, width: number) {
+    const key = `${colorBy}|${style}|${width}|${this.loaded.color}|${this.loaded.altOffset}`;
     const climbs = this.loaded.climbs;
-    if (this.track && key === this.trackKey && (colorBy !== 'climb' || climbs === this.trackClimbs)) return;
+    if (this.track.length && key === this.trackKey && (colorBy !== 'climb' || climbs === this.trackClimbs)) return;
     this.trackKey = key;
     this.trackClimbs = climbs;
-    if (this.track) this.viewer.scene.primitives.remove(this.track);
-    const { flight } = this.loaded;
+    this.tailWidth = width * 2;
+    for (const p of this.track) this.viewer.scene.primitives.remove(p);
+    this.track = [];
 
-    const positions = flight.fixes.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()));
-    const css = trackColorAt(this.loaded, colorBy);
-    const colors = flight.fixes.map((_, i) => Cesium.Color.fromCssColorString(css(i)).withAlpha(0.9));
+    const { fixes } = this.loaded.flight;
+    const positions = fixes.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()));
+    const pilot = Cesium.Color.fromCssColorString(this.loaded.color);
+    const line = (geometry: Partial<ConstructorParameters<typeof Cesium.PolylineGeometry>[0]>, w: number) =>
+      new Cesium.GeometryInstance({
+        geometry: new Cesium.PolylineGeometry({ positions, width: w, arcType: Cesium.ArcType.NONE, ...geometry })
+      });
 
-    const track: Cesium.Primitive = new Cesium.Primitive({
-      geometryInstances: new Cesium.GeometryInstance({
-        geometry: new Cesium.PolylineGeometry({
-          positions,
-          colors,
-          colorsPerVertex: true,
-          width: 3,
-          arcType: Cesium.ArcType.NONE,
-          vertexFormat: Cesium.PolylineColorAppearance.VERTEX_FORMAT
+    if (style === 'curtain') this.add(this.curtain(pilot));
+
+    // Cesium glow is a single-colour material, so it only applies to the pilot colour mode.
+    if (style === 'glow' && colorBy === 'pilot') {
+      this.add(
+        new Cesium.Primitive({
+          geometryInstances: line({ vertexFormat: Cesium.PolylineMaterialAppearance.VERTEX_FORMAT }, width * 3),
+          appearance: new Cesium.PolylineMaterialAppearance({
+            material: Cesium.Material.fromType('PolylineGlow', { color: pilot, glowPower: 0.2 })
+          }),
+          asynchronous: false
         })
+      );
+      return;
+    }
+
+    const css = trackColorAt(this.loaded, colorBy);
+    const outline = style === 'outline';
+    const colors = fixes.map((_, i) => Cesium.Color.fromCssColorString(css(i)).withAlpha(0.9));
+    this.add(
+      new Cesium.Primitive({
+        geometryInstances: line(
+          { colors, colorsPerVertex: true, vertexFormat: Cesium.PolylineColorAppearance.VERTEX_FORMAT },
+          outline ? width + OUTLINE_PX * 2 : width
+        ),
+        appearance: outline ? outlinedAppearance(width) : new Cesium.PolylineColorAppearance({ translucent: false }),
+        asynchronous: false
+      })
+    );
+  }
+
+  private add(p: Cesium.Primitive) {
+    p.show = this.loaded.visible;
+    this.track.push(this.viewer.scene.primitives.add(p));
+  }
+
+  /**
+   * Translucent wall from the track down to sea level. Depth testing against terrain hides
+   * the part below ground, so no terrain sampling is needed.
+   */
+  private curtain(color: Cesium.Color): Cesium.Primitive {
+    const { fixes } = this.loaded.flight;
+    const positions: Cesium.Cartesian3[] = [];
+    const heights: number[] = [];
+    let last = -Infinity;
+    fixes.forEach((f, i) => {
+      if (f.t - last < CURTAIN_STEP_MS && i !== fixes.length - 1) return;
+      last = f.t;
+      positions.push(Cesium.Cartesian3.fromDegrees(f.lon, f.lat));
+      heights.push(f.alt + this.loaded.altOffset);
+    });
+    return new Cesium.Primitive({
+      geometryInstances: new Cesium.GeometryInstance({
+        geometry: new Cesium.WallGeometry({
+          positions,
+          maximumHeights: heights,
+          minimumHeights: heights.map(() => 0),
+          vertexFormat: Cesium.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT
+        }),
+        attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(color.withAlpha(0.22)) }
       }),
-      appearance: new Cesium.PolylineColorAppearance({ translucent: false }),
+      appearance: new Cesium.PerInstanceColorAppearance({ flat: true, translucent: true }),
       asynchronous: false
     });
-    track.show = this.loaded.visible;
-    this.track = this.viewer.scene.primitives.add(track);
   }
 
   /** Thermal columns with climb labels; shown for the selected pilot only to limit clutter. */
@@ -156,12 +244,21 @@ export class FlightLayer {
 
   /** Swaps in the latest state snapshot of this flight (state replaces objects on change). */
   update(loaded: LoadedFlight) {
+    if (loaded.color !== this.loaded.color) this.recolor(loaded.color);
     this.loaded = loaded;
     this.setVisible(loaded.visible);
   }
 
+  /** Pilot marker, label and tail take the pilot colour; the track picks it up in renderTrack. */
+  private recolor(css: string) {
+    const color = Cesium.Color.fromCssColorString(css);
+    this.pilot.point!.color = new Cesium.ConstantProperty(color);
+    this.pilot.label!.backgroundColor = new Cesium.ConstantProperty(color.withAlpha(0.7));
+    this.tail.polyline!.material = new Cesium.PolylineGlowMaterialProperty({ color, glowPower: 0.25 });
+  }
+
   setVisible(visible: boolean) {
-    if (this.track) this.track.show = visible;
+    for (const p of this.track) p.show = visible;
     this.pilot.show = visible;
     this.tail.show = visible;
   }
@@ -173,7 +270,7 @@ export class FlightLayer {
   }
 
   destroy() {
-    if (this.track) this.viewer.scene.primitives.remove(this.track);
+    for (const p of this.track) this.viewer.scene.primitives.remove(p);
     this.viewer.entities.remove(this.pilot);
     this.viewer.entities.remove(this.tail);
     for (const e of this.thermals) this.viewer.entities.remove(e);
