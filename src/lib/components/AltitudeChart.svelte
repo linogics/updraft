@@ -36,6 +36,63 @@
     ctx.restore();
   }
 
+  /**
+   * Transition altitudes of the selected flight: the band between the average arrival
+   * and departure height of glides, with direct labels in text ink.
+   */
+  function drawWorkingBand(u: uPlot) {
+    const s = replay.selected?.climbs.summary;
+    if (!s || s.avgStartAlt == null || s.avgEndAlt == null) return;
+    const { ctx, bbox } = u;
+    const px = uPlot.pxRatio;
+    const top = u.valToPos(s.avgStartAlt, 'y', true);
+    const bottom = u.valToPos(s.avgEndAlt, 'y', true);
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(bbox.left, top, bbox.width, bottom - top);
+    ctx.strokeStyle = 'rgba(154,160,166,0.6)';
+    ctx.lineWidth = px;
+    ctx.setLineDash([4 * px, 4 * px]);
+    for (const y of [top, bottom]) {
+      ctx.beginPath();
+      ctx.moveTo(bbox.left, y);
+      ctx.lineTo(bbox.left + bbox.width, y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = INK;
+    ctx.font = `${11 * px}px sans-serif`;
+    ctx.textAlign = 'right';
+    const x = bbox.left + bbox.width - 4 * px;
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`leave ⌀ ${formatAlt(s.avgStartAlt, unitPrefs.units)}`, x, top - 2 * px);
+    ctx.textBaseline = 'top';
+    ctx.fillText(`arrive ⌀ ${formatAlt(s.avgEndAlt, unitPrefs.units)}`, x, bottom + 2 * px);
+    ctx.restore();
+  }
+
+  /** Where each glide left a climb and reached the next one, on top of the series. */
+  function drawTransitionMarks(u: uPlot) {
+    const sel = replay.selected;
+    if (!sel?.visible) return;
+    const { ctx } = u;
+    const { fixes } = sel.flight;
+    const px = uPlot.pxRatio;
+    ctx.save();
+    ctx.fillStyle = sel.color;
+    ctx.strokeStyle = '#14161b';
+    ctx.lineWidth = 2 * px;
+    for (const t of sel.climbs.transitions) {
+      if (t.kind !== 'glide') continue;
+      for (const i of [t.start, t.end]) {
+        ctx.beginPath();
+        ctx.arc(u.valToPos(fixes[i].t / 1000, 'x', true), u.valToPos(fixes[i].alt, 'y', true), 4 * px, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   function build() {
     plot?.destroy();
     const flights = replay.flights.filter((f) => f.visible);
@@ -82,7 +139,8 @@
           }
         ],
         hooks: {
-          drawClear: [drawPhases],
+          drawClear: [drawPhases, drawWorkingBand],
+          draw: [drawTransitionMarks],
           setCursor: [
             (u) => {
               const idx = u.cursor.idx;

@@ -3,7 +3,7 @@
   import { phaseColor } from '#lib/ui/colors';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatDuration } from '#lib/ui/format';
-  import { formatAlt, formatDistance, formatVario } from '#lib/ui/units';
+  import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -21,6 +21,18 @@
           ['Max climb', formatVario(stats.maxClimb, u)],
           ['Max sink', formatVario(stats.maxSink, u)],
           ['Glide ratio', stats.glideRatio ? `${stats.glideRatio.toFixed(1)} : 1` : '–']
+        ]
+      : []
+  );
+  const summary = $derived(replay.selected?.climbs.summary);
+  const transitionItems = $derived(
+    summary && summary.count
+      ? [
+          ['Leave climbs at ⌀', formatAlt(summary.avgStartAlt!, u)],
+          ['Arrive at next ⌀', formatAlt(summary.avgEndAlt!, u)],
+          ['Lowest arrival', formatAlt(summary.lowestArrival!, u)],
+          ['Glide ⌀', summary.avgGlideRatio ? `${summary.avgGlideRatio.toFixed(1)} : 1` : '–'],
+          ['Speed made good ⌀', summary.avgSpeed ? formatSpeed(summary.avgSpeed, u) : '–']
         ]
       : []
   );
@@ -48,6 +60,15 @@
         <li><span class="dot" style:background={phaseColor(s.k)}></span>{s.k} {Math.round(s.v * 100)}%</li>
       {/each}
     </ul>
+    {#if transitionItems.length}
+      <h4>Transitions <span class="count">{summary?.count} glides</span></h4>
+      <dl>
+        {#each transitionItems as [label, value] (label)}
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        {/each}
+      </dl>
+    {/if}
   </section>
 {/if}
 
@@ -61,6 +82,14 @@
   }
   dt {
     color: var(--muted);
+  }
+  h4 {
+    margin: 14px 0 6px;
+    font-size: 13px;
+  }
+  .count {
+    color: var(--muted);
+    font-weight: 400;
   }
   dd {
     margin: 0;

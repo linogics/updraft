@@ -3,7 +3,17 @@
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatClock, formatDuration } from '#lib/ui/format';
-  import { formatAlt, formatVario, fromAlt, fromVario, toAlt, toVario, UNIT_LABELS } from '#lib/ui/units';
+  import {
+    formatAlt,
+    formatDistance,
+    formatSpeed,
+    formatVario,
+    fromAlt,
+    fromVario,
+    toAlt,
+    toVario,
+    UNIT_LABELS
+  } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -13,9 +23,13 @@
   const GAIN_STEP = { m: 25, ft: 100 } as const;
   const CLIMB_STEP = { ms: 0.1, fpm: 20, kt: 0.2 } as const;
 
+  const KIND_LABELS = { launch: 'Launch', glide: 'Glide', final: 'Final glide' } as const;
+
+  let tab = $state<'thermals' | 'transitions'>('thermals');
   const sel = $derived(replay.selected);
   const u = $derived(unitPrefs.units);
   const thermals = $derived(sel?.climbs.thermals ?? []);
+  const transitions = $derived(sel?.climbs.transitions ?? []);
   const total = $derived(sel ? sel.analysis.thermals.filter((t) => t.gain > 0).length : 0);
   const current = $derived(sel ? indexAt(sel.flight.fixes, replay.time) : -1);
 
@@ -28,7 +42,7 @@
 
 {#if sel}
   <section>
-    <h3>Thermals <span class="count">{thermals.length === total ? total : `${thermals.length} of ${total}`}</span></h3>
+    <h3>Climbs &amp; glides</h3>
     <div class="filter">
       <label for="min-gain">Min gain</label>
       <input
@@ -54,13 +68,38 @@
       />
       <output for="min-climb">{climb ? `${+climb.toFixed(1)} ${UNIT_LABELS.vario[u.vario]}` : 'any'}</output>
     </div>
-    {#if thermals.length === 0}
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected={tab === 'thermals'} onclick={() => (tab = 'thermals')}>
+        Thermals <span class="count">{thermals.length === total ? total : `${thermals.length} of ${total}`}</span>
+      </button>
+      <button role="tab" aria-selected={tab === 'transitions'} onclick={() => (tab = 'transitions')}>
+        Transitions <span class="count">{transitions.length}</span>
+      </button>
+    </div>
+    {#if tab === 'transitions'}
+      <ol>
+        {#each transitions as t (t.start)}
+          <li class:active={current >= t.start && current < t.end}>
+            <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
+              <span class="n" class:kind={t.kind !== 'glide'}>{t.kind === 'glide' ? '↘' : t.kind === 'launch' ? '⇢' : '⇥'}</span>
+              <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
+              <span class="gain">{formatDistance(t.distance, u)}</span>
+              <span class="climb">{t.glideRatio ? `${t.glideRatio.toFixed(1)} : 1` : '–'}</span>
+              <span class="meta">
+                {t.kind === 'glide' ? '' : `${KIND_LABELS[t.kind]} · `}{formatAlt(t.startAlt, u)} → {formatAlt(t.endAlt, u)}
+                · {formatSpeed(t.speed, u)} · {formatDuration(t.duration)}
+              </span>
+            </button>
+          </li>
+        {/each}
+      </ol>
+    {:else if thermals.length === 0}
       <p class="empty">{total ? 'No thermals match the filter.' : 'No thermals detected.'}</p>
     {:else}
       <ol>
         {#each thermals as t, i (t.start)}
           <li class:active={current >= t.start && current <= t.end}>
-            <button onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
+            <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
               <span class="n">{i + 1}</span>
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
               <span class="gain">+{formatAlt(t.gain, u)}</span>
@@ -105,7 +144,26 @@
     margin: 0;
     padding: 0;
   }
-  button {
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tabs button {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    padding: 2px 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .tabs button[aria-selected='true'] {
+    color: var(--text);
+    border-bottom-color: #3987e5;
+  }
+  .row {
     all: unset;
     box-sizing: border-box;
     width: 100%;
@@ -118,12 +176,15 @@
     font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
-  button:hover,
-  li.active button {
+  .row:hover,
+  li.active .row {
     background: var(--surface-2);
   }
   .n {
     color: var(--muted);
+  }
+  .n.kind {
+    color: var(--text);
   }
   .gain {
     font-weight: 600;
