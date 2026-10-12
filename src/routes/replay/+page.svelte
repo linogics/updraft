@@ -27,6 +27,8 @@
     replay.camera = scene.camera;
     replay.colorBy = scene.colorBy;
     replay.layout = scene.layout;
+    replay.trackStyle = scene.trackStyle;
+    replay.trackWidth = scene.trackWidth;
     replay.basemap = scene.basemap;
     const { cesiumIonToken } = await loadRuntimeConfig();
     replay.ionAvailable = !!cesiumIonToken;
@@ -39,7 +41,7 @@
       error = 'None of the requested flights were found in this browser.';
       return;
     }
-    replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges, thermalFilter: scene.thermalFilter });
+    replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges, thermalFilter: scene.thermalFilter, colors: scene.colors });
     // Flights from different days need aligning, so open the timeline first.
     if (replay.multiDay) footerTab = 'timeline';
     loaded = true;
@@ -59,7 +61,10 @@
       terrain: replay.terrain,
       sync: replay.syncMode,
       nudges: replay.nudges,
-      thermalFilter: replay.thermalFilter
+      thermalFilter: replay.thermalFilter,
+      trackStyle: replay.trackStyle,
+      trackWidth: replay.trackWidth,
+      colors: replay.colorOverrides
     });
     goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });

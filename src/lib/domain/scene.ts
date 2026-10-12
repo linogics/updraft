@@ -8,12 +8,15 @@ export const COLOR_MODES = ['vario', 'phase', 'climb', 'pilot'] as const;
 export const LAYOUTS = ['3d', '2d', 'split'] as const;
 export const BASEMAP_IDS = ['satellite', 'topo', 'osm'] as const;
 export const TERRAIN_SOURCES = ['ion', 'terrarium', 'none'] as const;
+export const TRACK_STYLES = ['solid', 'outline', 'curtain', 'glow'] as const;
+export const TRACK_WIDTH = { min: 1, max: 10 } as const;
 
 export type CameraMode = (typeof CAMERA_MODES)[number];
 export type ColorMode = (typeof COLOR_MODES)[number];
 export type Layout = (typeof LAYOUTS)[number];
 export type BasemapId = (typeof BASEMAP_IDS)[number];
 export type TerrainSource = (typeof TERRAIN_SOURCES)[number];
+export type TrackStyle = (typeof TRACK_STYLES)[number];
 
 export interface SceneConfig {
   flightIds: string[];
@@ -28,6 +31,11 @@ export interface SceneConfig {
   /** Manual time shift per flight id, ms. */
   nudges: Record<string, number>;
   thermalFilter: ThermalFilter;
+  trackStyle: TrackStyle;
+  /** Track line width, px. */
+  trackWidth: number;
+  /** Pilot colour overrides per flight id, '#rrggbb'. */
+  colors: Record<string, string>;
 }
 
 export const DEFAULT_SCENE: SceneConfig = {
@@ -39,7 +47,10 @@ export const DEFAULT_SCENE: SceneConfig = {
   terrain: null,
   sync: null,
   nudges: {},
-  thermalFilter: DEFAULT_FILTER
+  thermalFilter: DEFAULT_FILTER,
+  trackStyle: 'solid',
+  trackWidth: 3,
+  colors: {}
 };
 
 function pick<T extends string>(allowed: readonly T[], value: string | null, fallback: T): T;
@@ -64,6 +75,9 @@ export function encodeScene(scene: SceneConfig): string {
   const { minGain, minClimb } = scene.thermalFilter;
   if (minGain !== DEFAULT_FILTER.minGain) params.set('tgain', String(minGain));
   if (minClimb !== DEFAULT_FILTER.minClimb) params.set('tclimb', String(minClimb));
+  if (scene.trackStyle !== DEFAULT_SCENE.trackStyle) params.set('style', scene.trackStyle);
+  if (scene.trackWidth !== DEFAULT_SCENE.trackWidth) params.set('width', String(scene.trackWidth));
+  for (const [id, hex] of Object.entries(scene.colors)) params.append('pc', `${id}:${hex}`);
   return params.toString();
 }
 
@@ -76,6 +90,24 @@ function decodeNudges(values: string[]): Record<string, number> {
     if (Number.isFinite(seconds) && seconds !== 0) nudges[value.slice(0, sep)] = seconds * 1000;
   }
   return nudges;
+}
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+function decodeColors(values: string[]): Record<string, string> {
+  const colors: Record<string, string> = {};
+  for (const value of values) {
+    const sep = value.lastIndexOf(':');
+    const hex = value.slice(sep + 1);
+    if (sep > 0 && HEX_COLOR.test(hex)) colors[value.slice(0, sep)] = hex.toLowerCase();
+  }
+  return colors;
+}
+
+function width(value: string | null): number {
+  const n = Math.round(Number(value));
+  if (value === null || !Number.isFinite(n)) return DEFAULT_SCENE.trackWidth;
+  return Math.min(TRACK_WIDTH.max, Math.max(TRACK_WIDTH.min, n));
 }
 
 /** Non-negative finite number, else the fallback. */
@@ -97,7 +129,10 @@ export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): Sc
     thermalFilter: {
       minGain: threshold(params.get('tgain'), DEFAULT_FILTER.minGain),
       minClimb: threshold(params.get('tclimb'), DEFAULT_FILTER.minClimb)
-    }
+    },
+    trackStyle: pick(TRACK_STYLES, params.get('style'), DEFAULT_SCENE.trackStyle),
+    trackWidth: width(params.get('width')),
+    colors: decodeColors(params.getAll('pc'))
   };
 }
 

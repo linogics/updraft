@@ -12,7 +12,10 @@ describe('scene config', () => {
       terrain: 'none',
       sync: 'takeoff',
       nudges: { b: 90_000 },
-      thermalFilter: { minGain: 250, minClimb: 1.2 }
+      thermalFilter: { minGain: 250, minClimb: 1.2 },
+      trackStyle: 'curtain',
+      trackWidth: 5,
+      colors: { a: '#ff8800' }
     };
 
     expect(decodeScene(new URLSearchParams(encodeScene(scene)))).toEqual(scene);
@@ -72,5 +75,23 @@ describe('resolveTerrain', () => {
     const scene = decodeScene(new URLSearchParams('tgain=-5&tclimb=fast'));
 
     expect(scene.thermalFilter).toEqual(DEFAULT_SCENE.thermalFilter);
+  });
+
+  it('writes track style, width and colours only when set', () => {
+    const plain = new URLSearchParams(encodeScene({ ...DEFAULT_SCENE, flightIds: ['a'] }));
+    expect(['style', 'width', 'pc'].filter((k) => plain.has(k))).toEqual([]);
+  });
+
+  it('clamps the track width and rejects unknown styles', () => {
+    expect(decodeScene(new URLSearchParams('width=40')).trackWidth).toBe(10);
+    expect(decodeScene(new URLSearchParams('width=0')).trackWidth).toBe(1);
+    expect(decodeScene(new URLSearchParams('width=wide')).trackWidth).toBe(DEFAULT_SCENE.trackWidth);
+    expect(decodeScene(new URLSearchParams('style=sparkles')).trackStyle).toBe(DEFAULT_SCENE.trackStyle);
+  });
+
+  it('accepts only six-digit hex pilot colours', () => {
+    const scene = decodeScene(new URLSearchParams('pc=a:%2300ff88&pc=b:red&pc=c:%23abc&pc=d:%23ABCDEF'));
+
+    expect(scene.colors).toEqual({ a: '#00ff88', d: '#abcdef' });
   });
 });

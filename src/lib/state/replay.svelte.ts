@@ -8,7 +8,15 @@ import {
   type TransitionSummary
 } from '#lib/domain/analysis/transitions';
 import type { Flight, FlightAnalysis, PhaseKind, Thermal } from '#lib/domain/model';
-import { DEFAULT_SCENE, type BasemapId, type CameraMode, type ColorMode, type Layout, type TerrainSource } from '#lib/domain/scene';
+import {
+  DEFAULT_SCENE,
+  type BasemapId,
+  type CameraMode,
+  type ColorMode,
+  type Layout,
+  type TerrainSource,
+  type TrackStyle
+} from '#lib/domain/scene';
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
 import { pilotColor } from '#lib/ui/colors';
@@ -45,6 +53,7 @@ export interface SceneInit {
   syncMode?: SyncMode | null;
   nudges?: Record<string, number>;
   thermalFilter?: ThermalFilter;
+  colors?: Record<string, string>;
 }
 
 /**
@@ -70,6 +79,10 @@ export class ReplayState {
   /** Manual time shift per flight id on top of the sync mode, ms. */
   nudges = $state.raw<Record<string, number>>({});
   thermalFilter = $state.raw<ThermalFilter>(DEFAULT_FILTER);
+  trackStyle = $state<TrackStyle>(DEFAULT_SCENE.trackStyle);
+  trackWidth = $state(DEFAULT_SCENE.trackWidth);
+  /** Pilot colours picked by the user, per flight id. */
+  colorOverrides = $state.raw<Record<string, string>>({});
 
   start = $derived(this.flights.length ? Math.min(...this.flights.map((f) => f.flight.fixes[0].t)) : 0);
   end = $derived(this.flights.length ? Math.max(...this.flights.map((f) => f.flight.fixes.at(-1)!.t)) : 0);
@@ -84,6 +97,7 @@ export class ReplayState {
     this.syncMode = init.syncMode ?? defaultSyncMode(flights.map((f) => f.fixes));
     this.nudges = init.nudges ?? {};
     this.thermalFilter = init.thermalFilter ?? DEFAULT_FILTER;
+    this.colorOverrides = init.colors ?? {};
     const offsets = this.offsets(flights);
     this.flights = flights.map((source, i) => {
       const analysis = analyzeFlight(source);
@@ -93,7 +107,7 @@ export class ReplayState {
         timeOffset: offsets[i],
         analysis,
         climbs: this.climbsOf(source, analysis),
-        color: pilotColor(i),
+        color: this.colorOverrides[source.id] ?? pilotColor(i),
         visible: true,
         altOffset: 0
       };
@@ -159,6 +173,15 @@ export class ReplayState {
   /** Real (recorded) clock time of a flight at the current replay time. */
   localTime(f: LoadedFlight): number {
     return this.time - f.timeOffset;
+  }
+
+  /** Overrides a pilot's colour everywhere; null restores the palette colour. */
+  setPilotColor(id: string, hex: string | null) {
+    const { [id]: _, ...rest } = this.colorOverrides;
+    this.colorOverrides = hex ? { ...rest, [id]: hex } : rest;
+    this.flights = this.flights.map((f, i) =>
+      f.flight.id === id ? { ...f, color: hex ?? pilotColor(i) } : f
+    );
   }
 
   setVisible(id: string, visible: boolean) {
