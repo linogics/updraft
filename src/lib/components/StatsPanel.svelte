@@ -61,7 +61,7 @@
       {/each}
     </ul>
     {#if transitionItems.length}
-      <h4>Transitions <span class="count">{summary?.count} glides</span></h4>
+      <h4>Transitions <span class="count">{summary?.count} {summary?.count === 1 ? 'glide' : 'glides'}</span></h4>
       <dl>
         {#each transitionItems as [label, value] (label)}
           <dt>{label}</dt>

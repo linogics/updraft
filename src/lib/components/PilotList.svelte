@@ -44,8 +44,21 @@
           onchange={(e) => replay.setVisible(r.f.flight.id, e.currentTarget.checked)}
           aria-label="Show {r.f.flight.pilot}"
         />
+        <span class="color">
+          <input
+            type="color"
+            class="swatch"
+            value={r.f.color}
+            style:background={r.f.color}
+            onchange={(e) => replay.setPilotColor(r.f.flight.id, e.currentTarget.value)}
+            aria-label="Colour of {r.f.flight.pilot}"
+            title="Change colour"
+          />
+          {#if replay.colorOverrides[r.f.flight.id]}
+            <button class="reset" onclick={() => replay.setPilotColor(r.f.flight.id, null)} title="Reset colour" aria-label="Reset colour of {r.f.flight.pilot}">✕</button>
+          {/if}
+        </span>
         <button class="name" onclick={() => (replay.selectedId = r.f.flight.id)}>
-          <span class="swatch" style:background={r.f.color}></span>
           <span>
             <span class="pilot">{r.f.flight.pilot}</span>
             <span class="glider">{r.f.flight.glider ?? r.f.flight.sourceName}</span>
@@ -71,7 +84,7 @@
   }
   li {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto auto 1fr auto;
     align-items: center;
     gap: 6px;
     padding: 6px 4px;
@@ -91,11 +104,36 @@
     cursor: pointer;
     min-width: 0;
   }
+  .color {
+    position: relative;
+    display: flex;
+  }
   .swatch {
+    appearance: none;
     flex: none;
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: 2px solid var(--surface);
     border-radius: 50%;
+    cursor: pointer;
+  }
+  .swatch::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  .swatch::-webkit-color-swatch,
+  .swatch::-moz-color-swatch {
+    border: 0;
+    border-radius: 50%;
+  }
+  .reset {
+    all: unset;
+    position: absolute;
+    top: -7px;
+    right: -8px;
+    font-size: 9px;
+    color: var(--muted);
+    cursor: pointer;
   }
   .pilot {
     display: block;

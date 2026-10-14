@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { BASEMAP_IDS, CAMERA_MODES, COLOR_MODES, LAYOUTS } from '#lib/domain/scene';
+  import { BASEMAP_IDS, CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import TrackMenu from './TrackMenu.svelte';
   import UnitsMenu from './UnitsMenu.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
   const LAYOUT_LABELS = { '3d': '3D', '2d': '2D', split: 'Split' } as const;
-  const COLOR_LABELS = { vario: 'Vario', phase: 'Phase', climb: 'Climb / transition', pilot: 'Pilot' } as const;
   const ION_HINT = 'Needs CESIUM_ION_TOKEN in the runtime config';
 </script>
 
@@ -26,12 +26,7 @@
     {/each}
   </div>
 
-  <label>
-    Track colour
-    <select bind:value={replay.colorBy}>
-      {#each COLOR_MODES as m (m)}<option value={m}>{COLOR_LABELS[m]}</option>{/each}
-    </select>
-  </label>
+  <TrackMenu {replay} />
 
   <label>
     Map
