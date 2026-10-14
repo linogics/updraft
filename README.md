@@ -5,11 +5,14 @@ Web app that replays IGC flight logs in 3D and analyses them: thermals, glides, 
 ## Features (V1)
 
 - Import one or more `.igc` files (drag and drop). Flights are stored in the browser (IndexedDB).
-- 3D replay on CesiumJS: tracks coloured by vario, flight phase or pilot; live pilot markers with trail.
+- 3D replay on CesiumJS: tracks coloured by vario, flight phase, climb / transition or pilot; live pilot markers with trail.
+- Track styling: solid, outline, curtain (wall down to the ground, 3D) or glow; width 1–10 px; pick any pilot colour by clicking the colour dot. Stored in the URL.
 - Camera modes: follow (smoothed chase cam), cockpit, orbit, free.
 - Player: play/pause, 1×–200× speed, scrubbing, jump to the next thermal, keyboard (space, ←/→).
 - Altitude chart for all pilots with phase bands of the selected pilot; click or drag to seek.
 - Flight analysis: thermalling / gliding / searching phases, thermal list (gain, average climb, duration), stats (distance, altitudes, max climb/sink, glide ratio).
+- Thermal filter by minimum gain and average climb. Transitions (glides between the remaining thermals) with distance, altitude loss, glide ratio and speed; average leave and arrival altitude shown as a band in the altitude chart.
+- Units: metric, imperial or aviation (km/mi/nm, m/ft, m/s, ft/min or kt, km/h, mph or kt), each also settable on its own. Stored per browser.
 - Multi-pilot replay on a shared clock.
 - Layouts: 3D, 2D map (MapLibre), or split view.
 - 3D terrain without any account (AWS Terrain Tiles); Cesium World Terrain when an ion token is configured. Terrain dropdown: ion, free tiles, or flat.
