@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as maplibregl from 'maplibre-gl';
-  import type { GeoJSONSource, LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl';
+  import type { ExpressionSpecification, GeoJSONSource, LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl';
   import type { FeatureCollection } from 'geojson';
   import 'maplibre-gl/dist/maplibre-gl.css';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow; bundle it explicitly.
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import { distance } from '#lib/domain/geo';
-  import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
+  import { BASEMAP_IDS, type BasemapId, type TrackStyle } from '#lib/domain/scene';
   import { positionAt } from '#lib/domain/timeline';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
@@ -98,6 +98,22 @@
     };
   }
 
+  /** Width, outline and glow of the 2D tracks. Curtain has no 2D form and draws solid. */
+  function applyTrackStyle(m: maplibregl.Map, style: TrackStyle, width: number) {
+    const w = (extra: number, scale = 1): ExpressionSpecification => [
+      'case',
+      ['get', 'selected'],
+      (width + 1) * scale + extra,
+      width * scale + extra
+    ];
+    m.setPaintProperty('tracks', 'line-width', w(0));
+    m.setPaintProperty('tracks-casing', 'line-width', w(4));
+    m.setPaintProperty('tracks-glow', 'line-width', w(0, 3));
+    m.setPaintProperty('tracks-glow', 'line-blur', width * 2);
+    m.setLayoutProperty('tracks-casing', 'visibility', style === 'outline' ? 'visible' : 'none');
+    m.setLayoutProperty('tracks-glow', 'visibility', style === 'glow' ? 'visible' : 'none');
+  }
+
   onMount(() => {
     maplibregl.setWorkerUrl(maplibreWorkerUrl);
     const bounds = new maplibregl.LngLatBounds();
@@ -116,16 +132,22 @@
       m.addSource('tracks', { type: 'geojson', data: trackData() });
       m.addSource('pilots', { type: 'geojson', data: pilotData(replay.time) });
       m.addSource('thermals', { type: 'geojson', data: thermalData() });
+      const round = { 'line-join': 'round', 'line-cap': 'round' } as const;
+      m.addLayer({ id: 'tracks-casing', type: 'line', source: 'tracks', layout: round, paint: { 'line-color': '#0b0c0f' } });
+      m.addLayer({
+        id: 'tracks-glow',
+        type: 'line',
+        source: 'tracks',
+        paint: { 'line-color': ['get', 'color'], 'line-opacity': 0.45 }
+      });
       m.addLayer({
         id: 'tracks',
         type: 'line',
         source: 'tracks',
-        paint: {
-          'line-color': ['get', 'color'],
-          'line-width': ['case', ['get', 'selected'], 3, 1.5],
-          'line-opacity': 0.85
-        }
+        layout: round,
+        paint: { 'line-color': ['get', 'color'], 'line-opacity': 0.9 }
       });
+      applyTrackStyle(m, replay.trackStyle, replay.trackWidth);
       m.addLayer({
         id: 'thermals',
         type: 'circle',
@@ -178,6 +200,12 @@
       const p = positionAt(sel.flight.fixes, t);
       map.setCenter([p.lon, p.lat]);
     }
+  });
+
+  $effect(() => {
+    const { trackStyle, trackWidth } = replay;
+    if (!ready || !map) return;
+    applyTrackStyle(map, trackStyle, trackWidth);
   });
 
   $effect(() => {
