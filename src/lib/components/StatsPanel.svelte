@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import { routeFromFlight } from '#lib/domain/routeFromFlight';
+  import { encodeRoute } from '#lib/domain/route';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
   import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
@@ -10,6 +13,14 @@
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
+
+  let turnpoints = $state(3);
+  const makeRoute = () => {
+    const sel = replay.selected;
+    if (!sel) return;
+    const n = Math.min(30, Math.max(1, Math.round(turnpoints) || 3));
+    void goto(`/plan?r=${encodeURIComponent(encodeRoute(routeFromFlight(sel.flight.fixes, n)))}`);
+  };
 
   const stats = $derived(replay.selected?.analysis.stats);
   const u = $derived(unitPrefs.units);
@@ -79,6 +90,11 @@
     {:else}
       <p class="muted">{xc === undefined ? 'Scoring…' : '–'}</p>
     {/if}
+    <label>
+      Turnpoints
+      <input type="number" min="1" max="30" bind:value={turnpoints} />
+    </label>
+    <button type="button" onclick={makeRoute}>Open in planner</button>
     {#if replay.flights.length > 1}
       <ul class="xc-list">
         {#each replay.flights as f (f.flight.id)}
