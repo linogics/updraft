@@ -1,0 +1,12 @@
+node_modules
+.svelte-kit
+build
+dist
+coverage
+static/cesium
+src/lib/paraglide
+test-results
+playwright-report
+.codegraph
+docs
+package-lock.json
