@@ -11,6 +11,7 @@
   import { positionAt } from '#lib/domain/timeline';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import { varioColor } from '#lib/ui/colors';
   import { colorRuns, trackColorAt } from '#lib/ui/trackColors';
 
   let { replay, follow = false }: { replay: ReplayState; follow?: boolean } = $props();
@@ -92,7 +93,7 @@
       type: 'FeatureCollection',
       features: (sel?.climbs.thermals ?? []).map((t) => ({
         type: 'Feature',
-        properties: { label: `+${Math.round(t.gain)}` },
+        properties: { label: `+${Math.round(t.gain)}`, color: varioColor(t.avgClimb) },
         geometry: { type: 'Point', coordinates: [t.centerLon, t.centerLat] }
       }))
     };
@@ -152,7 +153,7 @@
         id: 'thermals',
         type: 'circle',
         source: 'thermals',
-        paint: { 'circle-radius': 5, 'circle-color': '#ff8c42', 'circle-opacity': 0.7 }
+        paint: { 'circle-radius': 5, 'circle-color': ['get', 'color'], 'circle-opacity': 0.7 }
       });
       m.addLayer({
         id: 'pilots',

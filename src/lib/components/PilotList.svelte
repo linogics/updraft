@@ -17,10 +17,12 @@
       const i = indexAt(fixes, t);
       const p = positionAt(fixes, t);
       const u = unitPrefs.units;
+      const agl = replay.aglAt(f, i);
       return {
         f,
         inFlight,
         alt: formatAlt(p.alt, u),
+        agl: inFlight && agl !== undefined ? formatAlt(agl, u) : '–',
         vario: formatVario(inFlight ? f.analysis.vario[i] : 0, u),
         speed: formatSpeed(inFlight ? f.analysis.speed[i] : 0, u),
         varioUp: f.analysis.vario[i] > 0.2,
@@ -34,6 +36,7 @@
 
 <section>
   <h3>Pilots</h3>
+  <div class="head"><span class="live"><span>Alt</span><span>AGL</span></span></div>
   <ul>
     {#each rows as r (r.f.flight.id)}
       {@const selected = r.f.flight.id === replay.selected?.flight.id}
@@ -66,6 +69,7 @@
         </button>
         <span class="live">
           <span>{r.alt}</span>
+          <span title="Height above ground">{r.agl}</span>
           <span class:up={r.varioUp}>{r.vario}</span>
           <span>{r.speed}</span>
           <span class="muted">{r.dist}</span>
@@ -147,11 +151,22 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .head {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 4px;
+    font-size: 11px;
+    color: var(--muted);
+  }
   .live {
     display: grid;
+    grid-template-columns: auto auto;
     justify-items: end;
     font-size: 12px;
     font-variant-numeric: tabular-nums;
+  }
+  .live > span:nth-child(n + 3) {
+    grid-column: 1 / -1;
   }
   .up {
     font-weight: 700;
