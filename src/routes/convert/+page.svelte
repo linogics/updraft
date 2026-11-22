@@ -3,6 +3,7 @@
   import Logo from '#lib/components/Logo.svelte';
   import { WRITERS, formatOf, readTrack, type WriterKey } from '#lib/domain/formats';
   import type { Flight } from '#lib/domain/model';
+  import { zipStore } from '#lib/export/zip';
   import { flightRepository } from '#lib/storage';
 
   type Row = { name: string; format?: string; flight?: Flight; error?: string };
@@ -29,12 +30,31 @@
     busy = false;
   }
 
+  const fileName = (flight: Flight) => `${flight.sourceName.replace(/\.[^.]*$/, '')}.${WRITERS[target].ext}`;
+
   function download(flight: Flight) {
     const w = WRITERS[target];
-    const url = URL.createObjectURL(new Blob([w.write(flight)], { type: w.mime }));
+    saveFile(new Blob([w.write(flight)], { type: w.mime }), fileName(flight));
+  }
+
+  function downloadAll() {
+    const seen = new Map<string, number>();
+    const enc = new TextEncoder();
+    const files = ok.map((r) => {
+      let name = fileName(r.flight!);
+      const n = (seen.get(name) ?? 0) + 1;
+      seen.set(name, n);
+      if (n > 1) name = name.replace(/(\.[^.]*)$/, `-${n}$1`);
+      return { name, data: enc.encode(WRITERS[target].write(r.flight!)) };
+    });
+    saveFile(new Blob([zipStore(files) as BlobPart], { type: 'application/zip' }), 'updraft-tracks.zip');
+  }
+
+  function saveFile(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${flight.sourceName.replace(/\.[^.]*$/, '')}.${w.ext}`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -56,7 +76,7 @@
     <p>Turn a track into the format another app or instrument reads. Everything stays in your browser.</p>
   </header>
 
-  <Dropzone onfiles={load} {busy} />
+  <Dropzone onfiles={load} {busy} hint="IGC, GPX, KML, FIT, TRK or GeoJSON. Each file is converted on its own." />
 
   <div class="options">
     <label>
@@ -66,7 +86,7 @@
       </select>
     </label>
     <label class="check"><input type="checkbox" bind:checked={save} /> Also save to the logbook</label>
-    <button disabled={!ok.length} onclick={() => ok.forEach((r) => download(r.flight!))}>Download all</button>
+    <button disabled={!ok.length} onclick={downloadAll}>Download all</button>
   </div>
   {#if target === 'igc'}
     <p class="note">IGC files written here carry no security signature, so competitions and XContest will not accept them.</p>
