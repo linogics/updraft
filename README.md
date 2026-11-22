@@ -26,6 +26,9 @@ docker compose up dev
 docker compose run --rm dev npm test
 docker compose run --rm dev npm run check
 
+# UI tests in Chromium, on the host (first run: npx playwright install chromium)
+npm run test:ui
+
 # Static build into build/
 docker compose run --rm dev npm run build
 ```
