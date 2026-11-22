@@ -73,7 +73,16 @@ export function extractTransitions(fixes: Fix[], thermals: Thermal[]): Transitio
   return out;
 }
 
-export function summarizeTransitions(transitions: Transition[]): TransitionSummary {
+/** Start and end altitude of a transition, from `altAt` (e.g. height above ground per fix index) when given. */
+export function transitionAlts(t: Transition, altAt?: (i: number) => number | undefined) {
+  return altAt ? { start: altAt(t.start), end: altAt(t.end) } : { start: t.startAlt, end: t.endAlt };
+}
+
+/** With `altAt`, altitudes follow it and are null as soon as one lookup is missing. Other stats are unchanged. */
+export function summarizeTransitions(
+  transitions: Transition[],
+  altAt?: (i: number) => number | undefined
+): TransitionSummary {
   const glides = transitions.filter((t) => t.kind === 'glide');
   if (!glides.length) {
     return { count: 0, avgStartAlt: null, avgEndAlt: null, lowestArrival: null, avgGlideRatio: null, avgSpeed: null };
@@ -82,11 +91,15 @@ export function summarizeTransitions(transitions: Transition[]): TransitionSumma
   const dist = sum((t) => t.distance);
   const loss = sum((t) => t.altLoss);
   const time = sum((t) => t.duration);
+  const alts = glides.map((t) => transitionAlts(t, altAt));
+  const starts = alts.map((a) => a.start);
+  const ends = alts.map((a) => a.end);
+  const known = (v: (number | undefined)[]): v is number[] => v.every((x) => x !== undefined);
   return {
     count: glides.length,
-    avgStartAlt: sum((t) => t.startAlt) / glides.length,
-    avgEndAlt: sum((t) => t.endAlt) / glides.length,
-    lowestArrival: Math.min(...glides.map((t) => t.endAlt)),
+    avgStartAlt: known(starts) ? starts.reduce((s, v) => s + v, 0) / glides.length : null,
+    avgEndAlt: known(ends) ? ends.reduce((s, v) => s + v, 0) / glides.length : null,
+    lowestArrival: known(ends) ? Math.min(...ends) : null,
     avgGlideRatio: loss > 0 ? dist / loss : null,
     avgSpeed: time > 0 ? dist / time : null
   };

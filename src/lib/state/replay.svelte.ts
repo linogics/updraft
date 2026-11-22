@@ -233,6 +233,11 @@ export class ReplayState {
     return f.ground ? f.flight.fixes[i].alt + f.altOffset - f.ground[i] : undefined;
   }
 
+  /** Transition summary in MSL, or in AGL (altitudes null until ground heights have loaded). */
+  transitionSummary(f: LoadedFlight, agl: boolean): TransitionSummary {
+    return agl ? summarizeTransitions(f.climbs.transitions, (i) => this.aglAt(f, i)) : f.climbs.summary;
+  }
+
   private climbsOf(source: Flight, analysis: FlightAnalysis): Climbs {
     const thermals = filterThermals(analysis.thermals, this.thermalFilter);
     const transitions = extractTransitions(source.fixes, thermals);
