@@ -6,7 +6,7 @@ import type { AirspacePrefsValue } from './prefs';
 import { TILE_URL } from './tiles';
 
 const SOURCE = 'airspaces';
-const FILL = 'airspaces-fill';
+export const FILL = 'airspaces-fill';
 const LINE = 'airspaces-line';
 
 const cls: ExpressionSpecification = ['get', 'icao_class'];

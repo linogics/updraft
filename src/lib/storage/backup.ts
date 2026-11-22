@@ -1,7 +1,7 @@
 import { flightRepository } from './index';
 import type { Backup } from './repository';
 
-const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs'];
+const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs', 'thermalOverlayPrefs'];
 const TOKEN_KEY = 'cesiumIonToken';
 const OPENAIP_KEY = 'openaipKey';
 

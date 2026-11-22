@@ -7,6 +7,8 @@
   import { XcRoute } from '#lib/cesium/xcRoute';
 import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
 import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+import { ThermalLayer } from '#lib/cesium/thermalLayer';
+import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
@@ -27,6 +29,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   let xcRoute: XcRoute | undefined = $state.raw();
   let airspaceLayer: AirspaceLayer | undefined = $state.raw();
   let airspaces: AirspaceFeature[] = $state.raw([]);
+  let thermalLayer: ThermalLayer | undefined = $state.raw();
   let airspaceRequest = '';
 
   /** Loads a terrain source and re-aligns every track so takeoff sits on the ground. */
@@ -72,6 +75,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
       camera = new CameraController(v);
       xcRoute = new XcRoute(v);
       airspaceLayer = new AirspaceLayer(v);
+      thermalLayer = new ThermalLayer(v);
 
       v.scene.preRender.addEventListener(() => {
         const sel = replay.selected;
@@ -115,6 +119,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
       camera?.destroy();
       xcRoute?.destroy();
       airspaceLayer?.destroy();
+      thermalLayer?.destroy();
       if (viewer && !viewer.isDestroyed()) viewer.destroy();
     };
   });
@@ -151,6 +156,12 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
     if (!ready || !airspaceLayer) return;
     const { show, classes, maxFloor, opacity, key } = airspacePrefs;
     airspaceLayer.set(show && key ? airspaces : [], { show, classes, maxFloor, opacity }, replay.exaggeration);
+  });
+
+  $effect(() => {
+    if (!ready || !thermalLayer) return;
+    const { hotspots, skyways, opacity } = thermalOverlayPrefs;
+    thermalLayer.set({ hotspots, skyways, opacity });
   });
 
   // Terrain dropdown: switch source after the initial load.
