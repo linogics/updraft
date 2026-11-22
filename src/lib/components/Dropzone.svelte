@@ -4,7 +4,7 @@
   let over = $state(false);
 
   function accept(list: FileList | null | undefined) {
-    const files = [...(list ?? [])].filter((f) => /\.igc$/i.test(f.name));
+    const files = [...(list ?? [])].filter((f) => /\.(igc|gpx|kml|geojson|json|trk|fit)$/i.test(f.name));
     if (files.length) onfiles(files);
   }
 </script>
@@ -24,9 +24,9 @@
     accept(e.dataTransfer?.files);
   }}
 >
-  <input type="file" accept=".igc" multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
-  <strong>{busy ? 'Processing…' : 'Drop IGC files here'}</strong>
-  <span>or click to choose. Several files from the same day are replayed together.</span>
+  <input type="file" accept=".igc,.gpx,.kml,.geojson,.json,.trk,.fit" multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
+  <strong>{busy ? 'Processing…' : 'Drop flight files here'}</strong>
+  <span>IGC, GPX, KML, FIT, TRK or GeoJSON. Several files from the same day are replayed together.</span>
 </label>
 
 <style>

@@ -1,14 +1,14 @@
-import { parseIgc } from '../domain/igc';
+import { readTrack } from '../domain/formats';
 import { DEFAULT_SCENE, encodeScene } from '../domain/scene';
 import { flightRepository } from './index';
 
-/** Parses and stores IGC files. Bad files are reported, the rest are still saved. */
+/** Parses and stores track files of any supported format. Bad files are reported, the rest are still saved. */
 export async function importFlights(files: File[]): Promise<{ ids: string[]; errors: string[] }> {
   const ids: string[] = [];
   const errors: string[] = [];
   for (const file of files) {
     try {
-      const flight = parseIgc(await file.text(), { id: crypto.randomUUID(), sourceName: file.name });
+      const flight = await readTrack(file);
       await flightRepository.save(flight);
       ids.push(flight.id);
     } catch (err) {
