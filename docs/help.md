@@ -159,7 +159,7 @@ To add a token, open the **Ion** menu in the replay toolbar, paste the token and
 
 ### Airspaces and the openAIP key
 
-Airspaces need a free key from [openaip.net](https://www.openaip.net). Enter it under Airspaces in the View menu or in the planner. Then pick the classes, hide airspaces with high floors and set the opacity.
+Airspaces need a free key from [openaip.net](https://www.openaip.net). Enter it under Airspaces in the View menu or in the planner. Then pick the classes, hide airspaces with high floors and set the opacity. Airspaces start hidden in every new session, the other settings are kept.
 
 Airspace limits are approximate. Flight levels and AGL ceilings are treated as MSL, GND floors start at 0 m, FIR and UIR are not shown. Always check the official charts.
 

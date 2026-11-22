@@ -23,7 +23,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Altitude chart for all pilots with phase bands of the selected pilot. Click or drag to seek.
 - Pilot list with altitude and height above ground (AGL).
 - Track colour by vario, flight phase, climb and transition, or pilot. Any pilot colour can be picked.
-- Track style: solid, outline, dashed, curtain (3D wall down to the ground) or glow, width 1 to 10 px, optional smoothing.
+- Track style: solid, outline, dashed, curtain (3D wall down to the ground) or glow, width 1 to 10 px, smoothing (on by default).
 - View toggles: full screen, pilot names, height exaggeration 1× to 3×, sun lighting at the recorded time, thermal columns and labels.
 - Terrain: free AWS Terrain Tiles, Cesium World Terrain with your own ion token, or flat. Each track is shifted so takeoff sits on the ground (at most ±150 m).
 - Base maps: satellite (Esri), topo (OpenTopoMap) or OSM with hillshade, in 3D and 2D.

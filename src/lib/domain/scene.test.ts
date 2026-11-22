@@ -15,7 +15,7 @@ describe('scene config', () => {
       thermalFilter: { minGain: 250, minClimb: 1.2 },
       trackStyle: 'dashed',
       trackWidth: 5,
-      smoothTrack: true,
+      smoothTrack: false,
       colors: { a: '#ff8800' },
       exaggeration: 2.5,
       lighting: true,
@@ -54,7 +54,7 @@ describe('view toggles', () => {
   it('omits defaults from the URL', () => {
     const params = new URLSearchParams(encodeScene({ ...DEFAULT_SCENE, flightIds: ['a'] }));
 
-    expect(params.has('exag') || params.has('sun') || params.has('labels')).toBe(false);
+    expect(params.has('exag') || params.has('sun') || params.has('labels') || params.has('smooth')).toBe(false);
   });
 
   it('clamps exaggeration to 1-3 in 0.1 steps and ignores junk', () => {

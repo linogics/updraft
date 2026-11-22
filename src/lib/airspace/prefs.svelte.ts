@@ -27,7 +27,7 @@ class AirspacePrefs {
     try {
       localStorage.setItem(
         KEY,
-        JSON.stringify({ show: this.show, classes: this.classes, maxFloor: this.maxFloor, opacity: this.opacity })
+        JSON.stringify({ classes: this.classes, maxFloor: this.maxFloor, opacity: this.opacity })
       );
     } catch {
       // Not persisted, the choice still applies for this session.
