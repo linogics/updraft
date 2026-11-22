@@ -9,6 +9,7 @@
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -54,11 +55,13 @@
       await applyTerrain(v, replay.terrain);
       if (!alive) return;
 
-      for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time));
+      for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time, () => replay.exaggeration));
       camera = new CameraController(v);
 
       v.scene.preRender.addEventListener(() => {
         const sel = replay.selected;
+        // Sun position follows the recorded clock of the selected flight.
+        if (replay.lighting && sel) Cesium.JulianDate.fromDate(new Date(replay.localTime(sel)), v.clock.currentTime);
         const layer = sel && layers.get(sel.flight.id);
         camera!.update(
           replay.camera,
@@ -103,6 +106,19 @@
     setBasemap(viewer, id);
   });
 
+  $effect(() => {
+    if (!ready || !viewer) return;
+    viewer.scene.verticalExaggeration = replay.exaggeration;
+    viewer.scene.globe.enableLighting = replay.lighting;
+    viewer.scene.requestRender();
+  });
+
+  $effect(() => {
+    if (!ready) return;
+    const show = replay.labels;
+    for (const layer of layers.values()) layer.setLabelVisible(show);
+  });
+
   // Keep layers in sync with state snapshots (visibility, altitude and time offsets).
   $effect(() => {
     if (!ready) return;
@@ -113,6 +129,7 @@
   $effect(() => {
     if (!ready) return;
     const { colorBy, trackStyle, trackWidth } = replay;
+    void replay.exaggeration;
     for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth);
   });
 
@@ -120,8 +137,10 @@
     if (!ready) return;
     const id = replay.selected?.flight.id;
     const units = unitPrefs.units;
+    const parts = { columns: thermalPrefs.columns, labels: thermalPrefs.labels };
     void replay.flights;
-    for (const [key, layer] of layers) layer.renderThermals(key === id, units);
+    void replay.exaggeration;
+    for (const [key, layer] of layers) layer.renderThermals(key === id, units, parts);
   });
 </script>
 

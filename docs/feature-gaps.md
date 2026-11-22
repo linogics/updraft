@@ -12,6 +12,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Thermal filter by gain and climb rate (xcfinder) | 2026-10-14 | Min gain and min average climb sliders in display units. Applies to the list, 3D columns, 2D markers, timeline ticks and "next thermal"; saved in the URL (`tgain`, `tclimb`). |
 | Transition altitudes and transition phase (xcfinder) | 2026-10-14 | Glides between the filtered thermals (launch, glide, final) with distance, altitude loss, glide ratio and speed; average leave/arrive altitude and lowest arrival in the stats; working band and markers in the altitude chart; "climb / transition" track colour mode in 3D and 2D. |
 | Track styling: width, style, colours (skyviz Pro) | 2026-10-14 | Solid, outline, curtain (3D) and glow; width 1–10 px; per-pilot colour picker. Saved in the URL (`style`, `width`, `pc`). Glow needs the pilot colour mode in 3D. |
+| View toggles: full screen, pilot labels, 3D height exaggeration, sun lighting, thermal columns, thermal labels (flyXC) | 2026-11-22 | Exaggeration 1–3× scales terrain and tracks together. The sun follows the selected pilot's recorded time. Saved in the URL (`exag`, `sun`, `labels`). Full screen is not saved. Thermal column and label toggles are stored per browser, not in the URL. |
 
 ## Possible without a backend
 
@@ -33,8 +34,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | National topo maps: IGN France (incl. OACI chart), IGN Spain | flyXC |
 | Chart metric switch altitude / speed / vario, ground elevation fill, wheel zoom | flyXC |
 | Live readout: height above ground (altitude, vario and ground speed are shown in the pilot list) | flyXC |
-| 3D height exaggeration slider, sun lighting | flyXC |
-| Pilot label toggle, place search, "my location", full screen, installable PWA | flyXC |
+| Place search, "my location", installable PWA | flyXC |
 | Languages: German/English, French | skyviz, xcfinder |
 
 ## Needs a backend

@@ -58,7 +58,9 @@ export class FlightLayer {
   constructor(
     private viewer: Cesium.Viewer,
     private loaded: LoadedFlight,
-    private getTime: () => number
+    private getTime: () => number,
+    /** Polylines and walls ignore scene.verticalExaggeration, so heights are scaled here to match the terrain. */
+    private getExaggeration: () => number = () => 1
   ) {
     const color = Cesium.Color.fromCssColorString(loaded.color);
 
@@ -107,7 +109,7 @@ export class FlightLayer {
   }
 
   private cartesian(lon: number, lat: number, alt: number, result?: Cesium.Cartesian3): Cesium.Cartesian3 {
-    return Cesium.Cartesian3.fromDegrees(lon, lat, alt + this.loaded.altOffset, undefined, result);
+    return Cesium.Cartesian3.fromDegrees(lon, lat, (alt + this.loaded.altOffset) * this.getExaggeration(), undefined, result);
   }
 
   /** Interpolated pilot position at time t. Reuses an internal scratch unless result is given. */
@@ -123,7 +125,7 @@ export class FlightLayer {
 
   /** Rebuilds the static track, e.g. after colour mode, style, width or altitude offset changes. */
   renderTrack(colorBy: ColorMode, style: TrackStyle, width: number) {
-    const key = `${colorBy}|${style}|${width}|${this.loaded.color}|${this.loaded.altOffset}`;
+    const key = `${colorBy}|${style}|${width}|${this.loaded.color}|${this.loaded.altOffset}|${this.getExaggeration()}`;
     const climbs = this.loaded.climbs;
     if (this.track.length && key === this.trackKey && (colorBy !== 'climb' || climbs === this.trackClimbs)) return;
     this.trackKey = key;
@@ -189,7 +191,7 @@ export class FlightLayer {
       if (f.t - last < CURTAIN_STEP_MS && i !== fixes.length - 1) return;
       last = f.t;
       positions.push(Cesium.Cartesian3.fromDegrees(f.lon, f.lat));
-      heights.push(f.alt + this.loaded.altOffset);
+      heights.push((f.alt + this.loaded.altOffset) * this.getExaggeration());
     });
     return new Cesium.Primitive({
       geometryInstances: new Cesium.GeometryInstance({
@@ -206,11 +208,14 @@ export class FlightLayer {
     });
   }
 
-  /** Thermal columns with climb labels; shown for the selected pilot only to limit clutter. */
-  renderThermals(show: boolean, units: Units) {
+  /**
+   * Thermal columns and climb labels. Shown for the selected pilot only to limit clutter.
+   * Each part has its own toggle, so either can be off while the other stays on.
+   */
+  renderThermals(show: boolean, units: Units, parts: { columns: boolean; labels: boolean }) {
     for (const e of this.thermals) this.viewer.entities.remove(e);
     this.thermals = [];
-    if (!show) return;
+    if (!show || (!parts.columns && !parts.labels)) return;
     for (const th of this.loaded.climbs.thermals) {
       const mid = (th.entryAlt + th.exitAlt) / 2;
       // Hide the column while the pilot is circling in it, otherwise it blocks the chase camera.
@@ -221,22 +226,26 @@ export class FlightLayer {
       this.thermals.push(
         this.viewer.entities.add({
           position: this.cartesian(th.centerLon, th.centerLat, mid, new Cesium.Cartesian3()),
-          cylinder: {
-            show: outside,
-            length: th.gain,
-            topRadius: 35,
-            bottomRadius: 35,
-            material: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.15),
-            outline: false
-          },
-          label: {
-            text: `+${formatAlt(th.gain, units)} · ${formatVario(th.avgClimb, units)}`,
-            font: '12px sans-serif',
-            showBackground: true,
-            backgroundColor: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.8),
-            pixelOffset: new Cesium.Cartesian2(0, -10),
-            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 30_000)
-          }
+          ...(parts.columns && {
+            cylinder: {
+              show: outside,
+              length: th.gain * this.getExaggeration(),
+              topRadius: 35,
+              bottomRadius: 35,
+              material: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.15),
+              outline: false
+            }
+          }),
+          ...(parts.labels && {
+            label: {
+              text: `+${formatAlt(th.gain, units)} · ${formatVario(th.avgClimb, units)}`,
+              font: '12px sans-serif',
+              showBackground: true,
+              backgroundColor: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.8),
+              pixelOffset: new Cesium.Cartesian2(0, -10),
+              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 30_000)
+            }
+          })
         })
       );
     }
@@ -255,6 +264,10 @@ export class FlightLayer {
     this.pilot.point!.color = new Cesium.ConstantProperty(color);
     this.pilot.label!.backgroundColor = new Cesium.ConstantProperty(color.withAlpha(0.7));
     this.tail.polyline!.material = new Cesium.PolylineGlowMaterialProperty({ color, glowPower: 0.25 });
+  }
+
+  setLabelVisible(visible: boolean) {
+    this.pilot.label!.show = new Cesium.ConstantProperty(visible);
   }
 
   setVisible(visible: boolean) {

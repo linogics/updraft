@@ -54,9 +54,13 @@
   onMount(refresh);
 </script>
 
+<svelte:head>
+  <title>Flights | updraft</title>
+</svelte:head>
+
 <main>
   <header>
-    <h1>Paragliding Replay</h1>
+    <h1>updraft</h1>
     <p>Replay and analyse IGC flights in 3D: thermals, glides, stats and group comparison.</p>
   </header>
 

@@ -6,6 +6,7 @@
   import Popover from './Popover.svelte';
   import TrackMenu from './TrackMenu.svelte';
   import UnitsMenu from './UnitsMenu.svelte';
+  import ViewMenu from './ViewMenu.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -16,6 +17,13 @@
   let ionError = $state('');
   loadRuntimeConfig().then((c) => (ionToken = c.cesiumIonToken));
 
+  const canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
+  let fullscreen = $state(false);
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  }
+
   // The viewer reads the token once at start, so reload to apply it.
   function applyIonToken(e: SubmitEvent) {
     e.preventDefault();
@@ -23,6 +31,8 @@
     else ionError = 'Browser storage is blocked, the token cannot be saved.';
   }
 </script>
+
+<svelte:document onfullscreenchange={() => (fullscreen = !!document.fullscreenElement)} />
 
 <div class="toolbar">
   <a href="/" class="home">← Flights</a>
@@ -40,6 +50,7 @@
   </div>
 
   <TrackMenu {replay} />
+  <ViewMenu {replay} />
 
   <label>
     Map
@@ -73,6 +84,10 @@
   </Popover>
 
   <UnitsMenu />
+
+  {#if canFullscreen}
+    <button onclick={toggleFullscreen} aria-pressed={fullscreen}>{fullscreen ? 'Exit full screen' : 'Full screen'}</button>
+  {/if}
 </div>
 
 <style>

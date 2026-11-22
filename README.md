@@ -1,4 +1,4 @@
-# Paragliding Replay
+# updraft
 
 Web app that replays IGC flight logs in 3D and analyses them: thermals, glides, flight stats and side-by-side comparison of several pilots. Inspired by skyviz.io, ogoy.app, flyxc.app and xcfinder.com.
 
