@@ -26,6 +26,8 @@
   let viewer: Cesium.Viewer | undefined = $state.raw();
   let ready = $state(false);
   let notice = $state<string>(m.cesium_loading_view());
+  // Plain registry read by imperative code, never by templates.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const layers = new Map<string, FlightLayer>();
   let xcRoute: XcRoute | undefined = $state.raw();
   let airspaceLayer: AirspaceLayer | undefined = $state.raw();
@@ -43,6 +45,8 @@
     notice = m.cesium_loading_terrain();
     const used = await setTerrain(v, source);
     appliedTerrain = used;
+    // Local lookup handed to replay state once, not reactive itself.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const offsets = new Map<string, number>();
     await Promise.all(
       replay.flights.map(async ({ flight }) => {

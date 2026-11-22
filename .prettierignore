@@ -10,3 +10,4 @@ playwright-report
 .codegraph
 docs
 package-lock.json
+project.inlang/cache

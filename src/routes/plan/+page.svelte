@@ -45,6 +45,8 @@
   }
 
   function syncUrl() {
+    // Local query builder, not reactive state.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const q = new URLSearchParams();
     if (points.length) q.set('r', encodeRoute(points));
     if (speed !== DEFAULT_SPEED) q.set('v', String(speed));

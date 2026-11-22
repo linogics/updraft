@@ -26,6 +26,14 @@ export default ts.config(
   prettier,
   ...svelte.configs.prettier,
   {
+    rules: {
+      // Dropping a key via `const { [id]: _, ...rest }` is intentional.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+      // App is served at the root without paths.base, and most links carry query strings resolve() cannot type.
+      'svelte/no-navigation-without-resolve': 'off'
+    }
+  },
+  {
     languageOptions: {
       globals: { ...globals.browser, ...globals.node }
     }

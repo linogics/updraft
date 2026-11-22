@@ -67,6 +67,8 @@
 </div>
 {#if !prefs.key}
   <p class="hint">
+    <!-- Static i18n message with a fixed link, no user input. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html m.airspace_key_hint({
       link: '<a href="https://www.openaip.net" target="_blank" rel="noreferrer">openaip.net</a>'
     })}

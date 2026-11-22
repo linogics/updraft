@@ -91,6 +91,8 @@
       <label for="ion-token">{m.toolbar_ion_token()}</label>
       <input id="ion-token" type="password" autocomplete="off" bind:value={ionToken} placeholder="eyJhbGciOi…" />
       <p>
+        <!-- Static i18n message with a fixed link, no user input. -->
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html m.toolbar_ion_help({
           link: '<a href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">ion.cesium.com</a>'
         })}

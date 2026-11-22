@@ -220,6 +220,8 @@ export class ReplayState {
 
   /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
   private async loadGround() {
+    // Local lookup filled in parallel, then handed to state once.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const ground = new Map<string, Float32Array>();
     await Promise.all(
       this.flights.map(async (f) => {

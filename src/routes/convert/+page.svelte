@@ -39,6 +39,8 @@
   }
 
   function downloadAll() {
+    // Local duplicate counter for file names, not reactive state.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const seen = new Map<string, number>();
     const enc = new TextEncoder();
     const files = ok.map((r) => {
