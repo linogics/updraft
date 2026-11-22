@@ -24,13 +24,13 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Dashed track style and smooth track | 2026-11-22 | Dashed is a style with a fixed screen-space pattern that scales with the width, in every colour mode, in 3D and 2D. The Smooth toggle draws the track as a spline through the fixes (3 extra points per segment, gaps over 60 s or 500 m stay straight). Only the drawn line changes, the pilot marker and camera keep the raw fixes. Saved in the URL (`style=dashed`, `smooth=1`). |
 | XC scoring of a track (flyXC) | 2026-11-22 | "XC" section in the replay side panel with type, distance, multiplier and points, plus a points list when several pilots are loaded. Four leagues: XContest (default), FFVL, FAI and UK XC League, picked per browser. Other leagues are open. Scored in a Web Worker with `igc-xc-score` (10 s budget, best result so far) and cached per flight and league in IndexedDB. The selected pilot's route is drawn in 2D and 3D, with the closing circle for triangles. The logbook shows type and points per flight and total points, scored in the background for the chosen league. |
 | Route planner (flyXC) | 2026-11-22 | `/plan` page: click the map to draw a route, drag points, click a leg midpoint to insert one, undo and clear. Shows total and per-leg distance, XC score per league, and a duration estimate from a speed in km/h. The route and speed live in the URL (`?r=`, `&v=`) for a share link. Task export and airspaces are open. |
+| XC route from a flight (xcfinder) | 2026-11-22 | "Make route" in the XC section: 1 to 30 turnpoints that maximise the summed leg distance, opened in the planner for editing. Turnpoints show as numbered points. |
 
 ## Possible without a backend
 
 | Gap | Seen at |
 |---|---|
 | XCTSK import, load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
-| XC route optimised from a flight (up to 30 turnpoints), editable waypoints, turnpoints shown on the route | xcfinder |
 | Task and waypoint export: XCTrack `.xctsk` with QR code and "open in XCTrack" link, SeeYou `.cup`, XCSoar `.tsk`, GPX, KML, FormatGEO | xcfinder, flyXC |
 | Airspaces in 2D and 3D (openAIP, free API key): filter by class A–G, type, floor, opacity; airspaces in the altitude profile | flyXC |
 | Thermal hotspot overlay (thermal.kk7.ch) by type, month, time of day | flyXC |
