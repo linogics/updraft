@@ -105,12 +105,12 @@
       <span class="go">Convert a file</span>
     </a>
 
-    <div class="tool later" aria-disabled="true">
+    <a class="tool" href="/plan">
       <h2>XC planner</h2>
-      <p>Plan a route, score it and send the task to your flight instrument.</p>
-      <div class="face"><span class="unit">Turnpoints, FAI triangle, XCTrack task</span></div>
-      <span class="go">Planned</span>
-    </div>
+      <p>Draw a route on the map, score it per league and share the link.</p>
+      <div class="face"><span class="unit">Distance, XC points, duration</span></div>
+      <span class="go">Plan a route</span>
+    </a>
   </section>
 
   <Dropzone {onfiles} {busy} compact />
@@ -245,9 +245,6 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--text);
-  }
-  .later {
-    opacity: 0.55;
   }
 
   .recent h2 {
