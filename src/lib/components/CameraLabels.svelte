@@ -15,12 +15,14 @@
     type CameraProp,
     type PropTrack
   } from '#lib/domain/cameraPath';
-  import { directCamera } from '#lib/domain/director';
+  import { DENSITIES, directCamera, type Density } from '#lib/domain/director';
   import type { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { INTERP_INFO, PROP_LABEL, nextKeyTime, prevKeyTime } from '#lib/ui/keyLanes';
 
   let { replay, editor }: { replay: ReplayState; editor: CameraEditor } = $props();
+
+  let density = $state<Density>('low');
 
   const active = $derived(replay.camera === 'keys');
 
@@ -33,7 +35,7 @@
     const next = directCamera(sel.flight, sel.analysis.phases, {
       inMs: replay.exportIn ?? replay.start,
       outMs: replay.exportOut ?? replay.end
-    });
+    }, density);
     if (!hasKeys(next)) {
       editor.message = 'The export range is empty, so there is nothing to direct.';
       return;
@@ -99,6 +101,11 @@
   </button>
   <span class="title">Camera</span>
   <button onclick={auto} title="Direct keys from the flight phases of the selected pilot over the export range">Auto</button>
+  <select aria-label="Auto key density" title="How many keys Auto makes" bind:value={density}>
+    {#each DENSITIES as d (d)}
+      <option value={d}>{d[0].toUpperCase() + d.slice(1)}</option>
+    {/each}
+  </select>
   <button
     onclick={capture}
     disabled={!replay.captureCameraView}
@@ -174,6 +181,11 @@
     box-shadow: inset 0 1px 0 var(--border);
     overflow: hidden;
     white-space: nowrap;
+  }
+  .cam-row select {
+    font-size: 11px;
+    height: 18px;
+    padding: 0 2px;
   }
   .cam-row button {
     padding: 0 5px;
