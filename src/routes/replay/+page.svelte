@@ -5,6 +5,9 @@
   import AltitudeChart from '#lib/components/AltitudeChart.svelte';
   import CesiumView from '#lib/components/CesiumView.svelte';
   import LoadScreen from '#lib/components/LoadScreen.svelte';
+  import Splitter from '#lib/components/Splitter.svelte';
+  import { PANEL_LIMITS } from '#lib/state/panelPrefs';
+  import { panelPrefs } from '#lib/state/panelPrefs.svelte';
   import MiniMap from '#lib/components/MiniMap.svelte';
   import PilotList from '#lib/components/PilotList.svelte';
   import PlayerBar from '#lib/components/PlayerBar.svelte';
@@ -25,6 +28,9 @@
   let steps = $state(['Reading flights', 'Finding thermals and glides', 'Loading camera keys']);
   let step = $state(0);
   // Analysis runs synchronously, so let the browser paint the loader before each heavy step.
+  let viewsWidth = $state(1);
+  const panels = $derived(panelPrefs.value);
+  const L = PANEL_LIMITS;
   const paint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
 
   onMount(async () => {
@@ -108,26 +114,77 @@
     <a href="/logbook">Open the logbook</a>
   </main>
 {:else if loaded}
-  <div class="app" data-layout={replay.layout}>
+  <div
+    class="app"
+    data-layout={replay.layout}
+    style:--side="{panels.sideOpen ? panels.side : 0}px"
+    style:--chart="{panels.footer}px"
+    style:--split="{panels.split * 100}%"
+  >
     <header><Toolbar {replay} /></header>
 
-    <div class="views">
+    <div class="views" bind:clientWidth={viewsWidth}>
       {#if replay.layout !== '2d'}
         <div class="view3d"><CesiumView {replay} /></div>
+      {/if}
+      {#if replay.layout === 'split'}
+        <div class="split-handle">
+          <Splitter
+            label="3D and 2D split"
+            axis="x"
+            value={panels.split}
+            min={L.split.min}
+            max={L.split.max}
+            scale={1 / viewsWidth}
+            onchange={(v) => panelPrefs.resize('split', v)}
+            onreset={() => panelPrefs.reset('split')}
+          />
+        </div>
       {/if}
       {#if replay.layout !== '3d'}
         <div class="view2d"><MiniMap {replay} follow={replay.layout === '2d'} /></div>
       {/if}
     </div>
 
-    <aside>
+    <div class="side-handle">
+      <Splitter
+        label="Side panel"
+        axis="x"
+        sign={-1}
+        value={panels.side}
+        min={L.side.min}
+        max={L.side.max}
+        open={panels.sideOpen}
+        onchange={(v) => panelPrefs.resize('side', v)}
+        onreset={() => panelPrefs.reset('side')}
+        ontoggle={() => panelPrefs.toggle('sideOpen')}
+      />
+    </div>
+
+    <aside hidden={!panels.sideOpen}>
       <PilotList {replay} />
       <StatsPanel {replay} />
       <ThermalList {replay} />
     </aside>
 
+    <div class="footer-handle">
+      <Splitter
+        label="Bottom panel"
+        axis="y"
+        sign={-1}
+        value={panels.footer}
+        min={L.footer.min}
+        max={L.footer.max}
+        open={panels.footerOpen}
+        onchange={(v) => panelPrefs.resize('footer', v)}
+        onreset={() => panelPrefs.reset('footer')}
+        ontoggle={() => panelPrefs.toggle('footerOpen')}
+      />
+    </div>
+
     <footer>
       <PlayerBar {replay} />
+      <div class="footer-body" hidden={!panels.footerOpen}>
       <div class="tabs" role="tablist">
         <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>Altitude</button>
         <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
@@ -136,6 +193,7 @@
       </div>
       <div class="chart">
         {#if footerTab === 'altitude'}<AltitudeChart {replay} />{:else}<Timeline {replay} />{/if}
+      </div>
       </div>
     </footer>
   </div>
@@ -146,12 +204,13 @@
 <style>
   .app {
     display: grid;
-    grid-template-columns: 1fr 320px;
-    grid-template-rows: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto var(--side);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
     grid-template-areas:
-      'header header'
-      'views aside'
-      'footer footer';
+      'header header header'
+      'views vhandle aside'
+      'fhandle fhandle fhandle'
+      'footer footer footer';
     height: 100vh;
     height: 100dvh;
   }
@@ -172,8 +231,25 @@
     min-width: 0;
     position: relative;
   }
-  .app[data-layout='split'] .view2d {
-    border-left: 2px solid var(--border);
+  .app[data-layout='split'] .view3d {
+    flex: 0 0 var(--split);
+  }
+  .split-handle,
+  .side-handle,
+  .footer-handle {
+    display: flex;
+  }
+  .side-handle {
+    grid-area: vhandle;
+  }
+  .footer-handle {
+    grid-area: fhandle;
+    flex-direction: column;
+  }
+  .split-handle > :global(*),
+  .side-handle > :global(*),
+  .footer-handle > :global(*) {
+    flex: 1;
   }
   aside {
     grid-area: aside;
@@ -183,15 +259,17 @@
     align-content: start;
     gap: 20px;
     background: var(--surface);
-    border-left: 1px solid var(--border);
+  }
+  aside[hidden],
+  .footer-body[hidden] {
+    display: none;
   }
   footer {
     grid-area: footer;
     background: var(--surface);
-    border-top: 1px solid var(--border);
   }
   .chart {
-    height: 150px;
+    height: var(--chart);
     padding: 0 8px 6px;
   }
   .tabs {
@@ -235,9 +313,26 @@
     .app[data-layout='split'] .views {
       flex-direction: column;
     }
+    .app[data-layout='split'] .view3d {
+      flex: 1;
+    }
     .app[data-layout='split'] .view2d {
-      border-left: 0;
       border-top: 2px solid var(--border);
+    }
+    /* Stacked phone layout: panels flow, no resizing. */
+    .split-handle,
+    .side-handle,
+    .footer-handle {
+      display: none;
+    }
+    aside[hidden] {
+      display: grid;
+    }
+    .footer-body[hidden] {
+      display: block;
+    }
+    .chart {
+      height: 150px;
     }
   }
 </style>
