@@ -4,6 +4,7 @@
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import ExportImage from './ExportImage.svelte';
+  import CameraKeys from './CameraKeys.svelte';
   import ExportVideo from './ExportVideo.svelte';
   import Popover from './Popover.svelte';
   import TrackMenu from './TrackMenu.svelte';
@@ -50,6 +51,9 @@
       <button class:active={replay.camera === c} onclick={() => (replay.camera = c)}>{c}</button>
     {/each}
   </div>
+  <Popover label="Camera">
+    <CameraKeys {replay} />
+  </Popover>
 
   <TrackMenu {replay} />
   <ViewMenu {replay} />

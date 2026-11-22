@@ -223,6 +223,9 @@
       <div class="playhead" style:left="{x(replay.time)}px"></div>
       {#if replay.exportIn != null}<div class="mark" style:left="{x(replay.exportIn)}px"></div>{/if}
       {#if replay.exportOut != null}<div class="mark" style:left="{x(replay.exportOut)}px"></div>{/if}
+      {#if replay.camera === 'keys'}
+        {#each replay.keyframes as k, i (i)}<div class="key" style:left="{x(k.t)}px"></div>{/each}
+      {/if}
     </div>
   </div>
 </div>
@@ -400,6 +403,18 @@
     bottom: 0;
     width: 1px;
     background: #3987e5;
+    pointer-events: none;
+    z-index: 2;
+  }
+  /* Camera key marker: a small diamond on the top edge of the track area. */
+  .key {
+    position: absolute;
+    top: 2px;
+    width: 7px;
+    height: 7px;
+    margin-left: -3.5px;
+    background: #f2c94c;
+    transform: rotate(45deg);
     pointer-events: none;
     z-index: 2;
   }

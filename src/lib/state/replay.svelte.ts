@@ -1,4 +1,5 @@
 import type { BeginCapture } from '#lib/cesium/capture';
+import { MAX_KEYS, clampKey, parseKeys, unwrapNear, type Keyframe } from '#lib/domain/cameraPath';
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
 import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
 import {
@@ -21,7 +22,11 @@ import {
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
 import { groundSeries } from '#lib/map/groundHeights';
+import { flightRepository } from '#lib/storage';
 import { pilotColor } from '#lib/ui/colors';
+
+/** Camera key edits wait this long after the last change before they are stored, ms. */
+const KEY_SAVE_DELAY = 300;
 
 /** Climbs that pass the thermal filter. Index-based, like the analysis. */
 export interface Climbs {
@@ -97,6 +102,10 @@ export class ReplayState {
   /** Video export range marks, Unix ms. Null means replay start or end. */
   exportIn = $state<number | null>(null);
   exportOut = $state<number | null>(null);
+  /** Camera keys for 'keys' mode, sorted by time. Stored per set of flights on this device. */
+  keyframes = $state.raw<Keyframe[]>([]);
+  /** Camera view of the selected pilot now, as a key at replay time. Null until the 3D viewer is ready. */
+  captureCameraKey = $state.raw<(() => Keyframe | null) | null>(null);
 
   start = $derived(this.flights.length ? Math.min(...this.flights.map((f) => f.flight.fixes[0].t)) : 0);
   end = $derived(this.flights.length ? Math.max(...this.flights.map((f) => f.flight.fixes.at(-1)!.t)) : 0);
@@ -106,8 +115,13 @@ export class ReplayState {
 
   private frame = 0;
   private lastTick = 0;
+  private keySaveTimer: ReturnType<typeof setTimeout> | undefined;
+  private pendingKeySave: (() => void) | undefined;
 
   setFlights(flights: Flight[], init: SceneInit = {}) {
+    // Keys belong to the previous set of flights: save them, then start empty until loadKeyframes.
+    this.persistKeyframes();
+    this.keyframes = [];
     this.syncMode = init.syncMode ?? defaultSyncMode(flights.map((f) => f.fixes));
     this.nudges = init.nudges ?? {};
     this.thermalFilter = init.thermalFilter ?? DEFAULT_FILTER;
@@ -129,6 +143,61 @@ export class ReplayState {
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
     void this.loadGround();
+  }
+
+  /** Loads the camera keys saved for the loaded flights. Storage errors leave the keys empty. */
+  async loadKeyframes() {
+    const ids = this.flights.map((f) => f.flight.id);
+    try {
+      this.keyframes = parseKeys(await flightRepository.getCameraPath(ids));
+    } catch (err) {
+      console.error('Could not load camera keys', err);
+    }
+  }
+
+  /** Replaces all camera keys (validated, sorted and capped) and stores them. */
+  setKeyframes(keys: Keyframe[]) {
+    this.keyframes = parseKeys(keys);
+    this.saveKeyframes();
+  }
+
+  /** Adds a key in time order. False when the list is full or the key is invalid. */
+  addKeyframe(key: Keyframe): boolean {
+    const before = this.keyframes.length;
+    if (before < MAX_KEYS) this.setKeyframes([...this.keyframes, key]);
+    return this.keyframes.length > before;
+  }
+
+  /** Changes one key. The heading is read as the nearest angle to the old one, so it stays on the short way. */
+  updateKeyframe(index: number, patch: Partial<Keyframe>) {
+    const old = this.keyframes[index];
+    if (!old) return;
+    const heading = patch.heading === undefined ? old.heading : unwrapNear(patch.heading, old.heading);
+    const next = clampKey({ ...old, ...patch, heading });
+    if (next) this.setKeyframes(this.keyframes.map((k, i) => (i === index ? next : k)));
+  }
+
+  removeKeyframe(index: number) {
+    this.setKeyframes(this.keyframes.filter((_, i) => i !== index));
+  }
+
+  /** Debounced so dragging a number field does not write on every keystroke. */
+  private saveKeyframes() {
+    clearTimeout(this.keySaveTimer);
+    // Bind ids and keys now: the flights may change before the timer fires.
+    const ids = this.flights.map((f) => f.flight.id);
+    const keys = this.keyframes;
+    this.pendingKeySave = () =>
+      flightRepository.saveCameraPath(ids, keys).catch((err) => console.error('Could not save camera keys', err));
+    this.keySaveTimer = setTimeout(() => this.persistKeyframes(), KEY_SAVE_DELAY);
+  }
+
+  /** Writes a pending debounced save right away. */
+  private persistKeyframes() {
+    clearTimeout(this.keySaveTimer);
+    this.keySaveTimer = undefined;
+    this.pendingKeySave?.();
+    this.pendingKeySave = undefined;
   }
 
   /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
@@ -268,5 +337,7 @@ export class ReplayState {
 
   destroy() {
     this.pause();
+    // Do not lose an edit made just before leaving the page.
+    this.persistKeyframes();
   }
 }

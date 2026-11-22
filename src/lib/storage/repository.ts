@@ -1,3 +1,4 @@
+import type { Keyframe } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 
 /** Flight metadata without fixes, for listings. */
@@ -22,6 +23,9 @@ export interface FlightRepository {
   get(id: string): Promise<Flight | undefined>;
   save(flight: Flight): Promise<void>;
   delete(id: string): Promise<void>;
+  /** Camera keys for a set of flights. The order of ids does not matter. Empty when none saved. */
+  getCameraPath(flightIds: string[]): Promise<Keyframe[]>;
+  saveCameraPath(flightIds: string[], keys: Keyframe[]): Promise<void>;
 }
 
 export function summarize(flight: Flight): FlightSummary {

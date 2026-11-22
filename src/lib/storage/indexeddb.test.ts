@@ -1,6 +1,8 @@
 import 'fake-indexeddb/auto';
+import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import { IndexedDbFlightRepository } from './indexeddb';
+import type { Keyframe } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 
 const flight = (id: string, date = '2026-07-15'): Flight => ({
@@ -41,5 +43,31 @@ describe('IndexedDbFlightRepository', () => {
 
     expect(await repo.get('a')).toBeUndefined();
     expect(await repo.list()).toEqual([]);
+  });
+
+  it('saves a camera path and finds it whatever the order of the ids', async () => {
+    const repo = new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
+    const keys: Keyframe[] = [{ t: 1000, heading: 10, pitch: -20, range: 300 }];
+    await repo.saveCameraPath(['a', 'b'], keys);
+
+    expect(await repo.getCameraPath(['b', 'a'])).toEqual(keys);
+    expect(await repo.getCameraPath(['a'])).toEqual([]);
+  });
+
+  it('keeps flights when upgrading a version 1 database', async () => {
+    const name = `db-${crypto.randomUUID()}`;
+    const old = await openDB(name, 1, {
+      upgrade(db) {
+        db.createObjectStore('flights', { keyPath: 'id' });
+        db.createObjectStore('summaries', { keyPath: 'id' });
+      }
+    });
+    await old.put('flights', flight('a'));
+    old.close();
+
+    const repo = new IndexedDbFlightRepository(name);
+    expect(await repo.get('a')).toEqual(flight('a'));
+    await repo.saveCameraPath(['a'], [{ t: 0, heading: 0, pitch: -30, range: 400 }]);
+    expect(await repo.getCameraPath(['a'])).toHaveLength(1);
   });
 });

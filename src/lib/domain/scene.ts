@@ -3,7 +3,7 @@
 import { DEFAULT_FILTER, type ThermalFilter } from './analysis/filter';
 import { SYNC_MODES, type SyncMode } from './sync';
 
-export const CAMERA_MODES = ['follow', 'cockpit', 'orbit', 'free'] as const;
+export const CAMERA_MODES = ['follow', 'cockpit', 'orbit', 'free', 'keys'] as const;
 export const COLOR_MODES = ['vario', 'phase', 'climb', 'pilot'] as const;
 export const LAYOUTS = ['3d', '2d', 'split'] as const;
 export const BASEMAP_IDS = ['satellite', 'topo', 'osm'] as const;
