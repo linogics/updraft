@@ -164,7 +164,8 @@
 </script>
 
 <div class="cesium" bind:this={container}>
-  {#if notice}<div class="notice">{notice}</div>{/if}
+  <!-- Loading notices end in an ellipsis, errors do not. -->
+  {#if notice}<div class="notice" class:loading={notice.endsWith('…')} role="status">{notice}</div>{/if}
 </div>
 
 <style>
@@ -185,6 +186,24 @@
     color: #eee;
     font-size: 12px;
     pointer-events: none;
+    overflow: hidden;
+  }
+  .notice.loading::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--needle), transparent) no-repeat;
+    background-size: 40% 100%;
+    animation: sweep 1s linear infinite;
+  }
+  @keyframes sweep {
+    from {
+      background-position: -40% 0;
+    }
+    to {
+      background-position: 140% 0;
+    }
   }
   .cesium :global(.cesium-viewer-bottom) {
     opacity: 0.6;

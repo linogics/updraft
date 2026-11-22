@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import AltitudeChart from '#lib/components/AltitudeChart.svelte';
   import CesiumView from '#lib/components/CesiumView.svelte';
+  import LoadScreen from '#lib/components/LoadScreen.svelte';
   import MiniMap from '#lib/components/MiniMap.svelte';
   import PilotList from '#lib/components/PilotList.svelte';
   import PlayerBar from '#lib/components/PlayerBar.svelte';
@@ -21,6 +22,10 @@
   let error = $state('');
   let loaded = $state(false);
   let footerTab = $state<'altitude' | 'timeline'>('altitude');
+  let steps = $state(['Reading flights', 'Finding thermals and glides', 'Loading camera keys']);
+  let step = $state(0);
+  // Analysis runs synchronously, so let the browser paint the loader before each heavy step.
+  const paint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
 
   onMount(async () => {
     const scene = decodeScene(page.url.searchParams);
@@ -33,6 +38,8 @@
     replay.lighting = scene.lighting;
     replay.labels = scene.labels;
     replay.basemap = scene.basemap;
+    const n = scene.flightIds.length;
+    steps[0] = `Reading ${n} flight${n === 1 ? '' : 's'}`;
     const { cesiumIonToken } = await loadRuntimeConfig();
     replay.ionAvailable = !!cesiumIonToken;
     replay.terrain = resolveTerrain(scene.terrain, replay.ionAvailable);
@@ -44,7 +51,10 @@
       error = 'None of the requested flights were found in this browser.';
       return;
     }
+    step = 1;
+    await paint();
     replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges, thermalFilter: scene.thermalFilter, colors: scene.colors });
+    step = 2;
     await replay.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
     if (replay.multiDay) footerTab = 'timeline';
@@ -95,7 +105,7 @@
 {#if error}
   <main class="error">
     <p>{error}</p>
-    <a href="/">Back to flights</a>
+    <a href="/logbook">Open the logbook</a>
   </main>
 {:else if loaded}
   <div class="app" data-layout={replay.layout}>
@@ -130,7 +140,7 @@
     </footer>
   </div>
 {:else}
-  <main class="error"><p>Loading flights…</p></main>
+  <LoadScreen {steps} {step} />
 {/if}
 
 <style>
