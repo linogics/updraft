@@ -8,6 +8,8 @@
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import { bindAirspacePopup, syncAirspaces } from '#lib/airspace/layers';
   import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+  import { syncThermals } from '#lib/thermals/layers';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { distance } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId, type TrackStyle } from '#lib/domain/scene';
@@ -253,6 +255,12 @@
     const { show, classes, maxFloor, opacity, key } = airspacePrefs;
     if (!ready || !map) return;
     syncAirspaces(map, { show, classes, maxFloor, opacity }, key, 'tracks-casing');
+  });
+
+  $effect(() => {
+    const { hotspots, skyways, opacity } = thermalOverlayPrefs;
+    if (!ready || !map) return;
+    syncThermals(map, { hotspots, skyways, opacity }, 'tracks-casing');
   });
 
   $effect(() => {

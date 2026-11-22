@@ -3,6 +3,7 @@
   import type { CaptureSession } from '#lib/cesium/capture';
   import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
   import { mapCredits } from '#lib/export/credits';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { mp4Filename } from '#lib/export/filename';
   import { decodeMusic, renderMusic } from '#lib/export/music';
   import {
@@ -85,7 +86,7 @@
       return { timing: null, error: err instanceof Error ? err.message : String(err) };
     }
   });
-  const credits = $derived(mapCredits(replay.basemap, replay.terrain));
+  const credits = $derived(mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways));
   const otherValue = $derived.by(() => {
     const t = plan.timing;
     if (!t) return '';

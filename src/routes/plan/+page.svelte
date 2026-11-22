@@ -4,6 +4,7 @@
   import Logo from '#lib/components/Logo.svelte';
   import PlanMap from '#lib/components/PlanMap.svelte';
   import AirspaceControls from '#lib/components/AirspaceControls.svelte';
+  import ThermalOverlayControls from '#lib/components/ThermalOverlayControls.svelte';
   import { distance, type LatLon } from '#lib/domain/geo';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
@@ -146,6 +147,11 @@
     <section>
       <h2>Airspaces</h2>
       <AirspaceControls />
+    </section>
+
+    <section>
+      <h2>Thermal overlay</h2>
+      <ThermalOverlayControls />
     </section>
 
     <section>

@@ -2,6 +2,7 @@
   import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
   import { pngFilename } from '#lib/export/filename';
   import { mapCredits } from '#lib/export/credits';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
 
@@ -24,7 +25,7 @@
 
   const w = $derived(clamp(width));
   const h = $derived(clamp(height));
-  const credits = $derived(mapCredits(replay.basemap, replay.terrain));
+  const credits = $derived(mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways));
   const canExport = $derived(!!replay.capture && !!replay.selected && !busy);
 
   function pick(p: { width: number; height: number }) {

@@ -3,6 +3,7 @@
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
   import AirspaceControls from './AirspaceControls.svelte';
+  import ThermalOverlayControls from './ThermalOverlayControls.svelte';
   import Popover from './Popover.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
@@ -44,6 +45,8 @@
   <p class="hint">3D only. The sun follows the selected pilot's recorded time.</p>
   <h3>Airspaces (2D)</h3>
   <AirspaceControls />
+  <h3>Thermal overlay (2D and 3D)</h3>
+  <ThermalOverlayControls />
 </Popover>
 
 <style>
