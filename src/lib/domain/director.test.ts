@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_KEYS } from './cameraPath';
-import { directCamera } from './director';
+import { MAX_KEYS, type CameraTracks } from './cameraPath';
+import { directCamera as directTracks } from './director';
 import { headingDelta } from './geo';
 import type { Fix, Phase } from './model';
+
+/** Shots as {t, heading, pitch, range} rows, read back from the tracks. */
+const shotsOf = (tr: CameraTracks) =>
+  tr.heading.keys.map((k, i) => ({ t: k.t, heading: k.v, pitch: tr.pitch.keys[i].v, range: tr.range.keys[i].v }));
+const directCamera = (...args: Parameters<typeof directTracks>) => shotsOf(directTracks(...args));
 
 /** One fix per second, flying north at about 11 m/s. */
 const northbound = (count: number): Fix[] =>
@@ -17,9 +22,18 @@ const fixes = northbound(301);
 const range = { inMs: 10_000, outMs: 290_000 };
 
 describe('directCamera', () => {
-  it('returns nothing for an empty range or flight', () => {
+  it('returns no keys for an empty range or flight', () => {
     expect(directCamera({ fixes }, phases, { inMs: 5000, outMs: 5000 })).toEqual([]);
     expect(directCamera({ fixes: [] }, phases, range)).toEqual([]);
+  });
+
+  it('returns three animated tracks with auto interp at the same times', () => {
+    const tr = directTracks({ fixes }, phases, range);
+    for (const p of [tr.heading, tr.pitch, tr.range]) {
+      expect(p.animated).toBe(true);
+      expect(p.keys.every((k) => k.interp === 'auto')).toBe(true);
+      expect(p.keys.map((k) => k.t)).toEqual(tr.heading.keys.map((k) => k.t));
+    }
   });
 
   it('keeps keys sorted and inside the range', () => {

@@ -1,12 +1,12 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { Keyframe } from '../domain/cameraPath';
+import { parseTracks, type CameraTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 import { summarize, type FlightRepository, type FlightSummary } from './repository';
 
 interface CameraPath {
   /** Sorted flight ids joined with '|'. */
   key: string;
-  keys: Keyframe[];
+  tracks: CameraTracks;
 }
 
 interface FlightDb extends DBSchema {
@@ -34,12 +34,14 @@ export class IndexedDbFlightRepository implements FlightRepository {
     });
   }
 
-  async getCameraPath(flightIds: string[]): Promise<Keyframe[]> {
-    return (await (await this.db).get('cameraPaths', pathKey(flightIds)))?.keys ?? [];
+  async getCameraTracks(flightIds: string[]): Promise<CameraTracks> {
+    // Records of the old keyframe format have no tracks and fall back to the defaults.
+    const record: { tracks?: unknown } | undefined = await (await this.db).get('cameraPaths', pathKey(flightIds));
+    return parseTracks(record?.tracks);
   }
 
-  async saveCameraPath(flightIds: string[], keys: Keyframe[]): Promise<void> {
-    await (await this.db).put('cameraPaths', { key: pathKey(flightIds), keys });
+  async saveCameraTracks(flightIds: string[], tracks: CameraTracks): Promise<void> {
+    await (await this.db).put('cameraPaths', { key: pathKey(flightIds), tracks });
   }
 
   async list(): Promise<FlightSummary[]> {

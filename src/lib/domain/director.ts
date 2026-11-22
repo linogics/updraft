@@ -1,4 +1,6 @@
-import { MAX_KEYS, unwrapNear, type Keyframe } from './cameraPath';
+import { DEFAULT_TRACKS, MAX_KEYS, unwrapNear, type CameraTracks, type CameraView, type PropTrack } from './cameraPath';
+
+type Shot = CameraView & { t: number };
 import { bearing, distance } from './geo';
 import type { Fix, Phase } from './model';
 import { positionAt } from './timeline';
@@ -24,17 +26,32 @@ function ticks(a: number, b: number, step: number, inMs: number, outMs: number):
   return out;
 }
 
+/** Animated tracks of the shots, every key with auto interp. No shots gives the defaults. */
+function toTracks(shots: Shot[]): CameraTracks {
+  if (!shots.length) return DEFAULT_TRACKS;
+  const track = (prop: 'heading' | 'pitch' | 'range'): PropTrack => ({
+    animated: true,
+    value: shots[0][prop],
+    keys: shots.map((s) => ({ t: s.t, v: s[prop], interp: 'auto' }))
+  });
+  return { heading: track('heading'), pitch: track('pitch'), range: track('range') };
+}
+
 /**
  * Camera shot list for one pilot over the replay range: a wide establishing shot, chase keys on
  * glides, orbit keys in thermals and a final pull-back. Headings are unwrapped to the previous key.
  */
-export function directCamera(flight: { fixes: Fix[] }, phases: Phase[], range: { inMs: number; outMs: number }): Keyframe[] {
+export function directCamera(flight: { fixes: Fix[] }, phases: Phase[], range: { inMs: number; outMs: number }): CameraTracks {
+  return toTracks(directShots(flight, phases, range));
+}
+
+function directShots(flight: { fixes: Fix[] }, phases: Phase[], range: { inMs: number; outMs: number }): Shot[] {
   const { fixes } = flight;
   const { inMs, outMs } = range;
   if (!fixes.length || outMs <= inMs) return [];
 
   let heading = trackBearing(fixes, inMs, ESTABLISH.lookAhead) ?? 0;
-  const keys: Keyframe[] = [{ t: inMs, heading, pitch: ESTABLISH.pitch, range: ESTABLISH.range }];
+  const keys: Shot[] = [{ t: inMs, heading, pitch: ESTABLISH.pitch, range: ESTABLISH.range }];
 
   for (const phase of [...phases].sort((a, b) => a.start - b.start)) {
     const a = fixes[phase.start].t;

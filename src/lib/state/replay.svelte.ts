@@ -1,5 +1,5 @@
 import type { BeginCapture } from '#lib/cesium/capture';
-import { MAX_KEYS, clampKey, parseKeys, unwrapNear, type Keyframe } from '#lib/domain/cameraPath';
+import { DEFAULT_TRACKS, type CameraTracks, type CameraView } from '#lib/domain/cameraPath';
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
 import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
 import {
@@ -25,8 +25,10 @@ import { groundSeries } from '#lib/map/groundHeights';
 import { flightRepository } from '#lib/storage';
 import { pilotColor } from '#lib/ui/colors';
 
-/** Camera key edits wait this long after the last change before they are stored, ms. */
-const KEY_SAVE_DELAY = 300;
+/** Camera edits wait this long after the last change before they are stored, ms. */
+const CAMERA_SAVE_DELAY = 300;
+/** Camera edits kept for undo. */
+const UNDO_LIMIT = 50;
 
 /** Climbs that pass the thermal filter. Index-based, like the analysis. */
 export interface Climbs {
@@ -102,10 +104,14 @@ export class ReplayState {
   /** Video export range marks, Unix ms. Null means replay start or end. */
   exportIn = $state<number | null>(null);
   exportOut = $state<number | null>(null);
-  /** Camera keys for 'keys' mode, sorted by time. Stored per set of flights on this device. */
-  keyframes = $state.raw<Keyframe[]>([]);
-  /** Camera view of the selected pilot now, as a key at replay time. Null until the 3D viewer is ready. */
-  captureCameraKey = $state.raw<(() => Keyframe | null) | null>(null);
+  /** Camera tracks for 'keys' mode. Stored per set of flights on this device. */
+  cameraTracks = $state.raw<CameraTracks>(DEFAULT_TRACKS);
+  /** Camera view of the selected pilot now. Null until the 3D viewer is ready or no pilot is shown. */
+  captureCameraView = $state.raw<(() => CameraView | null) | null>(null);
+  private undoStack = $state.raw<CameraTracks[]>([]);
+  private redoStack = $state.raw<CameraTracks[]>([]);
+  canUndoCamera = $derived(this.undoStack.length > 0);
+  canRedoCamera = $derived(this.redoStack.length > 0);
 
   start = $derived(this.flights.length ? Math.min(...this.flights.map((f) => f.flight.fixes[0].t)) : 0);
   end = $derived(this.flights.length ? Math.max(...this.flights.map((f) => f.flight.fixes.at(-1)!.t)) : 0);
@@ -115,13 +121,15 @@ export class ReplayState {
 
   private frame = 0;
   private lastTick = 0;
-  private keySaveTimer: ReturnType<typeof setTimeout> | undefined;
-  private pendingKeySave: (() => void) | undefined;
+  private cameraSaveTimer: ReturnType<typeof setTimeout> | undefined;
+  private pendingCameraSave: (() => void) | undefined;
 
   setFlights(flights: Flight[], init: SceneInit = {}) {
-    // Keys belong to the previous set of flights: save them, then start empty until loadKeyframes.
-    this.persistKeyframes();
-    this.keyframes = [];
+    // Camera tracks belong to the previous set of flights: save them, then start from the defaults.
+    this.persistCameraTracks();
+    this.cameraTracks = DEFAULT_TRACKS;
+    this.undoStack = [];
+    this.redoStack = [];
     this.syncMode = init.syncMode ?? defaultSyncMode(flights.map((f) => f.fixes));
     this.nudges = init.nudges ?? {};
     this.thermalFilter = init.thermalFilter ?? DEFAULT_FILTER;
@@ -145,59 +153,63 @@ export class ReplayState {
     void this.loadGround();
   }
 
-  /** Loads the camera keys saved for the loaded flights. Storage errors leave the keys empty. */
-  async loadKeyframes() {
+  /** Loads the camera tracks saved for the loaded flights. Storage errors keep the defaults. */
+  async loadCameraTracks() {
     const ids = this.flights.map((f) => f.flight.id);
     try {
-      this.keyframes = parseKeys(await flightRepository.getCameraPath(ids));
+      this.cameraTracks = await flightRepository.getCameraTracks(ids);
     } catch (err) {
-      console.error('Could not load camera keys', err);
+      console.error('Could not load camera tracks', err);
     }
   }
 
-  /** Replaces all camera keys (validated, sorted and capped) and stores them. */
-  setKeyframes(keys: Keyframe[]) {
-    this.keyframes = parseKeys(keys);
-    this.saveKeyframes();
+  /**
+   * The one way to edit camera tracks. Undoable, stored, and switches the camera to 'keys'.
+   */
+  editCamera(next: CameraTracks) {
+    if (next === this.cameraTracks) return;
+    this.undoStack = [...this.undoStack.slice(-(UNDO_LIMIT - 1)), this.cameraTracks];
+    this.redoStack = [];
+    this.cameraTracks = next;
+    this.camera = 'keys';
+    this.saveCameraTracks();
   }
 
-  /** Adds a key in time order. False when the list is full or the key is invalid. */
-  addKeyframe(key: Keyframe): boolean {
-    const before = this.keyframes.length;
-    if (before < MAX_KEYS) this.setKeyframes([...this.keyframes, key]);
-    return this.keyframes.length > before;
+  undoCamera() {
+    const prev = this.undoStack.at(-1);
+    if (!prev) return;
+    this.undoStack = this.undoStack.slice(0, -1);
+    this.redoStack = [...this.redoStack, this.cameraTracks];
+    this.cameraTracks = prev;
+    this.saveCameraTracks();
   }
 
-  /** Changes one key. The heading is read as the nearest angle to the old one, so it stays on the short way. */
-  updateKeyframe(index: number, patch: Partial<Keyframe>) {
-    const old = this.keyframes[index];
-    if (!old) return;
-    const heading = patch.heading === undefined ? old.heading : unwrapNear(patch.heading, old.heading);
-    const next = clampKey({ ...old, ...patch, heading });
-    if (next) this.setKeyframes(this.keyframes.map((k, i) => (i === index ? next : k)));
-  }
-
-  removeKeyframe(index: number) {
-    this.setKeyframes(this.keyframes.filter((_, i) => i !== index));
+  redoCamera() {
+    const next = this.redoStack.at(-1);
+    if (!next) return;
+    this.redoStack = this.redoStack.slice(0, -1);
+    this.undoStack = [...this.undoStack, this.cameraTracks];
+    this.cameraTracks = next;
+    this.saveCameraTracks();
   }
 
   /** Debounced so dragging a number field does not write on every keystroke. */
-  private saveKeyframes() {
-    clearTimeout(this.keySaveTimer);
-    // Bind ids and keys now: the flights may change before the timer fires.
+  private saveCameraTracks() {
+    clearTimeout(this.cameraSaveTimer);
+    // Bind ids and tracks now: the flights may change before the timer fires.
     const ids = this.flights.map((f) => f.flight.id);
-    const keys = this.keyframes;
-    this.pendingKeySave = () =>
-      flightRepository.saveCameraPath(ids, keys).catch((err) => console.error('Could not save camera keys', err));
-    this.keySaveTimer = setTimeout(() => this.persistKeyframes(), KEY_SAVE_DELAY);
+    const tracks = this.cameraTracks;
+    this.pendingCameraSave = () =>
+      flightRepository.saveCameraTracks(ids, tracks).catch((err) => console.error('Could not save camera tracks', err));
+    this.cameraSaveTimer = setTimeout(() => this.persistCameraTracks(), CAMERA_SAVE_DELAY);
   }
 
   /** Writes a pending debounced save right away. */
-  private persistKeyframes() {
-    clearTimeout(this.keySaveTimer);
-    this.keySaveTimer = undefined;
-    this.pendingKeySave?.();
-    this.pendingKeySave = undefined;
+  private persistCameraTracks() {
+    clearTimeout(this.cameraSaveTimer);
+    this.cameraSaveTimer = undefined;
+    this.pendingCameraSave?.();
+    this.pendingCameraSave = undefined;
   }
 
   /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
@@ -279,7 +291,7 @@ export class ReplayState {
     return this.time - f.timeOffset;
   }
 
-  /** Overrides a pilot's colour everywhere; null restores the palette colour. */
+  /** Overrides a pilot's colour everywhere, null restores the palette colour. */
   setPilotColor(id: string, hex: string | null) {
     const { [id]: _, ...rest } = this.colorOverrides;
     this.colorOverrides = hex ? { ...rest, [id]: hex } : rest;
@@ -338,6 +350,6 @@ export class ReplayState {
   destroy() {
     this.pause();
     // Do not lose an edit made just before leaving the page.
-    this.persistKeyframes();
+    this.persistCameraTracks();
   }
 }

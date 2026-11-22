@@ -1,11 +1,15 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { snapStart, type SyncMode } from '#lib/domain/sync';
+  import { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { LoadedFlight, ReplayState } from '#lib/state/replay.svelte';
+  import { SNAP_PX } from '#lib/ui/keyLanes';
   import { formatClock, formatDuration } from '#lib/ui/format';
+  import CameraLabels from './CameraLabels.svelte';
+  import CameraLanes from './CameraLanes.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
-  const SNAP_PX = 8;
   const MIN_SPAN = 60_000;
   const MODES: { mode: SyncMode; label: string; title: string }[] = [
     { mode: 'real', label: 'Real time', title: 'Every flight at its recorded date and time' },
@@ -13,6 +17,8 @@
     { mode: 'takeoff', label: 'Align takeoffs', title: 'Start all flights at the same moment' }
   ];
   const TICK_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440].map((m) => m * 60_000);
+
+  const editor = untrack(() => new CameraEditor(replay));
 
   let width = $state(0);
   /** Visible time window; null fits all flights. */
@@ -140,9 +146,32 @@
       zoom = { a, b: a + span };
     }
   }
+
+  // Keyboard, while the timeline has focus ------------------------------------
+
+  function onKey(e: KeyboardEvent) {
+    if ((e.target as HTMLElement).closest('input, select, textarea')) return;
+    const mod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+    if (mod && key === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) replay.redoCamera();
+      else replay.undoCamera();
+    } else if (mod && key === 'c') {
+      editor.copy();
+    } else if (mod && key === 'v') {
+      e.preventDefault();
+      editor.paste();
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      editor.remove();
+    }
+  }
 </script>
 
-<div class="timeline">
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div class="timeline" tabindex="0" role="group" aria-label="Timeline" onkeydown={onKey}>
   <div class="head">
     <div class="modes" role="group" aria-label="Flight alignment">
       {#each MODES as m (m.mode)}
@@ -152,6 +181,8 @@
       {/each}
     </div>
     <span class="hint">Drag clips to shift · Alt: no snapping · Ctrl+wheel: zoom</span>
+    <button onclick={() => replay.undoCamera()} disabled={!replay.canUndoCamera} title="Undo camera edit (Ctrl+Z)">Undo</button>
+    <button onclick={() => replay.redoCamera()} disabled={!replay.canRedoCamera} title="Redo camera edit (Ctrl+Shift+Z)">Redo</button>
     {#if zoom}<button onclick={() => (zoom = null)}>Fit</button>{/if}
   </div>
 
@@ -173,6 +204,7 @@
           {/if}
         </div>
       {/each}
+      <CameraLabels {replay} {editor} />
     </div>
 
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -217,15 +249,14 @@
         </div>
       {/each}
 
+      <CameraLanes {replay} {editor} {x} {msPerPx} {width} {view} />
+
       {#if drag?.guide != null}
         <div class="guide" style:left="{x(drag.guide)}px"></div>
       {/if}
       <div class="playhead" style:left="{x(replay.time)}px"></div>
       {#if replay.exportIn != null}<div class="mark" style:left="{x(replay.exportIn)}px"></div>{/if}
       {#if replay.exportOut != null}<div class="mark" style:left="{x(replay.exportOut)}px"></div>{/if}
-      {#if replay.camera === 'keys'}
-        {#each replay.keyframes as k, i (i)}<div class="key" style:left="{x(k.t)}px"></div>{/each}
-      {/if}
     </div>
   </div>
 </div>
@@ -237,6 +268,10 @@
     height: 100%;
     font-size: 12px;
     user-select: none;
+  }
+  .timeline:focus-visible {
+    outline: 1px solid #3987e5;
+    outline-offset: -1px;
   }
   .head {
     display: flex;
@@ -271,7 +306,7 @@
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: 170px 1fr;
+    grid-template-columns: 220px 1fr;
     overflow-y: auto;
   }
   .ruler-pad,
@@ -403,18 +438,6 @@
     bottom: 0;
     width: 1px;
     background: #3987e5;
-    pointer-events: none;
-    z-index: 2;
-  }
-  /* Camera key marker: a small diamond on the top edge of the track area. */
-  .key {
-    position: absolute;
-    top: 2px;
-    width: 7px;
-    height: 7px;
-    margin-left: -3.5px;
-    background: #f2c94c;
-    transform: rotate(45deg);
     pointer-events: none;
     z-index: 2;
   }

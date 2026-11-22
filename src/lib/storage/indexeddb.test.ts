@@ -2,8 +2,13 @@ import 'fake-indexeddb/auto';
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import { IndexedDbFlightRepository } from './indexeddb';
-import type { Keyframe } from '../domain/cameraPath';
+import { DEFAULT_TRACKS, type CameraTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
+
+const tracks = (): CameraTracks => ({
+  ...DEFAULT_TRACKS,
+  heading: { animated: true, value: 0, keys: [{ t: 1000, v: 10, interp: 'linear' }] }
+});
 
 const flight = (id: string, date = '2026-07-15'): Flight => ({
   id,
@@ -45,13 +50,23 @@ describe('IndexedDbFlightRepository', () => {
     expect(await repo.list()).toEqual([]);
   });
 
-  it('saves a camera path and finds it whatever the order of the ids', async () => {
+  it('saves camera tracks and finds them whatever the order of the ids', async () => {
     const repo = new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
-    const keys: Keyframe[] = [{ t: 1000, heading: 10, pitch: -20, range: 300 }];
-    await repo.saveCameraPath(['a', 'b'], keys);
+    await repo.saveCameraTracks(['a', 'b'], tracks());
 
-    expect(await repo.getCameraPath(['b', 'a'])).toEqual(keys);
-    expect(await repo.getCameraPath(['a'])).toEqual([]);
+    expect(await repo.getCameraTracks(['b', 'a'])).toEqual(tracks());
+    expect(await repo.getCameraTracks(['a'])).toEqual(DEFAULT_TRACKS);
+  });
+
+  it('reads a record of the old keyframe format as the defaults', async () => {
+    const name = `db-${crypto.randomUUID()}`;
+    const repo = new IndexedDbFlightRepository(name);
+    await repo.get('a');
+    const raw = await openDB(name);
+    await raw.put('cameraPaths', { key: 'a', keys: [{ t: 0, heading: 0, pitch: -30, range: 400 }] });
+    raw.close();
+
+    expect(await repo.getCameraTracks(['a'])).toEqual(DEFAULT_TRACKS);
   });
 
   it('keeps flights when upgrading a version 1 database', async () => {
@@ -67,7 +82,7 @@ describe('IndexedDbFlightRepository', () => {
 
     const repo = new IndexedDbFlightRepository(name);
     expect(await repo.get('a')).toEqual(flight('a'));
-    await repo.saveCameraPath(['a'], [{ t: 0, heading: 0, pitch: -30, range: 400 }]);
-    expect(await repo.getCameraPath(['a'])).toHaveLength(1);
+    await repo.saveCameraTracks(['a'], tracks());
+    expect(await repo.getCameraTracks(['a'])).toEqual(tracks());
   });
 });

@@ -7,7 +7,7 @@
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
   import { altitudeOffset } from '#lib/domain/align';
-  import { cameraAt, unwrapNear } from '#lib/domain/cameraPath';
+  import { viewAt } from '#lib/domain/cameraPath';
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
@@ -69,7 +69,7 @@
         if (replay.lighting && sel) Cesium.JulianDate.fromDate(new Date(replay.localTime(sel)), v.clock.currentTime);
         const layer = sel && layers.get(sel.flight.id);
         if (cameraHold) return;
-        const view = replay.camera === 'keys' ? cameraAt(replay.keyframes, replay.time) : undefined;
+        const view = replay.camera === 'keys' ? viewAt(replay.cameraTracks, replay.time) : undefined;
         camera!.update(
           replay.camera,
           layer ? { position: layer.cartesianAt(replay.time), heading: layer.headingAt(replay.time) } : undefined,
@@ -83,15 +83,11 @@
       }
       replay.capture = (w, h) => captureFrame(v, w, h, setHold);
       replay.beginCapture = (w, h) => beginCapture(v, w, h, setHold);
-      replay.captureCameraKey = () => {
+      replay.captureCameraView = () => {
         const sel = replay.selected;
         const layer = sel && layers.get(sel.flight.id);
         if (!layer) return null;
-        const t = replay.time;
-        const view = viewFromCamera(v.camera.position, layer.cartesianAt(t, new Cesium.Cartesian3()));
-        // Continue from the key before t, so the heading interpolates the short way round.
-        const ref = replay.keyframes.filter((k) => k.t <= t).at(-1) ?? replay.keyframes[0];
-        return { t, heading: ref ? unwrapNear(view.heading, ref.heading) : view.heading, pitch: view.pitch, range: view.range };
+        return viewFromCamera(v.camera.position, layer.cartesianAt(replay.time, new Cesium.Cartesian3()));
       };
       ready = true;
     })().catch((err) => {
@@ -103,7 +99,7 @@
       alive = false;
       replay.capture = null;
       replay.beginCapture = null;
-      replay.captureCameraKey = null;
+      replay.captureCameraView = null;
       for (const l of layers.values()) l.destroy();
       layers.clear();
       camera?.destroy();
