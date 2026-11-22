@@ -1,6 +1,8 @@
 import type { CameraTracks } from '../domain/cameraPath';
 import { distance } from '../domain/geo';
 import type { Flight } from '../domain/model';
+import type { XcLeague } from '../state/xcPrefs';
+import type { XcScore } from '../xc/types';
 
 /** Flight metadata without fixes, for listings. */
 export interface FlightSummary {
@@ -56,6 +58,9 @@ export interface FlightRepository {
   /** Camera tracks for a set of flights. The order of ids does not matter. Defaults when none saved. */
   getCameraTracks(flightIds: string[]): Promise<CameraTracks>;
   saveCameraTracks(flightIds: string[], tracks: CameraTracks): Promise<void>;
+  /** Cached XC score. Undefined when never computed, null when computed but nothing scored. Dropped with the flight. */
+  getXcScore(flightId: string, league: XcLeague): Promise<XcScore | null | undefined>;
+  putXcScore(flightId: string, league: XcLeague, score: XcScore | null): Promise<void>;
   saveManual(entry: ManualEntry): Promise<void>;
   updateMeta(id: string, patch: MetaPatch): Promise<void>;
   /** Flights, manual entries and camera paths. Prefs and token are added by the backup layer. */

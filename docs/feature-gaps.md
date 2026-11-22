@@ -22,6 +22,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Local logbook (skyviz) | 2026-11-22 | `/logbook` with totals, monthly and yearly hours, breakdown by year, site and glider, manual entries without IGC, editable fields and notes, plus a whole-app backup file. Stays in the browser, no cloud sync. |
 | Camera keys and auto director (skyviz Pro) | 2026-11-22 | "Keys" camera mode in 3D, edited in a Camera row in the bottom timeline. Heading, pitch and range each have their own lane with a stopwatch to animate it, a value field and previous, add and next key buttons. Keys are picked, moved in time or value, copied and pasted, and set to auto, linear, hold or ease interpolation. Undo and redo cover every edit. Summary diamonds show the keys of all lanes when collapsed. "Auto" builds a shot list from the flight phases: a wide establishing shot, chase cams on glides, orbits in thermals and a pull-back. "Capture view" keys the current 3D camera at the playhead. Keys are stored per set of flights in this browser (IndexedDB), not in the scene URL. |
 | Dashed track style and smooth track | 2026-11-22 | Dashed is a style with a fixed screen-space pattern that scales with the width, in every colour mode, in 3D and 2D. The Smooth toggle draws the track as a spline through the fixes (3 extra points per segment, gaps over 60 s or 500 m stay straight). Only the drawn line changes, the pilot marker and camera keep the raw fixes. Saved in the URL (`style=dashed`, `smooth=1`). |
+| XC scoring of a track (flyXC) | 2026-11-22 | "XC" section in the replay side panel with type, distance, multiplier and points, plus a points list when several pilots are loaded. Four leagues: XContest (default), FFVL, FAI and UK XC League, picked per browser. Other leagues are open. Scored in a Web Worker with `igc-xc-score` (10 s budget, best result so far) and cached per flight and league in IndexedDB. The selected pilot's route is drawn in 2D and 3D, with the closing circle for triangles. Logbook columns for the score come next. |
 
 ## Possible without a backend
 
@@ -29,7 +30,6 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 |---|---|
 | XCTSK import, load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
 | XC route optimised from a flight (up to 30 turnpoints), editable waypoints, turnpoints shown on the route | xcfinder |
-| XC scoring of a track (free distance, flat and FAI triangle) for XContest, CFD, Leonardo, UK XC League, Czech ČPP, Norway, World XC | flyXC (`@flyxc/optimizer`) |
 | Route planner: free draw, distance, score, speed and duration estimate, share link | flyXC |
 | Task and waypoint export: XCTrack `.xctsk` with QR code and "open in XCTrack" link, SeeYou `.cup`, XCSoar `.tsk`, GPX, KML, FormatGEO | xcfinder, flyXC |
 | Airspaces in 2D and 3D (openAIP, free API key): filter by class A–G, type, floor, opacity; airspaces in the altitude profile | flyXC |

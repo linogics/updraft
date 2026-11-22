@@ -10,6 +10,7 @@
   import { BASEMAP_IDS, type BasemapId, type TrackStyle } from '#lib/domain/scene';
   import { smoothPath } from '#lib/domain/smooth';
   import { positionAt } from '#lib/domain/timeline';
+  import { ring } from '#lib/xc/ring';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { varioColor } from '#lib/ui/colors';
@@ -101,6 +102,19 @@
     };
   }
 
+  function xcData(): FeatureCollection {
+    const xc = replay.selected?.xc;
+    const coords = (pts: { lat: number; lon: number }[]) => pts.map((p) => [p.lon, p.lat]);
+    const lines = xc ? [xc.turnpoints, ...(xc.closing ? [ring(xc.closing.center, xc.closing.radius)] : [])] : [];
+    return {
+      type: 'FeatureCollection',
+      features: [
+        ...lines.map((pts) => ({ type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: coords(pts) } })),
+        ...(xc?.turnpoints ?? []).map((p) => ({ type: 'Feature' as const, properties: {}, geometry: { type: 'Point' as const, coordinates: [p.lon, p.lat] } }))
+      ]
+    };
+  }
+
   /** Width, outline and glow of the 2D tracks. Curtain has no 2D form and draws solid. */
   function applyTrackStyle(m: maplibregl.Map, style: TrackStyle, width: number) {
     const w = (extra: number, scale = 1): ExpressionSpecification => [
@@ -159,6 +173,22 @@
         type: 'circle',
         source: 'thermals',
         paint: { 'circle-radius': 5, 'circle-color': ['get', 'color'], 'circle-opacity': 0.7 }
+      });
+      m.addSource('xc', { type: 'geojson', data: xcData() });
+      m.addLayer({ id: 'xc-casing', type: 'line', source: 'xc', filter: ['!=', '$type', 'Point'], layout: round, paint: { 'line-color': '#0b0c0f', 'line-width': 5 } });
+      m.addLayer({
+        id: 'xc',
+        type: 'line',
+        source: 'xc',
+        filter: ['!=', '$type', 'Point'],
+        paint: { 'line-color': '#fff', 'line-width': 2, 'line-dasharray': [2, 2] }
+      });
+      m.addLayer({
+        id: 'xc-points',
+        type: 'circle',
+        source: 'xc',
+        filter: ['==', '$type', 'Point'],
+        paint: { 'circle-radius': 4, 'circle-color': '#fff', 'circle-stroke-color': '#0b0c0f', 'circle-stroke-width': 2 }
       });
       m.addLayer({
         id: 'pilots',
@@ -229,6 +259,12 @@
     if (!ready || !map) return;
     (map.getSource('tracks') as GeoJSONSource).setData(trackData());
     (map.getSource('thermals') as GeoJSONSource).setData(thermalData());
+  });
+
+  $effect(() => {
+    void replay.selected?.xc;
+    if (!ready || !map) return;
+    (map.getSource('xc') as GeoJSONSource).setData(xcData());
   });
 </script>
 
