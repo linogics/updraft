@@ -26,7 +26,7 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 | 2 Resizable panels | merged (#9) |
 | 3 Director density | merged (#10) |
 | 4 Converter and formats | merged (#11) |
-| 5 Logbook and backup | open |
+| 5 Logbook and backup | merged (#12) |
 
 ## Open tasks
 
@@ -38,5 +38,7 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 - The convert page drop zone still says files from the same day are replayed together.
 - "Download all" starts one download per file. Browsers may ask before allowing many downloads. A zip would avoid that.
 - The collapse chevron sits inside the ARIA separator, so screen readers do not list it. Enter on the separator does the same.
-- Update README and `docs/feature-gaps.md` once the series has landed.
+- Restored settings (units, thermal toggles, panel sizes) apply after a page reload, the page says so.
+- Manual entries have no distance or max altitude, the logbook shows a dash.
+- The yearly chart draws one wide bar while there is only one year of flights.
 - XC planner: route, scoring and task export, later.

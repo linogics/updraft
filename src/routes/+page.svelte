@@ -7,6 +7,7 @@
   import { monthlyHours, totals } from '#lib/domain/logbook';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, replayHref } from '#lib/storage/importFlights';
+  import { formatAirtime } from '#lib/ui/format';
 
   let flights = $state<FlightSummary[]>([]);
   let ready = $state(false);
@@ -16,16 +17,13 @@
   const sum = $derived(totals(flights));
   const months = $derived(monthlyHours(flights, 12, new Date()));
   const peak = $derived(Math.max(1, ...months.map((m) => m.hours)));
-  const last = $derived(flights[0]);
+  // Manual logbook entries have no track to replay.
+  const last = $derived(flights.find((f) => !f.manual));
 
   const dateFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   const monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
   const day = (date: string) => dateFmt.format(new Date(date));
-  /** Airtime as "3 h 12" or "35 min", read as a duration, never as a clock. */
-  const airtime = (ms: number) => {
-    const min = Math.round(ms / 60_000);
-    return min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
-  };
+  const airtime = formatAirtime;
   const hours = (seconds: number) => (seconds / 3600).toFixed(seconds < 36_000 ? 1 : 0);
 
   onMount(async () => {
@@ -130,7 +128,7 @@
       <ol>
         {#each flights.slice(0, 5) as f (f.id)}
           <li>
-            <a href={replayHref([f.id])}>
+            <a href={f.manual ? '/logbook' : replayHref([f.id])}>
               <span class="date">{day(f.date)}</span>
               <span class="pilot">{f.pilot}</span>
               <span class="muted">{f.site ?? f.glider ?? ''}</span>

@@ -17,6 +17,8 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Thermal colouring by climb strength | 2026-11-22 | 3D columns and labels, 2D markers and list swatches use the vario colour scale on the average climb. |
 | Social overlays: track, altitude graph and stats as an image or story (skyviz) | 2026-11-22 | Export menu renders the current 3D frame as a PNG in 16:9, 9:16 or 1:1 with HUD, altitude graph, stats, minimap and map credits, all optional. |
 | Video export MP4 (16:9 and 9:16) (skyviz Pro) | 2026-11-22 | Export menu renders the 3D replay frame by frame as an H.264 MP4 in 16:9, 9:16 or 1:1 at 720p, 1080p or 4K, 30 or 60 fps, with the same overlays as the PNG. Set in and out marks, length or speed mode, optional music. Uses the current camera mode, so camera keys apply here too. |
+| More formats and converter (skyviz, flyXC) | 2026-11-22 | Import and convert IGC, GPX, KML (`gx:Track`), FIT, TRK and GeoJSON. Export as IGC (unsigned), GPX, KML or GeoJSON on `/convert`. Loading tracks by URL is still open. |
+| Local logbook (skyviz) | 2026-11-22 | `/logbook` with totals, monthly and yearly hours, breakdown by year, site and glider, manual entries without IGC, editable fields and notes, plus a whole-app backup file. Stays in the browser, no cloud sync. |
 | Camera keys and auto director (skyviz Pro) | 2026-11-22 | "Keys" camera mode in 3D, edited in a Camera row in the bottom timeline. Heading, pitch and range each have their own lane with a stopwatch to animate it, a value field and previous, add and next key buttons. Keys are picked, moved in time or value, copied and pasted, and set to auto, linear, hold or ease interpolation. Undo and redo cover every edit. Summary diamonds show the keys of all lanes when collapsed. "Auto" builds a shot list from the flight phases: a wide establishing shot, chase cams on glides, orbits in thermals and a pull-back. "Capture view" keys the current 3D camera at the playhead. Keys are stored per set of flights in this browser (IndexedDB), not in the scene URL. |
 
 ## Possible without a backend
@@ -24,8 +26,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Gap | Seen at |
 |---|---|
 | Dashed track style (Cesium dash material is single-colour, like glow) | follow-up of track styling |
-| FIT import (skyviz has a GPX/FIT→IGC converter) | skyviz |
-| More formats: GPX, KML, TRK, GeoJSON, XCTSK; load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
+| XCTSK import, load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
 | Transition altitudes above ground (AGL); needs terrain sampling at transition ends | follow-up of transitions |
 | XC route optimised from a flight (up to 30 turnpoints), editable waypoints, turnpoints shown on the route | xcfinder |
 | XC scoring of a track (free distance, flat and FAI triangle) for XContest, CFD, Leonardo, UK XC League, Czech ČPP, Norway, World XC | flyXC (`@flyxc/optimizer`) |
@@ -43,7 +44,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | Gap | Seen at |
 |---|---|
 | Accounts and cloud storage | all |
-| Logbook incl. manual entries without IGC, long-term stats | skyviz |
+| Logbook sync across devices (the local logbook exists) | skyviz |
 | XContest import | skyviz |
 | Public shareable scenes, "latest scenes", monthly rankings | ogoy |
 | Flight database search: area crossed, takeoff, landing, period, glider class | xcfinder |

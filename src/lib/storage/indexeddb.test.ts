@@ -86,3 +86,70 @@ describe('IndexedDbFlightRepository', () => {
     expect(await repo.getCameraTracks(['a'])).toEqual(tracks());
   });
 });
+
+describe('manual entries, meta and backup', () => {
+  const fresh = () => new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
+  const entry = { date: '2026-07-01', pilot: 'Ann', glider: null, site: 'Hill', durationMin: 90, notes: 'n' };
+
+  it('saves a manual entry only as summary', async () => {
+    const repo = fresh();
+    await repo.saveManual({ ...entry, id: 'm' });
+    const [s] = await repo.list();
+
+    expect(s).toMatchObject({ id: 'm', manual: true, fixCount: 0, sourceName: '' });
+    expect(s.endTime - s.startTime).toBe(90 * 60_000);
+    expect(await repo.get('m')).toBeUndefined();
+  });
+
+  it('generates an id when missing and deletes manual entries', async () => {
+    const repo = fresh();
+    await repo.saveManual(entry);
+    const [s] = await repo.list();
+    expect(s.id).toBeTruthy();
+    await repo.delete(s.id);
+    expect(await repo.list()).toEqual([]);
+  });
+
+  it('updates meta on flight and manual', async () => {
+    const repo = fresh();
+    await repo.save(flight('a'));
+    await repo.saveManual({ ...entry, id: 'm' });
+    await repo.updateMeta('a', { site: 'Alps', notes: 'x' });
+    await repo.updateMeta('m', { pilot: 'Bob' });
+
+    expect((await repo.get('a'))?.site).toBe('Alps');
+    const list = await repo.list();
+    expect(list.find((s) => s.id === 'a')).toMatchObject({ site: 'Alps', notes: 'x' });
+    expect(list.find((s) => s.id === 'm')?.pilot).toBe('Bob');
+  });
+
+  it('computes maxAlt and trackKm', async () => {
+    const repo = fresh();
+    await repo.save({ ...flight('a'), fixes: [{ t: 0, lat: 47, lon: 11, alt: 900 }, { t: 1000, lat: 47.01, lon: 11, alt: 1200 }] });
+    const [s] = await repo.list();
+    expect(s.maxAlt).toBe(1200);
+    expect(s.trackKm).toBeGreaterThan(1);
+  });
+
+  it('round-trips a backup in merge and replace mode', async () => {
+    const src = fresh();
+    await src.save(flight('a'));
+    await src.updateMeta('a', { notes: 'keep' });
+    await src.saveManual({ ...entry, id: 'm' });
+    await src.saveCameraTracks(['a'], tracks());
+    const backup = await src.exportAll();
+
+    const merged = fresh();
+    await merged.save(flight('other'));
+    await merged.importAll(backup, 'merge');
+    expect((await merged.list()).map((s) => s.id).sort()).toEqual(['a', 'm', 'other']);
+    expect((await merged.list()).find((s) => s.id === 'a')?.notes).toBe('keep');
+    expect(await merged.getCameraTracks(['a'])).toEqual(tracks());
+
+    const replaced = fresh();
+    await replaced.save(flight('other'));
+    await replaced.importAll(backup, 'replace');
+    expect((await replaced.list()).map((s) => s.id).sort()).toEqual(['a', 'm']);
+    expect(await replaced.get('other')).toBeUndefined();
+  });
+});

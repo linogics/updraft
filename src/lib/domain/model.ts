@@ -18,6 +18,8 @@ export interface Flight {
   site: string | null;
   /** Flight date, ISO 8601 (YYYY-MM-DD). */
   date: string;
+  /** Free text, edited in the logbook. */
+  notes?: string;
   fixes: Fix[];
 }
 

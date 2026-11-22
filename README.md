@@ -4,7 +4,12 @@ Web app that replays IGC flight logs in 3D and analyses them: thermals, glides, 
 
 ## Features (V1)
 
-- Import one or more `.igc` files (drag and drop). Flights are stored in the browser (IndexedDB).
+- Dashboard at `/` with one tile per tool: Replay, Logbook, Convert and the planned XC planner.
+- Import one or more flight files (drag and drop): IGC, GPX, KML (`gx:Track`), FIT, CompeGPS TRK or GeoJSON. Flights are stored in the browser (IndexedDB).
+- Logbook (`/logbook`): totals, hours per month and year, breakdown by year, site or glider, flights entered by hand without a track, editable pilot, site, glider and notes.
+- Converter (`/convert`): write any imported track as IGC (unsigned), GPX, KML or GeoJSON.
+- Backup: export everything this browser keeps (flights, camera keys, settings, optionally the Cesium ion token) to one JSON file, and restore it by merging or replacing.
+- Resizable and collapsible replay panels, sizes stored per browser. Staged load screen while a replay opens.
 - 3D replay on CesiumJS: tracks coloured by vario, flight phase, climb / transition or pilot; live pilot markers with trail.
 - Track styling: solid, outline, curtain (wall down to the ground, 3D) or glow; width 1–10 px; pick any pilot colour by clicking the colour dot. Stored in the URL.
 - Camera modes: follow (smoothed chase cam), cockpit, orbit, free.
