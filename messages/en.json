@@ -200,6 +200,7 @@
   "home_convert_go": "Convert a file",
   "home_convert_title": "Convert",
   "home_flights": "flights",
+  "home_help": "Help (opens on GitHub)",
   "home_hours_flown": "hours flown",
   "home_load_demo": "load demo flights",
   "home_logbook_desc": "Every saved flight with airtime per month. Pick flights to replay together.",
