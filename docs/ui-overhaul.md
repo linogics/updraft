@@ -23,8 +23,8 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 | Step | State |
 |---|---|
 | 1 Dashboard, logbook route, staged loader | merged (#8) |
-| 2 Resizable panels | in review |
-| 3 Director density | open |
+| 2 Resizable panels | merged (#9) |
+| 3 Director density | merged (#10) |
 | 4 Converter and formats | open |
 | 5 Logbook and backup | open |
 
