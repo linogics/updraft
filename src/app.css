@@ -1,7 +1,7 @@
-@import '@fontsource/inter-tight/400.css';
-@import '@fontsource/inter-tight/500.css';
-@import '@fontsource/inter-tight/600.css';
-@import '@fontsource/inter-tight/700.css';
+@import '@fontsource/sora/400.css';
+@import '@fontsource/sora/500.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/sora/700.css';
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
 
@@ -24,7 +24,7 @@
   --needle: #f0b43c;
   --climb: #e66767;
   --sink: #3987e5;
-  --display: 'Inter Tight', system-ui, sans-serif;
+  --display: 'Sora', system-ui, sans-serif;
   --mono: 'Geist Mono', ui-monospace, monospace;
   color-scheme: dark;
 }
