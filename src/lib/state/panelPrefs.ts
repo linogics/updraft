@@ -1,17 +1,21 @@
 export interface PanelPrefsValue {
-  /** Side panel width, px. */
+  /** Left outliner width, px. */
+  outliner: number;
+  /** Right inspector width, px. */
   side: number;
   /** Bottom chart height, px. */
   footer: number;
   /** Share of the 3D view in split layout, 0..1. */
   split: number;
+  outlinerOpen: boolean;
   sideOpen: boolean;
   footerOpen: boolean;
 }
 
 export const PANEL_LIMITS = {
-  side: { min: 220, max: 640, initial: 320 },
-  footer: { min: 80, max: 480, initial: 150 },
+  outliner: { min: 200, max: 480, initial: 280 },
+  side: { min: 220, max: 640, initial: 300 },
+  footer: { min: 80, max: 480, initial: 200 },
   split: { min: 0.2, max: 0.8, initial: 0.5 }
 } as const;
 
@@ -28,9 +32,11 @@ export function parsePanelPrefs(raw: unknown): PanelPrefsValue {
   const size = (key: PanelSize) =>
     clampPanel(key, typeof o[key] === 'number' && Number.isFinite(o[key]) ? (o[key] as number) : PANEL_LIMITS[key].initial);
   return {
+    outliner: size('outliner'),
     side: size('side'),
     footer: size('footer'),
     split: size('split'),
+    outlinerOpen: typeof o.outlinerOpen === 'boolean' ? o.outlinerOpen : true,
     sideOpen: typeof o.sideOpen === 'boolean' ? o.sideOpen : true,
     footerOpen: typeof o.footerOpen === 'boolean' ? o.footerOpen : true
   };

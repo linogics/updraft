@@ -23,7 +23,7 @@ class PanelPrefs {
     this.resize(key, PANEL_LIMITS[key].initial);
   }
 
-  toggle(key: 'sideOpen' | 'footerOpen') {
+  toggle(key: 'outlinerOpen' | 'sideOpen' | 'footerOpen') {
     this.save({ ...this.value, [key]: !this.value[key] });
   }
 
