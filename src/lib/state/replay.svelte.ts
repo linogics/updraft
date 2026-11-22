@@ -89,6 +89,8 @@ export class ReplayState {
   labels = $state(DEFAULT_SCENE.labels);
   /** Pilot colours picked by the user, per flight id. */
   colorOverrides = $state.raw<Record<string, string>>({});
+  /** Renders the 3D frame at a size. Null until the 3D viewer is ready. */
+  capture = $state.raw<((w: number, h: number) => Promise<HTMLCanvasElement>) | null>(null);
 
   start = $derived(this.flights.length ? Math.min(...this.flights.map((f) => f.flight.fixes[0].t)) : 0);
   end = $derived(this.flights.length ? Math.max(...this.flights.map((f) => f.flight.fixes.at(-1)!.t)) : 0);

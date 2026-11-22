@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import * as Cesium from 'cesium';
+  import { captureFrame } from '#lib/cesium/capture';
   import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
   import { CameraController } from '#lib/cesium/cameraModes';
@@ -73,6 +74,7 @@
       if (spheres.length) {
         v.camera.flyToBoundingSphere(Cesium.BoundingSphere.fromBoundingSpheres(spheres), { duration: 0 });
       }
+      replay.capture = (w, h) => captureFrame(v, w, h);
       ready = true;
     })().catch((err) => {
       console.error(err);
@@ -81,6 +83,7 @@
 
     return () => {
       alive = false;
+      replay.capture = null;
       for (const l of layers.values()) l.destroy();
       layers.clear();
       camera?.destroy();

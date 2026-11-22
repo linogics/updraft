@@ -15,13 +15,13 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | View toggles: full screen, pilot labels, 3D height exaggeration, sun lighting, thermal columns, thermal labels (flyXC) | 2026-11-22 | Exaggeration 1–3× scales terrain and tracks together. The sun follows the selected pilot's recorded time. Saved in the URL (`exag`, `sun`, `labels`). Full screen is not saved. Thermal column and label toggles are stored per browser, not in the URL. |
 | Height above ground (flyXC) | 2026-11-22 | AGL column in the pilot list. Ground heights come from Terrarium tiles at zoom 13, loaded in the background per flight, so it works in 2D and with any 3D terrain source. Shows a dash while loading or offline. |
 | Thermal colouring by climb strength | 2026-11-22 | 3D columns and labels, 2D markers and list swatches use the vario colour scale on the average climb. |
+| Social overlays: track, altitude graph and stats as an image or story (skyviz) | 2026-11-22 | Export menu renders the current 3D frame as a PNG in 16:9, 9:16 or 1:1 with HUD, altitude graph, stats, minimap and map credits, all optional. |
 
 ## Possible without a backend
 
 | Gap | Seen at |
 |---|---|
 | Video export MP4 (16:9 and 9:16) with cinematic auto camera | skyviz (Pro) |
-| Social overlays: track, altitude graph and stats as an image or story | skyviz |
 | Dashed track style (Cesium dash material is single-colour, like glow) | follow-up of track styling |
 | FIT import (skyviz has a GPX/FIT→IGC converter) | skyviz |
 | More formats: GPX, KML, TRK, GeoJSON, XCTSK; load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
