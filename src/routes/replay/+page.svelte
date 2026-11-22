@@ -120,13 +120,33 @@
   <div
     class="app"
     data-layout={replay.layout}
+    style:--outliner="{panels.outlinerOpen ? panels.outliner : 0}px"
     style:--side="{panels.sideOpen ? panels.side : 0}px"
     style:--chart="{panels.footer}px"
     style:--split="{panels.split * 100}%"
   >
     <header><Toolbar {replay} /></header>
 
-    <div class="views" bind:clientWidth={viewsWidth}>
+    <nav class="outliner panel" hidden={!panels.outlinerOpen} aria-label={m.replay_outliner()}>
+      <PilotList {replay} />
+      <ThermalList {replay} />
+    </nav>
+
+    <div class="outliner-handle">
+      <Splitter
+        label={m.replay_outliner()}
+        axis="x"
+        value={panels.outliner}
+        min={L.outliner.min}
+        max={L.outliner.max}
+        open={panels.outlinerOpen}
+        onchange={(v) => panelPrefs.resize('outliner', v)}
+        onreset={() => panelPrefs.reset('outliner')}
+        ontoggle={() => panelPrefs.toggle('outlinerOpen')}
+      />
+    </div>
+
+    <div class="views panel" bind:clientWidth={viewsWidth}>
       {#if replay.layout !== '2d'}
         <div class="view3d"><CesiumView {replay} /></div>
       {/if}
@@ -164,10 +184,8 @@
       />
     </div>
 
-    <aside hidden={!panels.sideOpen}>
-      <PilotList {replay} />
+    <aside class="panel" hidden={!panels.sideOpen}>
       <StatsPanel {replay} />
-      <ThermalList {replay} />
     </aside>
 
     <div class="footer-handle">
@@ -185,18 +203,18 @@
       />
     </div>
 
-    <footer>
-      <PlayerBar {replay} />
-      <div class="footer-body" hidden={!panels.footerOpen}>
-      <div class="tabs" role="tablist">
-        <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>{m.replay_tab_altitude()}</button>
-        <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
-          {replay.multiDay ? m.replay_timeline_multi_day() : m.timeline_label()}
-        </button>
+    <footer class="panel">
+      <div class="transport">
+        <PlayerBar {replay} />
+        <div class="tabs" role="tablist" hidden={!panels.footerOpen}>
+          <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>{m.replay_tab_altitude()}</button>
+          <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
+            {replay.multiDay ? m.replay_timeline_multi_day() : m.timeline_label()}
+          </button>
+        </div>
       </div>
-      <div class="chart">
+      <div class="chart" hidden={!panels.footerOpen}>
         {#if footerTab === 'altitude'}<AltitudeChart {replay} />{:else}<Timeline {replay} />{/if}
-      </div>
       </div>
     </footer>
   </div>
@@ -205,22 +223,42 @@
 {/if}
 
 <style>
+  /* Editor layout: outliner | viewport | inspector over a full-width timeline. Splitters are the gutters. */
   .app {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto var(--side);
+    grid-template-columns: var(--outliner) auto minmax(0, 1fr) auto var(--side);
     grid-template-rows: auto minmax(0, 1fr) auto auto;
     grid-template-areas:
-      'header header header'
-      'views vhandle aside'
-      'fhandle fhandle fhandle'
-      'footer footer footer';
+      'header header header header header'
+      'outliner ohandle views vhandle aside'
+      'fhandle fhandle fhandle fhandle fhandle'
+      'footer footer footer footer footer';
     height: 100vh;
     height: 100dvh;
+    padding: 0 6px 6px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
   }
   header {
     grid-area: header;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+  }
+  .outliner {
+    grid-area: outliner;
+  }
+  .outliner,
+  aside {
+    overflow-y: auto;
+    padding: 12px;
+    display: grid;
+    align-content: start;
+    gap: 20px;
+  }
+  aside {
+    grid-area: aside;
   }
   .views {
     grid-area: views;
@@ -238,9 +276,13 @@
     flex: 0 0 var(--split);
   }
   .split-handle,
+  .outliner-handle,
   .side-handle,
   .footer-handle {
     display: flex;
+  }
+  .outliner-handle {
+    grid-area: ohandle;
   }
   .side-handle {
     grid-area: vhandle;
@@ -250,48 +292,53 @@
     flex-direction: column;
   }
   .split-handle > :global(*),
+  .outliner-handle > :global(*),
   .side-handle > :global(*),
   .footer-handle > :global(*) {
     flex: 1;
   }
-  aside {
-    grid-area: aside;
-    overflow-y: auto;
-    padding: 12px;
-    display: grid;
-    align-content: start;
-    gap: 20px;
-    background: var(--surface);
-  }
+  .outliner[hidden],
   aside[hidden],
-  .footer-body[hidden] {
+  .chart[hidden],
+  .tabs[hidden] {
     display: none;
   }
   footer {
     grid-area: footer;
-    background: var(--surface);
+  }
+  .transport {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .transport > :global(:first-child) {
+    flex: 1;
+    min-width: 0;
   }
   .chart {
     height: var(--chart);
-    padding: 0 8px 6px;
+    padding: 6px 8px;
   }
   .tabs {
     display: flex;
-    gap: 2px;
-    padding: 0 12px;
+    padding: 2px;
+    border-radius: 7px;
+    background: var(--surface-2);
   }
   .tabs button {
     border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
+    border-radius: 5px;
     background: none;
-    padding: 2px 8px;
+    padding: 4px 10px;
     color: var(--muted);
     font-size: 12px;
+    font-weight: 500;
   }
   .tabs button[aria-selected='true'] {
     color: var(--text);
-    border-bottom-color: var(--secondary);
+    background: var(--bg);
   }
   .error {
     display: grid;
@@ -306,12 +353,10 @@
   @media (max-width: 800px) {
     .app {
       grid-template-columns: 1fr;
-      grid-template-rows: auto 55vh auto auto;
-      grid-template-areas: 'header' 'views' 'footer' 'aside';
+      grid-template-rows: auto 55vh auto auto auto;
+      grid-template-areas: 'header' 'views' 'footer' 'outliner' 'aside';
+      row-gap: 6px;
       height: auto;
-    }
-    aside {
-      border-left: 0;
     }
     .app[data-layout='split'] .views {
       flex-direction: column;
@@ -324,15 +369,18 @@
     }
     /* Stacked phone layout: panels flow, no resizing. */
     .split-handle,
+    .outliner-handle,
     .side-handle,
     .footer-handle {
       display: none;
     }
-    aside[hidden] {
+    .outliner[hidden],
+    aside[hidden],
+    .chart[hidden] {
       display: grid;
     }
-    .footer-body[hidden] {
-      display: block;
+    .tabs[hidden] {
+      display: flex;
     }
     .chart {
       height: 150px;

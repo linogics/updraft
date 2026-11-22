@@ -69,7 +69,7 @@
 </script>
 
 <!-- The button is a sibling of the separator, so assistive tech lists it. -->
-<div class="splitter {axis}" class:closed={!open}>
+<div class="splitter {axis}" class:closed={!open} class:start={sign === 1}>
   <!-- A focusable separator is an interactive widget in ARIA, Svelte does not know that. -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
   <div
@@ -109,8 +109,14 @@
   .bar {
     position: absolute;
     inset: 0;
-    background: var(--border);
     touch-action: none;
+  }
+  /* The gutter between panels is the handle. A thin line shows on hover, drag and focus. */
+  .x .bar {
+    inset: 0 2px;
+  }
+  .y .bar {
+    inset: 2px 0;
   }
   .x .bar {
     cursor: col-resize;
@@ -119,10 +125,10 @@
     cursor: row-resize;
   }
   .splitter.x {
-    width: 1px;
+    width: 6px;
   }
   .splitter.y {
-    height: 1px;
+    height: 6px;
   }
   /* Wider invisible hit area around the 1px line. */
   .bar::before {
@@ -161,7 +167,10 @@
   }
   /* A closed side panel leaves the line at the screen edge: keep the chevron inside. */
   .x.closed button {
-    transform: translateX(-7px);
+    transform: translateX(-4px);
+  }
+  .x.closed.start button {
+    transform: translateX(4px);
   }
   button:hover {
     color: var(--text);
