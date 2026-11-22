@@ -253,18 +253,19 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   .notice.loading::after {
     content: '';
     position: absolute;
-    inset: auto 0 0;
+    left: 0;
+    bottom: 0;
+    width: 40%;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--needle), transparent) no-repeat;
-    background-size: 40% 100%;
+    background: var(--primary);
     animation: sweep 1s linear infinite;
   }
   @keyframes sweep {
     from {
-      background-position: -40% 0;
+      transform: translateX(-100%);
     }
     to {
-      background-position: 140% 0;
+      transform: translateX(250%);
     }
   }
   .cesium :global(.cesium-viewer-bottom) {

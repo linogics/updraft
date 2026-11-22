@@ -131,8 +131,8 @@
     border-radius: 0 6px 6px 0;
   }
   .group button.active {
-    background: #3987e5;
-    border-color: #3987e5;
+    background: var(--primary);
+    border-color: var(--primary);
     color: #fff;
   }
   .ion {
@@ -146,7 +146,7 @@
     font-size: 12px;
   }
   .ion .error {
-    color: #e5484d;
+    color: var(--danger);
   }
   label {
     display: flex;

@@ -37,7 +37,7 @@
     place-items: center;
     gap: 6px;
     padding: 40px 20px;
-    border: 2px dashed #3a3f48;
+    border: 2px dashed var(--border-hi);
     border-radius: 12px;
     text-align: center;
     cursor: pointer;
@@ -47,8 +47,8 @@
   }
   .drop.over,
   .drop:hover {
-    border-color: #3987e5;
-    background: rgba(57, 135, 229, 0.06);
+    border-color: var(--primary-hi);
+    background: var(--primary-dim);
   }
   .drop.compact {
     padding: 18px 16px;

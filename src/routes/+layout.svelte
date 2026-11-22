@@ -31,10 +31,9 @@
     position: fixed;
     inset: 0 0 auto;
     z-index: 1000;
+    width: 40%;
     height: 3px;
-    background: linear-gradient(90deg, transparent, var(--needle), transparent);
-    background-size: 40% 100%;
-    background-repeat: no-repeat;
+    background: var(--primary);
     animation: sweep 1s linear infinite;
   }
   .update {
@@ -55,10 +54,10 @@
   }
   @keyframes sweep {
     from {
-      background-position: -40% 0;
+      transform: translateX(-100%);
     }
     to {
-      background-position: 140% 0;
+      transform: translateX(250%);
     }
   }
 </style>

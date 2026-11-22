@@ -68,8 +68,8 @@
     border-radius: 0 6px 6px 0;
   }
   .presets button.active {
-    background: #3987e5;
-    border-color: #3987e5;
+    background: var(--primary);
+    border-color: var(--primary);
     color: #fff;
   }
   .custom {

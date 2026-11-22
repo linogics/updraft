@@ -1,16 +1,31 @@
+@import '@fontsource/inter-tight/400.css';
+@import '@fontsource/inter-tight/500.css';
+@import '@fontsource/inter-tight/600.css';
+@import '@fontsource/inter-tight/700.css';
+@import '@fontsource/geist-mono/400.css';
+@import '@fontsource/geist-mono/500.css';
+
 :root {
-  --bg: #0f1115;
-  --surface: #16181d;
-  --surface-2: #20242b;
-  --border: #2c3038;
-  --text: #e8eaed;
-  --muted: #9aa0a6;
-  --danger: #e66767;
-  /* Instrument needle: focus, progress and the one primary action per page. */
+  --bg: #0a090d;
+  --surface: #121117;
+  --surface-2: #1a1821;
+  --border: #25222e;
+  --border-hi: #3a3548;
+  --text: #e9e6f0;
+  --muted: #8b8599;
+  --danger: #e5484d;
+  --warn: #e5a500;
+  /* Brand: purple marks the primary action and selection, cyan marks links, tabs and icons. */
+  --primary: #8e2ab0;
+  --primary-hi: #c17ee0;
+  --primary-dim: rgb(142 42 176 / 0.2);
+  --secondary: #00aed9;
+  /* Data colors. Needle is the chart cursor, climb and sink the vario scale. */
   --needle: #f0b43c;
   --climb: #e66767;
   --sink: #3987e5;
-  --display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --display: 'Inter Tight', system-ui, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, monospace;
   color-scheme: dark;
 }
 
@@ -24,12 +39,8 @@ body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font:
-    14px/1.4 system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font: 14px/1.4 var(--display);
+  font-variant-numeric: tabular-nums;
 }
 
 button,
@@ -45,7 +56,7 @@ select {
 
 button:hover,
 select:hover {
-  border-color: #4a505a;
+  border-color: var(--border-hi);
 }
 
 button:disabled {
@@ -63,7 +74,7 @@ h3 {
 }
 
 :focus-visible {
-  outline: 2px solid var(--needle);
+  outline: 2px solid var(--primary-hi);
   outline-offset: 2px;
 }
 

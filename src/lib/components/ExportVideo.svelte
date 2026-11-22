@@ -472,16 +472,16 @@
     font-size: 12px;
   }
   .warn {
-    color: #e5a500;
+    color: var(--warn);
   }
   .error {
     margin: 0;
-    color: #e5484d;
+    color: var(--danger);
     font-size: 12px;
   }
   .primary {
-    background: #3987e5;
-    border-color: #3987e5;
+    background: var(--primary);
+    border-color: var(--primary);
     color: #fff;
   }
 </style>

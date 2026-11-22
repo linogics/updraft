@@ -292,7 +292,7 @@
   }
   .curve path {
     fill: none;
-    stroke: #f2c94c;
+    stroke: var(--primary-hi);
     stroke-opacity: 0.8;
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
@@ -304,8 +304,8 @@
     height: 8px;
     margin: -4px 0 0 -4px;
     padding: 0;
-    border: 1px solid #f2c94c;
-    background: #f2c94c;
+    border: 1px solid var(--primary-hi);
+    background: var(--primary-hi);
     cursor: grab;
   }
   .key:active {
@@ -332,7 +332,7 @@
   .key.sel {
     background: #fff;
     border-color: #fff;
-    box-shadow: 0 0 0 1px #f2c94c;
+    box-shadow: 0 0 0 1px var(--primary-hi);
   }
   .guide {
     position: absolute;
@@ -340,7 +340,7 @@
     bottom: 0;
     width: 2px;
     margin-left: -1px;
-    background: #f2c94c;
+    background: var(--primary-hi);
     pointer-events: none;
     z-index: 3;
   }
