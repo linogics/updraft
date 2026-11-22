@@ -36,7 +36,9 @@
 <Popover label={m.units_menu()}>
   <div class="presets" role="group" aria-label={m.units_preset_group()}>
     {#each Object.keys(UNIT_PRESETS) as UnitPreset[] as p (p)}
-      <button class:active={preset === p} onclick={() => unitPrefs.set({ ...UNIT_PRESETS[p] })}>{PRESET_LABELS[p]()}</button>
+      <button class:active={preset === p} onclick={() => unitPrefs.set({ ...UNIT_PRESETS[p] })}>
+        {PRESET_LABELS[p]()}
+      </button>
     {/each}
   </div>
   {#if preset === 'custom'}<p class="custom">{m.units_custom()}</p>{/if}

@@ -133,8 +133,20 @@
     const m = map;
     m.on('load', () => {
       m.addSource('route', { type: 'geojson', data: line(points) });
-      m.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-join': 'round' }, paint: { 'line-color': '#0b0c0f', 'line-width': 7 } });
-      m.addLayer({ id: 'route', type: 'line', source: 'route', layout: { 'line-join': 'round' }, paint: { 'line-color': '#ffd400', 'line-width': 3 } });
+      m.addLayer({
+        id: 'route-casing',
+        type: 'line',
+        source: 'route',
+        layout: { 'line-join': 'round' },
+        paint: { 'line-color': '#0b0c0f', 'line-width': 7 }
+      });
+      m.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: { 'line-join': 'round' },
+        paint: { 'line-color': '#ffd400', 'line-width': 3 }
+      });
       ready = true;
     });
     m.on('click', (e) => {

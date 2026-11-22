@@ -75,7 +75,9 @@
     </dl>
     <div class="meta">
       <LanguageSelect />
-      <a class="help" href={HELP_URL} target="_blank" rel="noreferrer" title={m.home_help()} aria-label={m.home_help()}>?</a>
+      <a class="help" href={HELP_URL} target="_blank" rel="noreferrer" title={m.home_help()} aria-label={m.home_help()}>
+        ?
+      </a>
     </div>
   </header>
 
@@ -100,7 +102,13 @@
       <div class="face">
         <svg class="bars" viewBox="0 0 120 32" preserveAspectRatio="none" role="img" aria-label={m.home_bars_label()}>
           {#each months as m, i (m.month)}
-            <rect x={i * 10 + 1} width="8" y={32 - (m.hours / peak) * 30 - 2} height={(m.hours / peak) * 30 + 2} class:now={i === months.length - 1}>
+            <rect
+              x={i * 10 + 1}
+              width="8"
+              y={32 - (m.hours / peak) * 30 - 2}
+              height={(m.hours / peak) * 30 + 2}
+              class:now={i === months.length - 1}
+            >
               <title>{monthFmt.format(new Date(m.month + '-01'))}: {formatNumber(m.hours, 1)} h</title>
             </rect>
           {/each}
@@ -225,7 +233,9 @@
     border-radius: 14px;
     background: var(--surface);
     /* Inner bezel, like the rim of an instrument face. */
-    box-shadow: inset 0 0 0 4px var(--bg), inset 0 0 0 5px var(--border);
+    box-shadow:
+      inset 0 0 0 4px var(--bg),
+      inset 0 0 0 5px var(--border);
     color: var(--text);
     text-decoration: none;
   }

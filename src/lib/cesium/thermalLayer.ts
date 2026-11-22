@@ -13,7 +13,10 @@ export class ThermalLayer {
   constructor(private viewer: Cesium.Viewer) {}
 
   set(p: ThermalOverlayPrefsValue) {
-    for (const [kind, on] of [['hotspots', p.hotspots], ['skyways', p.skyways]] as const) {
+    for (const [kind, on] of [
+      ['hotspots', p.hotspots],
+      ['skyways', p.skyways]
+    ] as const) {
       let layer = this.layers.get(kind);
       if (!on) {
         if (layer) this.remove(kind, layer);

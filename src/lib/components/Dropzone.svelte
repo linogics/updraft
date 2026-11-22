@@ -1,7 +1,12 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
 
-  let { onfiles, busy = false, compact = false, hint = m.drop_hint() }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean; hint?: string } = $props();
+  let {
+    onfiles,
+    busy = false,
+    compact = false,
+    hint = m.drop_hint()
+  }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean; hint?: string } = $props();
 
   let over = $state(false);
 
@@ -26,7 +31,13 @@
     accept(e.dataTransfer?.files);
   }}
 >
-  <input type="file" accept=".igc,.gpx,.kml,.geojson,.json,.trk,.fit" multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
+  <input
+    type="file"
+    accept=".igc,.gpx,.kml,.geojson,.json,.trk,.fit"
+    multiple
+    disabled={busy}
+    onchange={(e) => accept(e.currentTarget.files)}
+  />
   <strong>{busy ? m.drop_processing() : m.drop_here()}</strong>
   <span>{hint}</span>
 </label>

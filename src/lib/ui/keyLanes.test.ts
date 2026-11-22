@@ -85,7 +85,13 @@ describe('keysInBox', () => {
 
 describe('mergeRefs', () => {
   it('unions selections without duplicates', () => {
-    const merged = mergeRefs([{ prop: 'heading', t: 1 }], [{ prop: 'heading', t: 1 }, { prop: 'pitch', t: 1 }]);
+    const merged = mergeRefs(
+      [{ prop: 'heading', t: 1 }],
+      [
+        { prop: 'heading', t: 1 },
+        { prop: 'pitch', t: 1 }
+      ]
+    );
     expect(merged).toHaveLength(2);
   });
 });
@@ -95,7 +101,14 @@ describe('keyTimes, prevKeyTime, nextKeyTime', () => {
     const tracks = {
       ...DEFAULT_TRACKS,
       heading: { animated: true, value: 0, keys: [{ t: 2, v: 0, interp: 'auto' as const }] },
-      pitch: { animated: true, value: 0, keys: [{ t: 1, v: 0, interp: 'auto' as const }, { t: 2, v: 0, interp: 'auto' as const }] }
+      pitch: {
+        animated: true,
+        value: 0,
+        keys: [
+          { t: 1, v: 0, interp: 'auto' as const },
+          { t: 2, v: 0, interp: 'auto' as const }
+        ]
+      }
     };
     expect(keyTimes(tracks)).toEqual([1, 2]);
   });

@@ -61,7 +61,12 @@ export function smoothPath(fixes: Fix[], perSegment = 3): SmoothPath {
     const next = fixes[i + 1];
     if (!next || fixes.length < 3) continue;
     if (next.t - fixes[i].t > MAX_GAP_MS || distance(fixes[i], next) > MAX_GAP_M) continue;
-    const seg: [Vec, Vec, Vec, Vec] = [ctrl(i - 1, 0, 1), vec(i), vec(i + 1), ctrl(i + 2, fixes.length - 1, fixes.length - 2)];
+    const seg: [Vec, Vec, Vec, Vec] = [
+      ctrl(i - 1, 0, 1),
+      vec(i),
+      vec(i + 1),
+      ctrl(i + 2, fixes.length - 1, fixes.length - 2)
+    ];
     for (let j = 1; j <= perSegment; j++) {
       const [lat, lon, alt] = catmullRom(seg, j / (perSegment + 1));
       points.push({ lat, lon, alt });

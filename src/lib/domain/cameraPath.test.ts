@@ -39,36 +39,56 @@ describe('valueAt', () => {
   });
 
   it('clamps before the first and after the last key', () => {
-    const tr = track([[1000, 10], [2000, 50]]);
+    const tr = track([
+      [1000, 10],
+      [2000, 50]
+    ]);
     expect(valueAt(tr, 0, 'heading')).toBe(10);
     expect(valueAt(tr, 3000, 'heading')).toBe(50);
   });
 
   it('holds the value of the key until the next key', () => {
-    const tr = track([[0, 5, 'hold'], [1000, 50]]);
+    const tr = track([
+      [0, 5, 'hold'],
+      [1000, 50]
+    ]);
     expect(valueAt(tr, 500, 'heading')).toBe(5);
     expect(valueAt(tr, 999, 'heading')).toBe(5);
   });
 
   it('interpolates linearly', () => {
-    const tr = track([[0, 0, 'linear'], [1000, 100]]);
+    const tr = track([
+      [0, 0, 'linear'],
+      [1000, 100]
+    ]);
     expect(valueAt(tr, 250, 'heading')).toBeCloseTo(25);
   });
 
   it('eases in and out with smoothstep', () => {
-    const tr = track([[0, 0, 'ease'], [1000, 100]]);
+    const tr = track([
+      [0, 0, 'ease'],
+      [1000, 100]
+    ]);
     expect(valueAt(tr, 500, 'heading')).toBeCloseTo(50);
     expect(valueAt(tr, 250, 'heading')).toBeCloseTo(15.625);
   });
 
   it('passes smoothly through the keys with auto (Catmull-Rom)', () => {
-    const tr = track([[0, 0], [1000, 10], [2000, 20], [3000, 30]]);
+    const tr = track([
+      [0, 0],
+      [1000, 10],
+      [2000, 20],
+      [3000, 30]
+    ]);
     expect(valueAt(tr, 1500, 'heading')).toBeCloseTo(15);
     expect(valueAt(tr, 2000, 'heading')).toBeCloseTo(20);
   });
 
   it('interpolates range in log space', () => {
-    const tr = track([[0, 100, 'linear'], [1000, 400]]);
+    const tr = track([
+      [0, 100, 'linear'],
+      [1000, 400]
+    ]);
     expect(valueAt(tr, 500, 'range')).toBeCloseTo(200);
   });
 
@@ -80,7 +100,10 @@ describe('valueAt', () => {
   });
 
   it('keeps heading unwrapped through north', () => {
-    const tr = track([[0, 350, 'linear'], [1000, 370]]);
+    const tr = track([
+      [0, 350, 'linear'],
+      [1000, 370]
+    ]);
     expect(valueAt(tr, 500, 'heading')).toBeCloseTo(360);
   });
 });
@@ -88,7 +111,10 @@ describe('valueAt', () => {
 describe('viewAt', () => {
   it('combines the three tracks', () => {
     const tracks: CameraTracks = {
-      heading: track([[0, 0, 'linear'], [1000, 100]]),
+      heading: track([
+        [0, 0, 'linear'],
+        [1000, 100]
+      ]),
       pitch: track([[0, -20]], false, -20),
       range: track([[0, 300]], false, 300)
     };
@@ -106,7 +132,15 @@ describe('unwrapNear', () => {
 
 describe('setKey', () => {
   it('inserts a key in time order with auto interp', () => {
-    const tr = setKey(track([[0, 1], [2000, 3]]), 'pitch', 1000, -30);
+    const tr = setKey(
+      track([
+        [0, 1],
+        [2000, 3]
+      ]),
+      'pitch',
+      1000,
+      -30
+    );
     expect(tr.keys.map((k) => [k.t, k.v, k.interp])).toEqual([
       [0, 1, 'auto'],
       [1000, -30, 'auto'],
@@ -138,7 +172,14 @@ describe('setKey', () => {
 
 describe('removeKeys', () => {
   it('removes keys at the given times', () => {
-    const tr = removeKeys(track([[0, 1], [1000, 2], [2000, 3]]), set(1000));
+    const tr = removeKeys(
+      track([
+        [0, 1],
+        [1000, 2],
+        [2000, 3]
+      ]),
+      set(1000)
+    );
     expect(tr.keys.map((k) => k.t)).toEqual([0, 2000]);
   });
 
@@ -152,7 +193,15 @@ describe('removeKeys', () => {
 
 describe('moveKeys', () => {
   it('shifts the picked keys and keeps the order', () => {
-    const tr = moveKeys(track([[0, 1], [1000, 2], [2000, 3]]), set(0, 1000), 1500);
+    const tr = moveKeys(
+      track([
+        [0, 1],
+        [1000, 2],
+        [2000, 3]
+      ]),
+      set(0, 1000),
+      1500
+    );
     expect(tr.keys.map((k) => [k.t, k.v])).toEqual([
       [1500, 1],
       [2000, 3],
@@ -161,14 +210,28 @@ describe('moveKeys', () => {
   });
 
   it('replaces an unmoved key that the moved key lands on', () => {
-    const tr = moveKeys(track([[0, 1], [1000, 2]]), set(0), 1000);
+    const tr = moveKeys(
+      track([
+        [0, 1],
+        [1000, 2]
+      ]),
+      set(0),
+      1000
+    );
     expect(tr.keys.map((k) => [k.t, k.v])).toEqual([[1000, 1]]);
   });
 });
 
 describe('setKeysInterp', () => {
   it('sets interp on the picked keys only', () => {
-    const tr = setKeysInterp(track([[0, 1], [1000, 2]]), set(1000), 'ease');
+    const tr = setKeysInterp(
+      track([
+        [0, 1],
+        [1000, 2]
+      ]),
+      set(1000),
+      'ease'
+    );
     expect(tr.keys.map((k) => k.interp)).toEqual(['auto', 'ease']);
   });
 });
@@ -180,7 +243,15 @@ describe('setAnimated', () => {
   });
 
   it('turning off removes all keys and keeps the shown value', () => {
-    const tr = setAnimated(track([[0, 1], [1000, 9]]), false, 500, 5);
+    const tr = setAnimated(
+      track([
+        [0, 1],
+        [1000, 9]
+      ]),
+      false,
+      500,
+      5
+    );
     expect(tr).toEqual({ animated: false, value: 5, keys: [] });
   });
 });
@@ -209,13 +280,29 @@ describe('shiftValues', () => {
 
 describe('copy and paste', () => {
   const tracks: CameraTracks = {
-    heading: track([[1000, 10], [3000, 20]]),
+    heading: track([
+      [1000, 10],
+      [3000, 20]
+    ]),
     pitch: track([[3000, -30, 'hold']]),
-    range: track([[1000, 300], [3000, 400]], false, 300)
+    range: track(
+      [
+        [1000, 300],
+        [3000, 400]
+      ],
+      false,
+      300
+    )
   };
 
   it('copies picked keys relative to the first one', () => {
-    const clip = copyKeys(tracks, timeSets([{ prop: 'heading', t: 1000 }, { prop: 'pitch', t: 3000 }]))!;
+    const clip = copyKeys(
+      tracks,
+      timeSets([
+        { prop: 'heading', t: 1000 },
+        { prop: 'pitch', t: 3000 }
+      ])
+    )!;
     expect(clip.heading).toEqual([{ t: 0, v: 10, interp: 'auto' }]);
     expect(clip.pitch).toEqual([{ t: 2000, v: -30, interp: 'hold' }]);
     expect(clip.range).toBeUndefined();
@@ -226,7 +313,13 @@ describe('copy and paste', () => {
   });
 
   it('pastes at a time keeping the spacing and skips tracks not animated', () => {
-    const clip = copyKeys(tracks, timeSets([{ prop: 'heading', t: 1000 }, { prop: 'heading', t: 3000 }]))!;
+    const clip = copyKeys(
+      tracks,
+      timeSets([
+        { prop: 'heading', t: 1000 },
+        { prop: 'heading', t: 3000 }
+      ])
+    )!;
     const out = pasteKeys(tracks, clip, 10_000);
     expect(out.heading.keys.map((k) => k.t)).toEqual([1000, 3000, 10_000, 12_000]);
     expect(out.heading.keys.at(-1)!.v).toBe(20);
@@ -247,7 +340,10 @@ describe('captureView', () => {
 describe('clearKeys', () => {
   it('stops every track at the value shown at t', () => {
     const tracks: CameraTracks = {
-      heading: track([[0, 30], [1000, 60]]),
+      heading: track([
+        [0, 30],
+        [1000, 60]
+      ]),
       pitch: track([[0, -20]]),
       range: track([[0, 300]])
     };
@@ -259,7 +355,14 @@ describe('clearKeys', () => {
 
 describe('parseTracks', () => {
   const good = {
-    heading: { animated: true, value: 0, keys: [{ t: 2000, v: 40, interp: 'hold' }, { t: 1000, v: 10, interp: 'linear' }] },
+    heading: {
+      animated: true,
+      value: 0,
+      keys: [
+        { t: 2000, v: 40, interp: 'hold' },
+        { t: 1000, v: 10, interp: 'linear' }
+      ]
+    },
     pitch: { animated: false, value: -30, keys: [] },
     range: { animated: true, value: 300, keys: [{ t: 0, v: 5, interp: 'auto' }] }
   };

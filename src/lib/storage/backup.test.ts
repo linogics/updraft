@@ -16,7 +16,9 @@ describe('restoreBackup validation', () => {
   });
 
   it('rejects flights without id or fixes', async () => {
-    await expect(restoreBackup({ ...ok, flights: [{ id: 'a', fixes: [] }] }, 'merge')).rejects.toThrow('without id or track');
+    await expect(restoreBackup({ ...ok, flights: [{ id: 'a', fixes: [] }] }, 'merge')).rejects.toThrow(
+      'without id or track'
+    );
     await expect(restoreBackup({ ...ok, flights: [{ fixes: [{}] }] }, 'merge')).rejects.toThrow('without id or track');
   });
 

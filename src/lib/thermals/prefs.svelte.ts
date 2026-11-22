@@ -22,7 +22,10 @@ class ThermalOverlayPrefs {
   set(patch: Partial<ThermalOverlayPrefsValue>) {
     Object.assign(this, patch);
     try {
-      localStorage.setItem(KEY, JSON.stringify({ hotspots: this.hotspots, skyways: this.skyways, opacity: this.opacity }));
+      localStorage.setItem(
+        KEY,
+        JSON.stringify({ hotspots: this.hotspots, skyways: this.skyways, opacity: this.opacity })
+      );
     } catch {
       // Not persisted, the choice still applies for this session.
     }

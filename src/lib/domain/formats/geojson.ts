@@ -23,14 +23,17 @@ function featureFixes(f: Json): Fix[] {
   const times = p.coordTimes ?? p.coordinateProperties?.times;
   if (g?.type === 'LineString') return lineFixes(g.coordinates, times);
   if (g?.type === 'MultiLineString') {
-    return (g.coordinates as number[][][]).flatMap((line, i) => lineFixes(line, Array.isArray(times) ? times[i] : undefined));
+    return (g.coordinates as number[][][]).flatMap((line, i) =>
+      lineFixes(line, Array.isArray(times) ? times[i] : undefined)
+    );
   }
   return [];
 }
 
 export function readGeoJson(text: string, sourceName: string): Flight {
   const json = JSON.parse(text);
-  const features: Json[] = json.type === 'FeatureCollection' ? json.features : json.type === 'Feature' ? [json] : [{ geometry: json }];
+  const features: Json[] =
+    json.type === 'FeatureCollection' ? json.features : json.type === 'Feature' ? [json] : [{ geometry: json }];
   const fixes = features.flatMap(featureFixes);
   if (!fixes.length) throw new Error(m.format_geojson_no_time({ name: sourceName }));
   return toFlight(sourceName, fixes);

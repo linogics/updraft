@@ -11,7 +11,12 @@
 
 <div class="fields">
   <label for="as-show">{m.airspace_show()}</label>
-  <input id="as-show" type="checkbox" checked={prefs.show} onchange={(e) => prefs.set({ show: e.currentTarget.checked })} />
+  <input
+    id="as-show"
+    type="checkbox"
+    checked={prefs.show}
+    onchange={(e) => prefs.set({ show: e.currentTarget.checked })}
+  />
   <span>{m.airspace_classes()}</span>
   <span class="classes">
     {#each AIRSPACE_CLASSES as c (c)}
@@ -20,7 +25,9 @@
           type="checkbox"
           checked={prefs.classes.includes(c)}
           onchange={(e) =>
-            prefs.set({ classes: AIRSPACE_CLASSES.filter((x) => (x === c ? e.currentTarget.checked : prefs.classes.includes(x))) })}
+            prefs.set({
+              classes: AIRSPACE_CLASSES.filter((x) => (x === c ? e.currentTarget.checked : prefs.classes.includes(x)))
+            })}
         />
         {c === 'other' ? m.airspace_class_other() : c}
       </label>
@@ -60,7 +67,9 @@
 </div>
 {#if !prefs.key}
   <p class="hint">
-    {@html m.airspace_key_hint({ link: '<a href="https://www.openaip.net" target="_blank" rel="noreferrer">openaip.net</a>' })}
+    {@html m.airspace_key_hint({
+      link: '<a href="https://www.openaip.net" target="_blank" rel="noreferrer">openaip.net</a>'
+    })}
   </p>
 {/if}
 

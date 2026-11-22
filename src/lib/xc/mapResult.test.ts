@@ -8,7 +8,11 @@ describe('mapResult', () => {
     const s: RawSolution = {
       score: 30,
       opt: { scoring: { code: 'od', multiplier: 1 } },
-      scoreInfo: { distance: 30, ep: { start: p(1, 40), finish: p(1.4, 40.2) }, tp: [p(1.1, 40.05), p(1.2, 40.1), p(1.3, 40.15)] }
+      scoreInfo: {
+        distance: 30,
+        ep: { start: p(1, 40), finish: p(1.4, 40.2) },
+        tp: [p(1.1, 40.05), p(1.2, 40.1), p(1.3, 40.15)]
+      }
     };
     const r = mapResult('XContest', s)!;
     expect(r.type).toBe('free');
@@ -22,7 +26,11 @@ describe('mapResult', () => {
     const s: RawSolution = {
       score: 24,
       opt: { scoring: { code: 'fai', multiplier: 2 } },
-      scoreInfo: { distance: 12, tp: [p(1, 40), p(1.1, 40), p(1.05, 40.1)], cp: { d: 0.5, in: p(1, 40), out: p(1, 40.01) } }
+      scoreInfo: {
+        distance: 12,
+        tp: [p(1, 40), p(1.1, 40), p(1.05, 40.1)],
+        cp: { d: 0.5, in: p(1, 40), out: p(1, 40.01) }
+      }
     };
     const r = mapResult('FAI', s)!;
     expect(r.type).toBe('fai');

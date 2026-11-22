@@ -117,7 +117,13 @@ export class FlightLayer {
   }
 
   private cartesian(lon: number, lat: number, alt: number, result?: Cesium.Cartesian3): Cesium.Cartesian3 {
-    return Cesium.Cartesian3.fromDegrees(lon, lat, (alt + this.loaded.altOffset) * this.getExaggeration(), undefined, result);
+    return Cesium.Cartesian3.fromDegrees(
+      lon,
+      lat,
+      (alt + this.loaded.altOffset) * this.getExaggeration(),
+      undefined,
+      result
+    );
   }
 
   /** Interpolated pilot position at time t. Reuses an internal scratch unless result is given. */
@@ -326,7 +332,9 @@ export class FlightLayer {
   /** Bounding sphere around the whole track, for the initial camera view. */
   boundingSphere(): Cesium.BoundingSphere {
     const { fixes } = this.loaded.flight;
-    return Cesium.BoundingSphere.fromPoints(fixes.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3())));
+    return Cesium.BoundingSphere.fromPoints(
+      fixes.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()))
+    );
   }
 
   destroy() {

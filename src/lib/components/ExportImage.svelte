@@ -26,7 +26,9 @@
 
   const w = $derived(clamp(width));
   const h = $derived(clamp(height));
-  const credits = $derived(mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways));
+  const credits = $derived(
+    mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
+  );
   const canExport = $derived(!!replay.capture && !!replay.selected && !busy);
 
   function pick(p: { width: number; height: number }) {

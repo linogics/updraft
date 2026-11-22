@@ -16,14 +16,21 @@ const PRECACHED = new Set(PRECACHE);
 const PAGES = new Set(prerendered.map((page) => absolute(page.path)));
 
 sw.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => sw.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(PRECACHE))
+      .then(() => sw.skipWaiting())
+  );
 });
 
 sw.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith('updraft-') && key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key.startsWith('updraft-') && key !== CACHE).map((key) => caches.delete(key)))
+      )
       .then(() => sw.clients.claim())
   );
 });
@@ -37,7 +44,12 @@ sw.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(navigate(request, url.pathname));
   } else if (PRECACHED.has(url.pathname)) {
-    event.respondWith(caches.open(CACHE).then((cache) => cache.match(url.pathname)).then((hit) => hit ?? fetch(request)));
+    event.respondWith(
+      caches
+        .open(CACHE)
+        .then((cache) => cache.match(url.pathname))
+        .then((hit) => hit ?? fetch(request))
+    );
   }
 });
 

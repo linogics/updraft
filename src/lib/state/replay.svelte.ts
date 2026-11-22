@@ -336,9 +336,7 @@ export class ReplayState {
   setPilotColor(id: string, hex: string | null) {
     const { [id]: _, ...rest } = this.colorOverrides;
     this.colorOverrides = hex ? { ...rest, [id]: hex } : rest;
-    this.flights = this.flights.map((f, i) =>
-      f.flight.id === id ? { ...f, color: hex ?? pilotColor(i) } : f
-    );
+    this.flights = this.flights.map((f, i) => (f.flight.id === id ? { ...f, color: hex ?? pilotColor(i) } : f));
   }
 
   setVisible(id: string, visible: boolean) {

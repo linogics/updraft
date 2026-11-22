@@ -27,7 +27,12 @@ describe('smoothPath', () => {
   });
 
   it('leaves gaps straight, by time and by distance', () => {
-    const late = [fix(0, 47, 8), fix(1, 47, 8.0003), fix(2, 47, 8.0006, 1000, 200_000), fix(3, 47, 8.0009, 1000, 201_000)];
+    const late = [
+      fix(0, 47, 8),
+      fix(1, 47, 8.0003),
+      fix(2, 47, 8.0006, 1000, 200_000),
+      fix(3, 47, 8.0009, 1000, 201_000)
+    ];
     const far = [fix(0, 47, 8), fix(1, 47, 8.0003), fix(2, 47, 8.02), fix(3, 47, 8.0203)];
 
     for (const fixes of [late, far]) {

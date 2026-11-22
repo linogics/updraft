@@ -23,7 +23,11 @@ describe('route codec', () => {
 
 describe('densify', () => {
   it('keeps every point and adds steps per leg', () => {
-    const pts = [{ lat: 0, lon: 0 }, { lat: 1, lon: 2 }, { lat: 2, lon: 2 }];
+    const pts = [
+      { lat: 0, lon: 0 },
+      { lat: 1, lon: 2 },
+      { lat: 2, lon: 2 }
+    ];
     const out = densify(pts, 4);
     expect(out).toHaveLength(9);
     expect(out[0]).toEqual(pts[0]);

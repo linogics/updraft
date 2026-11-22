@@ -15,7 +15,10 @@ export class XcRoute {
     this.clear();
     if (!score) return;
     const paths = [score.turnpoints, ...(score.closing ? [ring(score.closing.center, score.closing.radius)] : [])];
-    for (const [width, color] of [[7, Cesium.Color.fromCssColorString('#0b0c0f')], [3, Cesium.Color.WHITE]] as const) {
+    for (const [width, color] of [
+      [7, Cesium.Color.fromCssColorString('#0b0c0f')],
+      [3, Cesium.Color.WHITE]
+    ] as const) {
       for (const pts of paths) {
         this.entities.push(
           this.viewer.entities.add({ polyline: { positions: line(pts), width, material: color, clampToGround: true } })

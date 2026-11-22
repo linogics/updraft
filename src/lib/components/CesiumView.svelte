@@ -5,11 +5,11 @@
   import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
   import { XcRoute } from '#lib/cesium/xcRoute';
-import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
-import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-import { ThermalLayer } from '#lib/cesium/thermalLayer';
-import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
-import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
+  import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
+  import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+  import { ThermalLayer } from '#lib/cesium/thermalLayer';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
+  import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
   import { m } from '#lib/paraglide/messages';
@@ -72,7 +72,16 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
       await applyTerrain(v, replay.terrain);
       if (!alive) return;
 
-      for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time, () => replay.exaggeration));
+      for (const lf of replay.flights)
+        layers.set(
+          lf.flight.id,
+          new FlightLayer(
+            v,
+            lf,
+            () => replay.time,
+            () => replay.exaggeration
+          )
+        );
       camera = new CameraController(v);
       xcRoute = new XcRoute(v);
       airspaceLayer = new AirspaceLayer(v);
@@ -207,7 +216,8 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
     if (!ready) return;
     const { colorBy, trackStyle, trackWidth, smoothTrack } = replay;
     void replay.exaggeration;
-    for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
+    for (const lf of replay.flights)
+      layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
   });
 
   $effect(() => {

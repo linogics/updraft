@@ -80,7 +80,13 @@ export function laneCurve(
   }
   const inView = track.keys.filter((k) => k.t >= a && k.t <= b).map((k) => toLane(prop, k.v));
   const scale = laneScale([...us, ...inView]);
-  return { d: polyline(xs, us.map((u) => valueY(u, scale, ROW_PX))), scale };
+  return {
+    d: polyline(
+      xs,
+      us.map((u) => valueY(u, scale, ROW_PX))
+    ),
+    scale
+  };
 }
 
 export interface Snap {
@@ -120,9 +126,7 @@ export function keysInBox(points: LanePoint[], box: Box): KeyRef[] {
   const xb = Math.max(box.x0, box.x1);
   const ya = Math.min(box.y0, box.y1);
   const yb = Math.max(box.y0, box.y1);
-  return points
-    .filter((p) => p.x >= xa && p.x <= xb && p.y >= ya && p.y <= yb)
-    .map(({ prop, t }) => ({ prop, t }));
+  return points.filter((p) => p.x >= xa && p.x <= xb && p.y >= ya && p.y <= yb).map(({ prop, t }) => ({ prop, t }));
 }
 
 /** Union of two selections without duplicates. */

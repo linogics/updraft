@@ -53,28 +53,36 @@ const START = { lat: 47.6646, lon: 11.531, alt: 1600, heading: 160 };
 
 export function buildDemoFlights(): Flight[] {
   const day = Date.UTC(2026, 6, 18, 11, 20);
-  const a = fly({ ...START, t: day }, [
-    { kind: 'glide', seconds: 90, heading: 126, speed: 11, sink: 1.2 },
-    { kind: 'thermal', seconds: 196, climb: 2.2, radius: 39.2, period: 21.6, direction: 1 },
-    { kind: 'glide', seconds: 260, heading: 256, speed: 9.4, sink: 1.1 },
-    { kind: 'thermal', seconds: 189, climb: 1.6, radius: 35, period: 24.5, direction: -1 },
-    { kind: 'glide', seconds: 320, heading: 318, speed: 11.1, sink: 1.1 },
-    { kind: 'thermal', seconds: 121, climb: 1.6, radius: 49.1, period: 26.7, direction: 1 },
-    { kind: 'glide', seconds: 420, heading: 52, speed: 9.8, sink: 1.1 },
-    { kind: 'thermal', seconds: 153, climb: 1.5, radius: 45.6, period: 24.7, direction: 1 },
-    { kind: 'glide', seconds: 360, heading: 89, speed: 11.6, sink: 1.3 }
-  ], 1);
-  const b = fly({ ...START, lat: START.lat + 0.0004, t: day + 75_000 }, [
-    { kind: 'glide', seconds: 110, heading: 139, speed: 10.9, sink: 1.1 },
-    { kind: 'thermal', seconds: 155, climb: 2.8, radius: 43.6, period: 24.5, direction: -1 },
-    { kind: 'glide', seconds: 240, heading: 239, speed: 9.8, sink: 1.5 },
-    { kind: 'thermal', seconds: 210, climb: 2.6, radius: 41.1, period: 22.9, direction: -1 },
-    { kind: 'glide', seconds: 300, heading: 298, speed: 12.6, sink: 1.1 },
-    { kind: 'thermal', seconds: 166, climb: 1.0, radius: 51.4, period: 23.1, direction: 1 },
-    { kind: 'glide', seconds: 450, heading: 46, speed: 9.6, sink: 1.2 },
-    { kind: 'thermal', seconds: 174, climb: 1.1, radius: 48.4, period: 24.9, direction: -1 },
-    { kind: 'glide', seconds: 330, heading: 126, speed: 10.1, sink: 1.6 }
-  ], 4);
+  const a = fly(
+    { ...START, t: day },
+    [
+      { kind: 'glide', seconds: 90, heading: 126, speed: 11, sink: 1.2 },
+      { kind: 'thermal', seconds: 196, climb: 2.2, radius: 39.2, period: 21.6, direction: 1 },
+      { kind: 'glide', seconds: 260, heading: 256, speed: 9.4, sink: 1.1 },
+      { kind: 'thermal', seconds: 189, climb: 1.6, radius: 35, period: 24.5, direction: -1 },
+      { kind: 'glide', seconds: 320, heading: 318, speed: 11.1, sink: 1.1 },
+      { kind: 'thermal', seconds: 121, climb: 1.6, radius: 49.1, period: 26.7, direction: 1 },
+      { kind: 'glide', seconds: 420, heading: 52, speed: 9.8, sink: 1.1 },
+      { kind: 'thermal', seconds: 153, climb: 1.5, radius: 45.6, period: 24.7, direction: 1 },
+      { kind: 'glide', seconds: 360, heading: 89, speed: 11.6, sink: 1.3 }
+    ],
+    1
+  );
+  const b = fly(
+    { ...START, lat: START.lat + 0.0004, t: day + 75_000 },
+    [
+      { kind: 'glide', seconds: 110, heading: 139, speed: 10.9, sink: 1.1 },
+      { kind: 'thermal', seconds: 155, climb: 2.8, radius: 43.6, period: 24.5, direction: -1 },
+      { kind: 'glide', seconds: 240, heading: 239, speed: 9.8, sink: 1.5 },
+      { kind: 'thermal', seconds: 210, climb: 2.6, radius: 41.1, period: 22.9, direction: -1 },
+      { kind: 'glide', seconds: 300, heading: 298, speed: 12.6, sink: 1.1 },
+      { kind: 'thermal', seconds: 166, climb: 1.0, radius: 51.4, period: 23.1, direction: 1 },
+      { kind: 'glide', seconds: 450, heading: 46, speed: 9.6, sink: 1.2 },
+      { kind: 'thermal', seconds: 174, climb: 1.1, radius: 48.4, period: 24.9, direction: -1 },
+      { kind: 'glide', seconds: 330, heading: 126, speed: 10.1, sink: 1.6 }
+    ],
+    4
+  );
 
   const flight = (id: string, pilot: string, glider: string, fixes: Fix[]): Flight => ({
     id,
@@ -85,5 +93,8 @@ export function buildDemoFlights(): Flight[] {
     date: '2026-07-18',
     fixes
   });
-  return [flight('demo-anna', 'Anna (demo)', 'Ozone Rush 6', a), flight('demo-ben', 'Ben (demo)', 'Advance Iota DLS', b)];
+  return [
+    flight('demo-anna', 'Anna (demo)', 'Ozone Rush 6', a),
+    flight('demo-ben', 'Ben (demo)', 'Advance Iota DLS', b)
+  ];
 }

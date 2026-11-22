@@ -21,7 +21,14 @@
   import { m } from '#lib/paraglide/messages';
   import { formatClock } from '#lib/ui/format';
 
-  let { replay, editor, x, msPerPx, width, view }: {
+  let {
+    replay,
+    editor,
+    x,
+    msPerPx,
+    width,
+    view
+  }: {
     replay: ReplayState;
     editor: CameraEditor;
     /** Time to px, as the clips use it. */
@@ -105,7 +112,18 @@
     const anchor = refs[0];
     const moving = editor.isOn(anchor) ? editor.live : refs;
     if (!editor.isOn(anchor)) editor.select(refs);
-    drag = { refs: moving, anchor, collapse: refs, x0: e.clientX, y0: e.clientY, scale, axis: null, dt: 0, dv: 0, guide: null };
+    drag = {
+      refs: moving,
+      anchor,
+      collapse: refs,
+      x0: e.clientX,
+      y0: e.clientY,
+      scale,
+      axis: null,
+      dt: 0,
+      dv: 0,
+      guide: null
+    };
   }
 
   function onKeyMove(e: PointerEvent) {
@@ -119,7 +137,9 @@
     }
     if (axis === 'x') {
       const candidate = d.anchor.t + dx * msPerPx;
-      const snap = e.altKey ? { t: candidate, guide: null } : snapTime(candidate, snapTargets(d.refs), SNAP_PX * msPerPx);
+      const snap = e.altKey
+        ? { t: candidate, guide: null }
+        : snapTime(candidate, snapTargets(d.refs), SNAP_PX * msPerPx);
       drag = { ...d, axis, dt: snap.t - d.anchor.t, guide: snap.guide };
     } else if (axis === 'y' && d.scale) {
       drag = { ...d, axis, dv: laneDelta(dy, d.scale, ROW_PX) };
@@ -195,8 +215,15 @@
             class="key {k.interp}"
             class:sel
             aria-pressed={sel}
-            aria-label={m.camera_key_aria({ prop: PROP_LABEL[lane.prop](), time: formatClock(k.t), interp: INTERP_INFO[k.interp].label() })}
-            title={m.camera_key_title({ prop: PROP_LABEL[lane.prop](), info: INTERP_INFO[k.interp].title().toLowerCase() })}
+            aria-label={m.camera_key_aria({
+              prop: PROP_LABEL[lane.prop](),
+              time: formatClock(k.t),
+              interp: INTERP_INFO[k.interp].label()
+            })}
+            title={m.camera_key_title({
+              prop: PROP_LABEL[lane.prop](),
+              info: INTERP_INFO[k.interp].title().toLowerCase()
+            })}
             style:left="{x(k.t + s.dt)}px"
             style:top="{valueY(toLane(lane.prop, k.v) + s.dv, lane.scale, ROW_PX)}px"
             onpointerdown={(e) => onKeyDown(e, [{ prop: lane.prop, t: k.t }], lane.scale)}
@@ -219,10 +246,18 @@
           class:sel
           aria-pressed={sel}
           aria-label={m.camera_keys_at({ time: formatClock(s.t) })}
-          title={m.camera_keys_at_props({ time: formatClock(s.t), props: s.props.map((p) => PROP_LABEL[p]()).join(', ') })}
+          title={m.camera_keys_at_props({
+            time: formatClock(s.t),
+            props: s.props.map((p) => PROP_LABEL[p]()).join(', ')
+          })}
           style:left="{x(s.t + sh.dt)}px"
           style:top="{ROW_PX / 2}px"
-          onpointerdown={(e) => onKeyDown(e, s.props.map((p) => ({ prop: p, t: s.t })), null)}
+          onpointerdown={(e) =>
+            onKeyDown(
+              e,
+              s.props.map((p) => ({ prop: p, t: s.t })),
+              null
+            )}
           onpointermove={onKeyMove}
           onpointerup={onKeyUp}
           onpointercancel={() => (drag = null)}

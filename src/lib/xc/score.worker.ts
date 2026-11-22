@@ -14,10 +14,19 @@ self.onmessage = (e: MessageEvent<{ fixes: Fix[]; league: XcLeague }>) => {
   const flight = {
     fixes: fixes
       .filter((_, i) => i % stride === 0 || i === fixes.length - 1)
-      .map((f) => ({ timestamp: f.t, latitude: f.lat, longitude: f.lon, valid: true, pressureAltitude: f.alt, gpsAltitude: f.alt }))
+      .map((f) => ({
+        timestamp: f.t,
+        latitude: f.lat,
+        longitude: f.lon,
+        valid: true,
+        pressureAltitude: f.alt,
+        gpsAltitude: f.alt
+      }))
   };
   try {
-    const best = solver(flight as never, (scoringRules as Record<string, object>)[league], { maxcycle: BUDGET_MS }).next().value;
+    const best = solver(flight as never, (scoringRules as Record<string, object>)[league], {
+      maxcycle: BUDGET_MS
+    }).next().value;
     self.postMessage({ score: best ? mapResult(league, best as never) : null });
   } catch (err) {
     self.postMessage({ error: String(err) });

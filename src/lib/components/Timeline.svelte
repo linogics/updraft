@@ -67,7 +67,9 @@
     replay.flights.map((f) => ({
       f,
       path: sparkline(f),
-      thermals: f.climbs.thermals.map((th) => (f.source.fixes[th.start].t - f.source.fixes[0].t) / Math.max(1, duration(f)))
+      thermals: f.climbs.thermals.map(
+        (th) => (f.source.fixes[th.start].t - f.source.fixes[0].t) / Math.max(1, duration(f))
+      )
     }))
   );
 
@@ -176,14 +178,22 @@
   <div class="head">
     <div class="modes" role="group" aria-label={m.timeline_alignment()}>
       {#each MODES as entry (entry.mode)}
-        <button class:active={replay.syncMode === entry.mode} title={entry.title()} onclick={() => replay.setSyncMode(entry.mode)}>
+        <button
+          class:active={replay.syncMode === entry.mode}
+          title={entry.title()}
+          onclick={() => replay.setSyncMode(entry.mode)}
+        >
           {entry.label()}
         </button>
       {/each}
     </div>
     <span class="hint">{m.timeline_hint()}</span>
-    <button onclick={() => replay.undoCamera()} disabled={!replay.canUndoCamera} title={m.timeline_undo_title()}>{m.timeline_undo()}</button>
-    <button onclick={() => replay.redoCamera()} disabled={!replay.canRedoCamera} title={m.timeline_redo_title()}>{m.timeline_redo()}</button>
+    <button onclick={() => replay.undoCamera()} disabled={!replay.canUndoCamera} title={m.timeline_undo_title()}>
+      {m.timeline_undo()}
+    </button>
+    <button onclick={() => replay.redoCamera()} disabled={!replay.canRedoCamera} title={m.timeline_redo_title()}>
+      {m.timeline_redo()}
+    </button>
     {#if zoom}<button onclick={() => (zoom = null)}>{m.timeline_fit()}</button>{/if}
   </div>
 
@@ -236,7 +246,11 @@
             style:left="{left}px"
             style:width="{Math.max(4, duration(f) / msPerPx)}px"
             style:--c={f.color}
-            title={m.timeline_clip_title({ pilot: f.source.pilot, from: formatClock(f.source.fixes[0].t), to: formatClock(f.source.fixes.at(-1)!.t) })}
+            title={m.timeline_clip_title({
+              pilot: f.source.pilot,
+              from: formatClock(f.source.fixes[0].t),
+              to: formatClock(f.source.fixes.at(-1)!.t)
+            })}
             onpointerdown={(e) => onClipDown(e, f)}
             onpointermove={(e) => onClipMove(e, f)}
             onpointerup={() => onClipUp(f)}
@@ -390,7 +404,9 @@
   }
   .clip.dragging {
     cursor: grabbing;
-    box-shadow: 0 0 0 2px var(--surface), 0 2px 8px rgba(0, 0, 0, 0.5);
+    box-shadow:
+      0 0 0 2px var(--surface),
+      0 2px 8px rgba(0, 0, 0, 0.5);
     z-index: 2;
   }
   .clip.hidden {

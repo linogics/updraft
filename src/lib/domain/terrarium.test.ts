@@ -36,7 +36,13 @@ describe('terrariumHeight', () => {
 
 describe('resampleTerrarium', () => {
   it('returns an outSize² heightmap', () => {
-    expect(resampleTerrarium(tile(4, () => 100), 4, 3)).toHaveLength(9);
+    expect(
+      resampleTerrarium(
+        tile(4, () => 100),
+        4,
+        3
+      )
+    ).toHaveLength(9);
   });
 
   it('puts corner samples on the edge pixels', () => {

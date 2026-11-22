@@ -22,7 +22,11 @@ const WIDGETS_OFF = {
 function basemapLayer(id: BasemapId): Cesium.ImageryLayer {
   const { tiles, maxZoom, attribution } = BASEMAPS[id];
   return new Cesium.ImageryLayer(
-    new Cesium.UrlTemplateImageryProvider({ url: tiles[0], maximumLevel: maxZoom, credit: new Cesium.Credit(attribution) })
+    new Cesium.UrlTemplateImageryProvider({
+      url: tiles[0],
+      maximumLevel: maxZoom,
+      credit: new Cesium.Credit(attribution)
+    })
   );
 }
 

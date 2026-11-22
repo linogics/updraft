@@ -91,7 +91,9 @@
       <label for="ion-token">{m.toolbar_ion_token()}</label>
       <input id="ion-token" type="password" autocomplete="off" bind:value={ionToken} placeholder="eyJhbGciOi…" />
       <p>
-        {@html m.toolbar_ion_help({ link: '<a href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">ion.cesium.com</a>' })}
+        {@html m.toolbar_ion_help({
+          link: '<a href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">ion.cesium.com</a>'
+        })}
       </p>
       {#if ionError}<p class="error" role="alert">{ionError}</p>{/if}
       <button type="submit">{m.toolbar_ion_save()}</button>
@@ -102,7 +104,9 @@
   <UnitsMenu />
 
   {#if canFullscreen}
-    <button onclick={toggleFullscreen} aria-pressed={fullscreen}>{fullscreen ? m.toolbar_exit_fullscreen() : m.toolbar_fullscreen()}</button>
+    <button onclick={toggleFullscreen} aria-pressed={fullscreen}>
+      {fullscreen ? m.toolbar_exit_fullscreen() : m.toolbar_fullscreen()}
+    </button>
   {/if}
 </div>
 

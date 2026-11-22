@@ -55,7 +55,10 @@ export function syncAirspaces(map: maplibregl.Map, p: AirspacePrefsValue, key: s
   if (!src) {
     map.addSource(SOURCE, { type: 'vector', tiles: [tiles], minzoom: 0, maxzoom: 14, attribution: '© openAIP' });
     map.addLayer({ id: FILL, type: 'fill', source: SOURCE, 'source-layer': 'airspaces', paint: {} }, before);
-    map.addLayer({ id: LINE, type: 'line', source: SOURCE, 'source-layer': 'airspaces', paint: { 'line-width': 1 } }, before);
+    map.addLayer(
+      { id: LINE, type: 'line', source: SOURCE, 'source-layer': 'airspaces', paint: { 'line-width': 1 } },
+      before
+    );
   } else if (src.tiles?.[0] !== tiles) src.setTiles([tiles]);
   const f = filter(p);
   map.setFilter(FILL, f);

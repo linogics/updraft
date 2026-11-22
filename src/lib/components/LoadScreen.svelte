@@ -7,7 +7,14 @@
 
 <div class="screen">
   <div class="box">
-    <div class="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-valuetext={steps[step]}>
+    <div
+      class="bar"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      aria-valuetext={steps[step]}
+    >
       <span style:width="{Math.max(pct, 4)}%"></span>
     </div>
     <ol>

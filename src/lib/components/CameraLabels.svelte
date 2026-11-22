@@ -34,15 +34,21 @@
   const active = $derived(replay.camera === 'keys');
 
   /** Headings read within one turn, the others as whole numbers. */
-  const shown = (prop: CameraProp, v: number) => (prop === 'heading' ? ((Math.round(v) % 360) + 360) % 360 : Math.round(v));
+  const shown = (prop: CameraProp, v: number) =>
+    prop === 'heading' ? ((Math.round(v) % 360) + 360) % 360 : Math.round(v);
 
   function auto() {
     const sel = replay.selected;
     if (!sel) return;
-    const next = directCamera(sel.flight, sel.analysis.phases, {
-      inMs: replay.exportIn ?? replay.start,
-      outMs: replay.exportOut ?? replay.end
-    }, density);
+    const next = directCamera(
+      sel.flight,
+      sel.analysis.phases,
+      {
+        inMs: replay.exportIn ?? replay.start,
+        outMs: replay.exportOut ?? replay.end
+      },
+      density
+    );
     if (!hasKeys(next)) {
       editor.message = m.camera_range_empty();
       return;
@@ -113,11 +119,7 @@
       <option value={d}>{DENSITY_LABELS[d]()}</option>
     {/each}
   </select>
-  <button
-    onclick={capture}
-    disabled={!replay.captureCameraView}
-    title={m.camera_capture_title()}
-  >
+  <button onclick={capture} disabled={!replay.captureCameraView} title={m.camera_capture_title()}>
     {m.camera_capture()}
   </button>
   <button onclick={clear} title={m.camera_clear_title()}>{m.camera_clear()}</button>
@@ -126,7 +128,9 @@
 {#if editor.live.length}
   <div class="cam-row bar" role="group" aria-label={m.camera_selected_keys()}>
     {#each INTERPS as interp (interp)}
-      <button title={INTERP_INFO[interp].title()} onclick={() => editor.setInterp(interp)}>{INTERP_INFO[interp].label()}</button>
+      <button title={INTERP_INFO[interp].title()} onclick={() => editor.setInterp(interp)}>
+        {INTERP_INFO[interp].label()}
+      </button>
     {/each}
     <button title={m.camera_delete_selected()} onclick={() => editor.remove()}>{m.common_delete()}</button>
   </div>
@@ -161,16 +165,32 @@
         onchange={(e) => setFromField(prop, e)}
       />
       <span class="nav">
-        <button aria-label={m.camera_prev_key_aria({ prop: label })} title={m.camera_prev_key()} disabled={prev === undefined} onclick={() => replay.seek(prev!)}>‹</button>
+        <button
+          aria-label={m.camera_prev_key_aria({ prop: label })}
+          title={m.camera_prev_key()}
+          disabled={prev === undefined}
+          onclick={() => replay.seek(prev!)}
+        >
+          ‹
+        </button>
         <button
           class="diamond"
           class:filled={atPlayhead}
           aria-pressed={atPlayhead}
-          aria-label={atPlayhead ? m.camera_remove_diamond_aria({ prop: label }) : m.camera_add_diamond_aria({ prop: label })}
+          aria-label={atPlayhead
+            ? m.camera_remove_diamond_aria({ prop: label })
+            : m.camera_add_diamond_aria({ prop: label })}
           title={atPlayhead ? m.camera_remove_key_title() : m.camera_add_key_title()}
           onclick={() => togglePlayheadKey(prop)}
         ></button>
-        <button aria-label={m.camera_next_key_aria({ prop: label })} title={m.camera_next_key()} disabled={next === undefined} onclick={() => replay.seek(next!)}>›</button>
+        <button
+          aria-label={m.camera_next_key_aria({ prop: label })}
+          title={m.camera_next_key()}
+          disabled={next === undefined}
+          onclick={() => replay.seek(next!)}
+        >
+          ›
+        </button>
       </span>
     </div>
   {/each}

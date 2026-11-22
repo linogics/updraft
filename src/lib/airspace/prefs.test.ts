@@ -4,7 +4,12 @@ import { parseAirspacePrefs } from './prefs';
 
 describe('parseAirspacePrefs', () => {
   it('defaults when nothing is stored', () => {
-    expect(parseAirspacePrefs(null)).toEqual({ show: false, classes: [...AIRSPACE_CLASSES], maxFloor: 4000, opacity: 0.25 });
+    expect(parseAirspacePrefs(null)).toEqual({
+      show: false,
+      classes: [...AIRSPACE_CLASSES],
+      maxFloor: 4000,
+      opacity: 0.25
+    });
   });
 
   it('keeps valid fields, clamps numbers and starts hidden', () => {
@@ -17,6 +22,8 @@ describe('parseAirspacePrefs', () => {
   });
 
   it('falls back for garbage', () => {
-    expect(parseAirspacePrefs({ show: 'yes', classes: 'A', maxFloor: 'x', opacity: NaN })).toEqual(parseAirspacePrefs(null));
+    expect(parseAirspacePrefs({ show: 'yes', classes: 'A', maxFloor: 'x', opacity: NaN })).toEqual(
+      parseAirspacePrefs(null)
+    );
   });
 });

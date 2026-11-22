@@ -126,16 +126,27 @@
     </dl>
     <div class="phases" role="img" aria-label={m.stats_phase_share()}>
       {#each shares as s (s.k)}
-        <span style:flex={s.v} style:background={phaseColor(s.k)} title="{PHASE_LABELS[s.k]()} {Math.round(s.v * 100)}%"></span>
+        <span style:flex={s.v} style:background={phaseColor(s.k)} title="{PHASE_LABELS[s.k]()} {Math.round(s.v * 100)}%"
+        ></span>
       {/each}
     </div>
     <ul class="legend">
       {#each shares as s (s.k)}
-        <li><span class="dot" style:background={phaseColor(s.k)}></span>{PHASE_LABELS[s.k]()} {Math.round(s.v * 100)}%</li>
+        <li>
+          <span class="dot" style:background={phaseColor(s.k)}></span>{PHASE_LABELS[s.k]()}
+          {Math.round(s.v * 100)}%
+        </li>
       {/each}
     </ul>
     {#if transitionItems.length}
-      <h4>{m.climbs_tab_transitions()} <span class="count">{summary?.count === 1 ? m.stats_glides_one({ count: 1 }) : m.stats_glides_many({ count: summary?.count ?? 0 })}</span><AltRefSwitch /></h4>
+      <h4>
+        {m.climbs_tab_transitions()}
+        <span class="count">
+          {summary?.count === 1
+            ? m.stats_glides_one({ count: 1 })
+            : m.stats_glides_many({ count: summary?.count ?? 0 })}
+        </span><AltRefSwitch />
+      </h4>
       <dl>
         {#each transitionItems as [label, value] (label)}
           <dt>{label}</dt>

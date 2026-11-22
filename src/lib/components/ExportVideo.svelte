@@ -92,7 +92,9 @@
       return { timing: null, error: err instanceof Error ? err.message : String(err) };
     }
   });
-  const credits = $derived(mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways));
+  const credits = $derived(
+    mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
+  );
   const otherValue = $derived.by(() => {
     const t = plan.timing;
     if (!t) return '';
@@ -108,7 +110,10 @@
     import('#lib/export/renderVideo')
       .then(async (m) => {
         encoder = m;
-        codecs = { video: await m.videoEncodable(1920, 1080, bitrateFor(1920, 1080, 30), 30), audio: await m.audioEncodable() };
+        codecs = {
+          video: await m.videoEncodable(1920, 1080, bitrateFor(1920, 1080, 30), 30),
+          audio: await m.audioEncodable()
+        };
       })
       .catch(() => (codecs = { video: false, audio: false }));
   });
@@ -230,7 +235,9 @@
   }
 </script>
 
-<button type="button" class="open" onclick={open} disabled={!codecs?.video || !replay.beginCapture}>{m.export_video_button()}</button>
+<button type="button" class="open" onclick={open} disabled={!codecs?.video || !replay.beginCapture}>
+  {m.export_video_button()}
+</button>
 {#if codecs && !codecs.video}
   <p class="hint">{m.export_video_needs_codec()}</p>
 {:else if !replay.beginCapture}
@@ -273,11 +280,22 @@
       </select>
     </div>
     <p class="hint">
-      {m.export_video_size_hint({ width: size.width, height: size.height, fps, minSide: MIN_SIDE, maxSide: MAX_SIDE, minFps: MIN_FPS, maxFps: MAX_FPS })}
+      {m.export_video_size_hint({
+        width: size.width,
+        height: size.height,
+        fps,
+        minSide: MIN_SIDE,
+        maxSide: MAX_SIDE,
+        minFps: MIN_FPS,
+        maxFps: MAX_FPS
+      })}
     </p>
     <p class="hint">
       {#if plan.timing}
-        {m.export_bitrate_size({ mbit: Math.round(bitrate / 1_000_000), mb: Math.round((bitrate * plan.timing.seconds) / 8_000_000) })}
+        {m.export_bitrate_size({
+          mbit: Math.round(bitrate / 1_000_000),
+          mb: Math.round((bitrate * plan.timing.seconds) / 8_000_000)
+        })}
       {:else}
         {m.export_bitrate({ mbit: Math.round(bitrate / 1_000_000) })}
       {/if}
@@ -288,7 +306,11 @@
     <legend>{m.export_range()}</legend>
     <p class="hint">
       {#if replay.exportIn == null && replay.exportOut == null}
-        {m.export_range_info_whole({ from: formatClock(range.inMs), to: formatClock(range.outMs), length: rangeLength })}
+        {m.export_range_info_whole({
+          from: formatClock(range.inMs),
+          to: formatClock(range.outMs),
+          length: rangeLength
+        })}
       {:else}
         {m.export_range_info({ from: formatClock(range.inMs), to: formatClock(range.outMs), length: rangeLength })}
       {/if}
@@ -303,13 +325,26 @@
   <fieldset>
     <legend>{m.export_timing()}</legend>
     <div class="row">
-      <label><input type="radio" name="video-timing" value="length" bind:group={mode} disabled={fitMusic} /> {m.export_timing_length()}</label>
-      <label><input type="radio" name="video-timing" value="speed" bind:group={mode} disabled={fitMusic} /> {m.export_timing_speed()}</label>
+      <label>
+        <input type="radio" name="video-timing" value="length" bind:group={mode} disabled={fitMusic} />
+        {m.export_timing_length()}
+      </label>
+      <label>
+        <input type="radio" name="video-timing" value="speed" bind:group={mode} disabled={fitMusic} />
+        {m.export_timing_speed()}
+      </label>
     </div>
     {#if mode === 'length'}
       <div class="row">
         {#each LENGTH_PRESETS as s (s)}
-          <button type="button" aria-pressed={seconds === s && !fitMusic} disabled={fitMusic} onclick={() => (seconds = s)}>{s} s</button>
+          <button
+            type="button"
+            aria-pressed={seconds === s && !fitMusic}
+            disabled={fitMusic}
+            onclick={() => (seconds = s)}
+          >
+            {s} s
+          </button>
         {/each}
       </div>
       <div class="grid">
@@ -337,13 +372,27 @@
   <fieldset>
     <legend>{m.export_music()}</legend>
     <label for="video-music">{m.export_audio_file()}</label>
-    <input id="video-music" type="file" accept="audio/*" onchange={pickMusic} disabled={busy || codecs?.audio === false} />
+    <input
+      id="video-music"
+      type="file"
+      accept="audio/*"
+      onchange={pickMusic}
+      disabled={busy || codecs?.audio === false}
+    />
     {#if codecs && !codecs.audio}<p class="hint">{m.export_music_needs_aac()}</p>{/if}
     {#if musicName}
       <p class="hint">{musicName}, {formatDuration(music!.duration)}</p>
       <div class="row" role="group" aria-label={m.export_music_length()}>
-        <button type="button" aria-pressed={musicMode === 'trim'} onclick={() => (musicMode = 'trim')}>{m.export_music_trim()}</button>
-        <button type="button" aria-pressed={musicMode === 'fit'} onclick={() => ((musicMode = 'fit'), (mode = 'length'))}>{m.export_music_fit()}</button>
+        <button type="button" aria-pressed={musicMode === 'trim'} onclick={() => (musicMode = 'trim')}>
+          {m.export_music_trim()}
+        </button>
+        <button
+          type="button"
+          aria-pressed={musicMode === 'fit'}
+          onclick={() => ((musicMode = 'fit'), (mode = 'length'))}
+        >
+          {m.export_music_fit()}
+        </button>
       </div>
     {/if}
     {#if musicError}<p class="error" role="alert">{musicError}</p>{/if}

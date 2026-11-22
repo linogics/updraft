@@ -96,7 +96,11 @@
   {#if rows.length}
     <table>
       <thead>
-        <tr><th>{m.convert_col_file()}</th><th>{m.convert_col_format()}</th><th>{m.convert_col_fixes()}</th><th>{m.export_row_date()}</th><th></th></tr>
+        <tr>
+          <th>{m.convert_col_file()}</th><th>{m.convert_col_format()}</th><th>{m.convert_col_fixes()}</th><th>
+            {m.export_row_date()}
+          </th><th></th>
+        </tr>
       </thead>
       <tbody>
         {#each rows as r, i (i)}

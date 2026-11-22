@@ -92,10 +92,14 @@
   {#if ontoggle}
     <button
       tabindex="-1"
-      aria-label={open ? m.splitter_collapse({ label: label.toLowerCase() }) : m.splitter_expand({ label: label.toLowerCase() })}
+      aria-label={open
+        ? m.splitter_collapse({ label: label.toLowerCase() })
+        : m.splitter_expand({ label: label.toLowerCase() })}
       aria-expanded={open}
-      onclick={ontoggle}>{chevron}</button
+      onclick={ontoggle}
     >
+      {chevron}
+    </button>
   {/if}
 </div>
 

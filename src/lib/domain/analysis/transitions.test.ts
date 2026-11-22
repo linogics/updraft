@@ -113,8 +113,16 @@ describe('climbKinds', () => {
     const kinds = climbKinds(short.length, thermals, extractTransitions(short, thermals));
 
     expect(kinds).toEqual([
-      'searching', 'searching', 'thermalling', 'thermalling', 'thermalling',
-      'gliding', 'thermalling', 'thermalling', 'searching', 'searching'
+      'searching',
+      'searching',
+      'thermalling',
+      'thermalling',
+      'thermalling',
+      'gliding',
+      'thermalling',
+      'thermalling',
+      'searching',
+      'searching'
     ]);
   });
 });

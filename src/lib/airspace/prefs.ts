@@ -18,7 +18,9 @@ export function parseAirspacePrefs(raw: unknown): AirspacePrefsValue {
   return {
     // Not restored: airspaces start hidden every session.
     show: false,
-    classes: Array.isArray(o.classes) ? AIRSPACE_CLASSES.filter((c) => (o.classes as unknown[]).includes(c)) : [...AIRSPACE_CLASSES],
+    classes: Array.isArray(o.classes)
+      ? AIRSPACE_CLASSES.filter((c) => (o.classes as unknown[]).includes(c))
+      : [...AIRSPACE_CLASSES],
     maxFloor: num(o.maxFloor, 0, MAX_FLOOR_LIMIT, 4000),
     opacity: num(o.opacity, 0.1, 0.6, 0.25)
   };

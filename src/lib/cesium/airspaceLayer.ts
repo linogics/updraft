@@ -26,7 +26,10 @@ export class AirspaceLayer {
         instances.push(
           new Cesium.GeometryInstance({
             geometry: new Cesium.PolygonGeometry({
-              polygonHierarchy: new Cesium.PolygonHierarchy(ring(outer), holes.map((h) => new Cesium.PolygonHierarchy(ring(h)))),
+              polygonHierarchy: new Cesium.PolygonHierarchy(
+                ring(outer),
+                holes.map((h) => new Cesium.PolygonHierarchy(ring(h)))
+              ),
               height: floor,
               extrudedHeight: ceiling,
               vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT

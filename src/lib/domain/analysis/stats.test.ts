@@ -50,6 +50,8 @@ describe('computeStats', () => {
   });
 
   it('has no glide ratio without gliding phases', () => {
-    expect(computeStats(fixes, vario, [{ kind: 'thermalling', start: 0, end: fixes.length - 1 }]).glideRatio).toBeNull();
+    expect(
+      computeStats(fixes, vario, [{ kind: 'thermalling', start: 0, end: fixes.length - 1 }]).glideRatio
+    ).toBeNull();
   });
 });

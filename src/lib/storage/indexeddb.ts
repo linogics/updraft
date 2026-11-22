@@ -3,7 +3,14 @@ import { parseTracks, type CameraTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 import type { XcLeague } from '../state/xcPrefs';
 import type { XcScore } from '../xc/types';
-import { summarize, type Backup, type FlightRepository, type FlightSummary, type ManualEntry, type MetaPatch } from './repository';
+import {
+  summarize,
+  type Backup,
+  type FlightRepository,
+  type FlightSummary,
+  type ManualEntry,
+  type MetaPatch
+} from './repository';
 
 interface CameraPath {
   /** Sorted flight ids joined with '|'. */
@@ -76,19 +83,30 @@ export class IndexedDbFlightRepository implements FlightRepository {
 
   async save(flight: Flight): Promise<void> {
     const tx = (await this.db).transaction(['flights', 'summaries'], 'readwrite');
-    await Promise.all([tx.objectStore('flights').put(flight), tx.objectStore('summaries').put(summarize(flight)), tx.done]);
+    await Promise.all([
+      tx.objectStore('flights').put(flight),
+      tx.objectStore('summaries').put(summarize(flight)),
+      tx.done
+    ]);
   }
 
   async delete(id: string): Promise<void> {
     const tx = (await this.db).transaction(['flights', 'summaries', 'xcScores'], 'readwrite');
     const scores = tx.objectStore('xcScores');
     const keys = await scores.index('flightId').getAllKeys(id);
-    await Promise.all([tx.objectStore('flights').delete(id), tx.objectStore('summaries').delete(id), ...keys.map((k) => scores.delete(k)), tx.done]);
+    await Promise.all([
+      tx.objectStore('flights').delete(id),
+      tx.objectStore('summaries').delete(id),
+      ...keys.map((k) => scores.delete(k)),
+      tx.done
+    ]);
   }
 
   async saveManual(e: ManualEntry): Promise<void> {
     const startTime = new Date(`${e.date}T12:00:00`).getTime();
-    await (await this.db).put('summaries', {
+    await (
+      await this.db
+    ).put('summaries', {
       id: e.id ?? crypto.randomUUID(),
       sourceName: '',
       pilot: e.pilot,
@@ -114,7 +132,11 @@ export class IndexedDbFlightRepository implements FlightRepository {
 
   async exportAll(): Promise<Backup> {
     const db = await this.db;
-    const [flights, summaries, cameraPaths] = await Promise.all([db.getAll('flights'), db.getAll('summaries'), db.getAll('cameraPaths')]);
+    const [flights, summaries, cameraPaths] = await Promise.all([
+      db.getAll('flights'),
+      db.getAll('summaries'),
+      db.getAll('cameraPaths')
+    ]);
     return {
       app: 'updraft',
       version: 1,
@@ -129,7 +151,8 @@ export class IndexedDbFlightRepository implements FlightRepository {
   async importAll(backup: Backup, mode: 'merge' | 'replace'): Promise<void> {
     const tx = (await this.db).transaction(['flights', 'summaries', 'cameraPaths', 'xcScores'], 'readwrite');
     const ops: Promise<unknown>[] = [tx.done];
-    if (mode === 'replace') for (const n of ['flights', 'summaries', 'cameraPaths', 'xcScores'] as const) ops.push(tx.objectStore(n).clear());
+    if (mode === 'replace')
+      for (const n of ['flights', 'summaries', 'cameraPaths', 'xcScores'] as const) ops.push(tx.objectStore(n).clear());
     // Notes live on the flight record, so rebuilt summaries keep them.
     for (const f of backup.flights) {
       ops.push(tx.objectStore('flights').put(f), tx.objectStore('summaries').put(summarize(f)));

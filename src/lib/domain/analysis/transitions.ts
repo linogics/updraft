@@ -105,7 +105,11 @@ export function summarizeTransitions(
   };
 }
 
-const TRANSITION_PHASE: Record<TransitionKind, PhaseKind> = { launch: 'searching', glide: 'gliding', final: 'searching' };
+const TRANSITION_PHASE: Record<TransitionKind, PhaseKind> = {
+  launch: 'searching',
+  glide: 'gliding',
+  final: 'searching'
+};
 
 /** Per-fix climb / transition phase for colouring. Shared boundary fixes belong to the thermal. */
 export function climbKinds(n: number, thermals: Thermal[], transitions: Transition[]): PhaseKind[] {

@@ -35,7 +35,14 @@
 
     <label for="track-width">{m.track_width()}</label>
     <span class="width">
-      <input id="track-width" type="range" min={TRACK_WIDTH.min} max={TRACK_WIDTH.max} step="1" bind:value={replay.trackWidth} />
+      <input
+        id="track-width"
+        type="range"
+        min={TRACK_WIDTH.min}
+        max={TRACK_WIDTH.max}
+        step="1"
+        bind:value={replay.trackWidth}
+      />
       <output for="track-width">{replay.trackWidth} px</output>
     </span>
 
