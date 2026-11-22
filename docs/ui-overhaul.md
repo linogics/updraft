@@ -12,7 +12,7 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 | Logbook | Owns the flight library: import, table, pick flights to replay. Adds totals and breakdowns per year, month, site and glider, charts, manual entries without IGC, editable fields and notes. Everything stays in the browser (IndexedDB). |
 | Backup | Export and import of the whole app (flights, camera keys, prefs). The Cesium ion token is only included when a checkbox is ticked, off by default. On import the user picks merge or replace. |
 | Converter | Reads IGC, GPX, FIT, KML, TRK and GeoJSON. Writes IGC (unsigned, no G record), GPX, KML and GeoJSON. FIT is parsed with `fit-file-parser`. Converted tracks are saved to the logbook like IGC flights, with GPS altitude only. |
-| XC planner | Tile only, marked as planned. No code yet. |
+| XC planner | `/plan`: free-draw route on a 2D map, distance, XC score per league, duration estimate, share link in the URL. |
 | Loading feedback | First replay load shows a staged screen with step labels. Page navigation shows a thin top bar. 3D loading notices show a sweep bar. |
 | Panels | Replay side panel, bottom panel and 3D/2D split are resizable by drag or arrow keys, collapse with the chevron or Enter, reset on double-click. Sizes are stored per browser. No resizing on phones. |
 | Auto director | Density setting low, mid, high. Low means about two keys per flight phase. |
@@ -33,7 +33,7 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 - TRK reader follows the CompeGPS layout from memory and treats times as UTC. Check against real files.
 - Switching the selected pilot was profiled with three 6 h flights at 1 Hz in headless Chrome. Our JS takes about 50 ms per switch, the rest is native rendering and terrain tiles under software GL. Check on a real GPU before optimising.
 - Restored settings (units, thermal toggles, panel sizes) apply after a reload. The restore message has a Reload now button.
-- XC planner: route, scoring and task export, later.
+- XC planner: task export (xctsk, cup), airspaces and turnpoint cylinders, later.
 
 ## Closed follow-ups
 
