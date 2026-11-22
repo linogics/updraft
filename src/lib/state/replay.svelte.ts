@@ -81,6 +81,9 @@ export class ReplayState {
   thermalFilter = $state.raw<ThermalFilter>(DEFAULT_FILTER);
   trackStyle = $state<TrackStyle>(DEFAULT_SCENE.trackStyle);
   trackWidth = $state(DEFAULT_SCENE.trackWidth);
+  exaggeration = $state(DEFAULT_SCENE.exaggeration);
+  lighting = $state(DEFAULT_SCENE.lighting);
+  labels = $state(DEFAULT_SCENE.labels);
   /** Pilot colours picked by the user, per flight id. */
   colorOverrides = $state.raw<Record<string, string>>({});
 

@@ -29,6 +29,9 @@
     replay.layout = scene.layout;
     replay.trackStyle = scene.trackStyle;
     replay.trackWidth = scene.trackWidth;
+    replay.exaggeration = scene.exaggeration;
+    replay.lighting = scene.lighting;
+    replay.labels = scene.labels;
     replay.basemap = scene.basemap;
     const { cesiumIonToken } = await loadRuntimeConfig();
     replay.ionAvailable = !!cesiumIonToken;
@@ -64,7 +67,10 @@
       thermalFilter: replay.thermalFilter,
       trackStyle: replay.trackStyle,
       trackWidth: replay.trackWidth,
-      colors: replay.colorOverrides
+      colors: replay.colorOverrides,
+      exaggeration: replay.exaggeration,
+      lighting: replay.lighting,
+      labels: replay.labels
     });
     goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });

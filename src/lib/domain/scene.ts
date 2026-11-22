@@ -10,6 +10,7 @@ export const BASEMAP_IDS = ['satellite', 'topo', 'osm'] as const;
 export const TERRAIN_SOURCES = ['ion', 'terrarium', 'none'] as const;
 export const TRACK_STYLES = ['solid', 'outline', 'curtain', 'glow'] as const;
 export const TRACK_WIDTH = { min: 1, max: 10 } as const;
+export const EXAGGERATION = { min: 1, max: 3, step: 0.1 } as const;
 
 export type CameraMode = (typeof CAMERA_MODES)[number];
 export type ColorMode = (typeof COLOR_MODES)[number];
@@ -36,6 +37,12 @@ export interface SceneConfig {
   trackWidth: number;
   /** Pilot colour overrides per flight id, '#rrggbb'. */
   colors: Record<string, string>;
+  /** 3D height exaggeration of terrain and tracks. */
+  exaggeration: number;
+  /** Sun lighting at the replay time in 3D. */
+  lighting: boolean;
+  /** Pilot name labels in 3D. */
+  labels: boolean;
 }
 
 export const DEFAULT_SCENE: SceneConfig = {
@@ -50,7 +57,10 @@ export const DEFAULT_SCENE: SceneConfig = {
   thermalFilter: DEFAULT_FILTER,
   trackStyle: 'solid',
   trackWidth: 3,
-  colors: {}
+  colors: {},
+  exaggeration: 1,
+  lighting: false,
+  labels: true
 };
 
 function pick<T extends string>(allowed: readonly T[], value: string | null, fallback: T): T;
@@ -78,6 +88,9 @@ export function encodeScene(scene: SceneConfig): string {
   if (scene.trackStyle !== DEFAULT_SCENE.trackStyle) params.set('style', scene.trackStyle);
   if (scene.trackWidth !== DEFAULT_SCENE.trackWidth) params.set('width', String(scene.trackWidth));
   for (const [id, hex] of Object.entries(scene.colors)) params.append('pc', `${id}:${hex}`);
+  if (scene.exaggeration !== DEFAULT_SCENE.exaggeration) params.set('exag', String(scene.exaggeration));
+  if (scene.lighting) params.set('sun', '1');
+  if (!scene.labels) params.set('labels', '0');
   return params.toString();
 }
 
@@ -110,6 +123,13 @@ function width(value: string | null): number {
   return Math.min(TRACK_WIDTH.max, Math.max(TRACK_WIDTH.min, n));
 }
 
+function exaggeration(value: string | null): number {
+  const n = Number(value);
+  if (value === null || !Number.isFinite(n)) return DEFAULT_SCENE.exaggeration;
+  const clamped = Math.min(EXAGGERATION.max, Math.max(EXAGGERATION.min, n));
+  return Math.round(clamped * 10) / 10;
+}
+
 /** Non-negative finite number, else the fallback. */
 function threshold(value: string | null, fallback: number): number {
   const n = Number(value);
@@ -132,7 +152,10 @@ export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): Sc
     },
     trackStyle: pick(TRACK_STYLES, params.get('style'), DEFAULT_SCENE.trackStyle),
     trackWidth: width(params.get('width')),
-    colors: decodeColors(params.getAll('pc'))
+    colors: decodeColors(params.getAll('pc')),
+    exaggeration: exaggeration(params.get('exag')),
+    lighting: params.get('sun') === '1',
+    labels: params.get('labels') !== '0'
   };
 }
 

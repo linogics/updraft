@@ -15,7 +15,10 @@ describe('scene config', () => {
       thermalFilter: { minGain: 250, minClimb: 1.2 },
       trackStyle: 'curtain',
       trackWidth: 5,
-      colors: { a: '#ff8800' }
+      colors: { a: '#ff8800' },
+      exaggeration: 2.5,
+      lighting: true,
+      labels: false
     };
 
     expect(decodeScene(new URLSearchParams(encodeScene(scene)))).toEqual(scene);
@@ -43,6 +46,21 @@ describe('scene config', () => {
 
     expect(new URLSearchParams(query).getAll('nudge')).toEqual(['a:-2']);
     expect(decodeScene(new URLSearchParams('nudge=a:12&nudge=b&nudge=c:x&nudge=:3')).nudges).toEqual({ a: 12_000 });
+  });
+});
+
+describe('view toggles', () => {
+  it('omits defaults from the URL', () => {
+    const params = new URLSearchParams(encodeScene({ ...DEFAULT_SCENE, flightIds: ['a'] }));
+
+    expect(params.has('exag') || params.has('sun') || params.has('labels')).toBe(false);
+  });
+
+  it('clamps exaggeration to 1-3 in 0.1 steps and ignores junk', () => {
+    expect(decodeScene(new URLSearchParams('exag=9')).exaggeration).toBe(3);
+    expect(decodeScene(new URLSearchParams('exag=0.2')).exaggeration).toBe(1);
+    expect(decodeScene(new URLSearchParams('exag=1.74')).exaggeration).toBe(1.7);
+    expect(decodeScene(new URLSearchParams('exag=x')).exaggeration).toBe(1);
   });
 });
 
