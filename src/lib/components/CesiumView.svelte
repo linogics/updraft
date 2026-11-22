@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import * as Cesium from 'cesium';
-  import { captureFrame } from '#lib/cesium/capture';
+  import { beginCapture, captureFrame } from '#lib/cesium/capture';
   import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
   import { CameraController } from '#lib/cesium/cameraModes';
@@ -46,6 +46,9 @@
   onMount(() => {
     let alive = true;
     let camera: CameraController | undefined;
+    // Set while a capture renders extra frames for tiles, so the camera does not move again.
+    let cameraHold = false;
+    const setHold = (hold: boolean) => (cameraHold = hold);
 
     (async () => {
       const { cesiumIonToken } = await loadRuntimeConfig();
@@ -64,6 +67,7 @@
         // Sun position follows the recorded clock of the selected flight.
         if (replay.lighting && sel) Cesium.JulianDate.fromDate(new Date(replay.localTime(sel)), v.clock.currentTime);
         const layer = sel && layers.get(sel.flight.id);
+        if (cameraHold) return;
         camera!.update(
           replay.camera,
           layer ? { position: layer.cartesianAt(replay.time), heading: layer.headingAt(replay.time) } : undefined
@@ -74,7 +78,8 @@
       if (spheres.length) {
         v.camera.flyToBoundingSphere(Cesium.BoundingSphere.fromBoundingSpheres(spheres), { duration: 0 });
       }
-      replay.capture = (w, h) => captureFrame(v, w, h);
+      replay.capture = (w, h) => captureFrame(v, w, h, setHold);
+      replay.beginCapture = (w, h) => beginCapture(v, w, h, setHold);
       ready = true;
     })().catch((err) => {
       console.error(err);
@@ -84,6 +89,7 @@
     return () => {
       alive = false;
       replay.capture = null;
+      replay.beginCapture = null;
       for (const l of layers.values()) l.destroy();
       layers.clear();
       camera?.destroy();

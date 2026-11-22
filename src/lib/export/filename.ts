@@ -9,6 +9,14 @@ export function slugify(text: string): string {
   return slug || 'flight';
 }
 
+function baseName(pilot: string, date: string, width: number, height: number): string {
+  return `updraft-${slugify(pilot)}-${date}-${width}x${height}`;
+}
+
 export function pngFilename(pilot: string, date: string, width: number, height: number): string {
-  return `updraft-${slugify(pilot)}-${date}-${width}x${height}.png`;
+  return `${baseName(pilot, date, width, height)}.png`;
+}
+
+export function mp4Filename(pilot: string, date: string, width: number, height: number): string {
+  return `${baseName(pilot, date, width, height)}.mp4`;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pngFilename, slugify } from './filename';
+import { mp4Filename, pngFilename, slugify } from './filename';
 
 describe('slugify', () => {
   it('lowercases and strips accents', () => {
@@ -18,5 +18,11 @@ describe('slugify', () => {
 describe('pngFilename', () => {
   it('builds the export name', () => {
     expect(pngFilename('Max Muster', '2026-07-14', 1080, 1920)).toBe('updraft-max-muster-2026-07-14-1080x1920.png');
+  });
+});
+
+describe('mp4Filename', () => {
+  it('builds the video export name', () => {
+    expect(mp4Filename('Max Muster', '2026-07-14', 1920, 1080)).toBe('updraft-max-muster-2026-07-14-1920x1080.mp4');
   });
 });

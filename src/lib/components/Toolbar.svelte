@@ -4,6 +4,7 @@
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import ExportImage from './ExportImage.svelte';
+  import ExportVideo from './ExportVideo.svelte';
   import Popover from './Popover.svelte';
   import TrackMenu from './TrackMenu.svelte';
   import UnitsMenu from './UnitsMenu.svelte';
@@ -55,6 +56,7 @@
 
   <Popover label="Export">
     <ExportImage {replay} />
+    <ExportVideo {replay} />
   </Popover>
 
   <label>

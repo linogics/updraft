@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { ALL_PARTS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
+  import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
   import { pngFilename } from '#lib/export/filename';
-  import { indexAt } from '#lib/domain/timeline';
-  import { BASEMAPS, TERRARIUM_ATTRIBUTION } from '#lib/map/basemaps';
+  import { mapCredits } from '#lib/export/credits';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
 
@@ -12,13 +11,6 @@
     { label: '16:9', width: 1920, height: 1080 },
     { label: '9:16', width: 1080, height: 1920 },
     { label: '1:1', width: 1080, height: 1080 }
-  ];
-  const PARTS: [keyof OverlayParts, string][] = [
-    ['hud', 'Flight data'],
-    ['altitudeGraph', 'Altitude graph'],
-    ['stats', 'Stats'],
-    ['minimap', 'Minimap'],
-    ['credits', 'Map credits']
   ];
   const MIN = 320;
   const MAX = 4096;
@@ -32,14 +24,7 @@
 
   const w = $derived(clamp(width));
   const h = $derived(clamp(height));
-  const terrainCredit = $derived(
-    replay.terrain === 'terrarium'
-      ? TERRARIUM_ATTRIBUTION
-      : replay.terrain === 'ion'
-        ? 'Terrain: Cesium World Terrain, Cesium ion'
-        : ''
-  );
-  const credits = $derived([BASEMAPS[replay.basemap].attribution, terrainCredit].filter(Boolean).join(' · '));
+  const credits = $derived(mapCredits(replay.basemap, replay.terrain));
   const canExport = $derived(!!replay.capture && !!replay.selected && !busy);
 
   function pick(p: { width: number; height: number }) {
@@ -105,7 +90,7 @@
 
   <fieldset>
     <legend>Overlays</legend>
-    {#each PARTS as [key, label] (key)}
+    {#each PART_LABELS as [key, label] (key)}
       <div class="check">
         <input id="export-part-{key}" type="checkbox" bind:checked={parts[key]} />
         <label for="export-part-{key}">{label}</label>
