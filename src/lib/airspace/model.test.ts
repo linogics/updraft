@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UNIT_PRESETS } from '../ui/units';
-import { airspaceLabel, classOf, formatLimit, limitOf } from './model';
+import { airspaceLabel, classOf, formatLimit, isVisible, limitOf, volumeHeights } from './model';
 
 const tma = {
   source_id: '69bb951a51e402d2a077d772',
@@ -29,6 +29,23 @@ describe('classOf', () => {
     expect(classOf('d')).toBe('D');
     expect(classOf('unclassified')).toBe('other');
     expect(classOf(undefined)).toBe('other');
+  });
+});
+
+describe('isVisible', () => {
+  const prefs = { classes: ['D' as const], maxFloor: 2000 };
+  it('filters by class and floor', () => {
+    expect(isVisible(tma, prefs)).toBe(true);
+    expect(isVisible({ ...tma, icao_class: 'c' }, prefs)).toBe(false);
+    expect(isVisible({ ...tma, lower_limit_value: 3000, lower_limit_unit: 'M' }, prefs)).toBe(false);
+    expect(isVisible({ ...tma, lower_limit_value: 9000, lower_limit_reference_datum: 'GND' }, prefs)).toBe(true);
+  });
+});
+
+describe('volumeHeights', () => {
+  it('scales metres and starts GND floors at zero', () => {
+    expect(volumeHeights(tma, 2)).toEqual({ floor: 2133.6, ceiling: 6096 });
+    expect(volumeHeights({ ...tma, lower_limit_value: 50, lower_limit_reference_datum: 'GND' }, 1).floor).toBe(0);
   });
 });
 
