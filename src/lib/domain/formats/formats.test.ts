@@ -72,6 +72,36 @@ describe('readers', () => {
     expect(readGpx(gpx, 'a.gpx').fixes.map((f) => f.alt)).toEqual([1500, 1500, 1500]);
   });
 
+  it('reads GPX with prefixed elements and single-quoted attributes', () => {
+    const gpx = `<gpx:gpx xmlns:gpx="http://www.topografix.com/GPX/1/1"><gpx:trk><gpx:trkseg>
+<gpx:trkpt lat='47.1' lon='11.2'><gpx:ele>1500</gpx:ele><gpx:time>2026-07-15T10:00:00Z</gpx:time></gpx:trkpt>
+<gpx:trkpt lat='47.2' lon='11.3'><gpx:ele>1510</gpx:ele><gpx:time>2026-07-15T10:00:01Z</gpx:time></gpx:trkpt>
+</gpx:trkseg></gpx:trk></gpx:gpx>`;
+    const f = readGpx(gpx, 'a.gpx');
+    expect(f.fixes.map((x) => [x.lat, x.lon, x.alt])).toEqual([[47.1, 11.2, 1500], [47.2, 11.3, 1510]]);
+  });
+
+  it('reads KML with prefixes and CDATA times', () => {
+    const kml = `<kml:kml><kml:Placemark><gx:Track>
+<kml:when><![CDATA[2026-07-18T10:00:00Z]]></kml:when><kml:when><![CDATA[2026-07-18T10:00:01Z]]></kml:when>
+<gx:coord>11 47 1000</gx:coord><gx:coord>11.1 47.1 1010</gx:coord>
+</gx:Track></kml:Placemark></kml:kml>`;
+    const f = readKml(kml, 'a.kml');
+    expect(f.fixes).toHaveLength(2);
+    expect(f.fixes[1]).toEqual({ t: Date.UTC(2026, 6, 18, 10, 0, 1), lat: 47.1, lon: 11.1, alt: 1010 });
+  });
+
+  it('reads KML Point placemarks with TimeStamp, sorted by time', () => {
+    const pm = (when: string, c: string) =>
+      `<Placemark><TimeStamp><when>${when}</when></TimeStamp><Point><coordinates>${c}</coordinates></Point></Placemark>`;
+    const kml = `<kml><Document>${pm('2026-07-18T10:00:01Z', '11.1,47.1,1010')}${pm('2026-07-18T10:00:00Z', '11,47')}</Document></kml>`;
+    const f = readKml(kml, 'a.kml');
+    expect(f.fixes.map((x) => [x.t, x.lat, x.lon, x.alt])).toEqual([
+      [Date.UTC(2026, 6, 18, 10, 0, 0), 47, 11, 1010],
+      [Date.UTC(2026, 6, 18, 10, 0, 1), 47.1, 11.1, 1010]
+    ]);
+  });
+
   it('rejects tracks without time', () => {
     const noTime = JSON.stringify({ type: 'LineString', coordinates: [[11, 47, 1000]] });
     expect(() => readGeoJson(noTime, 'x.geojson')).toThrow(/without time/);

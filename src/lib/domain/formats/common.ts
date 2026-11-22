@@ -32,8 +32,14 @@ export const xmlEscape = (s: string) =>
 const xmlUnescape = (s: string) =>
   s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 
-/** Inner text of every `<tag>` element, in document order. Regex instead of DOMParser so it also runs under node. */
+const cdata = (s: string) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, t: string) => xmlEscape(t));
+
+/**
+ * Inner text of every `<tag>` element, in document order. Any namespace prefix (also on `tag`) is ignored
+ * and CDATA is unwrapped. Regex instead of DOMParser so it also runs under node.
+ */
 export function xmlTexts(xml: string, tag: string): string[] {
-  const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, 'g');
-  return [...xml.matchAll(re)].map((m) => xmlUnescape(m[1].trim()));
+  const name = `(?:[\\w.-]+:)?${tag.replace(/^.*:/, '')}`;
+  const re = new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, 'g');
+  return [...xml.matchAll(re)].map((m) => xmlUnescape(cdata(m[1]).trim()));
 }
