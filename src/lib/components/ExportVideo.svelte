@@ -23,6 +23,7 @@
   import { LENGTH_PRESETS, SPEED_PRESETS, planTiming, type TimingMode } from '#lib/export/videoTiming';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { m } from '#lib/paraglide/messages';
   import { formatClock, formatDuration } from '#lib/ui/format';
 
   let { replay }: { replay: ReplayState } = $props();
@@ -32,8 +33,13 @@
     { value: '720', label: '720p' },
     { value: '1080', label: '1080p' },
     { value: '2160', label: '4K' },
-    { value: 'custom', label: 'Custom' }
+    { value: 'custom', label: m.common_custom() }
   ];
+  const QUALITY_LABELS = {
+    standard: () => m.export_quality_standard(),
+    high: () => m.export_quality_high(),
+    max: () => m.export_quality_max()
+  } as const;
 
   let encoder = $state.raw<Encoder | null>(null);
   let codecs = $state<{ video: boolean; audio: boolean } | null>(null);
@@ -141,7 +147,7 @@
       music = await decodeMusic(file);
       musicName = file.name;
     } catch {
-      musicError = 'The browser could not read this audio file.';
+      musicError = m.export_music_error();
     }
   }
 
@@ -184,7 +190,7 @@
     replay.pause();
     try {
       if (!(await enc.videoEncodable(width, height, bitrate, fps))) {
-        throw new Error(`This browser cannot encode ${width} × ${height} video. Try a smaller size.`);
+        throw new Error(m.export_video_cannot_encode({ width, height }));
       }
       const audio = music ? await renderMusic(music, timing.seconds) : undefined;
       session = await begin(width, height);
@@ -224,11 +230,11 @@
   }
 </script>
 
-<button type="button" class="open" onclick={open} disabled={!codecs?.video || !replay.beginCapture}>Export video…</button>
+<button type="button" class="open" onclick={open} disabled={!codecs?.video || !replay.beginCapture}>{m.export_video_button()}</button>
 {#if codecs && !codecs.video}
-  <p class="hint">Video export needs Chrome, Edge or Safari 17+.</p>
+  <p class="hint">{m.export_video_needs_codec()}</p>
 {:else if !replay.beginCapture}
-  <p class="hint">Switch to 3D or Split to export</p>
+  <p class="hint">{m.export_menu_hint_switch()}</p>
 {/if}
 
 <dialog
@@ -239,57 +245,66 @@
     if (busy) e.preventDefault();
   }}
 >
-  <h2 id="video-title">Export video</h2>
+  <h2 id="video-title">{m.export_video_title()}</h2>
 
   <fieldset>
-    <legend>Size</legend>
-    <div class="presets" role="group" aria-label="Aspect">
+    <legend>{m.export_size()}</legend>
+    <div class="presets" role="group" aria-label={m.export_aspect()}>
       {#each ASPECTS as a (a.id)}
         <button type="button" aria-pressed={aspectId === a.id} onclick={() => (aspectId = a.id)}>{a.label}</button>
       {/each}
     </div>
     <div class="grid">
-      <label for="video-res">Resolution</label>
+      <label for="video-res">{m.export_resolution()}</label>
       <select id="video-res" bind:value={resolution}>
         {#each RESOLUTIONS as r (r.value)}<option value={r.value}>{r.label}</option>{/each}
       </select>
       {#if resolution === 'custom'}
-        <label for="video-width">Width</label>
+        <label for="video-width">{m.common_width()}</label>
         <input id="video-width" type="number" min={MIN_SIDE} max={MAX_SIDE} step="2" bind:value={customW} />
-        <label for="video-height">Height</label>
+        <label for="video-height">{m.common_height()}</label>
         <input id="video-height" type="number" min={MIN_SIDE} max={MAX_SIDE} step="2" bind:value={customH} />
       {/if}
-      <label for="video-fps">Frame rate</label>
+      <label for="video-fps">{m.export_frame_rate()}</label>
       <input id="video-fps" type="number" min={MIN_FPS} max={MAX_FPS} step="1" bind:value={fpsInput} />
-      <label for="video-quality">Quality</label>
+      <label for="video-quality">{m.export_quality()}</label>
       <select id="video-quality" bind:value={quality}>
-        {#each QUALITIES as q (q.id)}<option value={q.id}>{q.label}</option>{/each}
+        {#each QUALITIES as q (q.id)}<option value={q.id}>{QUALITY_LABELS[q.id]()}</option>{/each}
       </select>
     </div>
-    <p class="hint">{size.width} × {size.height} px at {fps} fps. Sides between {MIN_SIDE} and {MAX_SIDE}, fps between {MIN_FPS} and {MAX_FPS}.</p>
     <p class="hint">
-      {Math.round(bitrate / 1_000_000)} Mbit/s{#if plan.timing}, about {Math.round((bitrate * plan.timing.seconds) / 8_000_000)} MB{/if}.
+      {m.export_video_size_hint({ width: size.width, height: size.height, fps, minSide: MIN_SIDE, maxSide: MAX_SIDE, minFps: MIN_FPS, maxFps: MAX_FPS })}
+    </p>
+    <p class="hint">
+      {#if plan.timing}
+        {m.export_bitrate_size({ mbit: Math.round(bitrate / 1_000_000), mb: Math.round((bitrate * plan.timing.seconds) / 8_000_000) })}
+      {:else}
+        {m.export_bitrate({ mbit: Math.round(bitrate / 1_000_000) })}
+      {/if}
     </p>
   </fieldset>
 
   <fieldset>
-    <legend>Range</legend>
+    <legend>{m.export_range()}</legend>
     <p class="hint">
-      In {formatClock(range.inMs)} · Out {formatClock(range.outMs)} · {rangeLength}
-      {#if replay.exportIn == null && replay.exportOut == null}(whole replay){/if}
+      {#if replay.exportIn == null && replay.exportOut == null}
+        {m.export_range_info_whole({ from: formatClock(range.inMs), to: formatClock(range.outMs), length: rangeLength })}
+      {:else}
+        {m.export_range_info({ from: formatClock(range.inMs), to: formatClock(range.outMs), length: rangeLength })}
+      {/if}
     </p>
     <div class="row">
-      <button type="button" onclick={setIn} disabled={busy}>Set in</button>
-      <button type="button" onclick={setOut} disabled={busy}>Set out</button>
-      <button type="button" onclick={resetRange} disabled={busy}>Reset</button>
+      <button type="button" onclick={setIn} disabled={busy}>{m.export_set_in()}</button>
+      <button type="button" onclick={setOut} disabled={busy}>{m.export_set_out()}</button>
+      <button type="button" onclick={resetRange} disabled={busy}>{m.export_reset()}</button>
     </div>
   </fieldset>
 
   <fieldset>
-    <legend>Length or speed</legend>
+    <legend>{m.export_timing()}</legend>
     <div class="row">
-      <label><input type="radio" name="video-timing" value="length" bind:group={mode} disabled={fitMusic} /> Length</label>
-      <label><input type="radio" name="video-timing" value="speed" bind:group={mode} disabled={fitMusic} /> Speed</label>
+      <label><input type="radio" name="video-timing" value="length" bind:group={mode} disabled={fitMusic} /> {m.export_timing_length()}</label>
+      <label><input type="radio" name="video-timing" value="speed" bind:group={mode} disabled={fitMusic} /> {m.export_timing_speed()}</label>
     </div>
     {#if mode === 'length'}
       <div class="row">
@@ -298,7 +313,7 @@
         {/each}
       </div>
       <div class="grid">
-        <label for="video-seconds">Seconds</label>
+        <label for="video-seconds">{m.export_seconds()}</label>
         <input id="video-seconds" type="number" min="1" step="1" bind:value={seconds} disabled={fitMusic} />
       </div>
     {:else}
@@ -308,7 +323,7 @@
         {/each}
       </div>
       <div class="grid">
-        <label for="video-factor">Speed</label>
+        <label for="video-factor">{m.export_timing_speed()}</label>
         <input id="video-factor" type="number" min="0.1" step="any" bind:value={factor} />
       </div>
     {/if}
@@ -320,47 +335,47 @@
   </fieldset>
 
   <fieldset>
-    <legend>Music</legend>
-    <label for="video-music">Audio file</label>
+    <legend>{m.export_music()}</legend>
+    <label for="video-music">{m.export_audio_file()}</label>
     <input id="video-music" type="file" accept="audio/*" onchange={pickMusic} disabled={busy || codecs?.audio === false} />
-    {#if codecs && !codecs.audio}<p class="hint">Music needs AAC audio encoding, which this browser lacks.</p>{/if}
+    {#if codecs && !codecs.audio}<p class="hint">{m.export_music_needs_aac()}</p>{/if}
     {#if musicName}
       <p class="hint">{musicName}, {formatDuration(music!.duration)}</p>
-      <div class="row" role="group" aria-label="Music length">
-        <button type="button" aria-pressed={musicMode === 'trim'} onclick={() => (musicMode = 'trim')}>Trim to video</button>
-        <button type="button" aria-pressed={musicMode === 'fit'} onclick={() => ((musicMode = 'fit'), (mode = 'length'))}>Fit video to music</button>
+      <div class="row" role="group" aria-label={m.export_music_length()}>
+        <button type="button" aria-pressed={musicMode === 'trim'} onclick={() => (musicMode = 'trim')}>{m.export_music_trim()}</button>
+        <button type="button" aria-pressed={musicMode === 'fit'} onclick={() => ((musicMode = 'fit'), (mode = 'length'))}>{m.export_music_fit()}</button>
       </div>
     {/if}
     {#if musicError}<p class="error" role="alert">{musicError}</p>{/if}
   </fieldset>
 
   <fieldset>
-    <legend>Overlays</legend>
-    {#each PART_LABELS as [key, label] (key)}
+    <legend>{m.export_overlays()}</legend>
+    {#each PART_LABELS as { key, label } (key)}
       <div class="check">
         <input id="video-part-{key}" type="checkbox" bind:checked={parts[key]} disabled={busy} />
-        <label for="video-part-{key}">{label}</label>
+        <label for="video-part-{key}">{label()}</label>
       </div>
     {/each}
     {#if !parts.credits}
-      <p class="warn" role="note">Map providers require attribution when you publish this video.</p>
+      <p class="warn" role="note">{m.export_video_credits_warn()}</p>
     {/if}
   </fieldset>
 
   {#if busy}
     <progress max={total} value={done}>{percent.toFixed(0)}%</progress>
     <p class="hint" aria-live="polite">
-      Frame {done} of {total} · {formatDuration((now - started) / 1000)} elapsed · about {formatDuration(eta)} left
+      {m.export_progress({ done, total, elapsed: formatDuration((now - started) / 1000), left: formatDuration(eta) })}
     </p>
   {/if}
-  {#if !replay.beginCapture}<p class="hint">Switch to 3D or Split to export</p>{/if}
+  {#if !replay.beginCapture}<p class="hint">{m.export_menu_hint_switch()}</p>{/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 
   <div class="row end">
     {#if busy}
-      <button type="button" onclick={() => abort?.abort()}>Cancel</button>
+      <button type="button" onclick={() => abort?.abort()}>{m.common_cancel()}</button>
     {:else}
-      <button type="button" onclick={() => dialog.close()}>Close</button>
+      <button type="button" onclick={() => dialog.close()}>{m.common_close()}</button>
     {/if}
     <button
       type="button"
@@ -368,7 +383,7 @@
       onclick={render}
       disabled={busy || !replay.beginCapture || !plan.timing || !encoder}
     >
-      {busy ? 'Rendering…' : 'Render MP4'}
+      {busy ? m.export_rendering() : m.export_render_mp4()}
     </button>
   </div>
 </dialog>

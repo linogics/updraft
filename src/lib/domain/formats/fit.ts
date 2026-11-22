@@ -1,3 +1,4 @@
+import { m } from '../../paraglide/messages';
 import FitParser from 'fit-file-parser';
 import type { Fix, Flight } from '../model';
 import { toFlight } from './common';
@@ -14,6 +15,6 @@ export async function readFit(buf: ArrayBuffer, sourceName: string): Promise<Fli
       alt: r.enhanced_altitude ?? r.altitude ?? NaN
     });
   }
-  if (!fixes.length) throw new Error(`${sourceName}: no GPS records found`);
+  if (!fixes.length) throw new Error(m.format_fit_no_gps({ name: sourceName }));
   return toFlight(sourceName, fixes);
 }

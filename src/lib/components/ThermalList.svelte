@@ -1,11 +1,12 @@
 <script lang="ts">
   import { indexAt } from '#lib/domain/timeline';
   import { transitionAlts, type Transition } from '#lib/domain/analysis/transitions';
+  import { m } from '#lib/paraglide/messages';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { varioColor } from '#lib/ui/colors';
-  import { formatClock, formatDuration } from '#lib/ui/format';
+  import { formatClock, formatDuration, formatNumber } from '#lib/ui/format';
   import {
     formatAlt,
     formatDistance,
@@ -26,7 +27,11 @@
   const GAIN_STEP = { m: 25, ft: 100 } as const;
   const CLIMB_STEP = { ms: 0.1, fpm: 20, kt: 0.2 } as const;
 
-  const KIND_LABELS = { launch: 'Launch', glide: 'Glide', final: 'Final glide' } as const;
+  const KIND_LABELS = {
+    launch: () => m.thermal_kind_launch(),
+    glide: () => m.thermal_kind_glide(),
+    final: () => m.thermal_kind_final()
+  } as const;
 
   let tab = $state<'thermals' | 'transitions'>('thermals');
   const sel = $derived(replay.selected);
@@ -51,9 +56,9 @@
 
 {#if sel}
   <section>
-    <h3>Climbs &amp; glides</h3>
+    <h3>{m.climbs_heading()}</h3>
     <div class="filter">
-      <label for="min-gain">Min gain</label>
+      <label for="min-gain">{m.climbs_min_gain()}</label>
       <input
         id="min-gain"
         type="range"
@@ -63,8 +68,8 @@
         value={gain}
         oninput={(e) => replay.setThermalFilter({ ...replay.thermalFilter, minGain: fromAlt(+e.currentTarget.value, u.alt) })}
       />
-      <output for="min-gain">{gain ? formatAlt(replay.thermalFilter.minGain, u) : 'any'}</output>
-      <label for="min-climb">Min climb</label>
+      <output for="min-gain">{gain ? formatAlt(replay.thermalFilter.minGain, u) : m.common_any()}</output>
+      <label for="min-climb">{m.climbs_min_climb()}</label>
       <input
         id="min-climb"
         type="range"
@@ -75,14 +80,14 @@
         oninput={(e) =>
           replay.setThermalFilter({ ...replay.thermalFilter, minClimb: fromVario(+e.currentTarget.value, u.vario) })}
       />
-      <output for="min-climb">{climb ? `${+climb.toFixed(1)} ${UNIT_LABELS.vario[u.vario]}` : 'any'}</output>
+      <output for="min-climb">{climb ? `${formatNumber(climb, 1, 0)} ${UNIT_LABELS.vario[u.vario]}` : m.common_any()}</output>
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected={tab === 'thermals'} onclick={() => (tab = 'thermals')}>
-        Thermals <span class="count">{thermals.length === total ? total : `${thermals.length} of ${total}`}</span>
+        {m.climbs_tab_thermals()} <span class="count">{thermals.length === total ? total : m.climbs_count_of({ count: thermals.length, total })}</span>
       </button>
       <button role="tab" aria-selected={tab === 'transitions'} onclick={() => (tab = 'transitions')}>
-        Transitions <span class="count">{transitions.length}</span>
+        {m.climbs_tab_transitions()} <span class="count">{transitions.length}</span>
       </button>
     </div>
     {#if tab === 'transitions'}
@@ -93,17 +98,20 @@
               <span class="n" class:kind={t.kind !== 'glide'}>{t.kind === 'glide' ? '↘' : t.kind === 'launch' ? '⇢' : '⇥'}</span>
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
               <span class="gain">{formatDistance(t.distance, u)}</span>
-              <span class="climb">{t.glideRatio ? `${t.glideRatio.toFixed(1)} : 1` : '–'}</span>
+              <span class="climb">{t.glideRatio ? `${formatNumber(t.glideRatio, 1)} : 1` : '–'}</span>
               <span class="meta">
-                {t.kind === 'glide' ? '' : `${KIND_LABELS[t.kind]} · `}{alt(t, 'start')} → {alt(t, 'end')}{agl ? ' AGL' : ''}
-                · {formatSpeed(t.speed, u)} · {formatDuration(t.duration)}
+                {#if t.kind === 'glide'}
+                  {m.climbs_meta_plain({ from: alt(t, 'start'), to: alt(t, 'end'), agl: agl ? ' AGL' : '', speed: formatSpeed(t.speed, u), duration: formatDuration(t.duration) })}
+                {:else}
+                  {m.climbs_meta_kind({ kind: KIND_LABELS[t.kind](), from: alt(t, 'start'), to: alt(t, 'end'), agl: agl ? ' AGL' : '', speed: formatSpeed(t.speed, u), duration: formatDuration(t.duration) })}
+                {/if}
               </span>
             </button>
           </li>
         {/each}
       </ol>
     {:else if thermals.length === 0}
-      <p class="empty">{total ? 'No thermals match the filter.' : 'No thermals detected.'}</p>
+      <p class="empty">{total ? m.climbs_none_match() : m.climbs_none_detected()}</p>
     {:else}
       <ol>
         {#each thermals as t, i (t.start)}
@@ -113,7 +121,7 @@
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
               <span class="gain">+{formatAlt(t.gain, u)}</span>
               <span class="climb">{formatVario(t.avgClimb, u)}</span>
-              <span class="meta">{formatDuration(t.duration)} · top {formatAlt(t.exitAlt, u)}</span>
+              <span class="meta">{m.climbs_thermal_meta({ duration: formatDuration(t.duration), alt: formatAlt(t.exitAlt, u) })}</span>
             </button>
           </li>
         {/each}

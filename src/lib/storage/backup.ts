@@ -42,26 +42,28 @@ export async function buildBackup(includeToken: boolean): Promise<Backup> {
   return backup;
 }
 
+import { m } from '../paraglide/messages';
+
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object';
 
 export async function restoreBackup(raw: unknown, mode: 'merge' | 'replace') {
-  if (!isObj(raw) || raw.app !== 'updraft') throw new Error('This is not an updraft backup file.');
-  if (raw.version !== 1) throw new Error(`Unsupported backup version: ${String(raw.version)}.`);
+  if (!isObj(raw) || raw.app !== 'updraft') throw new Error(m.backup_not_backup());
+  if (raw.version !== 1) throw new Error(m.backup_version({ version: String(raw.version) }));
   if (!Array.isArray(raw.flights) || !Array.isArray(raw.manual) || !Array.isArray(raw.cameraPaths)) {
-    throw new Error('The backup file is incomplete.');
+    throw new Error(m.backup_incomplete());
   }
   for (const f of raw.flights) {
     if (!isObj(f) || typeof f.id !== 'string' || !Array.isArray(f.fixes) || !f.fixes.length) {
-      throw new Error('The backup contains a flight without id or track.');
+      throw new Error(m.backup_bad_flight());
     }
   }
-  for (const m of raw.manual) {
-    if (!isObj(m) || typeof m.id !== 'string' || typeof m.date !== 'string' || m.manual !== true) {
-      throw new Error('The backup contains a broken manual entry.');
+  for (const entry of raw.manual) {
+    if (!isObj(entry) || typeof entry.id !== 'string' || typeof entry.date !== 'string' || entry.manual !== true) {
+      throw new Error(m.backup_bad_manual());
     }
   }
   for (const c of raw.cameraPaths) {
-    if (!isObj(c) || typeof c.key !== 'string') throw new Error('The backup contains broken camera keys.');
+    if (!isObj(c) || typeof c.key !== 'string') throw new Error(m.backup_bad_camera());
   }
   const backup = raw as unknown as Backup;
   await flightRepository.importAll(backup, mode);

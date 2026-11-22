@@ -1,3 +1,4 @@
+import { m } from '../paraglide/messages';
 import IGCParser from 'igc-parser';
 import type { Fix, Flight } from './model';
 
@@ -22,7 +23,7 @@ export function parseIgc(text: string, { id, sourceName }: ParseOptions): Flight
   }
 
   if (fixes.length === 0) {
-    throw new Error(`${sourceName}: no valid fixes found`);
+    throw new Error(m.format_no_fixes({ name: sourceName }));
   }
 
   return {

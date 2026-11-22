@@ -1,10 +1,11 @@
 import type { BasemapId } from '#lib/domain/scene';
+import { m } from '../paraglide/messages';
 
 // Free, keyless map sources shared by the 3D (Cesium) and 2D (MapLibre) views.
 // All require attribution. Fine for low traffic; heavy use should self-host or use a keyed provider.
 
 export interface Basemap {
-  label: string;
+  label: () => string;
   /** XYZ templates with {z}/{x}/{y}; several entries spread load over subdomains. */
   tiles: string[];
   maxZoom: number;
@@ -13,19 +14,19 @@ export interface Basemap {
 
 export const BASEMAPS: Record<BasemapId, Basemap> = {
   satellite: {
-    label: 'Satellite',
+    label: () => m.basemap_satellite(),
     tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
     maxZoom: 19,
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
   },
   topo: {
-    label: 'Topo',
+    label: () => 'Topo',
     tiles: ['a', 'b', 'c'].map((s) => `https://${s}.tile.opentopomap.org/{z}/{x}/{y}.png`),
     maxZoom: 17,
     attribution: '© OpenStreetMap contributors, SRTM · style © OpenTopoMap (CC-BY-SA)'
   },
   osm: {
-    label: 'OSM',
+    label: () => 'OSM',
     tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'

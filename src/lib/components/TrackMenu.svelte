@@ -1,41 +1,53 @@
 <script lang="ts">
   import { COLOR_MODES, TRACK_STYLES, TRACK_WIDTH } from '#lib/domain/scene';
+  import { m } from '#lib/paraglide/messages';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import Popover from './Popover.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
-  const COLOR_LABELS = { vario: 'Vario', phase: 'Phase', climb: 'Climb / transition', pilot: 'Pilot' } as const;
-  const STYLE_LABELS = { solid: 'Solid', outline: 'Outline', dashed: 'Dashed', curtain: 'Curtain (3D)', glow: 'Glow' } as const;
+  const COLOR_LABELS = {
+    vario: () => m.track_color_vario(),
+    phase: () => m.track_color_phase(),
+    climb: () => m.track_color_climb(),
+    pilot: () => m.track_color_pilot()
+  } as const;
+  const STYLE_LABELS = {
+    solid: () => m.track_style_solid(),
+    outline: () => m.track_style_outline(),
+    dashed: () => m.track_style_dashed(),
+    curtain: () => m.track_style_curtain(),
+    glow: () => m.track_style_glow()
+  } as const;
 </script>
 
-<Popover label="Track">
+<Popover label={m.track_menu()}>
   <div class="fields">
-    <label for="track-color">Colour</label>
+    <label for="track-color">{m.track_colour()}</label>
     <select id="track-color" bind:value={replay.colorBy}>
-      {#each COLOR_MODES as m (m)}<option value={m}>{COLOR_LABELS[m]}</option>{/each}
+      {#each COLOR_MODES as mode (mode)}<option value={mode}>{COLOR_LABELS[mode]()}</option>{/each}
     </select>
 
-    <label for="track-style">Style</label>
+    <label for="track-style">{m.track_style()}</label>
     <select id="track-style" bind:value={replay.trackStyle}>
-      {#each TRACK_STYLES as s (s)}<option value={s}>{STYLE_LABELS[s]}</option>{/each}
+      {#each TRACK_STYLES as s (s)}<option value={s}>{STYLE_LABELS[s]()}</option>{/each}
     </select>
 
-    <label for="track-width">Width</label>
+    <label for="track-width">{m.track_width()}</label>
     <span class="width">
       <input id="track-width" type="range" min={TRACK_WIDTH.min} max={TRACK_WIDTH.max} step="1" bind:value={replay.trackWidth} />
       <output for="track-width">{replay.trackWidth} px</output>
     </span>
 
     <span></span>
-    <label class="check"><input type="checkbox" bind:checked={replay.smoothTrack} /> Smooth</label>
+    <label class="check"><input type="checkbox" bind:checked={replay.smoothTrack} /> {m.track_smooth()}</label>
   </div>
   {#if replay.trackStyle === 'glow' && replay.colorBy !== 'pilot'}
-    <p class="hint">In 3D, glow needs the pilot colour; other colour modes draw solid.</p>
+    <p class="hint">{m.track_hint_glow()}</p>
   {:else if replay.trackStyle === 'curtain'}
-    <p class="hint">The curtain is a 3D effect; the 2D map draws solid.</p>
+    <p class="hint">{m.track_hint_curtain()}</p>
   {/if}
-  <p class="hint">Click a pilot's colour dot to change their colour.</p>
+  <p class="hint">{m.track_hint_dot()}</p>
 </Popover>
 
 <style>

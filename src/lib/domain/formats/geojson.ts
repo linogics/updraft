@@ -1,3 +1,4 @@
+import { m } from '../../paraglide/messages';
 import type { Fix, Flight } from '../model';
 import { toFlight } from './common';
 
@@ -31,7 +32,7 @@ export function readGeoJson(text: string, sourceName: string): Flight {
   const json = JSON.parse(text);
   const features: Json[] = json.type === 'FeatureCollection' ? json.features : json.type === 'Feature' ? [json] : [{ geometry: json }];
   const fixes = features.flatMap(featureFixes);
-  if (!fixes.length) throw new Error(`${sourceName}: no LineString with timestamps found, a track without time cannot be a flight`);
+  if (!fixes.length) throw new Error(m.format_geojson_no_time({ name: sourceName }));
   return toFlight(sourceName, fixes);
 }
 

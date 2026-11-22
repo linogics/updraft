@@ -1,5 +1,7 @@
 <script lang="ts">
-  let { onfiles, busy = false, compact = false, hint = 'IGC, GPX, KML, FIT, TRK or GeoJSON. Several files from the same day are replayed together.' }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean; hint?: string } = $props();
+  import { m } from '#lib/paraglide/messages';
+
+  let { onfiles, busy = false, compact = false, hint = m.drop_hint() }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean; hint?: string } = $props();
 
   let over = $state(false);
 
@@ -25,7 +27,7 @@
   }}
 >
   <input type="file" accept=".igc,.gpx,.kml,.geojson,.json,.trk,.fit" multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
-  <strong>{busy ? 'Processing…' : 'Drop flight files here'}</strong>
+  <strong>{busy ? m.drop_processing() : m.drop_here()}</strong>
   <span>{hint}</span>
 </label>
 

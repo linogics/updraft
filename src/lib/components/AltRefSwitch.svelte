@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
 </script>
 
-<span class="switch" role="group" aria-label="Altitude reference">
+<span class="switch" role="group" aria-label={m.altref_label()}>
   <button aria-pressed={altRefPrefs.ref === 'msl'} onclick={() => altRefPrefs.set('msl')}>MSL</button>
   <button aria-pressed={altRefPrefs.ref === 'agl'} onclick={() => altRefPrefs.set('agl')}>AGL</button>
 </span>

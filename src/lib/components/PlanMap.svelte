@@ -12,6 +12,7 @@
   import type { LatLon } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
+  import { m } from '#lib/paraglide/messages';
 
   let {
     points,
@@ -85,7 +86,7 @@
       el.type = 'button';
       el.className = 'pt' + (i === selected ? ' sel' : '');
       el.textContent = String(i + 1);
-      el.ariaLabel = `Point ${i + 1}`;
+      el.ariaLabel = m.plan_point({ n: i + 1 });
       el.onclick = (e) => {
         e.stopPropagation();
         onselect(i);
@@ -105,7 +106,7 @@
       const h = document.createElement('button');
       h.type = 'button';
       h.className = 'mid';
-      h.ariaLabel = `Insert point before ${i + 1}`;
+      h.ariaLabel = m.plan_insert_point({ n: i + 1 });
       h.onclick = (e) => {
         e.stopPropagation();
         oninsert(i, mid);

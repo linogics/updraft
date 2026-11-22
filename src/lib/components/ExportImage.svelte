@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
   import { pngFilename } from '#lib/export/filename';
+  import { m } from '#lib/paraglide/messages';
   import { mapCredits } from '#lib/export/credits';
   import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import type { ReplayState } from '#lib/state/replay.svelte';
@@ -57,7 +58,7 @@
         parts
       );
       const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('The browser could not encode the PNG.');
+      if (!blob) throw new Error(m.export_png_error());
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -74,39 +75,39 @@
 
 <div class="export">
   <fieldset>
-    <legend>Size</legend>
-    <div class="presets" role="group" aria-label="Aspect preset">
+    <legend>{m.export_size()}</legend>
+    <div class="presets" role="group" aria-label={m.export_aspect_preset()}>
       {#each PRESETS as p (p.label)}
         <button type="button" aria-pressed={w === p.width && h === p.height} onclick={() => pick(p)}>{p.label}</button>
       {/each}
     </div>
     <div class="size">
-      <label for="export-width">Width</label>
+      <label for="export-width">{m.common_width()}</label>
       <input id="export-width" type="number" min={MIN} max={MAX} step="1" bind:value={width} />
-      <label for="export-height">Height</label>
+      <label for="export-height">{m.common_height()}</label>
       <input id="export-height" type="number" min={MIN} max={MAX} step="1" bind:value={height} />
     </div>
-    <p class="hint">{w} × {h} px, between {MIN} and {MAX}.</p>
+    <p class="hint">{m.export_image_size_hint({ width: w, height: h, min: MIN, max: MAX })}</p>
   </fieldset>
 
   <fieldset>
-    <legend>Overlays</legend>
-    {#each PART_LABELS as [key, label] (key)}
+    <legend>{m.export_overlays()}</legend>
+    {#each PART_LABELS as { key, label } (key)}
       <div class="check">
         <input id="export-part-{key}" type="checkbox" bind:checked={parts[key]} />
-        <label for="export-part-{key}">{label}</label>
+        <label for="export-part-{key}">{label()}</label>
       </div>
     {/each}
     {#if !parts.credits}
-      <p class="warn" role="note">Map providers require attribution when you publish this image.</p>
+      <p class="warn" role="note">{m.export_image_credits_warn()}</p>
     {/if}
   </fieldset>
 
   <button type="button" class="download" onclick={download} disabled={!canExport}>
-    {busy ? 'Rendering…' : 'Download PNG'}
+    {busy ? m.export_rendering() : m.export_image_button()}
   </button>
   {#if !replay.capture}
-    <p class="hint">Switch to 3D or Split to export</p>
+    <p class="hint">{m.export_menu_hint_switch()}</p>
   {/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 </div>

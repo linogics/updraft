@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
+
   /**
    * Window splitter (WAI-ARIA pattern). Drag or arrow keys resize, Enter or the chevron collapses,
    * double-click resets. `sign` is -1 when moving left/up makes the controlled panel bigger,
@@ -88,7 +90,12 @@
     onkeydown={key}
   ></div>
   {#if ontoggle}
-    <button tabindex="-1" aria-label="{open ? 'Collapse' : 'Expand'} {label.toLowerCase()}" aria-expanded={open} onclick={ontoggle}>{chevron}</button>
+    <button
+      tabindex="-1"
+      aria-label={open ? m.splitter_collapse({ label: label.toLowerCase() }) : m.splitter_expand({ label: label.toLowerCase() })}
+      aria-expanded={open}
+      onclick={ontoggle}>{chevron}</button
+    >
   {/if}
 </div>
 

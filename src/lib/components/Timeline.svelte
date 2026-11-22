@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { snapStart, type SyncMode } from '#lib/domain/sync';
+  import { m } from '#lib/paraglide/messages';
   import { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { LoadedFlight, ReplayState } from '#lib/state/replay.svelte';
   import { SNAP_PX } from '#lib/ui/keyLanes';
@@ -11,10 +12,10 @@
   let { replay }: { replay: ReplayState } = $props();
 
   const MIN_SPAN = 60_000;
-  const MODES: { mode: SyncMode; label: string; title: string }[] = [
-    { mode: 'real', label: 'Real time', title: 'Every flight at its recorded date and time' },
-    { mode: 'timeOfDay', label: 'Same day', title: 'Move all flights onto one day, keeping their time of day' },
-    { mode: 'takeoff', label: 'Align takeoffs', title: 'Start all flights at the same moment' }
+  const MODES: { mode: SyncMode; label: () => string; title: () => string }[] = [
+    { mode: 'real', label: () => m.sync_real(), title: () => m.sync_real_title() },
+    { mode: 'timeOfDay', label: () => m.sync_day(), title: () => m.sync_day_title() },
+    { mode: 'takeoff', label: () => m.sync_takeoff(), title: () => m.sync_takeoff_title() }
   ];
   const TICK_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440].map((m) => m * 60_000);
 
@@ -171,19 +172,19 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div class="timeline" tabindex="0" role="group" aria-label="Timeline" onkeydown={onKey}>
+<div class="timeline" tabindex="0" role="group" aria-label={m.timeline_label()} onkeydown={onKey}>
   <div class="head">
-    <div class="modes" role="group" aria-label="Flight alignment">
-      {#each MODES as m (m.mode)}
-        <button class:active={replay.syncMode === m.mode} title={m.title} onclick={() => replay.setSyncMode(m.mode)}>
-          {m.label}
+    <div class="modes" role="group" aria-label={m.timeline_alignment()}>
+      {#each MODES as entry (entry.mode)}
+        <button class:active={replay.syncMode === entry.mode} title={entry.title()} onclick={() => replay.setSyncMode(entry.mode)}>
+          {entry.label()}
         </button>
       {/each}
     </div>
-    <span class="hint">Drag clips to shift · Alt: no snapping · Ctrl+wheel: zoom</span>
-    <button onclick={() => replay.undoCamera()} disabled={!replay.canUndoCamera} title="Undo camera edit (Ctrl+Z)">Undo</button>
-    <button onclick={() => replay.redoCamera()} disabled={!replay.canRedoCamera} title="Redo camera edit (Ctrl+Shift+Z)">Redo</button>
-    {#if zoom}<button onclick={() => (zoom = null)}>Fit</button>{/if}
+    <span class="hint">{m.timeline_hint()}</span>
+    <button onclick={() => replay.undoCamera()} disabled={!replay.canUndoCamera} title={m.timeline_undo_title()}>{m.timeline_undo()}</button>
+    <button onclick={() => replay.redoCamera()} disabled={!replay.canRedoCamera} title={m.timeline_redo_title()}>{m.timeline_redo()}</button>
+    {#if zoom}<button onclick={() => (zoom = null)}>{m.timeline_fit()}</button>{/if}
   </div>
 
   <div class="body">
@@ -198,7 +199,7 @@
             <small>{f.source.date}</small>
           </span>
           {#if nudge}
-            <button class="nudge" title="Remove manual shift" onclick={() => replay.setNudge(f.flight.id, 0)}>
+            <button class="nudge" title={m.timeline_remove_shift()} onclick={() => replay.setNudge(f.flight.id, 0)}>
               {formatNudge(nudge)} ✕
             </button>
           {/if}
@@ -235,7 +236,7 @@
             style:left="{left}px"
             style:width="{Math.max(4, duration(f) / msPerPx)}px"
             style:--c={f.color}
-            title="{f.source.pilot}: {formatClock(f.source.fixes[0].t)}–{formatClock(f.source.fixes.at(-1)!.t)} recorded"
+            title={m.timeline_clip_title({ pilot: f.source.pilot, from: formatClock(f.source.fixes[0].t), to: formatClock(f.source.fixes.at(-1)!.t) })}
             onpointerdown={(e) => onClipDown(e, f)}
             onpointermove={(e) => onClipMove(e, f)}
             onpointerup={() => onClipUp(f)}

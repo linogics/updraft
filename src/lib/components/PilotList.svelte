@@ -3,6 +3,7 @@
   import { indexAt, positionAt } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { m } from '#lib/paraglide/messages';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
@@ -35,8 +36,8 @@
 </script>
 
 <section>
-  <h3>Pilots</h3>
-  <div class="head"><span class="live"><span>Alt</span><span>AGL</span></span></div>
+  <h3>{m.pilots_heading()}</h3>
+  <div class="head"><span class="live"><span>{m.pilots_alt()}</span><span>AGL</span></span></div>
   <ul>
     {#each rows as r (r.f.flight.id)}
       {@const selected = r.f.flight.id === replay.selected?.flight.id}
@@ -45,7 +46,7 @@
           type="checkbox"
           checked={r.f.visible}
           onchange={(e) => replay.setVisible(r.f.flight.id, e.currentTarget.checked)}
-          aria-label="Show {r.f.flight.pilot}"
+          aria-label={m.pilots_show({ pilot: r.f.flight.pilot })}
         />
         <span class="color">
           <input
@@ -54,11 +55,11 @@
             value={r.f.color}
             style:background={r.f.color}
             onchange={(e) => replay.setPilotColor(r.f.flight.id, e.currentTarget.value)}
-            aria-label="Colour of {r.f.flight.pilot}"
-            title="Change colour"
+            aria-label={m.pilots_colour_of({ pilot: r.f.flight.pilot })}
+            title={m.pilots_change_colour()}
           />
           {#if replay.colorOverrides[r.f.flight.id]}
-            <button class="reset" onclick={() => replay.setPilotColor(r.f.flight.id, null)} title="Reset colour" aria-label="Reset colour of {r.f.flight.pilot}">✕</button>
+            <button class="reset" onclick={() => replay.setPilotColor(r.f.flight.id, null)} title={m.pilots_reset_colour()} aria-label={m.pilots_reset_colour_of({ pilot: r.f.flight.pilot })}>✕</button>
           {/if}
         </span>
         <button class="name" onclick={() => (replay.selectedId = r.f.flight.id)}>
@@ -69,11 +70,11 @@
         </button>
         <span class="live">
           <span>{r.alt}</span>
-          <span title="Height above ground">{r.agl}</span>
+          <span title={m.pilots_agl_title()}>{r.agl}</span>
           <span class:up={r.varioUp}>{r.vario}</span>
           <span>{r.speed}</span>
           <span class="muted">{r.dist}</span>
-          {#if r.local}<span class="muted" title="Recorded time of this flight">{r.local}</span>{/if}
+          {#if r.local}<span class="muted" title={m.pilots_recorded_time()}>{r.local}</span>{/if}
         </span>
       </li>
     {/each}

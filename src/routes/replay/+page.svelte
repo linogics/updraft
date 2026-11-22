@@ -17,6 +17,7 @@
   import Toolbar from '#lib/components/Toolbar.svelte';
   import { loadRuntimeConfig } from '#lib/config';
   import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
+  import { m } from '#lib/paraglide/messages';
   import type { Flight } from '#lib/domain/model';
   import { ReplayState } from '#lib/state/replay.svelte';
   import { flightRepository } from '#lib/storage';
@@ -25,7 +26,7 @@
   let error = $state('');
   let loaded = $state(false);
   let footerTab = $state<'altitude' | 'timeline'>('altitude');
-  let steps = $state(['Reading flights', 'Finding thermals and glides', 'Loading camera keys']);
+  let steps = $state<string[]>([m.replay_step_read_flights(), m.replay_step_thermals(), m.replay_step_camera()]);
   let step = $state(0);
   // Analysis runs synchronously, so let the browser paint the loader before each heavy step.
   let viewsWidth = $state(1);
@@ -46,7 +47,7 @@
     replay.labels = scene.labels;
     replay.basemap = scene.basemap;
     const n = scene.flightIds.length;
-    steps[0] = `Reading ${n} flight${n === 1 ? '' : 's'}`;
+    steps[0] = n === 1 ? m.replay_step_read_one() : m.replay_step_read_many({ count: n });
     const { cesiumIonToken } = await loadRuntimeConfig();
     replay.ionAvailable = !!cesiumIonToken;
     replay.terrain = resolveTerrain(scene.terrain, replay.ionAvailable);
@@ -55,7 +56,7 @@
       (f): f is Flight => !!f
     );
     if (!flights.length) {
-      error = 'None of the requested flights were found in this browser.';
+      error = m.replay_none_found();
       return;
     }
     step = 1;
@@ -105,7 +106,7 @@
 </script>
 
 <svelte:head>
-  <title>Replay | updraft</title>
+  <title>{m.replay_title()}</title>
 </svelte:head>
 
 <svelte:window onkeydown={onKey} />
@@ -113,7 +114,7 @@
 {#if error}
   <main class="error">
     <p>{error}</p>
-    <a href="/logbook">Open the logbook</a>
+    <a href="/logbook">{m.home_open_logbook()}</a>
   </main>
 {:else if loaded}
   <div
@@ -132,7 +133,7 @@
       {#if replay.layout === 'split'}
         <div class="split-handle">
           <Splitter
-            label="3D and 2D split"
+            label={m.replay_split_label()}
             axis="x"
             value={panels.split}
             min={L.split.min}
@@ -150,7 +151,7 @@
 
     <div class="side-handle">
       <Splitter
-        label="Side panel"
+        label={m.replay_side_panel()}
         axis="x"
         sign={-1}
         value={panels.side}
@@ -171,7 +172,7 @@
 
     <div class="footer-handle">
       <Splitter
-        label="Bottom panel"
+        label={m.replay_bottom_panel()}
         axis="y"
         sign={-1}
         value={panels.footer}
@@ -188,9 +189,9 @@
       <PlayerBar {replay} />
       <div class="footer-body" hidden={!panels.footerOpen}>
       <div class="tabs" role="tablist">
-        <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>Altitude</button>
+        <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>{m.replay_tab_altitude()}</button>
         <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
-          Timeline{replay.multiDay ? ' · multi-day' : ''}
+          {replay.multiDay ? m.replay_timeline_multi_day() : m.timeline_label()}
         </button>
       </div>
       <div class="chart">

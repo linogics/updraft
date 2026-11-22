@@ -1,4 +1,5 @@
 // Canvas 2D overlay for exported frames. Framework-free: only the context it draws on is touched.
+import { m } from '../paraglide/messages';
 import { formatClock, formatDuration } from '../ui/format';
 import { formatAlt, formatDistance, formatSpeed, formatVario, type Units } from '../ui/units';
 import { indexAt } from '../domain/timeline';
@@ -14,12 +15,12 @@ export interface OverlayParts {
 
 export const ALL_PARTS: OverlayParts = { hud: true, altitudeGraph: true, stats: true, minimap: true, credits: true };
 
-export const PART_LABELS: [keyof OverlayParts, string][] = [
-  ['hud', 'Flight data'],
-  ['altitudeGraph', 'Altitude graph'],
-  ['stats', 'Stats'],
-  ['minimap', 'Minimap'],
-  ['credits', 'Map credits']
+export const PART_LABELS: { key: keyof OverlayParts; label: () => string }[] = [
+  { key: 'hud', label: () => m.export_part_hud() },
+  { key: 'altitudeGraph', label: () => m.export_part_graph() },
+  { key: 'stats', label: () => m.export_part_stats() },
+  { key: 'minimap', label: () => m.export_part_minimap() },
+  { key: 'credits', label: () => m.export_part_credits() }
 ];
 
 export interface OverlayData {
@@ -181,11 +182,11 @@ function paintHud(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: OverlayD
   const inFlight = d.replayTime >= fixes[0].t && d.replayTime <= fixes[fixes.length - 1].t;
   const agl = aglOf(sel, i);
   const rows: [string, string][] = [
-    ['Time', formatClock(d.replayTime - sel.timeOffset)],
-    ['Altitude', formatAlt(fixes[i].alt, u)],
+    [m.export_row_time(), formatClock(d.replayTime - sel.timeOffset)],
+    [m.export_row_altitude(), formatAlt(fixes[i].alt, u)],
     ['AGL', agl === undefined ? '–' : formatAlt(agl, u)],
-    ['Vario', formatVario(inFlight ? sel.analysis.vario[i] : 0, u)],
-    ['Ground speed', formatSpeed(inFlight ? sel.analysis.speed[i] : 0, u)]
+    [m.units_vario(), formatVario(inFlight ? sel.analysis.vario[i] : 0, u)],
+    [m.export_row_ground_speed(), formatSpeed(inFlight ? sel.analysis.speed[i] : 0, u)]
   ];
   rows.forEach(([label, value], k) => row(ctx, r, s, rowY(r, s, k), label, value));
 }
@@ -195,13 +196,13 @@ function paintStats(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Overla
   const { source: f, analysis } = d.selected;
   const st = analysis.stats;
   const rows: [string, string][] = [
-    ['Pilot', f.pilot],
-    ['Glider', f.glider ?? f.sourceName],
-    ['Site', f.site ?? '–'],
-    ['Date', f.date],
-    ['Duration', formatDuration(st.duration)],
-    ['Track', formatDistance(st.trackLength, d.units)],
-    ['Max altitude', formatAlt(st.maxAlt, d.units)]
+    [m.export_row_pilot(), f.pilot],
+    [m.export_row_glider(), f.glider ?? f.sourceName],
+    [m.export_row_site(), f.site ?? '–'],
+    [m.export_row_date(), f.date],
+    [m.export_row_duration(), formatDuration(st.duration)],
+    [m.export_row_track(), formatDistance(st.trackLength, d.units)],
+    [m.export_row_max_altitude(), formatAlt(st.maxAlt, d.units)]
   ];
   rows.forEach(([label, value], k) => row(ctx, r, s, rowY(r, s, k), label, value));
 }
@@ -249,7 +250,7 @@ function paintGraph(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Overla
   font(ctx, 20 * s, 600);
   ctx.fillStyle = TEXT;
   ctx.textAlign = 'left';
-  ctx.fillText('Altitude', r.x + pad, r.y + pad + 9 * s);
+  ctx.fillText(m.export_row_altitude(), r.x + pad, r.y + pad + 9 * s);
   ctx.textAlign = 'right';
   ctx.fillText(formatAlt(fixes[i].alt, d.units), r.x + r.w - pad, r.y + pad + 9 * s);
 }

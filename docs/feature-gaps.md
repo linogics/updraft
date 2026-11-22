@@ -27,6 +27,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | XC route from a flight (xcfinder) | 2026-11-22 | "Make route" in the XC section: 1 to 30 turnpoints that maximise the summed leg distance, opened in the planner for editing. Turnpoints show as numbered points. |
 | Thermal hotspot overlay (flyXC) | 2026-11-22 | Hotspots and skyways from thermal.kk7.ch, drawn in 2D, 3D and the planner. Two toggles and one opacity slider, stored per browser, not in the URL. Export credits name the source. Type, month and time-of-day filters are open. |
 | Airspaces in 2D and 3D (flyXC) | 2026-11-22 | openAIP vector tiles with a free key per browser, filtered by class, floor and opacity, click for details in 2D. In the replay map and the planner. The 3D replay draws translucent volumes scaled with the altitude exaggeration. Limits: FL is treated as MSL, AGL ceilings are treated as MSL, GND floors start at 0 m, FIR and UIR are skipped. |
+| Languages: English, German, French (skyviz, xcfinder) | 2026-11-22 | English, German and French, picked next to units, saved per browser, otherwise browser language. |
 
 ## Possible without a backend
 
@@ -38,7 +39,6 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | National topo maps: IGN France (incl. OACI chart), IGN Spain | flyXC |
 | Chart metric switch altitude / speed / vario, ground elevation fill, wheel zoom | flyXC |
 | Place search, "my location", installable PWA | flyXC |
-| Languages: German/English, French | skyviz, xcfinder |
 
 ## Needs a backend
 

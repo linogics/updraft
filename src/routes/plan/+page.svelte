@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { replaceState } from '$app/navigation';
   import Logo from '#lib/components/Logo.svelte';
+  import { m } from '#lib/paraglide/messages';
+  import { XC_TYPE_LABELS } from '#lib/xc/labels';
   import PlanMap from '#lib/components/PlanMap.svelte';
   import AirspaceControls from '#lib/components/AirspaceControls.svelte';
   import ThermalOverlayControls from '#lib/components/ThermalOverlayControls.svelte';
@@ -97,7 +99,7 @@
 </script>
 
 <svelte:head>
-  <title>XC planner | updraft</title>
+  <title>{m.plan_title()}</title>
 </svelte:head>
 
 <svelte:window onkeydown={onkey} />
@@ -111,63 +113,63 @@
 
   <aside>
     <Logo />
-    <h1>XC planner</h1>
-    <p class="hint">Click the map to add points. Drag a point to move it, click a leg midpoint to insert one.</p>
+    <h1>{m.home_planner_title()}</h1>
+    <p class="hint">{m.plan_hint()}</p>
 
     <div class="row">
-      <button onclick={undo} disabled={!history.length}>Undo</button>
-      <button onclick={remove} disabled={selected === null}>Remove point</button>
-      <button onclick={() => commit([])} disabled={!points.length}>Clear</button>
-      <button onclick={copy} disabled={!points.length}>{copied ? 'Copied' : 'Copy link'}</button>
+      <button onclick={undo} disabled={!history.length}>{m.timeline_undo()}</button>
+      <button onclick={remove} disabled={selected === null}>{m.plan_remove_point()}</button>
+      <button onclick={() => commit([])} disabled={!points.length}>{m.common_clear()}</button>
+      <button onclick={copy} disabled={!points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
     </div>
 
     <label>
-      Base map
+      {m.plan_base_map()}
       <select bind:value={basemap}>
-        {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label}</option>{/each}
+        {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
       </select>
     </label>
 
     <div class="readout">
       <span class="big">{formatDistance(total, unitPrefs.units)}</span>
-      <span class="unit">total distance</span>
+      <span class="unit">{m.plan_total_distance()}</span>
     </div>
 
     <div class="row">
       <label>
-        Speed (km/h)
+        {m.plan_speed()}
         <input type="number" min="1" max="300" bind:value={speed} onchange={syncUrl} />
       </label>
       <div class="readout">
         <span class="big">{speed > 0 && total ? formatDuration((total / 1000 / speed) * 3600) : '–'}</span>
-        <span class="unit">estimated time</span>
+        <span class="unit">{m.plan_estimated_time()}</span>
       </div>
     </div>
 
     <section>
-      <h2>Airspaces</h2>
+      <h2>{m.airspace_show()}</h2>
       <AirspaceControls />
     </section>
 
     <section>
-      <h2>Thermal overlay</h2>
+      <h2>{m.plan_thermal_overlay()}</h2>
       <ThermalOverlayControls />
     </section>
 
     <section>
-      <h2>XC score</h2>
+      <h2>{m.plan_xc_score()}</h2>
       <label>
-        League
+        {m.plan_league()}
         <select value={xcPrefs.league} onchange={(e) => xcPrefs.set(e.currentTarget.value as XcLeague)}>
           {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
         </select>
       </label>
       {#if scoring}
-        <p class="muted">Scoring…</p>
+        <p class="muted">{m.xc_scoring()}</p>
       {:else if score}
         <p>
-          <strong>{Math.round(score.points)} points</strong>
-          <span class="muted">{score.type}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}</span>
+          <strong>{m.plan_points({ points: Math.round(score.points) })}</strong>
+          <span class="muted">{XC_TYPE_LABELS[score.type]()}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}</span>
         </p>
       {:else}
         <p class="muted">–</p>
@@ -176,10 +178,10 @@
 
     {#if legs.length}
       <section>
-        <h2>Legs</h2>
+        <h2>{m.plan_legs()}</h2>
         <ol>
           {#each legs as d, i (i)}
-            <li><span>{i + 1} to {i + 2}</span><span>{formatDistance(d, unitPrefs.units)}</span></li>
+            <li><span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span></li>
           {/each}
         </ol>
       </section>

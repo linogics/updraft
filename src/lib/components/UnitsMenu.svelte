@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
   import { unitPrefs } from '#lib/state/units.svelte';
   import {
     ALT_UNITS,
@@ -13,12 +14,16 @@
   } from '#lib/ui/units';
   import Popover from './Popover.svelte';
 
-  const PRESET_LABELS: Record<UnitPreset, string> = { metric: 'Metric', imperial: 'Imperial', aviation: 'Aviation' };
+  const PRESET_LABELS: Record<UnitPreset, () => string> = {
+    metric: () => m.units_preset_metric(),
+    imperial: () => m.units_preset_imperial(),
+    aviation: () => m.units_preset_aviation()
+  };
   const FIELDS = [
-    { key: 'distance', label: 'Distance', options: DISTANCE_UNITS },
-    { key: 'alt', label: 'Altitude', options: ALT_UNITS },
-    { key: 'vario', label: 'Vario', options: VARIO_UNITS },
-    { key: 'speed', label: 'Speed', options: SPEED_UNITS }
+    { key: 'distance', label: () => m.units_distance(), options: DISTANCE_UNITS },
+    { key: 'alt', label: () => m.units_altitude(), options: ALT_UNITS },
+    { key: 'vario', label: () => m.units_vario(), options: VARIO_UNITS },
+    { key: 'speed', label: () => m.units_speed(), options: SPEED_UNITS }
   ] as const;
 
   const preset = $derived(presetOf(unitPrefs.units));
@@ -28,16 +33,16 @@
   }
 </script>
 
-<Popover label="Units">
-  <div class="presets" role="group" aria-label="Unit preset">
+<Popover label={m.units_menu()}>
+  <div class="presets" role="group" aria-label={m.units_preset_group()}>
     {#each Object.keys(UNIT_PRESETS) as UnitPreset[] as p (p)}
-      <button class:active={preset === p} onclick={() => unitPrefs.set({ ...UNIT_PRESETS[p] })}>{PRESET_LABELS[p]}</button>
+      <button class:active={preset === p} onclick={() => unitPrefs.set({ ...UNIT_PRESETS[p] })}>{PRESET_LABELS[p]()}</button>
     {/each}
   </div>
-  {#if preset === 'custom'}<p class="custom">Custom</p>{/if}
+  {#if preset === 'custom'}<p class="custom">{m.units_custom()}</p>{/if}
   <div class="fields">
     {#each FIELDS as f (f.key)}
-      <label for="unit-{f.key}">{f.label}</label>
+      <label for="unit-{f.key}">{f.label()}</label>
       <select id="unit-{f.key}" value={unitPrefs.units[f.key]} onchange={(e) => setField(f.key, e.currentTarget.value)}>
         {#each f.options as o (o)}
           <option value={o}>{(UNIT_LABELS[f.key] as Record<string, string>)[o]}</option>
