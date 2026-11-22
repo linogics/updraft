@@ -33,10 +33,10 @@
     display: block;
   }
   rect {
-    fill: #3a414c;
+    fill: var(--border-hi);
   }
   rect.now {
-    fill: var(--needle);
+    fill: var(--primary);
   }
   figcaption {
     margin-top: 4px;

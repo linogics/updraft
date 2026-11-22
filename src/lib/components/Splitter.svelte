@@ -139,7 +139,7 @@
   .splitter:hover .bar,
   .bar.dragging,
   .bar:focus-visible {
-    background: var(--needle);
+    background: var(--primary-hi);
     outline: none;
   }
   button {

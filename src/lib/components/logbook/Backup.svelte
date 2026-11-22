@@ -118,7 +118,7 @@
     background: var(--surface-2);
   }
   .file:focus-within span {
-    outline: 2px solid var(--needle);
+    outline: 2px solid var(--primary-hi);
     outline-offset: 2px;
   }
 </style>

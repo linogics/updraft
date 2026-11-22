@@ -189,7 +189,7 @@
     text-decoration: none;
   }
   .help:hover {
-    border-color: #4a505a;
+    border-color: var(--border-hi);
   }
   .readouts {
     display: flex;
@@ -230,10 +230,10 @@
     text-decoration: none;
   }
   a.tool:hover {
-    border-color: #4a505a;
+    border-color: var(--border-hi);
   }
   a.tool:hover .go {
-    color: var(--needle);
+    color: var(--primary-hi);
   }
   .tool h2 {
     margin: 0;
@@ -266,10 +266,10 @@
     height: 36px;
   }
   .bars rect {
-    fill: #3a414c;
+    fill: var(--border-hi);
   }
   .bars rect.now {
-    fill: var(--needle);
+    fill: var(--primary);
   }
   .go {
     font-size: 13px;
@@ -296,7 +296,7 @@
     text-decoration: none;
   }
   .recent li a:hover .pilot {
-    color: var(--needle);
+    color: var(--primary-hi);
   }
   .pilot {
     font-weight: 600;

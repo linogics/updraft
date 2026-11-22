@@ -248,8 +248,8 @@
     border-radius: 50%;
   }
   .stopwatch.on span {
-    background: #f2c94c;
-    border-color: #f2c94c;
+    background: var(--primary-hi);
+    border-color: var(--primary-hi);
   }
   .diamond {
     width: 10px;
@@ -257,13 +257,13 @@
     margin: 0 4px;
     padding: 0 !important;
     align-self: center;
-    border: 1.5px solid #f2c94c;
+    border: 1.5px solid var(--primary-hi);
     border-radius: 1px;
     background: none;
     transform: rotate(45deg);
   }
   .diamond.filled {
-    background: #f2c94c;
+    background: var(--primary-hi);
   }
   .muted {
     color: var(--muted);

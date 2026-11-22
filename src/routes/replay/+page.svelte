@@ -291,7 +291,7 @@
   }
   .tabs button[aria-selected='true'] {
     color: var(--text);
-    border-bottom-color: #3987e5;
+    border-bottom-color: var(--secondary);
   }
   .error {
     display: grid;

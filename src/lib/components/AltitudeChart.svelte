@@ -22,7 +22,7 @@
   let agl = false;
   let tooltip = $state<{ left: number; time: string; rows: { name: string; color: string; alt: string }[] } | null>(null);
 
-  const INK = '#9aa0a6';
+  const INK = '#8b8599';
   const GRID = 'rgba(255,255,255,0.06)';
 
   /** Phase bands of the selected flight, drawn behind the series. */
@@ -241,7 +241,7 @@
     right: 8px;
     z-index: 1;
     font-size: 11px;
-    color: #9aa0a6;
+    color: var(--muted);
     pointer-events: none;
   }
   .now {
@@ -259,15 +259,15 @@
     z-index: 3;
     padding: 6px 8px;
     border-radius: 6px;
-    background: rgba(20, 22, 27, 0.95);
-    border: 1px solid #2c3038;
-    color: #e8eaed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
     font-size: 12px;
     pointer-events: none;
     white-space: nowrap;
   }
   .tip-time {
-    color: #9aa0a6;
+    color: var(--muted);
     margin-bottom: 2px;
   }
   .tip-row {

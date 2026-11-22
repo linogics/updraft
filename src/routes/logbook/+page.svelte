@@ -385,8 +385,8 @@
     border-radius: 0 6px 6px 0;
   }
   .seg button.on {
-    border-color: var(--needle);
-    color: var(--needle);
+    border-color: var(--primary-hi);
+    color: var(--primary-hi);
   }
   table {
     width: 100%;

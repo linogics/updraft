@@ -41,7 +41,7 @@
   input[type='range'] {
     flex: 1;
     min-width: 80px;
-    accent-color: #3987e5;
+    accent-color: var(--primary);
   }
   .clock {
     font-variant-numeric: tabular-nums;

@@ -271,7 +271,7 @@
     user-select: none;
   }
   .timeline:focus-visible {
-    outline: 1px solid #3987e5;
+    outline: 1px solid var(--primary-hi);
     outline-offset: -1px;
   }
   .head {
@@ -295,8 +295,8 @@
     border-radius: 0 6px 6px 0;
   }
   .modes button.active {
-    background: #3987e5;
-    border-color: #3987e5;
+    background: var(--primary);
+    border-color: var(--primary);
     color: #fff;
   }
   .hint {

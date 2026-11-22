@@ -40,7 +40,7 @@
   .bar span {
     display: block;
     height: 100%;
-    background: var(--needle);
+    background: var(--primary);
     transition: width 0.3s ease-out;
   }
   ol {
@@ -69,7 +69,7 @@
     color: var(--text);
   }
   li.now::before {
-    border-color: var(--needle);
-    background: var(--needle);
+    border-color: var(--primary);
+    background: var(--primary);
   }
 </style>

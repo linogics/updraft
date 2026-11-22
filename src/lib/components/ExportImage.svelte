@@ -145,8 +145,8 @@
     border-radius: 0 6px 6px 0;
   }
   .presets button[aria-pressed='true'] {
-    background: #3987e5;
-    border-color: #3987e5;
+    background: var(--primary);
+    border-color: var(--primary);
     color: #fff;
   }
   .size {
@@ -173,11 +173,11 @@
     font-size: 12px;
   }
   .warn {
-    color: #e5a500;
+    color: var(--warn);
   }
   .error {
     margin: 0;
-    color: #e5484d;
+    color: var(--danger);
     font-size: 12px;
   }
   .download {
