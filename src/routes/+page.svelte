@@ -100,12 +100,12 @@
       <span class="go">Open logbook</span>
     </a>
 
-    <div class="tool later" aria-disabled="true">
+    <a class="tool" href="/convert">
       <h2>Convert</h2>
       <p>Turn a track into the format another app or instrument reads.</p>
       <div class="face"><span class="unit">IGC GPX KML FIT GeoJSON</span></div>
-      <span class="go">In the works</span>
-    </div>
+      <span class="go">Convert a file</span>
+    </a>
 
     <div class="tool later" aria-disabled="true">
       <h2>XC planner</h2>
@@ -142,7 +142,7 @@
       {#if flights.length > 5}<a class="more" href="/logbook">All {flights.length} flights in the logbook</a>{/if}
     {:else}
       <p class="muted">
-        No flights saved in this browser. Drop an IGC file below, or
+        No flights saved in this browser. Drop a flight file below, or
         <button onclick={loadDemo} disabled={busy}>load demo flights</button>
       </p>
     {/if}
