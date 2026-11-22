@@ -59,7 +59,7 @@ export const DEFAULT_SCENE: SceneConfig = {
   thermalFilter: DEFAULT_FILTER,
   trackStyle: 'solid',
   trackWidth: 3,
-  smoothTrack: false,
+  smoothTrack: true,
   colors: {},
   exaggeration: 1,
   lighting: false,
@@ -90,7 +90,7 @@ export function encodeScene(scene: SceneConfig): string {
   if (minClimb !== DEFAULT_FILTER.minClimb) params.set('tclimb', String(minClimb));
   if (scene.trackStyle !== DEFAULT_SCENE.trackStyle) params.set('style', scene.trackStyle);
   if (scene.trackWidth !== DEFAULT_SCENE.trackWidth) params.set('width', String(scene.trackWidth));
-  if (scene.smoothTrack) params.set('smooth', '1');
+  if (!scene.smoothTrack) params.set('smooth', '0');
   for (const [id, hex] of Object.entries(scene.colors)) params.append('pc', `${id}:${hex}`);
   if (scene.exaggeration !== DEFAULT_SCENE.exaggeration) params.set('exag', String(scene.exaggeration));
   if (scene.lighting) params.set('sun', '1');
@@ -156,7 +156,7 @@ export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): Sc
     },
     trackStyle: pick(TRACK_STYLES, params.get('style'), DEFAULT_SCENE.trackStyle),
     trackWidth: width(params.get('width')),
-    smoothTrack: params.get('smooth') === '1',
+    smoothTrack: params.get('smooth') !== '0',
     colors: decodeColors(params.getAll('pc')),
     exaggeration: exaggeration(params.get('exag')),
     lighting: params.get('sun') === '1',

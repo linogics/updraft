@@ -7,9 +7,9 @@ describe('parseAirspacePrefs', () => {
     expect(parseAirspacePrefs(null)).toEqual({ show: false, classes: [...AIRSPACE_CLASSES], maxFloor: 4000, opacity: 0.25 });
   });
 
-  it('keeps valid fields and clamps numbers', () => {
+  it('keeps valid fields, clamps numbers and starts hidden', () => {
     expect(parseAirspacePrefs({ show: true, classes: ['A', 'x', 'G'], maxFloor: 99999, opacity: 0 })).toEqual({
-      show: true,
+      show: false,
       classes: ['A', 'G'],
       maxFloor: 6000,
       opacity: 0.1

@@ -16,3 +16,7 @@ static/cesium/
 
 # Paraglide generates this at build time
 src/lib/paraglide/
+
+# Playwright
+/test-results/
+/playwright-report/
