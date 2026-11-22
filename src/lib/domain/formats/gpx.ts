@@ -3,7 +3,7 @@ import { toFlight, xmlEscape, xmlTexts } from './common';
 
 export function readGpx(text: string, sourceName: string): Flight {
   const fixes: Fix[] = [];
-  for (const m of text.matchAll(/<trkpt\b([^>]*?)(?:\/>|>([\s\S]*?)<\/trkpt>)/g)) {
+  for (const m of text.matchAll(/<(?:[\w.-]+:)?trkpt\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:[\w.-]+:)?trkpt>)/g)) {
     const lat = /\blat\s*=\s*["']([^"']+)["']/.exec(m[1]);
     const lon = /\blon\s*=\s*["']([^"']+)["']/.exec(m[1]);
     const time = xmlTexts(m[2] ?? '', 'time')[0];

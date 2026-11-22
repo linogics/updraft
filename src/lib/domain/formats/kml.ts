@@ -11,6 +11,16 @@ export function readKml(text: string, sourceName: string): Flight {
     });
   }
   if (!fixes.length) {
+    // Fallback: one Placemark per fix, with a Point and a TimeStamp.
+    for (const pm of xmlTexts(text, 'Placemark')) {
+      const when = xmlTexts(xmlTexts(pm, 'TimeStamp')[0] ?? '', 'when')[0];
+      const coords = xmlTexts(xmlTexts(pm, 'Point')[0] ?? '', 'coordinates')[0];
+      if (!when || !coords) continue;
+      const [lon, lat, alt = 'NaN'] = coords.split(',').map((s) => s.trim());
+      fixes.push({ t: Date.parse(when), lat: +lat, lon: +lon, alt: +alt });
+    }
+  }
+  if (!fixes.length) {
     // A plain LineString carries no times, so there is nothing to replay.
     throw new Error(`${sourceName}: no gx:Track with timestamps found, a plain LineString has no time and cannot be a flight`);
   }
