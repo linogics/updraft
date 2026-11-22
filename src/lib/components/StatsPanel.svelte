@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
+  import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
+  import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatDuration } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
@@ -24,13 +26,15 @@
         ]
       : []
   );
-  const summary = $derived(replay.selected?.climbs.summary);
+  const agl = $derived(altRefPrefs.ref === 'agl');
+  const summary = $derived(replay.selected && replay.transitionSummary(replay.selected, agl));
+  const alt = (v: number | null) => (v == null ? '–' : formatAlt(v, u));
   const transitionItems = $derived(
     summary && summary.count
       ? [
-          ['Leave climbs at ⌀', formatAlt(summary.avgStartAlt!, u)],
-          ['Arrive at next ⌀', formatAlt(summary.avgEndAlt!, u)],
-          ['Lowest arrival', formatAlt(summary.lowestArrival!, u)],
+          [agl ? 'Leave climbs at ⌀ (AGL)' : 'Leave climbs at ⌀', alt(summary.avgStartAlt)],
+          [agl ? 'Arrive at next ⌀ (AGL)' : 'Arrive at next ⌀', alt(summary.avgEndAlt)],
+          [agl ? 'Lowest arrival (AGL)' : 'Lowest arrival', alt(summary.lowestArrival)],
           ['Glide ⌀', summary.avgGlideRatio ? `${summary.avgGlideRatio.toFixed(1)} : 1` : '–'],
           ['Speed made good ⌀', summary.avgSpeed ? formatSpeed(summary.avgSpeed, u) : '–']
         ]
@@ -61,7 +65,7 @@
       {/each}
     </ul>
     {#if transitionItems.length}
-      <h4>Transitions <span class="count">{summary?.count} {summary?.count === 1 ? 'glide' : 'glides'}</span></h4>
+      <h4>Transitions <span class="count">{summary?.count} {summary?.count === 1 ? 'glide' : 'glides'}</span><AltRefSwitch /></h4>
       <dl>
         {#each transitionItems as [label, value] (label)}
           <dt>{label}</dt>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Thermal } from '../model';
 import { chain, straight } from '../testing/tracks';
-import { climbKinds, extractTransitions, summarizeTransitions } from './transitions';
+import { climbKinds, extractTransitions, summarizeTransitions, transitionAlts } from './transitions';
 
 /** Only the index range matters for transitions. */
 const th = (start: number, end: number) => ({ start, end }) as Thermal;
@@ -76,6 +76,33 @@ describe('summarizeTransitions', () => {
       avgGlideRatio: null,
       avgSpeed: null
     });
+  });
+});
+
+describe('AGL transitions', () => {
+  const tr = extractTransitions(fixes, [th(60, 100), th(150, 200), th(220, 250)]);
+  const agl = (i: number) => 1000 + i;
+
+  it('maps a transition to the looked-up altitudes', () => {
+    expect(transitionAlts(tr[1], agl)).toEqual({ start: 1100, end: 1150 });
+    expect(transitionAlts(tr[1])).toEqual({ start: tr[1].startAlt, end: tr[1].endAlt });
+  });
+
+  it('summarizes altitudes with the lookup and leaves the rest unchanged', () => {
+    const msl = summarizeTransitions(tr);
+    const s = summarizeTransitions(tr, agl);
+
+    expect(s.avgStartAlt).toBe((1100 + 1200) / 2);
+    expect(s.avgEndAlt).toBe((1150 + 1220) / 2);
+    expect(s.lowestArrival).toBe(1150);
+    expect(s.avgGlideRatio).toBe(msl.avgGlideRatio);
+  });
+
+  it('has no altitudes while the lookup is missing values', () => {
+    const s = summarizeTransitions(tr, () => undefined);
+
+    expect([s.avgStartAlt, s.avgEndAlt, s.lowestArrival]).toEqual([null, null, null]);
+    expect(s.count).toBe(2);
   });
 });
 

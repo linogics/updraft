@@ -5,6 +5,7 @@
   import { resampleAltitudes } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
+  import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
@@ -14,6 +15,10 @@
   let container: HTMLDivElement;
   let plot: uPlot | undefined = $state.raw();
   let cursorX = $state<number | null>(null);
+  /** AGL was chosen but a visible flight has no ground heights yet, so the chart stays MSL. */
+  let needsGround = $state(false);
+  // Set by build(), read by the draw hooks.
+  let agl = false;
   let tooltip = $state<{ left: number; time: string; rows: { name: string; color: string; alt: string }[] } | null>(null);
 
   const INK = '#9aa0a6';
@@ -41,7 +46,8 @@
    * and departure height of glides, with direct labels in text ink.
    */
   function drawWorkingBand(u: uPlot) {
-    const s = replay.selected?.climbs.summary;
+    const sel = replay.selected;
+    const s = sel && replay.transitionSummary(sel, agl);
     if (!s || s.avgStartAlt == null || s.avgEndAlt == null) return;
     const { ctx, bbox } = u;
     const px = uPlot.pxRatio;
@@ -85,7 +91,7 @@
       if (t.kind !== 'glide') continue;
       for (const i of [t.start, t.end]) {
         ctx.beginPath();
-        ctx.arc(u.valToPos(fixes[i].t / 1000, 'x', true), u.valToPos(fixes[i].alt, 'y', true), 4 * px, 0, 2 * Math.PI);
+        ctx.arc(u.valToPos(fixes[i].t / 1000, 'x', true), u.valToPos(agl ? replay.aglAt(sel, i)! : fixes[i].alt, 'y', true), 4 * px, 0, 2 * Math.PI);
         ctx.stroke();
         ctx.fill();
       }
@@ -97,8 +103,10 @@
     plot?.destroy();
     const flights = replay.flights.filter((f) => f.visible);
     if (!flights.length || !container) return;
+    agl = altRefPrefs.ref === 'agl' && flights.every((f) => f.ground);
+    needsGround = altRefPrefs.ref === 'agl' && !agl;
     const { x, series } = resampleAltitudes(
-      flights.map((f) => f.flight.fixes),
+      flights.map((f) => (agl ? f.flight.fixes.map((fix, i) => ({ ...fix, alt: replay.aglAt(f, i)! })) : f.flight.fixes)),
       2
     );
     const selectedId = replay.selected?.flight.id;
@@ -186,6 +194,7 @@
   $effect(() => {
     void replay.flights;
     void replay.selected;
+    void altRefPrefs.ref;
     // build() reads and replaces `plot`; untrack it so the effect does not re-trigger itself.
     untrack(build);
   });
@@ -204,6 +213,7 @@
 </script>
 
 <div class="chart" bind:this={container}>
+  {#if needsGround}<div class="note">AGL needs ground data</div>{/if}
   {#if plot && cursorX !== null}
     <div class="now" style:left="{plot.over.offsetLeft + cursorX}px" style:top="{plot.over.offsetTop}px" style:height="{plot.over.clientHeight}px"></div>
   {/if}
@@ -223,6 +233,15 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+  .note {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    z-index: 1;
+    font-size: 11px;
+    color: #9aa0a6;
+    pointer-events: none;
   }
   .now {
     position: absolute;

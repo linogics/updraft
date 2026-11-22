@@ -1,5 +1,7 @@
 <script lang="ts">
   import { indexAt } from '#lib/domain/timeline';
+  import { transitionAlts, type Transition } from '#lib/domain/analysis/transitions';
+  import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { varioColor } from '#lib/ui/colors';
@@ -33,6 +35,12 @@
   const transitions = $derived(sel?.climbs.transitions ?? []);
   const total = $derived(sel ? sel.analysis.thermals.filter((t) => t.gain > 0).length : 0);
   const current = $derived(sel ? indexAt(sel.flight.fixes, replay.time) : -1);
+
+  const agl = $derived(altRefPrefs.ref === 'agl');
+  const alt = (t: Transition, end: 'start' | 'end') => {
+    const v = transitionAlts(t, agl && sel ? (i) => replay.aglAt(sel, i) : undefined)[end];
+    return v === undefined ? '–' : formatAlt(v, u);
+  };
 
   const gainStep = $derived(GAIN_STEP[u.alt]);
   const climbStep = $derived(CLIMB_STEP[u.vario]);
@@ -87,7 +95,7 @@
               <span class="gain">{formatDistance(t.distance, u)}</span>
               <span class="climb">{t.glideRatio ? `${t.glideRatio.toFixed(1)} : 1` : '–'}</span>
               <span class="meta">
-                {t.kind === 'glide' ? '' : `${KIND_LABELS[t.kind]} · `}{formatAlt(t.startAlt, u)} → {formatAlt(t.endAlt, u)}
+                {t.kind === 'glide' ? '' : `${KIND_LABELS[t.kind]} · `}{alt(t, 'start')} → {alt(t, 'end')}{agl ? ' AGL' : ''}
                 · {formatSpeed(t.speed, u)} · {formatDuration(t.duration)}
               </span>
             </button>
