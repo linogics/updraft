@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { breakdown, monthlyHours, totals, yearlyHours } from './logbook';
+import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from './logbook';
 
 const HOUR = 3_600_000;
 const flight = (date: string, hours: number) => ({ date, startTime: 0, endTime: hours * HOUR });
 
 describe('logbook', () => {
+  it('sums known xc points and groups them in the breakdown', () => {
+    const fs = [{ id: 'a', ...flight('2026-01-01', 1) }, { id: 'b', ...flight('2026-02-01', 1) }, { id: 'c', ...flight('2026-03-01', 1) }];
+    const points = { a: 10.5, b: 4 };
+    expect(totalXcPoints(fs, points)).toBe(14.5);
+    expect(breakdown(fs, 'year', points)[0].points).toBe(14.5);
+  });
+
   it('sums flights and airtime', () => {
     expect(totals([flight('2026-01-01', 1), flight('2026-01-02', 0.5)])).toEqual({ flights: 2, seconds: 5400 });
   });
@@ -32,7 +39,7 @@ describe('logbook', () => {
       'site'
     );
     expect(rows.map((r) => r.label)).toEqual(['Unknown', 'A']);
-    expect(rows[1]).toEqual({ label: 'A', flights: 2, hours: 1.5, maxAlt: 2000, longestMin: 60 });
+    expect(rows[1]).toEqual({ label: 'A', flights: 2, hours: 1.5, points: 0, maxAlt: 2000, longestMin: 60 });
     expect(rows[0].maxAlt).toBeUndefined();
   });
 

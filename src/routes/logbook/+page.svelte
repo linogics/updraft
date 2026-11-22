@@ -1,12 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import Backup from '#lib/components/logbook/Backup.svelte';
   import BarChart from '#lib/components/logbook/BarChart.svelte';
   import Dropzone from '#lib/components/Dropzone.svelte';
   import Logo from '#lib/components/Logo.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
-  import { breakdown, monthlyHours, totals, yearlyHours } from '#lib/domain/logbook';
+  import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from '#lib/domain/logbook';
+  import { scoreFlight } from '#lib/xc/score';
+  import type { XcScore } from '#lib/xc/types';
+  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, replayHref } from '#lib/storage/importFlights';
@@ -18,6 +22,9 @@
   let errors = $state<string[]>([]);
   let busy = $state(false);
   let ready = $state(false);
+  // Missing id = not scored yet, null = nothing scorable or failed.
+  let xc = $state<Record<string, XcScore | null>>({});
+  let xcRun = 0;
   let by = $state<'year' | 'site' | 'glider'>('year');
 
   let editing = $state<string | null>(null);
@@ -32,7 +39,12 @@
   const monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
   const months = $derived(monthlyHours(flights, 12, new Date()).map((m) => ({ label: monthFmt.format(new Date(m.month + '-01')), hours: m.hours })));
   const years = $derived(yearlyHours(flights).map((y) => ({ label: y.year, hours: y.hours })));
-  const rows = $derived(breakdown(flights, by));
+  const points = $derived(Object.fromEntries(Object.entries(xc).flatMap(([id, s]) => (s ? [[id, s.points]] : []))));
+  const rows = $derived(breakdown(flights, by, points));
+  const xcTotal = $derived(totalXcPoints(flights, points));
+  const todo = $derived(flights.filter((f) => !f.manual));
+  const scored = $derived(todo.filter((f) => f.id in xc).length);
+  const TYPES = { free: 'Free', flat: 'Flat', fai: 'FAI', oar: 'O&R' };
 
   const hours = (seconds: number) => (seconds / 3600).toFixed(seconds < 36_000 ? 1 : 0);
   const mins = (min: number) => formatAirtime(min * 60_000);
@@ -42,6 +54,44 @@
     flights = await flightRepository.list();
     selected = selected.filter((id) => flights.some((f) => f.id === id));
     ready = true;
+    void scoreMissing();
+  }
+
+  /** Loads cached scores first, then scores the rest one flight at a time. A newer run supersedes this one. */
+  async function scoreMissing(reset = false) {
+    const run = ++xcRun;
+    const league = xcPrefs.league;
+    if (reset) xc = {};
+    const missing = [];
+    for (const f of flights.filter((f) => !f.manual && !(f.id in xc))) {
+      let score: XcScore | null | undefined;
+      try {
+        score = await flightRepository.getXcScore(f.id, league);
+      } catch (err) {
+        console.error('Could not read XC score', err);
+      }
+      if (run !== xcRun) return;
+      if (score === undefined) missing.push(f.id);
+      else xc[f.id] = score;
+    }
+    for (const id of missing) {
+      let score: XcScore | null;
+      try {
+        const flight = await flightRepository.get(id);
+        score = flight ? await scoreFlight(flight.fixes, league) : null;
+        await flightRepository.putXcScore(id, league, score);
+      } catch (err) {
+        console.error('Could not score flight', err);
+        score = null;
+      }
+      if (run !== xcRun) return;
+      xc[id] = score;
+    }
+  }
+
+  function setLeague(league: XcLeague) {
+    xcPrefs.set(league);
+    void scoreMissing(true);
   }
 
   const openReplay = (ids: string[]) => goto(replayHref(ids));
@@ -99,6 +149,7 @@
   }
 
   onMount(refresh);
+  onDestroy(() => xcRun++);
 </script>
 
 <svelte:head>
@@ -114,6 +165,7 @@
     <dl class="readouts" aria-busy={!ready}>
       <div><dt>hours flown</dt><dd>{ready ? hours(sum.seconds) : '–'}</dd></div>
       <div><dt>flights</dt><dd>{ready ? sum.flights : '–'}</dd></div>
+      <div><dt>XC points</dt><dd>{ready ? xcTotal.toFixed(2) : '–'}</dd></div>
       <div><dt>longest flight</dt><dd>{ready && longest ? formatAirtime(longest) : '–'}</dd></div>
       <div><dt>highest altitude</dt><dd>{ready && highest ? formatAlt(highest, u) : '–'}</dd></div>
     </dl>
@@ -136,7 +188,7 @@
       </div>
       <table>
         <thead>
-          <tr><th>{by[0].toUpperCase() + by.slice(1)}</th><th class="num">Flights</th><th class="num">Hours</th><th class="num hide">Longest</th><th class="num hide">Max altitude</th></tr>
+          <tr><th>{by[0].toUpperCase() + by.slice(1)}</th><th class="num">Flights</th><th class="num">Hours</th><th class="num">Points</th><th class="num hide">Longest</th><th class="num hide">Max altitude</th></tr>
         </thead>
         <tbody>
           {#each rows as r (r.label)}
@@ -144,6 +196,7 @@
               <td>{r.label}</td>
               <td class="num">{r.flights}</td>
               <td class="num">{r.hours.toFixed(1)}</td>
+              <td class="num">{r.points.toFixed(2)}</td>
               <td class="num hide">{mins(r.longestMin)}</td>
               <td class="num hide">{r.maxAlt === undefined ? '–' : formatAlt(r.maxAlt, u)}</td>
             </tr>
@@ -167,6 +220,12 @@
     <div class="head">
       <h2>Flights</h2>
       <div class="actions">
+        <label class="league">XC league
+          <select value={xcPrefs.league} onchange={(e) => setLeague(e.currentTarget.value as XcLeague)}>
+            {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+          </select>
+        </label>
+        {#if ready && scored < todo.length}<span class="muted">Scoring {scored} / {todo.length}…</span>{/if}
         <button onclick={() => (adding = !adding)} aria-expanded={adding}>Add flight without a track</button>
         <button disabled={!selected.length} onclick={() => openReplay(selected)}>Replay selected ({selected.length})</button>
       </div>
@@ -189,7 +248,7 @@
         <thead>
           <tr>
             <th><span class="sr">Select</span></th><th>Date</th><th>Pilot</th><th class="hide">Site</th><th class="hide">Glider</th>
-            <th class="num">Duration</th><th class="num hide">Distance</th><th class="num hide">Max altitude</th><th><span class="sr">Notes</span></th><th><span class="sr">Actions</span></th>
+            <th class="num">Duration</th><th class="num hide">Distance</th><th class="num hide">Max altitude</th><th class="hide">XC type</th><th class="num hide">Points</th><th><span class="sr">Notes</span></th><th><span class="sr">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -203,6 +262,8 @@
               <td class="num">{dur(f)}</td>
               <td class="num hide">{f.trackKm === undefined ? '–' : formatDistance(f.trackKm * 1000, u)}</td>
               <td class="num hide">{f.maxAlt === undefined ? '–' : formatAlt(f.maxAlt, u)}</td>
+              <td class="hide">{f.manual ? '–' : !(f.id in xc) ? '…' : xc[f.id] ? TYPES[xc[f.id]!.type] : '–'}</td>
+              <td class="num hide">{f.manual ? '–' : !(f.id in xc) ? '…' : xc[f.id] ? xc[f.id]!.points.toFixed(2) : '–'}</td>
               <td title={f.notes}>{#if f.notes}<span aria-label="Has notes">✎</span>{/if}</td>
               <td class="actions">
                 <button onclick={() => edit(f)} aria-label="Edit {f.pilot}, {f.date}">Edit</button>
@@ -211,7 +272,7 @@
             </tr>
             {#if editing === f.id}
               <tr>
-                <td colspan="10">
+                <td colspan="12">
                   <form class="form" onsubmit={(e) => { e.preventDefault(); saveEdit(); }}>
                     <label>Pilot <input bind:value={draft.pilot} /></label>
                     <label>Site <input bind:value={draft.site} /></label>
@@ -291,6 +352,13 @@
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+  }
+  .league {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
   }
   .seg {
     display: flex;
