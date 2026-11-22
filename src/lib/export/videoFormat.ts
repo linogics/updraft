@@ -37,7 +37,10 @@ export function clampFps(v: number | null | undefined): number {
   return Math.min(MAX_FPS, Math.max(MIN_FPS, n));
 }
 
-/** Target H.264 bitrate, bits per second: about 0.1 bit per pixel per frame, clamped. */
+/**
+ * Target H.264 bitrate, bits per second: about 0.3 bit per pixel per frame, clamped.
+ * Satellite imagery in constant motion needs far more than typical video, 0.1 looked blocky.
+ */
 export function bitrateFor(width: number, height: number, fps: number): number {
-  return Math.min(50_000_000, Math.max(1_000_000, Math.round(width * height * fps * 0.1)));
+  return Math.min(100_000_000, Math.max(1_000_000, Math.round(width * height * fps * 0.3)));
 }
