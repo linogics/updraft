@@ -397,6 +397,8 @@
   "units_preset_metric": "Metrisch",
   "units_speed": "Geschwindigkeit",
   "units_vario": "Vario",
+  "update_available": "Eine neue Version ist verfügbar.",
+  "update_reload": "Neu laden",
   "view_airspaces_2d": "Lufträume (2D)",
   "view_height": "Höhe",
   "view_hint_3d": "Nur 3D. Die Sonne folgt der aufgezeichneten Zeit des gewählten Piloten.",

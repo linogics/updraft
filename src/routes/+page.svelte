@@ -30,6 +30,10 @@
   const hours = (seconds: number) => formatNumber(seconds / 3600, seconds < 36_000 ? 1 : 0);
 
   onMount(async () => {
+    // Chromium: track files opened with the installed app arrive here (file_handlers in the manifest).
+    window.launchQueue?.setConsumer(async (params) => {
+      onfiles(await Promise.all(params.files.map((handle) => handle.getFile())));
+    });
     flights = await flightRepository.list();
     ready = true;
   });

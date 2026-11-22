@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { onMount } from 'svelte';
-  import { navigating } from '$app/state';
+  import { navigating, updated } from '$app/state';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
 
@@ -17,6 +17,15 @@
 
 {@render children()}
 
+<div role="status">
+  {#if updated.current}
+    <div class="update">
+      <span>{m.update_available()}</span>
+      <button onclick={() => location.reload()}>{m.update_reload()}</button>
+    </div>
+  {/if}
+</div>
+
 <style>
   .nav-bar {
     position: fixed;
@@ -27,6 +36,22 @@
     background-size: 40% 100%;
     background-repeat: no-repeat;
     animation: sweep 1s linear infinite;
+  }
+  .update {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    z-index: 1000;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100vw - 32px);
+    padding: 8px 8px 8px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.4);
   }
   @keyframes sweep {
     from {

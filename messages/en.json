@@ -397,6 +397,8 @@
   "units_preset_metric": "Metric",
   "units_speed": "Speed",
   "units_vario": "Vario",
+  "update_available": "A new version is available.",
+  "update_reload": "Reload",
   "view_airspaces_2d": "Airspaces (2D)",
   "view_height": "Height",
   "view_hint_3d": "3D only. The sun follows the selected pilot's recorded time.",
