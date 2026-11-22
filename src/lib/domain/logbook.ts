@@ -1,4 +1,5 @@
 interface Logged {
+  id?: string;
   date: string;
   startTime: number;
   endTime: number;
@@ -27,23 +28,30 @@ export function monthlyHours(flights: Logged[], months: number, now: Date): { mo
   return out;
 }
 
+/** Sum of the known XC points, keyed by flight id. Flights without an entry count as zero. */
+export function totalXcPoints(flights: Logged[], points: Record<string, number>): number {
+  return flights.reduce((sum, f) => sum + (f.id ? (points[f.id] ?? 0) : 0), 0);
+}
+
 export interface BreakdownRow {
   label: string;
   flights: number;
   hours: number;
+  points: number;
   maxAlt?: number;
   longestMin: number;
 }
 
 /** Flights grouped by year, site or glider. Years sort newest first, the rest by hours. */
-export function breakdown(flights: Logged[], key: 'year' | 'site' | 'glider'): BreakdownRow[] {
+export function breakdown(flights: Logged[], key: 'year' | 'site' | 'glider', points: Record<string, number> = {}): BreakdownRow[] {
   const rows = new Map<string, BreakdownRow>();
   for (const f of flights) {
     const label = key === 'year' ? f.date.slice(0, 4) : (f[key] ?? '') || 'Unknown';
-    const row = rows.get(label) ?? { label, flights: 0, hours: 0, longestMin: 0 };
+    const row = rows.get(label) ?? { label, flights: 0, hours: 0, points: 0, longestMin: 0 };
     const min = (f.endTime - f.startTime) / 60_000;
     row.flights++;
     row.hours += min / 60;
+    row.points += f.id ? (points[f.id] ?? 0) : 0;
     row.longestMin = Math.max(row.longestMin, min);
     if (f.maxAlt !== undefined) row.maxAlt = Math.max(row.maxAlt ?? -Infinity, f.maxAlt);
     rows.set(label, row);
