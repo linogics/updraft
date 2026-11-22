@@ -85,6 +85,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Replay | updraft</title>
+</svelte:head>
+
 <svelte:window onkeydown={onKey} />
 
 {#if error}

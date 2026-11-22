@@ -9,6 +9,7 @@
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
@@ -136,9 +137,10 @@
     if (!ready) return;
     const id = replay.selected?.flight.id;
     const units = unitPrefs.units;
+    const parts = { columns: thermalPrefs.columns, labels: thermalPrefs.labels };
     void replay.flights;
     void replay.exaggeration;
-    for (const [key, layer] of layers) layer.renderThermals(key === id, units);
+    for (const [key, layer] of layers) layer.renderThermals(key === id, units, parts);
   });
 </script>
 

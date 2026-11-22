@@ -1,6 +1,7 @@
 <script lang="ts">
   import { EXAGGERATION } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
   import Popover from './Popover.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
@@ -24,6 +25,20 @@
     <input id="view-sun" type="checkbox" bind:checked={replay.lighting} />
     <label for="view-labels">Pilot names</label>
     <input id="view-labels" type="checkbox" bind:checked={replay.labels} />
+    <label for="view-thermal-columns">Thermal columns</label>
+    <input
+      id="view-thermal-columns"
+      type="checkbox"
+      checked={thermalPrefs.columns}
+      onchange={(e) => thermalPrefs.set({ columns: e.currentTarget.checked, labels: thermalPrefs.labels })}
+    />
+    <label for="view-thermal-labels">Thermal labels</label>
+    <input
+      id="view-thermal-labels"
+      type="checkbox"
+      checked={thermalPrefs.labels}
+      onchange={(e) => thermalPrefs.set({ columns: thermalPrefs.columns, labels: e.currentTarget.checked })}
+    />
   </div>
   <p class="hint">3D only. The sun follows the selected pilot's recorded time.</p>
 </Popover>

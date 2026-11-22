@@ -10,7 +10,7 @@ interface FlightDb extends DBSchema {
 export class IndexedDbFlightRepository implements FlightRepository {
   private db: Promise<IDBPDatabase<FlightDb>>;
 
-  constructor(name = 'paragliding-replay') {
+  constructor(name = 'updraft') {
     this.db = openDB<FlightDb>(name, 1, {
       upgrade(db) {
         db.createObjectStore('flights', { keyPath: 'id' });

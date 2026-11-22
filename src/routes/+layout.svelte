@@ -4,8 +4,4 @@
   let { children } = $props();
 </script>
 
-<svelte:head>
-  <title>Paragliding Replay</title>
-</svelte:head>
-
 {@render children()}
