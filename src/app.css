@@ -6,6 +6,11 @@
   --text: #e8eaed;
   --muted: #9aa0a6;
   --danger: #e66767;
+  /* Instrument needle: focus, progress and the one primary action per page. */
+  --needle: #f0b43c;
+  --climb: #e66767;
+  --sink: #3987e5;
+  --display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -55,4 +60,18 @@ h3 {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--needle);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
 }

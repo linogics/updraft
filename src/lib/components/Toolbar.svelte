@@ -3,6 +3,7 @@
   import { BASEMAP_IDS, CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import Logo from './Logo.svelte';
   import ExportImage from './ExportImage.svelte';
   import ExportVideo from './ExportVideo.svelte';
   import Popover from './Popover.svelte';
@@ -37,7 +38,7 @@
 <svelte:document onfullscreenchange={() => (fullscreen = !!document.fullscreenElement)} />
 
 <div class="toolbar">
-  <a href="/" class="home">← Flights</a>
+  <Logo compact />
 
   <div class="group" role="group" aria-label="Layout">
     {#each LAYOUTS as l (l)}
@@ -105,10 +106,7 @@
     gap: 12px;
     padding: 8px 12px;
   }
-  .home {
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 600;
+  .toolbar > :global(.logo) {
     margin-right: auto;
   }
   .group {

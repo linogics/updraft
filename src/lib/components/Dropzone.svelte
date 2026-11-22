@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { onfiles, busy = false }: { onfiles: (files: File[]) => void; busy?: boolean } = $props();
+  let { onfiles, busy = false, compact = false }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean } = $props();
 
   let over = $state(false);
 
@@ -12,6 +12,7 @@
 <label
   class="drop"
   class:over
+  class:compact
   ondragover={(e) => {
     e.preventDefault();
     over = true;
@@ -46,6 +47,13 @@
   .drop:hover {
     border-color: #3987e5;
     background: rgba(57, 135, 229, 0.06);
+  }
+  .drop.compact {
+    padding: 18px 16px;
+    border-width: 1px;
+  }
+  .compact strong {
+    font-size: 15px;
   }
   input {
     display: none;
