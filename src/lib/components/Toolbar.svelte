@@ -3,6 +3,7 @@
   import { BASEMAP_IDS, CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import ExportImage from './ExportImage.svelte';
   import Popover from './Popover.svelte';
   import TrackMenu from './TrackMenu.svelte';
   import UnitsMenu from './UnitsMenu.svelte';
@@ -51,6 +52,10 @@
 
   <TrackMenu {replay} />
   <ViewMenu {replay} />
+
+  <Popover label="Export">
+    <ExportImage {replay} />
+  </Popover>
 
   <label>
     Map
