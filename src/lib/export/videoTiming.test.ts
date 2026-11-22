@@ -86,5 +86,7 @@ describe('bitrateFor', () => {
     expect(bitrateFor(1920, 1080, 30)).toBe(18_662_400);
     expect(bitrateFor(7680, 4320, 60)).toBe(100_000_000);
     expect(bitrateFor(320, 320, 1)).toBe(1_000_000);
+    expect(bitrateFor(1920, 1080, 30, 'max')).toBe(2 * bitrateFor(1920, 1080, 30));
+    expect(bitrateFor(1920, 1080, 30, 'standard')).toBe(bitrateFor(1920, 1080, 30) / 2);
   });
 });
