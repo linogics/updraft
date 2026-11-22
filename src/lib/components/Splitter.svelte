@@ -36,7 +36,7 @@
   const pos = (e: PointerEvent) => (axis === 'x' ? e.clientX : e.clientY);
 
   function down(e: PointerEvent) {
-    if (!open || e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+    if (!open || e.button !== 0) return;
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     start = { pos: pos(e), value };
@@ -66,28 +66,29 @@
   });
 </script>
 
-<!-- A focusable separator is an interactive widget in ARIA, Svelte does not know that. -->
-<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-<div
-  class="splitter {axis}"
-  class:dragging={!!start}
-  class:closed={!open}
-  role="separator"
-  tabindex="0"
-  aria-label={label}
-  aria-orientation={axis === 'x' ? 'vertical' : 'horizontal'}
-  aria-valuenow={open ? Math.round(value * 100) / 100 : min}
-  aria-valuemin={min}
-  aria-valuemax={max}
-  onpointerdown={down}
-  onpointermove={move}
-  onpointerup={() => (start = null)}
-  onpointercancel={() => (start = null)}
-  ondblclick={() => open && onreset()}
-  onkeydown={key}
->
+<!-- The button is a sibling of the separator, so assistive tech lists it. -->
+<div class="splitter {axis}" class:closed={!open}>
+  <!-- A focusable separator is an interactive widget in ARIA, Svelte does not know that. -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+  <div
+    class="bar"
+    class:dragging={!!start}
+    role="separator"
+    tabindex="0"
+    aria-label={label}
+    aria-orientation={axis === 'x' ? 'vertical' : 'horizontal'}
+    aria-valuenow={open ? Math.round(value * 100) / 100 : min}
+    aria-valuemin={min}
+    aria-valuemax={max}
+    onpointerdown={down}
+    onpointermove={move}
+    onpointerup={() => (start = null)}
+    onpointercancel={() => (start = null)}
+    ondblclick={() => open && onreset()}
+    onkeydown={key}
+  ></div>
   {#if ontoggle}
-    <button tabindex="-1" aria-label="{open ? 'Hide' : 'Show'} {label.toLowerCase()}" onclick={ontoggle}>{chevron}</button>
+    <button tabindex="-1" aria-label="{open ? 'Collapse' : 'Expand'} {label.toLowerCase()}" aria-expanded={open} onclick={ontoggle}>{chevron}</button>
   {/if}
 </div>
 
@@ -97,32 +98,40 @@
     z-index: 3;
     display: grid;
     place-items: center;
+  }
+  .bar {
+    position: absolute;
+    inset: 0;
     background: var(--border);
     touch-action: none;
   }
+  .x .bar {
+    cursor: col-resize;
+  }
+  .y .bar {
+    cursor: row-resize;
+  }
   .splitter.x {
     width: 1px;
-    cursor: col-resize;
   }
   .splitter.y {
     height: 1px;
-    cursor: row-resize;
   }
   /* Wider invisible hit area around the 1px line. */
-  .splitter::before {
+  .bar::before {
     content: '';
     position: absolute;
     inset: -4px;
   }
-  .splitter.x::before {
+  .x .bar::before {
     inset: 0 -4px;
   }
-  .splitter.y::before {
+  .y .bar::before {
     inset: -4px 0;
   }
-  .splitter:hover,
-  .splitter.dragging,
-  .splitter:focus-visible {
+  .splitter:hover .bar,
+  .bar.dragging,
+  .bar:focus-visible {
     background: var(--needle);
     outline: none;
   }

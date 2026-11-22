@@ -1,7 +1,8 @@
 <script lang="ts">
   let { bars, label }: { bars: { label: string; hours: number }[]; label: string } = $props();
   const peak = $derived(Math.max(1, ...bars.map((b) => b.hours)));
-  const step = $derived(120 / bars.length);
+  // Cap the slot width so a single bar stays slim, bars are left aligned.
+  const step = $derived(Math.min(120 / bars.length, 12));
 </script>
 
 <figure>

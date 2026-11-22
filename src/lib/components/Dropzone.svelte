@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { onfiles, busy = false, compact = false }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean } = $props();
+  let { onfiles, busy = false, compact = false, hint = 'IGC, GPX, KML, FIT, TRK or GeoJSON. Several files from the same day are replayed together.' }: { onfiles: (files: File[]) => void; busy?: boolean; compact?: boolean; hint?: string } = $props();
 
   let over = $state(false);
 
@@ -26,7 +26,7 @@
 >
   <input type="file" accept=".igc,.gpx,.kml,.geojson,.json,.trk,.fit" multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
   <strong>{busy ? 'Processing…' : 'Drop flight files here'}</strong>
-  <span>IGC, GPX, KML, FIT, TRK or GeoJSON. Several files from the same day are replayed together.</span>
+  <span>{hint}</span>
 </label>
 
 <style>

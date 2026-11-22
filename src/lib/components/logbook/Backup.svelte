@@ -8,10 +8,12 @@
   let pending = $state.raw<unknown>(null);
   let message = $state('');
   let failed = $state(false);
+  let restored = $state(false);
 
   function say(text: string, error = false) {
     message = text;
     failed = error;
+    restored = false;
   }
 
   async function exportBackup() {
@@ -49,6 +51,7 @@
       const n = await restoreBackup(pending, mode);
       pending = null;
       say(`Restored ${n.flights} flights, ${n.manual} manual entries, ${n.cameraPaths} camera paths. Reload the page to apply restored settings.`);
+      restored = true;
       ondone();
     } catch (err) {
       say(err instanceof Error ? err.message : String(err), true);
@@ -75,6 +78,7 @@
     </div>
   {/if}
   {#if message}<p class:error={failed} role="status">{message}</p>{/if}
+  {#if restored}<button onclick={() => location.reload()}>Reload now</button>{/if}
 </section>
 
 <style>
