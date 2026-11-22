@@ -1,31 +1,22 @@
 # updraft
 
-Web app that replays IGC flight logs in 3D and analyses them: thermals, glides, flight stats and side-by-side comparison of several pilots. Inspired by skyviz.io, ogoy.app, flyxc.app and xcfinder.com.
+Web app for paraglider and hang glider pilots. Replay flight logs in 3D, analyse thermals and glides, score XC flights and keep a logbook, all in the browser.
 
-## Features (V1)
+Live at https://updraft.linogics.io
 
-- Dashboard at `/` with one tile per tool: Replay, Logbook, Convert and the planned XC planner.
-- Import one or more flight files (drag and drop): IGC, GPX, KML (`gx:Track`), FIT, CompeGPS TRK or GeoJSON. Flights are stored in the browser (IndexedDB).
-- Logbook (`/logbook`): totals, hours per month and year, breakdown by year, site or glider, flights entered by hand without a track, editable pilot, site, glider and notes.
-- Converter (`/convert`): write any imported track as IGC (unsigned), GPX, KML or GeoJSON.
-- Backup: export everything this browser keeps (flights, camera keys, settings, optionally the Cesium ion token) to one JSON file, and restore it by merging or replacing.
-- Resizable and collapsible replay panels, sizes stored per browser. Staged load screen while a replay opens.
-- 3D replay on CesiumJS: tracks coloured by vario, flight phase, climb / transition or pilot; live pilot markers with trail.
-- Track styling: solid, outline, curtain (wall down to the ground, 3D) or glow; width 1–10 px; pick any pilot colour by clicking the colour dot. Stored in the URL.
-- Camera modes: follow (smoothed chase cam), cockpit, orbit, free.
-- Player: play/pause, 1×–200× speed, scrubbing, jump to the next thermal, keyboard (space, ←/→).
-- Altitude chart for all pilots with phase bands of the selected pilot; click or drag to seek.
-- Flight analysis: thermalling / gliding / searching phases, thermal list (gain, average climb, duration), stats (distance, altitudes, max climb/sink, glide ratio).
-- Thermal filter by minimum gain and average climb. Transitions (glides between the remaining thermals) with distance, altitude loss, glide ratio and speed; average leave and arrival altitude shown as a band in the altitude chart.
-- Units: metric, imperial or aviation (km/mi/nm, m/ft, m/s, ft/min or kt, km/h, mph or kt), each also settable on its own. Stored per browser.
-- Multi-pilot replay on a shared clock.
-- Layouts: 3D, 2D map (MapLibre), or split view.
-- 3D terrain without any account (AWS Terrain Tiles); Cesium World Terrain when an ion token is configured. Terrain dropdown: ion, free tiles, or flat.
-- Base maps: satellite (Esri), topo (OpenTopoMap) or OSM with hillshade, in 3D and 2D.
-- Timeline for flights from different days, similar to a video editor: one clip per pilot, drag clips to shift them in time (snapping to other clips and the playhead, Alt disables it), Ctrl+wheel to zoom. Quick alignment: real time, same day (keeps time of day) or aligned takeoffs. The alignment is stored in the URL.
-- Demo flights to try the app without own files.
+## Features
 
-## Running locally (Docker only, no Node on the host)
+- **3D and 2D replay** of one or many pilots on a shared clock, with a video-editor style timeline, camera modes and keyframed camera paths.
+- **Flight analysis and XC score**: thermals, glides and flight stats, scored for XContest, FFVL, FAI or UK XC League.
+- **Video export and route planner**: render the replay as an MP4 or PNG with overlays, draw and share XC routes with thermal hotspots and airspaces.
+- **Logbook and backup**: totals and breakdowns, flights without a track, one-file backup of everything.
+- **Local-first, no account**: flights stay in your browser. Imports IGC, GPX, KML, FIT, TRK and GeoJSON. Installable as an app, in English, German and French.
+
+All features are listed in [docs/features.md](docs/features.md). How to use the app is described in [docs/help.md](docs/help.md).
+
+## Local development
+
+Docker only, no Node on the host.
 
 ```sh
 # Development with hot reload on http://localhost:5173
@@ -41,48 +32,16 @@ docker compose run --rm dev npm run build
 
 `node_modules` lives in a Docker volume, so editors on the host will not resolve imports. After changing `package.json`, run `docker compose run --rm dev npm install`.
 
-### Terrain and maps
-
-| Terrain source | Needs | Notes |
-|---|---|---|
-| AWS Terrain Tiles (default without token) | nothing | Free global elevation (Terrarium PNG, SRTM and national DEMs), up to zoom 15 |
-| Cesium World Terrain (default with token) | free [Cesium ion](https://ion.cesium.com) token | Higher resolution. Each user enters their own token in the "Ion" menu of the replay toolbar. It is stored only in that browser. If ion fails, the app falls back to AWS Terrain Tiles |
-| Flat | nothing | Ellipsoid, no relief |
-
-Each track is shifted vertically so takeoff sits on the ground (at most ±150 m). This compensates for loggers that record a different height reference than the terrain.
-
-The keyless tile services (AWS Terrain Tiles, Esri World Imagery, OpenTopoMap, OpenStreetMap) require attribution, which the map shows. They are meant for moderate traffic. For heavy public use, self-host tiles or switch to a keyed provider (for example MapTiler). The sources are configured in `src/lib/map/basemaps.ts`.
+Code structure and notes for a future backend are in [docs/development.md](docs/development.md).
 
 ## Hosting
 
-The app is a static site with no backend. Every push to `main` runs `.github/workflows/deploy.yml`: check, test, build, then deploy `build/` to GitHub Pages at https://updraft.linogics.io (`static/CNAME`). Any other static host works too: serve `build/` and answer unknown paths with `404.html`.
+The app is a static site with no backend. Build it, then serve `build/` from any static host and answer unknown paths with `404.html`.
 
-One-time setup: in the repository settings set Pages source to "GitHub Actions", custom domain `updraft.linogics.io` and enforce HTTPS. In DNS add `CNAME updraft -> linogics.github.io`.
+The official instance deploys on every push to `main` through `.github/workflows/deploy.yml` (check, test, build, deploy to GitHub Pages).
 
-## Architecture
+The keyless tile services (AWS Terrain Tiles, Esri World Imagery, OpenTopoMap, OpenStreetMap) are meant for moderate traffic. For heavy public use, self-host tiles or switch to a keyed provider. The sources are configured in `src/lib/map/basemaps.ts`.
 
-```
-src/lib/
-  domain/     framework-free TypeScript: IGC parsing, analysis, timeline, scene config (unit tested)
-  storage/    FlightRepository interface + IndexedDB implementation
-  cesium/     3D viewer, terrain providers, flight layer, camera modes
-  map/        shared tile sources (base maps, terrain)
-  state/      replay state (Svelte runes) incl. the replay clock
-  components/ Svelte UI
-  ui/         colour scales and formatting
-```
+## License
 
-The dependency direction is `domain → storage / cesium / ui`. The domain layer has no browser or framework imports, so the same code can run on a server later.
-
-## Prepared for a backend (next iteration)
-
-- `FlightRepository` (`src/lib/storage/repository.ts`): add an HTTP implementation and switch it in `src/lib/storage/index.ts`.
-- Domain types are plain JSON and the analysis functions are pure, so they can run on the server unchanged.
-- The replay view is fully described by `SceneConfig` in the URL. It can become a stored scene behind a share link.
-- Flight IDs are UUIDs.
-- Runtime config is read by `loadRuntimeConfig` (`src/lib/config.ts`), so an API base URL can be added there.
-- To add server routes, switch the SvelteKit adapter from `adapter-static` to `adapter-node`.
-
-## Roadmap
-
-See [docs/feature-gaps.md](docs/feature-gaps.md) for a comparison with skyviz.io, ogoy.app, flyxc.app and xcfinder.com.
+[BSD 3-Clause](LICENSE)

@@ -2,6 +2,7 @@
   "name": "updraft",
   "version": "0.1.0",
   "private": true,
+  "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
     "postinstall": "node scripts/copy-cesium.mjs",
