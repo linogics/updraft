@@ -17,6 +17,7 @@
   let busy = $state(false);
   let errors = $state<string[]>([]);
 
+  const HELP_URL = 'https://github.com/linogics/updraft/blob/main/docs/help.md';
   const sum = $derived(totals(flights));
   const months = $derived(monthlyHours(flights, 12, new Date()));
   const peak = $derived(Math.max(1, ...months.map((m) => m.hours)));
@@ -72,7 +73,10 @@
         <dd>{ready ? sum.flights : '–'}</dd>
       </div>
     </dl>
-    <LanguageSelect />
+    <div class="meta">
+      <LanguageSelect />
+      <a class="help" href={HELP_URL} target="_blank" rel="noreferrer" title={m.home_help()} aria-label={m.home_help()}>?</a>
+    </div>
   </header>
 
   <section class="tools" aria-label={m.home_tools()}>
@@ -168,6 +172,24 @@
     align-items: end;
     justify-content: space-between;
     gap: 16px;
+  }
+  .meta {
+    display: flex;
+    gap: 8px;
+  }
+  .help {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .help:hover {
+    border-color: #4a505a;
   }
   .readouts {
     display: flex;
