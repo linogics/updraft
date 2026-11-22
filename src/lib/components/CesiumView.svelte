@@ -4,6 +4,7 @@
   import { beginCapture, captureFrame } from '#lib/cesium/capture';
   import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
+  import { XcRoute } from '#lib/cesium/xcRoute';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
   import { altitudeOffset } from '#lib/domain/align';
@@ -20,6 +21,7 @@
   let ready = $state(false);
   let notice = $state('Loading 3D view…');
   const layers = new Map<string, FlightLayer>();
+  let xcRoute: XcRoute | undefined = $state.raw();
 
   /** Loads a terrain source and re-aligns every track so takeoff sits on the ground. */
   let terrainRequest = 0;
@@ -62,6 +64,7 @@
 
       for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time, () => replay.exaggeration));
       camera = new CameraController(v);
+      xcRoute = new XcRoute(v);
 
       v.scene.preRender.addEventListener(() => {
         const sel = replay.selected;
@@ -103,6 +106,7 @@
       for (const l of layers.values()) l.destroy();
       layers.clear();
       camera?.destroy();
+      xcRoute?.destroy();
       if (viewer && !viewer.isDestroyed()) viewer.destroy();
     };
   });
@@ -160,6 +164,10 @@
     void replay.flights;
     void replay.exaggeration;
     for (const [key, layer] of layers) layer.renderThermals(key === id, units, parts);
+  });
+
+  $effect(() => {
+    xcRoute?.set(replay.selected?.xc);
   });
 </script>
 

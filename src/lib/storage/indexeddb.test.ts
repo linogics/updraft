@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { IndexedDbFlightRepository } from './indexeddb';
 import { DEFAULT_TRACKS, type CameraTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
+import type { XcScore } from '../xc/types';
 
 const tracks = (): CameraTracks => ({
   ...DEFAULT_TRACKS,
@@ -151,5 +152,24 @@ describe('manual entries, meta and backup', () => {
     await replaced.importAll(backup, 'replace');
     expect((await replaced.list()).map((s) => s.id).sort()).toEqual(['a', 'm']);
     expect(await replaced.get('other')).toBeUndefined();
+  });
+
+  it('caches xc scores per league and drops them with the flight or on replace', async () => {
+    const score: XcScore = { league: 'FFVL', type: 'free', distance: 1000, multiplier: 1, points: 1, turnpoints: [] };
+    const repo = fresh();
+    await repo.save(flight('a'));
+    await repo.putXcScore('a', 'FFVL', score);
+    await repo.putXcScore('a', 'FAI', null);
+
+    expect(await repo.getXcScore('a', 'FFVL')).toEqual(score);
+    expect(await repo.getXcScore('a', 'FAI')).toBeNull();
+    expect(await repo.getXcScore('a', 'XContest')).toBeUndefined();
+
+    await repo.importAll(await repo.exportAll(), 'replace');
+    expect(await repo.getXcScore('a', 'FFVL')).toBeUndefined();
+
+    await repo.putXcScore('a', 'FFVL', score);
+    await repo.delete('a');
+    expect(await repo.getXcScore('a', 'FFVL')).toBeUndefined();
   });
 });

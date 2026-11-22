@@ -22,8 +22,10 @@ import {
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
 import { groundSeries } from '#lib/map/groundHeights';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import { flightRepository } from '#lib/storage';
 import { pilotColor } from '#lib/ui/colors';
+import { scoreFlight, type XcScore } from '#lib/xc/score';
 
 /** Camera edits wait this long after the last change before they are stored, ms. */
 const CAMERA_SAVE_DELAY = 300;
@@ -56,6 +58,8 @@ export interface LoadedFlight {
   altOffset: number;
   /** Ground height under each source fix, metres MSL. Undefined until loaded. */
   ground?: Float32Array;
+  /** XC score for the current league. Undefined while scoring, null when nothing could be scored. */
+  xc?: XcScore | null;
 }
 
 export const SPEEDS = [1, 5, 10, 25, 50, 100, 200] as const;
@@ -152,6 +156,7 @@ export class ReplayState {
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
     void this.loadGround();
+    void this.scoreAll();
   }
 
   /** Loads the camera tracks saved for the loaded flights. Storage errors keep the defaults. */
@@ -226,6 +231,36 @@ export class ReplayState {
       })
     );
     this.flights = this.flights.map((f) => (ground.has(f.flight.id) ? { ...f, ground: ground.get(f.flight.id) } : f));
+  }
+
+  private xcRun = 0;
+
+  /** Switches the scoring league and rescores. */
+  setLeague(league: typeof xcPrefs.league) {
+    xcPrefs.set(league);
+    void this.scoreAll();
+  }
+
+  /** Scores one flight at a time in the background, cached results first. A newer run supersedes this one. */
+  private async scoreAll() {
+    const run = ++this.xcRun;
+    const league = xcPrefs.league;
+    this.flights = this.flights.map((f) => ({ ...f, xc: undefined }));
+    for (const { source } of this.flights) {
+      let xc: XcScore | null | undefined;
+      try {
+        xc = await flightRepository.getXcScore(source.id, league);
+        if (xc === undefined) {
+          xc = await scoreFlight(source.fixes, league);
+          await flightRepository.putXcScore(source.id, league, xc);
+        }
+      } catch (err) {
+        console.error('Could not score flight', err);
+        xc ??= null;
+      }
+      if (run !== this.xcRun) return;
+      this.flights = this.flights.map((f) => (f.source.id === source.id ? { ...f, xc } : f));
+    }
   }
 
   /** Height above ground of fix i in metres, or undefined until ground heights have loaded. */

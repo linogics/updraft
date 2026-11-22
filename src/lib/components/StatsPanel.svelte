@@ -2,6 +2,8 @@
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
   import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
+  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatDuration } from '#lib/ui/format';
@@ -40,10 +42,56 @@
         ]
       : []
   );
+  const XC_TYPES = { free: 'Free distance', flat: 'Flat triangle', fai: 'FAI triangle', oar: 'Out and return' };
+  const xc = $derived(replay.selected?.xc);
+  const xcItems = $derived(
+    xc
+      ? [
+          ['Type', XC_TYPES[xc.type]],
+          ['Distance', formatDistance(xc.distance, u)],
+          ['Multiplier', `× ${xc.multiplier}`],
+          ['Points', xc.points.toFixed(2)]
+        ]
+      : []
+  );
   const shares = $derived(
     stats ? (['thermalling', 'gliding', 'searching'] as const).map((k) => ({ k, v: stats.phaseShare[k] })) : []
   );
 </script>
+
+{#if replay.selected}
+  <section>
+    <h3>XC</h3>
+    <select
+      value={xcPrefs.league}
+      onchange={(e) => replay.setLeague(e.currentTarget.value as XcLeague)}
+      aria-label="XC league"
+    >
+      {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+    </select>
+    {#if xc}
+      <dl>
+        {#each xcItems as [label, value] (label)}
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        {/each}
+      </dl>
+    {:else}
+      <p class="muted">{xc === undefined ? 'Scoring…' : '–'}</p>
+    {/if}
+    {#if replay.flights.length > 1}
+      <ul class="xc-list">
+        {#each replay.flights as f (f.flight.id)}
+          <li>
+            <span class="dot" style:background={f.color}></span>
+            <span class="xc-name">{f.flight.pilot}</span>
+            <span>{f.xc === undefined ? '…' : f.xc ? f.xc.points.toFixed(2) : '–'}</span>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+{/if}
 
 {#if stats}
   <section>
@@ -124,6 +172,32 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+  select {
+    margin-bottom: 8px;
+  }
+  .muted {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .xc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+  }
+  .xc-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .xc-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .dot {
     width: 8px;
