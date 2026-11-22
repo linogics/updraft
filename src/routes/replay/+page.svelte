@@ -40,6 +40,7 @@
     replay.layout = scene.layout;
     replay.trackStyle = scene.trackStyle;
     replay.trackWidth = scene.trackWidth;
+    replay.smoothTrack = scene.smoothTrack;
     replay.exaggeration = scene.exaggeration;
     replay.lighting = scene.lighting;
     replay.labels = scene.labels;
@@ -84,6 +85,7 @@
       thermalFilter: replay.thermalFilter,
       trackStyle: replay.trackStyle,
       trackWidth: replay.trackWidth,
+      smoothTrack: replay.smoothTrack,
       colors: replay.colorOverrides,
       exaggeration: replay.exaggeration,
       lighting: replay.lighting,

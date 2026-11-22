@@ -1,9 +1,10 @@
 import * as Cesium from 'cesium';
+import { smoothPath } from '#lib/domain/smooth';
 import { indexAt, positionAt } from '#lib/domain/timeline';
 import type { ColorMode, TrackStyle } from '#lib/domain/scene';
 import type { LoadedFlight } from '#lib/state/replay.svelte';
 import { varioColor } from '#lib/ui/colors';
-import { trackColorAt } from '#lib/ui/trackColors';
+import { colorRuns, trackColorAt } from '#lib/ui/trackColors';
 import { formatAlt, formatVario, type Units } from '#lib/ui/units';
 
 /** Black or white text, whichever reads better on the label background. */
@@ -131,8 +132,8 @@ export class FlightLayer {
   }
 
   /** Rebuilds the static track, e.g. after colour mode, style, width or altitude offset changes. */
-  renderTrack(colorBy: ColorMode, style: TrackStyle, width: number) {
-    const key = `${colorBy}|${style}|${width}|${this.loaded.color}|${this.loaded.altOffset}|${this.getExaggeration()}`;
+  renderTrack(colorBy: ColorMode, style: TrackStyle, width: number, smooth: boolean) {
+    const key = `${colorBy}|${style}|${width}|${smooth}|${this.loaded.color}|${this.loaded.altOffset}|${this.getExaggeration()}`;
     const climbs = this.loaded.climbs;
     if (this.track.length && key === this.trackKey && (colorBy !== 'climb' || climbs === this.trackClimbs)) return;
     this.trackKey = key;
@@ -142,13 +143,15 @@ export class FlightLayer {
     this.track = [];
 
     const { fixes } = this.loaded.flight;
-    const positions = fixes.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()));
+    const path = smoothPath(fixes, smooth ? 3 : 0);
+    const positions = path.points.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()));
     const pilot = Cesium.Color.fromCssColorString(this.loaded.color);
     const line = (geometry: Partial<ConstructorParameters<typeof Cesium.PolylineGeometry>[0]>, w: number) =>
       new Cesium.GeometryInstance({
         geometry: new Cesium.PolylineGeometry({ positions, width: w, arcType: Cesium.ArcType.NONE, ...geometry })
       });
 
+    // The curtain walls keep the raw fixes, their sparse posts gain nothing from a spline.
     if (style === 'curtain') this.add(this.curtain(pilot));
 
     // Cesium glow is a single-colour material, so it only applies to the pilot colour mode.
@@ -167,7 +170,42 @@ export class FlightLayer {
 
     const css = trackColorAt(this.loaded, colorBy);
     const outline = style === 'outline';
-    const colors = fixes.map((_, i) => Cesium.Color.fromCssColorString(css(i)).withAlpha(0.9));
+    if (style === 'dashed') {
+      // Dash material is single-colour, so draw one primitive per colour with a polyline per run.
+      // Coarse vario buckets cap the number of colours, so materials stay few.
+      const byColor = new Map<string, Cesium.GeometryInstance[]>();
+      for (const run of colorRuns(fixes.length, trackColorAt(this.loaded, colorBy, true))) {
+        const instance = new Cesium.GeometryInstance({
+          geometry: new Cesium.PolylineGeometry({
+            positions: positions.slice(path.index[run.start], path.index[run.end] + 1),
+            width,
+            arcType: Cesium.ArcType.NONE,
+            vertexFormat: Cesium.PolylineMaterialAppearance.VERTEX_FORMAT
+          })
+        });
+        byColor.set(run.color, [...(byColor.get(run.color) ?? []), instance]);
+      }
+      for (const [color, geometryInstances] of byColor) {
+        this.add(
+          new Cesium.Primitive({
+            geometryInstances,
+            appearance: new Cesium.PolylineMaterialAppearance({
+              material: Cesium.Material.fromType('PolylineDash', {
+                color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
+                gapColor: Cesium.Color.TRANSPARENT,
+                // One period is 16 bits, 11 on and 5 off gives dash 4 and gap 2 per 6 widths.
+                dashLength: width * 6,
+                dashPattern: 0b0000011111111111
+              })
+            }),
+            asynchronous: false
+          })
+        );
+      }
+      return;
+    }
+
+    const colors = path.source.map((i) => Cesium.Color.fromCssColorString(css(i)).withAlpha(0.9));
     this.add(
       new Cesium.Primitive({
         geometryInstances: line(

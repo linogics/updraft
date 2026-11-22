@@ -6,7 +6,7 @@
   let { replay }: { replay: ReplayState } = $props();
 
   const COLOR_LABELS = { vario: 'Vario', phase: 'Phase', climb: 'Climb / transition', pilot: 'Pilot' } as const;
-  const STYLE_LABELS = { solid: 'Solid', outline: 'Outline', curtain: 'Curtain (3D)', glow: 'Glow' } as const;
+  const STYLE_LABELS = { solid: 'Solid', outline: 'Outline', dashed: 'Dashed', curtain: 'Curtain (3D)', glow: 'Glow' } as const;
 </script>
 
 <Popover label="Track">
@@ -26,6 +26,9 @@
       <input id="track-width" type="range" min={TRACK_WIDTH.min} max={TRACK_WIDTH.max} step="1" bind:value={replay.trackWidth} />
       <output for="track-width">{replay.trackWidth} px</output>
     </span>
+
+    <span></span>
+    <label class="check"><input type="checkbox" bind:checked={replay.smoothTrack} /> Smooth</label>
   </div>
   {#if replay.trackStyle === 'glow' && replay.colorBy !== 'pilot'}
     <p class="hint">In 3D, glow needs the pilot colour; other colour modes draw solid.</p>
@@ -44,6 +47,12 @@
   }
   label {
     color: var(--muted);
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
   }
   .width {
     display: flex;

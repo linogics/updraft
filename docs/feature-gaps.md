@@ -20,12 +20,12 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | More formats and converter (skyviz, flyXC) | 2026-11-22 | Import and convert IGC, GPX, KML (`gx:Track`), FIT, TRK and GeoJSON. Export as IGC (unsigned), GPX, KML or GeoJSON on `/convert`. Loading tracks by URL is still open. |
 | Local logbook (skyviz) | 2026-11-22 | `/logbook` with totals, monthly and yearly hours, breakdown by year, site and glider, manual entries without IGC, editable fields and notes, plus a whole-app backup file. Stays in the browser, no cloud sync. |
 | Camera keys and auto director (skyviz Pro) | 2026-11-22 | "Keys" camera mode in 3D, edited in a Camera row in the bottom timeline. Heading, pitch and range each have their own lane with a stopwatch to animate it, a value field and previous, add and next key buttons. Keys are picked, moved in time or value, copied and pasted, and set to auto, linear, hold or ease interpolation. Undo and redo cover every edit. Summary diamonds show the keys of all lanes when collapsed. "Auto" builds a shot list from the flight phases: a wide establishing shot, chase cams on glides, orbits in thermals and a pull-back. "Capture view" keys the current 3D camera at the playhead. Keys are stored per set of flights in this browser (IndexedDB), not in the scene URL. |
+| Dashed track style and smooth track | 2026-11-22 | Dashed is a style with a fixed screen-space pattern that scales with the width, in every colour mode, in 3D and 2D. The Smooth toggle draws the track as a spline through the fixes (3 extra points per segment, gaps over 60 s or 500 m stay straight). Only the drawn line changes, the pilot marker and camera keep the raw fixes. Saved in the URL (`style=dashed`, `smooth=1`). |
 
 ## Possible without a backend
 
 | Gap | Seen at |
 |---|---|
-| Dashed track style (Cesium dash material is single-colour, like glow) | follow-up of track styling |
 | XCTSK import, load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
 | Transition altitudes above ground (AGL); needs terrain sampling at transition ends | follow-up of transitions |
 | XC route optimised from a flight (up to 30 turnpoints), editable waypoints, turnpoints shown on the route | xcfinder |

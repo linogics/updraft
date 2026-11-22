@@ -92,6 +92,7 @@ export class ReplayState {
   thermalFilter = $state.raw<ThermalFilter>(DEFAULT_FILTER);
   trackStyle = $state<TrackStyle>(DEFAULT_SCENE.trackStyle);
   trackWidth = $state(DEFAULT_SCENE.trackWidth);
+  smoothTrack = $state(DEFAULT_SCENE.smoothTrack);
   exaggeration = $state(DEFAULT_SCENE.exaggeration);
   lighting = $state(DEFAULT_SCENE.lighting);
   labels = $state(DEFAULT_SCENE.labels);

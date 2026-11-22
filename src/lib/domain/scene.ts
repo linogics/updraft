@@ -8,7 +8,7 @@ export const COLOR_MODES = ['vario', 'phase', 'climb', 'pilot'] as const;
 export const LAYOUTS = ['3d', '2d', 'split'] as const;
 export const BASEMAP_IDS = ['satellite', 'topo', 'osm'] as const;
 export const TERRAIN_SOURCES = ['ion', 'terrarium', 'none'] as const;
-export const TRACK_STYLES = ['solid', 'outline', 'curtain', 'glow'] as const;
+export const TRACK_STYLES = ['solid', 'outline', 'dashed', 'curtain', 'glow'] as const;
 export const TRACK_WIDTH = { min: 1, max: 10 } as const;
 export const EXAGGERATION = { min: 1, max: 3, step: 0.1 } as const;
 
@@ -35,6 +35,8 @@ export interface SceneConfig {
   trackStyle: TrackStyle;
   /** Track line width, px. */
   trackWidth: number;
+  /** Draw the static track as a spline through the fixes. */
+  smoothTrack: boolean;
   /** Pilot colour overrides per flight id, '#rrggbb'. */
   colors: Record<string, string>;
   /** 3D height exaggeration of terrain and tracks. */
@@ -57,6 +59,7 @@ export const DEFAULT_SCENE: SceneConfig = {
   thermalFilter: DEFAULT_FILTER,
   trackStyle: 'solid',
   trackWidth: 3,
+  smoothTrack: false,
   colors: {},
   exaggeration: 1,
   lighting: false,
@@ -87,6 +90,7 @@ export function encodeScene(scene: SceneConfig): string {
   if (minClimb !== DEFAULT_FILTER.minClimb) params.set('tclimb', String(minClimb));
   if (scene.trackStyle !== DEFAULT_SCENE.trackStyle) params.set('style', scene.trackStyle);
   if (scene.trackWidth !== DEFAULT_SCENE.trackWidth) params.set('width', String(scene.trackWidth));
+  if (scene.smoothTrack) params.set('smooth', '1');
   for (const [id, hex] of Object.entries(scene.colors)) params.append('pc', `${id}:${hex}`);
   if (scene.exaggeration !== DEFAULT_SCENE.exaggeration) params.set('exag', String(scene.exaggeration));
   if (scene.lighting) params.set('sun', '1');
@@ -152,6 +156,7 @@ export function decodeScene(params: Pick<URLSearchParams, 'get' | 'getAll'>): Sc
     },
     trackStyle: pick(TRACK_STYLES, params.get('style'), DEFAULT_SCENE.trackStyle),
     trackWidth: width(params.get('width')),
+    smoothTrack: params.get('smooth') === '1',
     colors: decodeColors(params.getAll('pc')),
     exaggeration: exaggeration(params.get('exag')),
     lighting: params.get('sun') === '1',

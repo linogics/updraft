@@ -8,6 +8,7 @@
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import { distance } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId, type TrackStyle } from '#lib/domain/scene';
+  import { smoothPath } from '#lib/domain/smooth';
   import { positionAt } from '#lib/domain/timeline';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
@@ -59,12 +60,13 @@
         .flatMap((f) => {
           const { fixes } = f.flight;
           const selected = f.flight.id === replay.selected?.flight.id;
+          const path = smoothPath(fixes, replay.smoothTrack ? 3 : 0);
           return colorRuns(fixes.length, trackColorAt(f, replay.colorBy, true)).map((run) => ({
             type: 'Feature' as const,
             properties: { color: run.color, selected },
             geometry: {
               type: 'LineString' as const,
-              coordinates: fixes.slice(run.start, run.end + 1).map((x) => [x.lon, x.lat])
+              coordinates: path.points.slice(path.index[run.start], path.index[run.end] + 1).map((x) => [x.lon, x.lat])
             }
           }));
         })
@@ -111,6 +113,9 @@
     m.setPaintProperty('tracks-casing', 'line-width', w(4));
     m.setPaintProperty('tracks-glow', 'line-width', w(0, 3));
     m.setPaintProperty('tracks-glow', 'line-blur', width * 2);
+    // Dasharray is in line widths. Round caps would fill the gaps.
+    m.setPaintProperty('tracks', 'line-dasharray', style === 'dashed' ? [4, 2] : undefined);
+    m.setLayoutProperty('tracks', 'line-cap', style === 'dashed' ? 'butt' : 'round');
     m.setLayoutProperty('tracks-casing', 'visibility', style === 'outline' ? 'visible' : 'none');
     m.setLayoutProperty('tracks-glow', 'visibility', style === 'glow' ? 'visible' : 'none');
   }
@@ -220,6 +225,7 @@
     void replay.flights;
     void replay.selected;
     void replay.colorBy;
+    void replay.smoothTrack;
     if (!ready || !map) return;
     (map.getSource('tracks') as GeoJSONSource).setData(trackData());
     (map.getSource('thermals') as GeoJSONSource).setData(thermalData());

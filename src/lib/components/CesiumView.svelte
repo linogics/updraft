@@ -147,9 +147,9 @@
   // Rebuild tracks when colour mode, style, width, colours or altitude offsets change (layers skip unchanged input).
   $effect(() => {
     if (!ready) return;
-    const { colorBy, trackStyle, trackWidth } = replay;
+    const { colorBy, trackStyle, trackWidth, smoothTrack } = replay;
     void replay.exaggeration;
-    for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth);
+    for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
   });
 
   $effect(() => {
