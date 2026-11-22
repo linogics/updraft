@@ -30,8 +30,8 @@ docker compose up dev
 docker compose run --rm dev npm test
 docker compose run --rm dev npm run check
 
-# Production image (Caddy) on http://localhost:8080
-docker compose --profile prod up --build web
+# Static build into build/
+docker compose run --rm dev npm run build
 ```
 
 `node_modules` lives in a Docker volume, so editors on the host will not resolve imports. After changing `package.json`, run `docker compose run --rm dev npm install`.
@@ -41,27 +41,18 @@ docker compose --profile prod up --build web
 | Terrain source | Needs | Notes |
 |---|---|---|
 | AWS Terrain Tiles (default without token) | nothing | Free global elevation (Terrarium PNG, SRTM and national DEMs), up to zoom 15 |
-| Cesium World Terrain (default with token) | free [Cesium ion](https://ion.cesium.com) token | Higher resolution. Set `CESIUM_ION_TOKEN` in `.env` (copy `.env.example`). If ion fails, the app falls back to AWS Terrain Tiles |
+| Cesium World Terrain (default with token) | free [Cesium ion](https://ion.cesium.com) token | Higher resolution. Each user enters their own token in the "Ion" menu of the replay toolbar. It is stored only in that browser. If ion fails, the app falls back to AWS Terrain Tiles |
 | Flat | nothing | Ellipsoid, no relief |
 
 Each track is shifted vertically so takeoff sits on the ground (at most ±150 m). This compensates for loggers that record a different height reference than the terrain.
 
 The keyless tile services (AWS Terrain Tiles, Esri World Imagery, OpenTopoMap, OpenStreetMap) require attribution, which the map shows. They are meant for moderate traffic. For heavy public use, self-host tiles or switch to a keyed provider (for example MapTiler). The sources are configured in `src/lib/map/basemaps.ts`.
 
-## Kubernetes
+## Hosting
 
-The runtime image is [Caddy](https://caddyserver.com) (`caddy:2.11-alpine`, config in `deploy/caddy/Caddyfile`) serving the static build on port 8080. It runs as uid 65532 with a read-only root filesystem and no capabilities, and exposes `/healthz` for probes. Configuration is read at runtime from `/config.json`, which Caddy fills from environment variables per request. One image therefore serves every environment. TLS is left to the ingress.
+The app is a static site with no backend. Every push to `main` runs `.github/workflows/deploy.yml`: check, test, build, then deploy `build/` to GitHub Pages at https://updraft.linogics.io (`static/CNAME`). Any other static host works too: serve `build/` and answer unknown paths with `404.html`.
 
-```sh
-docker build --target runtime -t <registry>/paragliding-replay:<tag> .
-docker push <registry>/paragliding-replay:<tag>
-
-kubectl create secret generic paragliding-replay --from-literal=cesium-ion-token=<token>   # optional
-cd deploy/k8s && kustomize edit set image paragliding-replay=<registry>/paragliding-replay:<tag>
-kubectl apply -k deploy/k8s
-```
-
-Edit the host and ingress class in `deploy/k8s/ingress.yaml` before applying (`ingressClassName: nginx` refers to the cluster's ingress controller, not to the app image).
+One-time setup: in the repository settings set Pages source to "GitHub Actions", custom domain `updraft.linogics.io` and enforce HTTPS. In DNS add `CNAME updraft -> linogics.github.io`.
 
 ## Architecture
 
@@ -84,7 +75,7 @@ The dependency direction is `domain → storage / cesium / ui`. The domain layer
 - Domain types are plain JSON and the analysis functions are pure, so they can run on the server unchanged.
 - The replay view is fully described by `SceneConfig` in the URL. It can become a stored scene behind a share link.
 - Flight IDs are UUIDs.
-- Runtime config comes from `/config.json`, so an API base URL can be added there.
+- Runtime config is read by `loadRuntimeConfig` (`src/lib/config.ts`), so an API base URL can be added there.
 - To add server routes, switch the SvelteKit adapter from `adapter-static` to `adapter-node`.
 
 ## Roadmap

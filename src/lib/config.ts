@@ -2,13 +2,26 @@ export interface RuntimeConfig {
   cesiumIonToken: string;
 }
 
-let cached: Promise<RuntimeConfig> | undefined;
+const ION_KEY = 'cesiumIonToken';
 
-/** Runtime config served as /config.json (Caddy in prod, Vite middleware in dev). */
+/** The static site has no server config: each user brings their own ion token, kept in this browser. */
 export function loadRuntimeConfig(): Promise<RuntimeConfig> {
-  cached ??= fetch('/config.json')
-    .then((r) => (r.ok ? r.json() : {}))
-    .catch(() => ({}))
-    .then((c: Partial<RuntimeConfig>) => ({ cesiumIonToken: c.cesiumIonToken ?? '' }));
-  return cached;
+  let token = '';
+  try {
+    token = localStorage.getItem(ION_KEY) ?? '';
+  } catch {
+    // Storage blocked (private mode): run without ion.
+  }
+  return Promise.resolve({ cesiumIonToken: token });
+}
+
+/** Returns false when storage is blocked and the token could not be kept. */
+export function saveIonToken(token: string): boolean {
+  try {
+    if (token) localStorage.setItem(ION_KEY, token);
+    else localStorage.removeItem(ION_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
