@@ -53,3 +53,21 @@ export function airspaceLabel(p: AirspaceProps, units: Units): string {
   const cls = classOf(p.icao_class);
   return `${String(p.name ?? 'Airspace')}, ${cls === 'other' ? 'no class' : `class ${cls}`}, ${lim('lower')} to ${lim('upper')}`;
 }
+
+/** Same rule as the 2D filter: class shown and floor not above the limit. GND floors count as 0. */
+export function isVisible(p: AirspaceProps, prefs: { classes: AirspaceClass[]; maxFloor: number }): boolean {
+  const lower = limitOf(Number(p.lower_limit_value) || 0, String(p.lower_limit_unit), String(p.lower_limit_reference_datum));
+  return prefs.classes.includes(classOf(p.icao_class)) && (lower.ref === 'GND' ? 0 : lower.value) <= prefs.maxFloor;
+}
+
+/**
+ * Floor and ceiling in metres, scaled like the tracks.
+ * shortcut: FL (STD) and AGL ceilings are treated as MSL, GND floors start at 0 m. Upgrade with terrain sampling.
+ */
+export function volumeHeights(p: AirspaceProps, exaggeration: number): { floor: number; ceiling: number } {
+  const h = (side: 'lower' | 'upper') => {
+    const l = limitOf(Number(p[`${side}_limit_value`]) || 0, String(p[`${side}_limit_unit`]), String(p[`${side}_limit_reference_datum`]));
+    return (l.ref === 'GND' && side === 'lower' ? 0 : l.value) * exaggeration;
+  };
+  return { floor: h('lower'), ceiling: h('upper') };
+}

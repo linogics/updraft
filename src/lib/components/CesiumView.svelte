@@ -5,6 +5,9 @@
   import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
   import { XcRoute } from '#lib/cesium/xcRoute';
+import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
+import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
   import { altitudeOffset } from '#lib/domain/align';
@@ -22,6 +25,9 @@
   let notice = $state('Loading 3D view…');
   const layers = new Map<string, FlightLayer>();
   let xcRoute: XcRoute | undefined = $state.raw();
+  let airspaceLayer: AirspaceLayer | undefined = $state.raw();
+  let airspaces: AirspaceFeature[] = $state.raw([]);
+  let airspaceRequest = '';
 
   /** Loads a terrain source and re-aligns every track so takeoff sits on the ground. */
   let terrainRequest = 0;
@@ -65,6 +71,7 @@
       for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time, () => replay.exaggeration));
       camera = new CameraController(v);
       xcRoute = new XcRoute(v);
+      airspaceLayer = new AirspaceLayer(v);
 
       v.scene.preRender.addEventListener(() => {
         const sel = replay.selected;
@@ -107,8 +114,43 @@
       layers.clear();
       camera?.destroy();
       xcRoute?.destroy();
+      airspaceLayer?.destroy();
       if (viewer && !viewer.isDestroyed()) viewer.destroy();
     };
+  });
+
+  // Fetch airspaces for the loaded flights (+5 km margin), only when the box or key changes.
+  $effect(() => {
+    const fixes = replay.flights.flatMap((lf) => lf.flight.fixes);
+    const key = airspacePrefs.key;
+    if (!ready || !airspacePrefs.show || !key || !fixes.length) return;
+    let s = 90,
+      n = -90,
+      w = 180,
+      e = -180;
+    for (const f of fixes) {
+      s = Math.min(s, f.lat);
+      n = Math.max(n, f.lat);
+      w = Math.min(w, f.lon);
+      e = Math.max(e, f.lon);
+    }
+    const dLat = 5 / 111;
+    const dLon = dLat / Math.max(0.1, Math.cos((((s + n) / 2) * Math.PI) / 180));
+    const bbox: [number, number, number, number] = [w - dLon, s - dLat, e + dLon, n + dLat];
+    const id = bbox.map((x) => x.toFixed(3)).join() + key;
+    if (id === airspaceRequest) return;
+    airspaceRequest = id;
+    loadAirspaces(bbox, key)
+      .then((f) => {
+        if (airspaceRequest === id) airspaces = f;
+      })
+      .catch((err) => console.error(err));
+  });
+
+  $effect(() => {
+    if (!ready || !airspaceLayer) return;
+    const { show, classes, maxFloor, opacity, key } = airspacePrefs;
+    airspaceLayer.set(show && key ? airspaces : [], { show, classes, maxFloor, opacity }, replay.exaggeration);
   });
 
   // Terrain dropdown: switch source after the initial load.

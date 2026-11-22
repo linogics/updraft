@@ -25,7 +25,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 | XC scoring of a track (flyXC) | 2026-11-22 | "XC" section in the replay side panel with type, distance, multiplier and points, plus a points list when several pilots are loaded. Four leagues: XContest (default), FFVL, FAI and UK XC League, picked per browser. Other leagues are open. Scored in a Web Worker with `igc-xc-score` (10 s budget, best result so far) and cached per flight and league in IndexedDB. The selected pilot's route is drawn in 2D and 3D, with the closing circle for triangles. The logbook shows type and points per flight and total points, scored in the background for the chosen league. |
 | Route planner (flyXC) | 2026-11-22 | `/plan` page: click the map to draw a route, drag points, click a leg midpoint to insert one, undo and clear. Shows total and per-leg distance, XC score per league, and a duration estimate from a speed in km/h. The route and speed live in the URL (`?r=`, `&v=`) for a share link. Task export is open. |
 | XC route from a flight (xcfinder) | 2026-11-22 | "Make route" in the XC section: 1 to 30 turnpoints that maximise the summed leg distance, opened in the planner for editing. Turnpoints show as numbered points. |
-| Airspaces in 2D (flyXC) | 2026-11-22 | openAIP vector tiles with a free key per browser, filtered by class, floor and opacity, click for details. In the replay map and the planner. |
+| Airspaces in 2D and 3D (flyXC) | 2026-11-22 | openAIP vector tiles with a free key per browser, filtered by class, floor and opacity, click for details in 2D. In the replay map and the planner. The 3D replay draws translucent volumes scaled with the altitude exaggeration. Limits: FL is treated as MSL, AGL ceilings are treated as MSL, GND floors start at 0 m, FIR and UIR are skipped. |
 
 ## Possible without a backend
 
@@ -33,7 +33,7 @@ Compared in October 2026 against skyviz.io (incl. /pricing), ogoy.app, xcfinder.
 |---|---|
 | XCTSK import, load tracks by URL (may need a CORS proxy) | flyXC, skyviz |
 | Task and waypoint export: XCTrack `.xctsk` with QR code and "open in XCTrack" link, SeeYou `.cup`, XCSoar `.tsk`, GPX, KML, FormatGEO | xcfinder, flyXC |
-| Airspaces in 3D and in the altitude profile | flyXC |
+| Airspaces in the altitude profile | flyXC |
 | Thermal hotspot overlay (thermal.kk7.ch) by type, month, time of day | flyXC |
 | National topo maps: IGN France (incl. OACI chart), IGN Spain | flyXC |
 | Chart metric switch altitude / speed / vario, ground elevation fill, wheel zoom | flyXC |
