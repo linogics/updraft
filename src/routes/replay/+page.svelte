@@ -45,6 +45,7 @@
       return;
     }
     replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges, thermalFilter: scene.thermalFilter, colors: scene.colors });
+    await replay.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
     if (replay.multiDay) footerTab = 'timeline';
     loaded = true;

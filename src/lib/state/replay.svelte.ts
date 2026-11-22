@@ -1,4 +1,5 @@
 import type { BeginCapture } from '#lib/cesium/capture';
+import { DEFAULT_TRACKS, type CameraTracks, type CameraView } from '#lib/domain/cameraPath';
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
 import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
 import {
@@ -21,7 +22,13 @@ import {
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
 import { groundSeries } from '#lib/map/groundHeights';
+import { flightRepository } from '#lib/storage';
 import { pilotColor } from '#lib/ui/colors';
+
+/** Camera edits wait this long after the last change before they are stored, ms. */
+const CAMERA_SAVE_DELAY = 300;
+/** Camera edits kept for undo. */
+const UNDO_LIMIT = 50;
 
 /** Climbs that pass the thermal filter. Index-based, like the analysis. */
 export interface Climbs {
@@ -97,6 +104,14 @@ export class ReplayState {
   /** Video export range marks, Unix ms. Null means replay start or end. */
   exportIn = $state<number | null>(null);
   exportOut = $state<number | null>(null);
+  /** Camera tracks for 'keys' mode. Stored per set of flights on this device. */
+  cameraTracks = $state.raw<CameraTracks>(DEFAULT_TRACKS);
+  /** Camera view of the selected pilot now. Null until the 3D viewer is ready or no pilot is shown. */
+  captureCameraView = $state.raw<(() => CameraView | null) | null>(null);
+  private undoStack = $state.raw<CameraTracks[]>([]);
+  private redoStack = $state.raw<CameraTracks[]>([]);
+  canUndoCamera = $derived(this.undoStack.length > 0);
+  canRedoCamera = $derived(this.redoStack.length > 0);
 
   start = $derived(this.flights.length ? Math.min(...this.flights.map((f) => f.flight.fixes[0].t)) : 0);
   end = $derived(this.flights.length ? Math.max(...this.flights.map((f) => f.flight.fixes.at(-1)!.t)) : 0);
@@ -106,8 +121,15 @@ export class ReplayState {
 
   private frame = 0;
   private lastTick = 0;
+  private cameraSaveTimer: ReturnType<typeof setTimeout> | undefined;
+  private pendingCameraSave: (() => void) | undefined;
 
   setFlights(flights: Flight[], init: SceneInit = {}) {
+    // Camera tracks belong to the previous set of flights: save them, then start from the defaults.
+    this.persistCameraTracks();
+    this.cameraTracks = DEFAULT_TRACKS;
+    this.undoStack = [];
+    this.redoStack = [];
     this.syncMode = init.syncMode ?? defaultSyncMode(flights.map((f) => f.fixes));
     this.nudges = init.nudges ?? {};
     this.thermalFilter = init.thermalFilter ?? DEFAULT_FILTER;
@@ -129,6 +151,65 @@ export class ReplayState {
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
     void this.loadGround();
+  }
+
+  /** Loads the camera tracks saved for the loaded flights. Storage errors keep the defaults. */
+  async loadCameraTracks() {
+    const ids = this.flights.map((f) => f.flight.id);
+    try {
+      this.cameraTracks = await flightRepository.getCameraTracks(ids);
+    } catch (err) {
+      console.error('Could not load camera tracks', err);
+    }
+  }
+
+  /**
+   * The one way to edit camera tracks. Undoable, stored, and switches the camera to 'keys'.
+   */
+  editCamera(next: CameraTracks) {
+    if (next === this.cameraTracks) return;
+    this.undoStack = [...this.undoStack.slice(-(UNDO_LIMIT - 1)), this.cameraTracks];
+    this.redoStack = [];
+    this.cameraTracks = next;
+    this.camera = 'keys';
+    this.saveCameraTracks();
+  }
+
+  undoCamera() {
+    const prev = this.undoStack.at(-1);
+    if (!prev) return;
+    this.undoStack = this.undoStack.slice(0, -1);
+    this.redoStack = [...this.redoStack, this.cameraTracks];
+    this.cameraTracks = prev;
+    this.saveCameraTracks();
+  }
+
+  redoCamera() {
+    const next = this.redoStack.at(-1);
+    if (!next) return;
+    this.redoStack = this.redoStack.slice(0, -1);
+    this.undoStack = [...this.undoStack, this.cameraTracks];
+    this.cameraTracks = next;
+    this.saveCameraTracks();
+  }
+
+  /** Debounced so dragging a number field does not write on every keystroke. */
+  private saveCameraTracks() {
+    clearTimeout(this.cameraSaveTimer);
+    // Bind ids and tracks now: the flights may change before the timer fires.
+    const ids = this.flights.map((f) => f.flight.id);
+    const tracks = this.cameraTracks;
+    this.pendingCameraSave = () =>
+      flightRepository.saveCameraTracks(ids, tracks).catch((err) => console.error('Could not save camera tracks', err));
+    this.cameraSaveTimer = setTimeout(() => this.persistCameraTracks(), CAMERA_SAVE_DELAY);
+  }
+
+  /** Writes a pending debounced save right away. */
+  private persistCameraTracks() {
+    clearTimeout(this.cameraSaveTimer);
+    this.cameraSaveTimer = undefined;
+    this.pendingCameraSave?.();
+    this.pendingCameraSave = undefined;
   }
 
   /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
@@ -210,7 +291,7 @@ export class ReplayState {
     return this.time - f.timeOffset;
   }
 
-  /** Overrides a pilot's colour everywhere; null restores the palette colour. */
+  /** Overrides a pilot's colour everywhere, null restores the palette colour. */
   setPilotColor(id: string, hex: string | null) {
     const { [id]: _, ...rest } = this.colorOverrides;
     this.colorOverrides = hex ? { ...rest, [id]: hex } : rest;
@@ -268,5 +349,7 @@ export class ReplayState {
 
   destroy() {
     this.pause();
+    // Do not lose an edit made just before leaving the page.
+    this.persistCameraTracks();
   }
 }
