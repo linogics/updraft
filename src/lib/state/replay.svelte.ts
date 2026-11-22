@@ -19,6 +19,7 @@ import {
 } from '#lib/domain/scene';
 import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
+import { groundSeries } from '#lib/map/groundHeights';
 import { pilotColor } from '#lib/ui/colors';
 
 /** Climbs that pass the thermal filter. Index-based, like the analysis. */
@@ -45,6 +46,8 @@ export interface LoadedFlight {
   visible: boolean;
   /** Vertical correction applied in 3D, metres (terrain alignment + manual). */
   altOffset: number;
+  /** Ground height under each source fix, metres MSL. Undefined until loaded. */
+  ground?: Float32Array;
 }
 
 export const SPEEDS = [1, 5, 10, 25, 50, 100, 200] as const;
@@ -117,6 +120,27 @@ export class ReplayState {
     });
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
+    void this.loadGround();
+  }
+
+  /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
+  private async loadGround() {
+    const ground = new Map<string, Float32Array>();
+    await Promise.all(
+      this.flights.map(async (f) => {
+        try {
+          ground.set(f.flight.id, await groundSeries(f.source.fixes));
+        } catch {
+          // Offline or tile error: AGL stays unavailable for this flight.
+        }
+      })
+    );
+    this.flights = this.flights.map((f) => (ground.has(f.flight.id) ? { ...f, ground: ground.get(f.flight.id) } : f));
+  }
+
+  /** Height above ground of fix i in metres, or undefined until ground heights have loaded. */
+  aglAt(f: LoadedFlight, i: number): number | undefined {
+    return f.ground ? f.flight.fixes[i].alt + f.altOffset - f.ground[i] : undefined;
   }
 
   private climbsOf(source: Flight, analysis: FlightAnalysis): Climbs {

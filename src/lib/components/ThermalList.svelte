@@ -2,6 +2,7 @@
   import { indexAt } from '#lib/domain/timeline';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { varioColor } from '#lib/ui/colors';
   import { formatClock, formatDuration } from '#lib/ui/format';
   import {
     formatAlt,
@@ -100,7 +101,7 @@
         {#each thermals as t, i (t.start)}
           <li class:active={current >= t.start && current <= t.end}>
             <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
-              <span class="n">{i + 1}</span>
+              <span class="n"><span class="swatch" style="background: {varioColor(t.avgClimb)}" aria-hidden="true"></span>{i + 1}</span>
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
               <span class="gain">+{formatAlt(t.gain, u)}</span>
               <span class="climb">{formatVario(t.avgClimb, u)}</span>
@@ -168,7 +169,7 @@
     box-sizing: border-box;
     width: 100%;
     display: grid;
-    grid-template-columns: 22px auto 1fr auto;
+    grid-template-columns: 34px auto 1fr auto;
     gap: 2px 8px;
     padding: 5px 6px;
     border-radius: 6px;
@@ -181,7 +182,16 @@
     background: var(--surface-2);
   }
   .n {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     color: var(--muted);
+  }
+  .swatch {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
   }
   .n.kind {
     color: var(--text);

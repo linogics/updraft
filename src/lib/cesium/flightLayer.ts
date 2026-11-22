@@ -2,8 +2,15 @@ import * as Cesium from 'cesium';
 import { indexAt, positionAt } from '#lib/domain/timeline';
 import type { ColorMode, TrackStyle } from '#lib/domain/scene';
 import type { LoadedFlight } from '#lib/state/replay.svelte';
+import { varioColor } from '#lib/ui/colors';
 import { trackColorAt } from '#lib/ui/trackColors';
 import { formatAlt, formatVario, type Units } from '#lib/ui/units';
+
+/** Black or white text, whichever reads better on the label background. */
+function labelText(css: string): Cesium.Color {
+  const c = Cesium.Color.fromCssColorString(css);
+  return c.red * 0.299 + c.green * 0.587 + c.blue * 0.114 > 0.6 ? Cesium.Color.BLACK : Cesium.Color.WHITE;
+}
 
 /** Length of the bright trail behind the pilot, ms. */
 const TAIL_MS = 60_000;
@@ -223,6 +230,7 @@ export class FlightLayer {
         const i = indexAt(this.loaded.flight.fixes, this.getTime());
         return i < th.start || i > th.end;
       }, false);
+      const css = varioColor(th.avgClimb);
       this.thermals.push(
         this.viewer.entities.add({
           position: this.cartesian(th.centerLon, th.centerLat, mid, new Cesium.Cartesian3()),
@@ -232,7 +240,7 @@ export class FlightLayer {
               length: th.gain * this.getExaggeration(),
               topRadius: 35,
               bottomRadius: 35,
-              material: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.15),
+              material: Cesium.Color.fromCssColorString(css).withAlpha(0.15),
               outline: false
             }
           }),
@@ -240,8 +248,9 @@ export class FlightLayer {
             label: {
               text: `+${formatAlt(th.gain, units)} · ${formatVario(th.avgClimb, units)}`,
               font: '12px sans-serif',
+              fillColor: labelText(css),
               showBackground: true,
-              backgroundColor: Cesium.Color.fromCssColorString('#d95926').withAlpha(0.8),
+              backgroundColor: Cesium.Color.fromCssColorString(css).withAlpha(0.8),
               pixelOffset: new Cesium.Cartesian2(0, -10),
               distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 30_000)
             }
