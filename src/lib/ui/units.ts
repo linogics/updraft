@@ -1,5 +1,7 @@
 // Display units. Domain values stay SI (m, m/s); conversion happens only at the edge.
 
+import { formatNumber } from './format';
+
 export const DISTANCE_UNITS = ['km', 'mi', 'nm'] as const;
 export const ALT_UNITS = ['m', 'ft'] as const;
 export const VARIO_UNITS = ['ms', 'fpm', 'kt'] as const;
@@ -62,7 +64,7 @@ export function formatAlt(m: number, u: Units): string {
 export function formatVario(ms: number, u: Units): string {
   const fpm = u.vario === 'fpm';
   const v = round(toVario(ms, u.vario), fpm ? 10 : 0.1);
-  return `${v > 0 ? '+' : ''}${v.toFixed(fpm ? 0 : 1)} ${UNIT_LABELS.vario[u.vario]}`;
+  return `${v > 0 ? '+' : ''}${formatNumber(v, fpm ? 0 : 1)} ${UNIT_LABELS.vario[u.vario]}`;
 }
 
 export function formatSpeed(ms: number, u: Units): string {
@@ -72,7 +74,7 @@ export function formatSpeed(ms: number, u: Units): string {
 /** Below 1 km (metric) or 0.5 mi / 0.5 nm, short distances read better in m or ft. */
 export function formatDistance(m: number, u: Units): string {
   const long = toDistance(m, u.distance);
-  if (u.distance === 'km' ? long >= 1 : long >= 0.5) return `${long.toFixed(1)} ${UNIT_LABELS.distance[u.distance]}`;
+  if (u.distance === 'km' ? long >= 1 : long >= 0.5) return `${formatNumber(long, 1)} ${UNIT_LABELS.distance[u.distance]}`;
   return u.distance === 'km' ? `${Math.round(m)} m` : `${Math.round(toAlt(m, 'ft'))} ft`;
 }
 

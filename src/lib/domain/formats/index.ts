@@ -1,3 +1,4 @@
+import { m } from '../../paraglide/messages';
 import type { Flight } from '../model';
 import { readFit } from './fit';
 import { readGeoJson, writeGeoJson } from './geojson';
@@ -25,7 +26,7 @@ export const formatOf = (name: string) => reader(name)?.label;
 
 export async function readTrack(file: File): Promise<Flight> {
   const r = reader(file.name);
-  if (!r) throw new Error(`${file.name}: Unsupported file type`);
+  if (!r) throw new Error(m.format_unsupported({ name: file.name }));
   return r.read(file);
 }
 

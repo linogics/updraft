@@ -1,6 +1,7 @@
 <script lang="ts">
   import { AIRSPACE_CLASSES } from '#lib/airspace/model';
   import { MAX_FLOOR_LIMIT } from '#lib/airspace/prefs';
+  import { m } from '#lib/paraglide/messages';
   import { airspacePrefs as prefs } from '#lib/airspace/prefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { fromAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
@@ -9,9 +10,9 @@
 </script>
 
 <div class="fields">
-  <label for="as-show">Airspaces</label>
+  <label for="as-show">{m.airspace_show()}</label>
   <input id="as-show" type="checkbox" checked={prefs.show} onchange={(e) => prefs.set({ show: e.currentTarget.checked })} />
-  <span>Classes</span>
+  <span>{m.airspace_classes()}</span>
   <span class="classes">
     {#each AIRSPACE_CLASSES as c (c)}
       <label>
@@ -21,11 +22,11 @@
           onchange={(e) =>
             prefs.set({ classes: AIRSPACE_CLASSES.filter((x) => (x === c ? e.currentTarget.checked : prefs.classes.includes(x))) })}
         />
-        {c === 'other' ? 'other' : c}
+        {c === 'other' ? m.airspace_class_other() : c}
       </label>
     {/each}
   </span>
-  <label for="as-floor">Hide floors above</label>
+  <label for="as-floor">{m.airspace_floor()}</label>
   <span class="range">
     <input
       id="as-floor"
@@ -38,7 +39,7 @@
     />
     <output for="as-floor">{Math.round(toAlt(prefs.maxFloor, alt))} {UNIT_LABELS.alt[alt]}</output>
   </span>
-  <label for="as-opacity">Opacity</label>
+  <label for="as-opacity">{m.common_opacity()}</label>
   <input
     id="as-opacity"
     type="range"
@@ -48,7 +49,7 @@
     value={prefs.opacity}
     oninput={(e) => prefs.set({ opacity: e.currentTarget.valueAsNumber })}
   />
-  <label for="as-key">openAIP key</label>
+  <label for="as-key">{m.airspace_key()}</label>
   <input
     id="as-key"
     type="password"
@@ -59,7 +60,7 @@
 </div>
 {#if !prefs.key}
   <p class="hint">
-    Add a free openAIP key above. Get one at <a href="https://www.openaip.net" target="_blank" rel="noreferrer">openaip.net</a>.
+    {@html m.airspace_key_hint({ link: '<a href="https://www.openaip.net" target="_blank" rel="noreferrer">openaip.net</a>' })}
   </p>
 {/if}
 

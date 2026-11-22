@@ -1,5 +1,7 @@
 /** Replay range and timing of a video export. Times are Unix ms on the replay clock. */
 
+import { m } from '../paraglide/messages';
+
 export interface ReplayRange {
   inMs: number;
   outMs: number;
@@ -31,9 +33,9 @@ export function lengthForSpeed(rangeMs: number, factor: number): number {
 
 export function planTiming(range: ReplayRange, mode: TimingMode, fps: number): Timing {
   const rangeMs = range.outMs - range.inMs;
-  if (!(rangeMs > 0)) throw new Error('The export range is empty. Set the out mark after the in mark.');
+  if (!(rangeMs > 0)) throw new Error(m.export_range_empty());
   const speed = mode.kind === 'speed' ? mode.factor : speedForLength(rangeMs, mode.seconds);
-  if (!(speed > 0) || !Number.isFinite(speed)) throw new Error('Enter a length or speed above zero.');
+  if (!(speed > 0) || !Number.isFinite(speed)) throw new Error(m.export_speed_invalid());
   // The epsilon keeps float noise (450.00000001) from adding a frame.
   const frames = Math.max(1, Math.ceil(lengthForSpeed(rangeMs, speed) * fps - 1e-6));
   return { frames, speed, seconds: frames / fps };

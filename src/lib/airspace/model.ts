@@ -1,3 +1,4 @@
+import { m } from '../paraglide/messages';
 import { formatAlt, type Units } from '../ui/units';
 
 export type LimitRef = 'GND' | 'MSL' | 'STD';
@@ -51,7 +52,12 @@ export function airspaceLabel(p: AirspaceProps, units: Units): string {
       units
     );
   const cls = classOf(p.icao_class);
-  return `${String(p.name ?? 'Airspace')}, ${cls === 'other' ? 'no class' : `class ${cls}`}, ${lim('lower')} to ${lim('upper')}`;
+  return m.airspace_summary({
+    name: String(p.name ?? m.airspace_default_name()),
+    cls: cls === 'other' ? m.airspace_no_class() : m.airspace_class({ cls }),
+    lower: lim('lower'),
+    upper: lim('upper')
+  });
 }
 
 /** Same rule as the 2D filter: class shown and floor not above the limit. GND floors count as 0. */

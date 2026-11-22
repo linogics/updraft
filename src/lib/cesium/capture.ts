@@ -1,3 +1,4 @@
+import { m } from '../paraglide/messages';
 import type * as Cesium from 'cesium';
 
 /** Longest wait for globe tiles per frame before grabbing it anyway. */
@@ -26,7 +27,7 @@ export async function beginCapture(
   height: number,
   setHold: (hold: boolean) => void
 ): Promise<CaptureSession> {
-  if (viewer.isDestroyed()) throw new Error('3D view is not available.');
+  if (viewer.isDestroyed()) throw new Error(m.capture_unavailable());
   const container = viewer.container as HTMLElement;
   const { style } = container;
   const saved = { width: style.width, height: style.height, loop: viewer.useDefaultRenderLoop };
@@ -45,7 +46,7 @@ export async function beginCapture(
 
   return {
     async frame(target = document.createElement('canvas')) {
-      if (ended || viewer.isDestroyed()) throw new Error('3D view was closed during export.');
+      if (ended || viewer.isDestroyed()) throw new Error(m.capture_closed());
       setHold(false);
       render();
       setHold(true);
@@ -53,7 +54,7 @@ export async function beginCapture(
       // Each loop ends right after a render, so the copy below reads that fresh frame.
       while (!viewer.scene.globe.tilesLoaded && performance.now() < deadline) {
         await pause();
-        if (ended || viewer.isDestroyed()) throw new Error('3D view was closed during export.');
+        if (ended || viewer.isDestroyed()) throw new Error(m.capture_closed());
         render();
       }
       // Assigning a size clears the canvas, so only do it when it changes.

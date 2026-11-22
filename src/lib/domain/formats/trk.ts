@@ -1,3 +1,4 @@
+import { m } from '../../paraglide/messages';
 import type { Fix, Flight } from '../model';
 import { toFlight } from './common';
 
@@ -23,6 +24,6 @@ export function readTrk(text: string, sourceName: string): Flight {
       alt: +m[11]
     });
   }
-  if (!fixes.length) throw new Error(`${sourceName}: no track points found`);
+  if (!fixes.length) throw new Error(m.format_trk_no_points({ name: sourceName }));
   return toFlight(sourceName, fixes);
 }

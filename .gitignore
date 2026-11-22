@@ -13,3 +13,6 @@ docs/superpowers/
 *.log
 static/cesium/
 .claude/settings.local.json
+
+# Paraglide generates this at build time
+src/lib/paraglide/

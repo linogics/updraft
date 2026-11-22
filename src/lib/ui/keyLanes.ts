@@ -9,6 +9,7 @@ import {
   type KeyRef,
   type PropTrack
 } from '../domain/cameraPath';
+import { m } from '../paraglide/messages';
 
 /** Height of one camera row, px. Matches the pilot rows. */
 export const ROW_PX = 26;
@@ -19,13 +20,17 @@ export const SNAP_PX = 8;
 /** Horizontal sampling step of the value curve, px. */
 const CURVE_STEP_PX = 3;
 
-export const PROP_LABEL: Record<CameraProp, string> = { heading: 'Heading', pitch: 'Pitch', range: 'Range' };
+export const PROP_LABEL: Record<CameraProp, () => string> = {
+  heading: () => m.prop_heading(),
+  pitch: () => m.prop_pitch(),
+  range: () => m.prop_range()
+};
 
-export const INTERP_INFO: Record<Interp, { label: string; title: string }> = {
-  auto: { label: 'Auto', title: 'Smooth curve through the keys' },
-  linear: { label: 'Linear', title: 'Straight line to the next key' },
-  hold: { label: 'Hold', title: 'Keep this value until the next key' },
-  ease: { label: 'Ease', title: 'Ease in and out to the next key' }
+export const INTERP_INFO: Record<Interp, { label: () => string; title: () => string }> = {
+  auto: { label: () => m.interp_auto(), title: () => m.interp_auto_title() },
+  linear: { label: () => m.interp_linear(), title: () => m.interp_linear_title() },
+  hold: { label: () => m.interp_hold(), title: () => m.interp_hold_title() },
+  ease: { label: () => m.interp_ease(), title: () => m.interp_ease_title() }
 };
 
 /** Range of a lane in lane space (log for range). */

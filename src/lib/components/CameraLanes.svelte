@@ -18,6 +18,7 @@
     type LanePoint,
     type Scale
   } from '#lib/ui/keyLanes';
+  import { m } from '#lib/paraglide/messages';
   import { formatClock } from '#lib/ui/format';
 
   let { replay, editor, x, msPerPx, width, view }: {
@@ -162,8 +163,8 @@
 <div class="cam-head" role="presentation" onpointerdown={(e) => e.stopPropagation()}>
   {#if editor.message}<span class="msg" role="status">{editor.message}</span>{/if}
   {#if !active}
-    <span class="hint">Camera keys inactive</span>
-    <button onclick={() => (replay.camera = 'keys')}>Use</button>
+    <span class="hint">{m.camera_keys_inactive()}</span>
+    <button onclick={() => (replay.camera = 'keys')}>{m.camera_use()}</button>
   {/if}
 </div>
 
@@ -194,8 +195,8 @@
             class="key {k.interp}"
             class:sel
             aria-pressed={sel}
-            aria-label="{PROP_LABEL[lane.prop]} key at {formatClock(k.t)}, {INTERP_INFO[k.interp].label}"
-            title="{PROP_LABEL[lane.prop]} {INTERP_INFO[k.interp].title.toLowerCase()}"
+            aria-label={m.camera_key_aria({ prop: PROP_LABEL[lane.prop](), time: formatClock(k.t), interp: INTERP_INFO[k.interp].label() })}
+            title={m.camera_key_title({ prop: PROP_LABEL[lane.prop](), info: INTERP_INFO[k.interp].title().toLowerCase() })}
             style:left="{x(k.t + s.dt)}px"
             style:top="{valueY(toLane(lane.prop, k.v) + s.dv, lane.scale, ROW_PX)}px"
             onpointerdown={(e) => onKeyDown(e, [{ prop: lane.prop, t: k.t }], lane.scale)}
@@ -217,8 +218,8 @@
           class="key summary"
           class:sel
           aria-pressed={sel}
-          aria-label="Keys at {formatClock(s.t)}"
-          title="Keys at {formatClock(s.t)}: {s.props.map((p) => PROP_LABEL[p]).join(', ')}"
+          aria-label={m.camera_keys_at({ time: formatClock(s.t) })}
+          title={m.camera_keys_at_props({ time: formatClock(s.t), props: s.props.map((p) => PROP_LABEL[p]()).join(', ') })}
           style:left="{x(s.t + sh.dt)}px"
           style:top="{ROW_PX / 2}px"
           onpointerdown={(e) => onKeyDown(e, s.props.map((p) => ({ prop: p, t: s.t })), null)}

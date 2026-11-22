@@ -1,12 +1,18 @@
 <script lang="ts">
   import '../app.css';
+  import { onMount } from 'svelte';
   import { navigating } from '$app/state';
+  import { m } from '#lib/paraglide/messages';
+  import { getLocale } from '#lib/paraglide/runtime';
+
+  // The locale only changes on reload, so setting the lang attribute once is enough.
+  onMount(() => (document.documentElement.lang = getLocale()));
 
   let { children } = $props();
 </script>
 
 {#if navigating.to}
-  <div class="nav-bar" role="progressbar" aria-label="Loading page"></div>
+  <div class="nav-bar" role="progressbar" aria-label={m.layout_loading_page()}></div>
 {/if}
 
 {@render children()}

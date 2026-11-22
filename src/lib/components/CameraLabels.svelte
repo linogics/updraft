@@ -18,9 +18,16 @@
   import { DENSITIES, directCamera, type Density } from '#lib/domain/director';
   import type { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import { m } from '#lib/paraglide/messages';
   import { INTERP_INFO, PROP_LABEL, nextKeyTime, prevKeyTime } from '#lib/ui/keyLanes';
 
   let { replay, editor }: { replay: ReplayState; editor: CameraEditor } = $props();
+
+  const DENSITY_LABELS: Record<Density, () => string> = {
+    low: () => m.density_low(),
+    mid: () => m.density_mid(),
+    high: () => m.density_high()
+  };
 
   let density = $state<Density>('low');
 
@@ -37,25 +44,25 @@
       outMs: replay.exportOut ?? replay.end
     }, density);
     if (!hasKeys(next)) {
-      editor.message = 'The export range is empty, so there is nothing to direct.';
+      editor.message = m.camera_range_empty();
       return;
     }
-    if (hasKeys(replay.cameraTracks) && !confirm('Replace the camera keys with the automatic shots?')) return;
+    if (hasKeys(replay.cameraTracks) && !confirm(m.camera_confirm_replace())) return;
     replay.editCamera(next);
-    editor.message = `Made ${next.heading.keys.length} shots from the flight phases.`;
+    editor.message = m.camera_made_shots({ count: next.heading.keys.length });
   }
 
   function capture() {
     const view = replay.captureCameraView?.();
     if (!view) {
-      editor.message = 'No pilot in view to capture.';
+      editor.message = m.camera_no_pilot();
       return;
     }
     replay.editCamera(captureView(replay.cameraTracks, view, replay.time));
   }
 
   function clear() {
-    if (hasKeys(replay.cameraTracks) && confirm('Delete all camera keys for these flights?')) {
+    if (hasKeys(replay.cameraTracks) && confirm(m.camera_confirm_clear())) {
       replay.editCamera(clearKeys(replay.cameraTracks, replay.time));
       editor.clear();
     }
@@ -94,41 +101,41 @@
   <button
     class="twirl"
     aria-expanded={editor.expanded}
-    aria-label={editor.expanded ? 'Collapse camera keys' : 'Expand camera keys'}
+    aria-label={editor.expanded ? m.camera_collapse_keys() : m.camera_expand_keys()}
     onclick={() => (editor.expanded = !editor.expanded)}
   >
     {editor.expanded ? '▾' : '▸'}
   </button>
-  <span class="title">Camera</span>
-  <button onclick={auto} title="Direct keys from the flight phases of the selected pilot over the export range">Auto</button>
-  <select aria-label="Auto key density" title="How many keys Auto makes" bind:value={density}>
+  <span class="title">{m.toolbar_camera()}</span>
+  <button onclick={auto} title={m.camera_auto_title()}>{m.camera_auto()}</button>
+  <select aria-label={m.camera_density()} title={m.camera_density_title()} bind:value={density}>
     {#each DENSITIES as d (d)}
-      <option value={d}>{d[0].toUpperCase() + d.slice(1)}</option>
+      <option value={d}>{DENSITY_LABELS[d]()}</option>
     {/each}
   </select>
   <button
     onclick={capture}
     disabled={!replay.captureCameraView}
-    title="Keys heading, pitch and range from the current 3D view at the playhead"
+    title={m.camera_capture_title()}
   >
-    Capture view
+    {m.camera_capture()}
   </button>
-  <button onclick={clear} title="Delete all camera keys">Clear</button>
+  <button onclick={clear} title={m.camera_clear_title()}>{m.camera_clear()}</button>
 </div>
 
 {#if editor.live.length}
-  <div class="cam-row bar" role="group" aria-label="Selected keys">
+  <div class="cam-row bar" role="group" aria-label={m.camera_selected_keys()}>
     {#each INTERPS as interp (interp)}
-      <button title={INTERP_INFO[interp].title} onclick={() => editor.setInterp(interp)}>{INTERP_INFO[interp].label}</button>
+      <button title={INTERP_INFO[interp].title()} onclick={() => editor.setInterp(interp)}>{INTERP_INFO[interp].label()}</button>
     {/each}
-    <button title="Delete selected keys (Delete)" onclick={() => editor.remove()}>Delete</button>
+    <button title={m.camera_delete_selected()} onclick={() => editor.remove()}>{m.common_delete()}</button>
   </div>
 {/if}
 
 {#if editor.expanded}
   {#each CAMERA_PROPS as prop (prop)}
     {@const track = replay.cameraTracks[prop]}
-    {@const label = PROP_LABEL[prop]}
+    {@const label = PROP_LABEL[prop]()}
     {@const v = valueAt(track, replay.time, prop)}
     {@const atPlayhead = track.animated && !!keyAt(track, replay.time)}
     {@const prev = prevKeyTime(track.keys, replay.time)}
@@ -138,8 +145,8 @@
         class="stopwatch"
         class:on={track.animated}
         aria-pressed={track.animated}
-        aria-label="Animate {label}"
-        title="Animate {label.toLowerCase()}: keys at the playhead change over time"
+        aria-label={m.camera_animate({ prop: label })}
+        title={m.camera_animate_title({ prop: label })}
         onclick={() => toggleAnimated(prop)}
       >
         <span></span>
@@ -150,25 +157,25 @@
         type="number"
         step="any"
         value={shown(prop, v)}
-        title="Value at the playhead"
+        title={m.camera_value_title()}
         onchange={(e) => setFromField(prop, e)}
       />
       <span class="nav">
-        <button aria-label="Previous {label.toLowerCase()} key" title="Previous key" disabled={prev === undefined} onclick={() => replay.seek(prev!)}>‹</button>
+        <button aria-label={m.camera_prev_key_aria({ prop: label })} title={m.camera_prev_key()} disabled={prev === undefined} onclick={() => replay.seek(prev!)}>‹</button>
         <button
           class="diamond"
           class:filled={atPlayhead}
           aria-pressed={atPlayhead}
-          aria-label="{atPlayhead ? 'Remove' : 'Add'} {label.toLowerCase()} key at playhead"
-          title="{atPlayhead ? 'Remove key at playhead' : 'Add key at playhead'}"
+          aria-label={atPlayhead ? m.camera_remove_diamond_aria({ prop: label }) : m.camera_add_diamond_aria({ prop: label })}
+          title={atPlayhead ? m.camera_remove_key_title() : m.camera_add_key_title()}
           onclick={() => togglePlayheadKey(prop)}
         ></button>
-        <button aria-label="Next {label.toLowerCase()} key" title="Next key" disabled={next === undefined} onclick={() => replay.seek(next!)}>›</button>
+        <button aria-label={m.camera_next_key_aria({ prop: label })} title={m.camera_next_key()} disabled={next === undefined} onclick={() => replay.seek(next!)}>›</button>
       </span>
     </div>
   {/each}
 {:else}
-  <div class="cam-row summary-label"><span class="muted">All keys</span></div>
+  <div class="cam-row summary-label"><span class="muted">{m.camera_all_keys()}</span></div>
 {/if}
 
 <style>

@@ -1,13 +1,14 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
   import { thermalOverlayPrefs as prefs } from '#lib/thermals/prefs.svelte';
 </script>
 
 <div class="fields">
-  <label for="th-hotspots">Hotspots</label>
+  <label for="th-hotspots">{m.thermal_hotspots()}</label>
   <input id="th-hotspots" type="checkbox" checked={prefs.hotspots} onchange={(e) => prefs.set({ hotspots: e.currentTarget.checked })} />
-  <label for="th-skyways">Skyways</label>
+  <label for="th-skyways">{m.thermal_skyways()}</label>
   <input id="th-skyways" type="checkbox" checked={prefs.skyways} onchange={(e) => prefs.set({ skyways: e.currentTarget.checked })} />
-  <label for="th-opacity">Opacity</label>
+  <label for="th-opacity">{m.common_opacity()}</label>
   <input
     id="th-opacity"
     type="range"

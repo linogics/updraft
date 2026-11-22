@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { formatNumber } from '#lib/ui/format';
+
   let { bars, label }: { bars: { label: string; hours: number }[]; label: string } = $props();
   const peak = $derived(Math.max(1, ...bars.map((b) => b.hours)));
   // Cap the slot width so a single bar stays slim, bars are left aligned.
@@ -10,7 +12,7 @@
     {#each bars as b, i (b.label)}
       {@const h = (b.hours / peak) * 36 + 1}
       <rect x={i * step + step * 0.12} width={step * 0.76} y={40 - h} height={h} class:now={i === bars.length - 1}>
-        <title>{b.label}: {b.hours.toFixed(1)} h</title>
+        <title>{b.label}: {formatNumber(b.hours, 1)} h</title>
       </rect>
     {/each}
   </svg>

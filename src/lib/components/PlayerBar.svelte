@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
   import { SPEEDS, type ReplayState } from '#lib/state/replay.svelte';
   import { formatClock, formatDuration } from '#lib/ui/format';
 
@@ -6,13 +7,13 @@
 </script>
 
 <div class="player">
-  <button class="play" onclick={() => replay.toggle()} aria-label={replay.playing ? 'Pause' : 'Play'}>
+  <button class="play" onclick={() => replay.toggle()} aria-label={replay.playing ? m.player_pause() : m.player_play()}>
     {replay.playing ? '❚❚' : '▶'}
   </button>
-  <select bind:value={replay.speed} aria-label="Playback speed">
+  <select bind:value={replay.speed} aria-label={m.player_speed()}>
     {#each SPEEDS as s (s)}<option value={s}>{s}×</option>{/each}
   </select>
-  <button onclick={() => replay.nextThermal()} title="Jump to the selected pilot's next thermal">Next thermal ⏭</button>
+  <button onclick={() => replay.nextThermal()} title={m.player_next_thermal_title()}>{m.player_next_thermal()}</button>
   <span class="clock">{formatClock(replay.time)}</span>
   <input
     type="range"
@@ -21,7 +22,7 @@
     step={1000}
     value={replay.time}
     oninput={(e) => replay.seek(Number(e.currentTarget.value))}
-    aria-label="Replay position"
+    aria-label={m.player_position()}
   />
   <span class="elapsed">{formatDuration((replay.time - replay.start) / 1000)} / {formatDuration((replay.end - replay.start) / 1000)}</span>
 </div>

@@ -1,3 +1,5 @@
+import { m } from '../paraglide/messages';
+ 
 interface Logged {
   id?: string;
   date: string;
@@ -46,7 +48,7 @@ export interface BreakdownRow {
 export function breakdown(flights: Logged[], key: 'year' | 'site' | 'glider', points: Record<string, number> = {}): BreakdownRow[] {
   const rows = new Map<string, BreakdownRow>();
   for (const f of flights) {
-    const label = key === 'year' ? f.date.slice(0, 4) : (f[key] ?? '') || 'Unknown';
+    const label = key === 'year' ? f.date.slice(0, 4) : (f[key] ?? '') || m.common_unknown();
     const row = rows.get(label) ?? { label, flights: 0, hours: 0, points: 0, longestMin: 0 };
     const min = (f.endTime - f.startTime) / 60_000;
     row.flights++;

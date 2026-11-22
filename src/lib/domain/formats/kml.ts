@@ -1,3 +1,4 @@
+import { m } from '../../paraglide/messages';
 import type { Fix, Flight } from '../model';
 import { toFlight, xmlEscape, xmlTexts } from './common';
 
@@ -22,7 +23,7 @@ export function readKml(text: string, sourceName: string): Flight {
   }
   if (!fixes.length) {
     // A plain LineString carries no times, so there is nothing to replay.
-    throw new Error(`${sourceName}: no gx:Track with timestamps found, a plain LineString has no time and cannot be a flight`);
+    throw new Error(m.format_kml_no_time({ name: sourceName }));
   }
   return toFlight(sourceName, fixes);
 }

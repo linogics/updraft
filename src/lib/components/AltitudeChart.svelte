@@ -3,6 +3,7 @@
   import uPlot from 'uplot';
   import 'uplot/dist/uPlot.min.css';
   import { resampleAltitudes } from '#lib/domain/timeline';
+  import { m } from '#lib/paraglide/messages';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { phaseColor } from '#lib/ui/colors';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
@@ -70,9 +71,9 @@
     ctx.textAlign = 'right';
     const x = bbox.left + bbox.width - 4 * px;
     ctx.textBaseline = 'bottom';
-    ctx.fillText(`leave ⌀ ${formatAlt(s.avgStartAlt, unitPrefs.units)}`, x, top - 2 * px);
+    ctx.fillText(m.chart_leave({ alt: formatAlt(s.avgStartAlt, unitPrefs.units) }), x, top - 2 * px);
     ctx.textBaseline = 'top';
-    ctx.fillText(`arrive ⌀ ${formatAlt(s.avgEndAlt, unitPrefs.units)}`, x, bottom + 2 * px);
+    ctx.fillText(m.chart_arrive({ alt: formatAlt(s.avgEndAlt, unitPrefs.units) }), x, bottom + 2 * px);
     ctx.restore();
   }
 
@@ -213,7 +214,7 @@
 </script>
 
 <div class="chart" bind:this={container}>
-  {#if needsGround}<div class="note">AGL needs ground data</div>{/if}
+  {#if needsGround}<div class="note">{m.chart_agl_needs_ground()}</div>{/if}
   {#if plot && cursorX !== null}
     <div class="now" style:left="{plot.over.offsetLeft + cursorX}px" style:top="{plot.over.offsetTop}px" style:height="{plot.over.clientHeight}px"></div>
   {/if}

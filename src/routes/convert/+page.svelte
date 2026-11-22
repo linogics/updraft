@@ -1,5 +1,6 @@
 <script lang="ts">
   import Dropzone from '#lib/components/Dropzone.svelte';
+  import { m } from '#lib/paraglide/messages';
   import Logo from '#lib/components/Logo.svelte';
   import { WRITERS, formatOf, readTrack, type WriterKey } from '#lib/domain/formats';
   import type { Flight } from '#lib/domain/model';
@@ -66,36 +67,36 @@
 </script>
 
 <svelte:head>
-  <title>Convert | updraft</title>
+  <title>{m.convert_title()}</title>
 </svelte:head>
 
 <main>
   <header>
     <Logo />
-    <h1>Convert</h1>
-    <p>Turn a track into the format another app or instrument reads. Everything stays in your browser.</p>
+    <h1>{m.home_convert_title()}</h1>
+    <p>{m.convert_intro()}</p>
   </header>
 
-  <Dropzone onfiles={load} {busy} hint="IGC, GPX, KML, FIT, TRK or GeoJSON. Each file is converted on its own." />
+  <Dropzone onfiles={load} {busy} hint={m.convert_drop_hint()} />
 
   <div class="options">
     <label>
-      Output format
+      {m.convert_output_format()}
       <select bind:value={target}>
         {#each Object.entries(WRITERS) as [key, w] (key)}<option value={key}>{w.label}</option>{/each}
       </select>
     </label>
-    <label class="check"><input type="checkbox" bind:checked={save} /> Also save to the logbook</label>
-    <button disabled={!ok.length} onclick={downloadAll}>Download all</button>
+    <label class="check"><input type="checkbox" bind:checked={save} /> {m.convert_save_logbook()}</label>
+    <button disabled={!ok.length} onclick={downloadAll}>{m.convert_download_all()}</button>
   </div>
   {#if target === 'igc'}
-    <p class="note">IGC files written here carry no security signature, so competitions and XContest will not accept them.</p>
+    <p class="note">{m.convert_igc_note()}</p>
   {/if}
 
   {#if rows.length}
     <table>
       <thead>
-        <tr><th>File</th><th>Format</th><th>Fixes</th><th>Date</th><th></th></tr>
+        <tr><th>{m.convert_col_file()}</th><th>{m.convert_col_format()}</th><th>{m.convert_col_fixes()}</th><th>{m.export_row_date()}</th><th></th></tr>
       </thead>
       <tbody>
         {#each rows as r, i (i)}
@@ -105,7 +106,7 @@
             {#if r.flight}
               <td>{r.flight.fixes.length}</td>
               <td>{r.flight.date}</td>
-              <td><button onclick={() => download(r.flight!)}>Download</button></td>
+              <td><button onclick={() => download(r.flight!)}>{m.convert_download()}</button></td>
             {:else}
               <td colspan="3" class="error">{r.error}</td>
             {/if}

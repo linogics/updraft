@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
   import { buildBackup, restoreBackup } from '#lib/storage/backup';
 
   let { ondone }: { ondone: () => void } = $props();
@@ -25,7 +26,7 @@
       a.download = `updraft-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      say(`Exported ${backup.flights.length + backup.manual.length} flights.`);
+      say(m.backup_exported({ count: backup.flights.length + backup.manual.length }));
     } catch (err) {
       say(err instanceof Error ? err.message : String(err), true);
     }
@@ -38,19 +39,19 @@
     if (!file) return;
     try {
       pending = JSON.parse(await file.text());
-      say(`Loaded ${file.name}. Choose how to restore it.`);
+      say(m.backup_loaded({ name: file.name }));
     } catch {
       pending = null;
-      say('That file is not valid JSON.', true);
+      say(m.backup_invalid_json(), true);
     }
   }
 
   async function restore(mode: 'merge' | 'replace') {
-    if (mode === 'replace' && !confirm('Replace all flights, camera keys and settings in this browser?')) return;
+    if (mode === 'replace' && !confirm(m.backup_confirm_replace())) return;
     try {
       const n = await restoreBackup(pending, mode);
       pending = null;
-      say(`Restored ${n.flights} flights, ${n.manual} manual entries, ${n.cameraPaths} camera paths. Reload the page to apply restored settings.`);
+      say(m.backup_restored({ flights: n.flights, manual: n.manual, cameraPaths: n.cameraPaths }));
       restored = true;
       ondone();
     } catch (err) {
@@ -60,25 +61,25 @@
 </script>
 
 <section>
-  <h2>Backup</h2>
-  <p class="muted">Save everything this browser keeps (flights, camera keys, settings) to a file, or restore it.</p>
-  <label class="check"><input type="checkbox" bind:checked={includeToken} /> Include API keys (Cesium ion, openAIP)</label>
-  {#if includeToken}<p class="muted">The file then contains your keys. Do not share it.</p>{/if}
+  <h2>{m.backup_heading()}</h2>
+  <p class="muted">{m.backup_intro()}</p>
+  <label class="check"><input type="checkbox" bind:checked={includeToken} /> {m.backup_include_keys()}</label>
+  {#if includeToken}<p class="muted">{m.backup_keys_warning()}</p>{/if}
   <div class="row">
-    <button onclick={exportBackup}>Export backup</button>
+    <button onclick={exportBackup}>{m.backup_export()}</button>
     <label class="file">
       <input type="file" accept=".json,application/json" onchange={pick} />
-      <span>Import backup</span>
+      <span>{m.backup_import()}</span>
     </label>
   </div>
   {#if pending}
     <div class="row">
-      <button onclick={() => restore('merge')}>Merge with this browser</button>
-      <button onclick={() => restore('replace')}>Replace everything</button>
+      <button onclick={() => restore('merge')}>{m.backup_merge()}</button>
+      <button onclick={() => restore('replace')}>{m.backup_replace()}</button>
     </div>
   {/if}
   {#if message}<p class:error={failed} role="status">{message}</p>{/if}
-  {#if restored}<button onclick={() => location.reload()}>Reload now</button>{/if}
+  {#if restored}<button onclick={() => location.reload()}>{m.backup_reload()}</button>{/if}
 </section>
 
 <style>

@@ -6,10 +6,12 @@
   import { phaseColor } from '#lib/ui/colors';
   import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
   import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
+  import { XC_TYPE_LABELS } from '#lib/xc/labels';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+  import { m } from '#lib/paraglide/messages';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { formatDuration } from '#lib/ui/format';
+  import { formatDuration, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
   let { replay }: { replay: ReplayState } = $props();
@@ -27,15 +29,15 @@
   const items = $derived(
     stats
       ? [
-          ['Duration', formatDuration(stats.duration)],
-          ['Track', formatDistance(stats.trackLength, u)],
-          ['Max from takeoff', formatDistance(stats.maxDistanceFromTakeoff, u)],
-          ['Takeoff → landing', formatDistance(stats.straightDistance, u)],
-          ['Max altitude', formatAlt(stats.maxAlt, u)],
-          ['Takeoff altitude', formatAlt(stats.takeoffAlt, u)],
-          ['Max climb', formatVario(stats.maxClimb, u)],
-          ['Max sink', formatVario(stats.maxSink, u)],
-          ['Glide ratio', stats.glideRatio ? `${stats.glideRatio.toFixed(1)} : 1` : '–']
+          [m.export_row_duration(), formatDuration(stats.duration)],
+          [m.export_row_track(), formatDistance(stats.trackLength, u)],
+          [m.stats_max_from_takeoff(), formatDistance(stats.maxDistanceFromTakeoff, u)],
+          [m.stats_takeoff_landing(), formatDistance(stats.straightDistance, u)],
+          [m.export_row_max_altitude(), formatAlt(stats.maxAlt, u)],
+          [m.stats_takeoff_alt(), formatAlt(stats.takeoffAlt, u)],
+          [m.stats_max_climb(), formatVario(stats.maxClimb, u)],
+          [m.stats_max_sink(), formatVario(stats.maxSink, u)],
+          [m.stats_glide_ratio(), stats.glideRatio ? `${formatNumber(stats.glideRatio, 1)} : 1` : '–']
         ]
       : []
   );
@@ -45,23 +47,27 @@
   const transitionItems = $derived(
     summary && summary.count
       ? [
-          [agl ? 'Leave climbs at ⌀ (AGL)' : 'Leave climbs at ⌀', alt(summary.avgStartAlt)],
-          [agl ? 'Arrive at next ⌀ (AGL)' : 'Arrive at next ⌀', alt(summary.avgEndAlt)],
-          [agl ? 'Lowest arrival (AGL)' : 'Lowest arrival', alt(summary.lowestArrival)],
-          ['Glide ⌀', summary.avgGlideRatio ? `${summary.avgGlideRatio.toFixed(1)} : 1` : '–'],
-          ['Speed made good ⌀', summary.avgSpeed ? formatSpeed(summary.avgSpeed, u) : '–']
+          [agl ? m.stats_leave_climbs_agl() : m.stats_leave_climbs(), alt(summary.avgStartAlt)],
+          [agl ? m.stats_arrive_next_agl() : m.stats_arrive_next(), alt(summary.avgEndAlt)],
+          [agl ? m.stats_lowest_arrival_agl() : m.stats_lowest_arrival(), alt(summary.lowestArrival)],
+          [m.stats_glide_avg(), summary.avgGlideRatio ? `${formatNumber(summary.avgGlideRatio, 1)} : 1` : '–'],
+          [m.stats_speed_good(), summary.avgSpeed ? formatSpeed(summary.avgSpeed, u) : '–']
         ]
       : []
   );
-  const XC_TYPES = { free: 'Free distance', flat: 'Flat triangle', fai: 'FAI triangle', oar: 'Out and return' };
+  const PHASE_LABELS = {
+    thermalling: () => m.phase_thermalling(),
+    gliding: () => m.phase_gliding(),
+    searching: () => m.phase_searching()
+  } as const;
   const xc = $derived(replay.selected?.xc);
   const xcItems = $derived(
     xc
       ? [
-          ['Type', XC_TYPES[xc.type]],
-          ['Distance', formatDistance(xc.distance, u)],
-          ['Multiplier', `× ${xc.multiplier}`],
-          ['Points', xc.points.toFixed(2)]
+          [m.xc_type(), XC_TYPE_LABELS[xc.type]()],
+          [m.xc_distance(), formatDistance(xc.distance, u)],
+          [m.xc_multiplier(), `× ${xc.multiplier}`],
+          [m.xc_points(), formatNumber(xc.points, 2)]
         ]
       : []
   );
@@ -76,7 +82,7 @@
     <select
       value={xcPrefs.league}
       onchange={(e) => replay.setLeague(e.currentTarget.value as XcLeague)}
-      aria-label="XC league"
+      aria-label={m.xc_league()}
     >
       {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
     </select>
@@ -88,20 +94,20 @@
         {/each}
       </dl>
     {:else}
-      <p class="muted">{xc === undefined ? 'Scoring…' : '–'}</p>
+      <p class="muted">{xc === undefined ? m.xc_scoring() : '–'}</p>
     {/if}
     <label>
-      Turnpoints
+      {m.xc_turnpoints()}
       <input type="number" min="1" max="30" bind:value={turnpoints} />
     </label>
-    <button type="button" onclick={makeRoute}>Open in planner</button>
+    <button type="button" onclick={makeRoute}>{m.xc_open_planner()}</button>
     {#if replay.flights.length > 1}
       <ul class="xc-list">
         {#each replay.flights as f (f.flight.id)}
           <li>
             <span class="dot" style:background={f.color}></span>
             <span class="xc-name">{f.flight.pilot}</span>
-            <span>{f.xc === undefined ? '…' : f.xc ? f.xc.points.toFixed(2) : '–'}</span>
+            <span>{f.xc === undefined ? '…' : f.xc ? formatNumber(f.xc.points, 2) : '–'}</span>
           </li>
         {/each}
       </ul>
@@ -111,25 +117,25 @@
 
 {#if stats}
   <section>
-    <h3>Flight</h3>
+    <h3>{m.stats_flight()}</h3>
     <dl>
       {#each items as [label, value] (label)}
         <dt>{label}</dt>
         <dd>{value}</dd>
       {/each}
     </dl>
-    <div class="phases" role="img" aria-label="Time share per phase">
+    <div class="phases" role="img" aria-label={m.stats_phase_share()}>
       {#each shares as s (s.k)}
-        <span style:flex={s.v} style:background={phaseColor(s.k)} title="{s.k} {Math.round(s.v * 100)}%"></span>
+        <span style:flex={s.v} style:background={phaseColor(s.k)} title="{PHASE_LABELS[s.k]()} {Math.round(s.v * 100)}%"></span>
       {/each}
     </div>
     <ul class="legend">
       {#each shares as s (s.k)}
-        <li><span class="dot" style:background={phaseColor(s.k)}></span>{s.k} {Math.round(s.v * 100)}%</li>
+        <li><span class="dot" style:background={phaseColor(s.k)}></span>{PHASE_LABELS[s.k]()} {Math.round(s.v * 100)}%</li>
       {/each}
     </ul>
     {#if transitionItems.length}
-      <h4>Transitions <span class="count">{summary?.count} {summary?.count === 1 ? 'glide' : 'glides'}</span><AltRefSwitch /></h4>
+      <h4>{m.climbs_tab_transitions()} <span class="count">{summary?.count === 1 ? m.stats_glides_one({ count: 1 }) : m.stats_glides_many({ count: summary?.count ?? 0 })}</span><AltRefSwitch /></h4>
       <dl>
         {#each transitionItems as [label, value] (label)}
           <dt>{label}</dt>

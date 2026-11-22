@@ -42,9 +42,9 @@ export function clampFps(v: number | null | undefined): number {
  * Render time barely changes with quality, file size grows linearly.
  */
 export const QUALITIES = [
-  { id: 'standard', label: 'Standard', bitsPerPixel: 0.15 },
-  { id: 'high', label: 'High', bitsPerPixel: 0.3 },
-  { id: 'max', label: 'Maximum', bitsPerPixel: 0.6 }
+  { id: 'standard', bitsPerPixel: 0.15 },
+  { id: 'high', bitsPerPixel: 0.3 },
+  { id: 'max', bitsPerPixel: 0.6 }
 ] as const;
 export type QualityId = (typeof QUALITIES)[number]['id'];
 

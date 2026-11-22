@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages';
   let { compact = false }: { compact?: boolean } = $props();
 </script>
 
-<a href="/" class="logo" class:compact aria-label="updraft, all tools">
+<a href="/" class="logo" class:compact aria-label={m.logo_label()}>
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M3 19c4 0 5-4 8-4s3 3 6 0 2-9 4-11" />
   </svg>

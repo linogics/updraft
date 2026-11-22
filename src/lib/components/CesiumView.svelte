@@ -12,6 +12,7 @@ import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
+  import { m } from '#lib/paraglide/messages';
   import { altitudeOffset } from '#lib/domain/align';
   import { viewAt } from '#lib/domain/cameraPath';
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
@@ -24,7 +25,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   let container: HTMLDivElement;
   let viewer: Cesium.Viewer | undefined = $state.raw();
   let ready = $state(false);
-  let notice = $state('Loading 3D view…');
+  let notice = $state<string>(m.cesium_loading_view());
   const layers = new Map<string, FlightLayer>();
   let xcRoute: XcRoute | undefined = $state.raw();
   let airspaceLayer: AirspaceLayer | undefined = $state.raw();
@@ -39,7 +40,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   async function applyTerrain(v: Cesium.Viewer, source: TerrainSource) {
     const request = ++terrainRequest;
     appliedTerrain = source;
-    notice = 'Loading terrain…';
+    notice = m.cesium_loading_terrain();
     const used = await setTerrain(v, source);
     appliedTerrain = used;
     const offsets = new Map<string, number>();
@@ -52,7 +53,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
     if (request !== terrainRequest || v.isDestroyed()) return;
     replay.setAltOffsets(offsets);
     if (used !== source) replay.terrain = used;
-    notice = used !== source ? 'Cesium ion terrain failed to load: using AWS Terrain Tiles instead.' : '';
+    notice = used !== source ? m.cesium_ion_fallback() : '';
   }
 
   onMount(() => {
@@ -106,7 +107,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
       ready = true;
     })().catch((err) => {
       console.error(err);
-      notice = `3D view failed to load: ${err instanceof Error ? err.message : err}`;
+      notice = m.cesium_view_failed({ message: String(err instanceof Error ? err.message : err) });
     });
 
     return () => {
@@ -171,7 +172,7 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
     const v = viewer;
     untrack(() => applyTerrain(v, source)).catch((err) => {
       console.error(err);
-      notice = `Terrain failed to load: ${err instanceof Error ? err.message : err}`;
+      notice = m.cesium_terrain_failed({ message: String(err instanceof Error ? err.message : err) });
     });
   });
 

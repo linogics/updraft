@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { getLocale } from '#lib/paraglide/runtime';
   import { goto } from '$app/navigation';
   import Dropzone from '#lib/components/Dropzone.svelte';
+  import LanguageSelect from '#lib/components/LanguageSelect.svelte';
   import Logo from '#lib/components/Logo.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
   import { monthlyHours, totals } from '#lib/domain/logbook';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, replayHref } from '#lib/storage/importFlights';
-  import { formatAirtime } from '#lib/ui/format';
+  import { m } from '#lib/paraglide/messages';
+  import { formatAirtime, formatNumber } from '#lib/ui/format';
 
   let flights = $state<FlightSummary[]>([]);
   let ready = $state(false);
@@ -20,11 +23,11 @@
   // Manual logbook entries have no track to replay.
   const last = $derived(flights.find((f) => !f.manual));
 
-  const dateFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  const monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const dateFmt = new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
+  const monthFmt = new Intl.DateTimeFormat(getLocale(), { month: 'short', year: 'numeric', timeZone: 'UTC' });
   const day = (date: string) => dateFmt.format(new Date(date));
   const airtime = formatAirtime;
-  const hours = (seconds: number) => (seconds / 3600).toFixed(seconds < 36_000 ? 1 : 0);
+  const hours = (seconds: number) => formatNumber(seconds / 3600, seconds < 36_000 ? 1 : 0);
 
   onMount(async () => {
     flights = await flightRepository.list();
@@ -57,59 +60,60 @@
     <Logo />
     <dl class="readouts" aria-busy={!ready}>
       <div>
-        <dt>hours flown</dt>
+        <dt>{m.home_hours_flown()}</dt>
         <dd>{ready ? hours(sum.seconds) : '–'}</dd>
       </div>
       <div>
-        <dt>flights</dt>
+        <dt>{m.home_flights()}</dt>
         <dd>{ready ? sum.flights : '–'}</dd>
       </div>
     </dl>
+    <LanguageSelect />
   </header>
 
-  <section class="tools" aria-label="Tools">
+  <section class="tools" aria-label={m.home_tools()}>
     <a class="tool" href={last ? replayHref([last.id]) : '/logbook'}>
-      <h2>Replay</h2>
-      <p>Fly a day again in 3D. Compare pilots on one clock, key the camera, export video.</p>
+      <h2>{m.home_replay_title()}</h2>
+      <p>{m.home_replay_desc()}</p>
       <div class="face">
         {#if last}
           <span class="big">{airtime(last.endTime - last.startTime)}</span>
           <span class="unit">{last.pilot}, {day(last.date)}</span>
         {:else}
-          <span class="unit">No flight loaded yet</span>
+          <span class="unit">{m.home_no_flight()}</span>
         {/if}
       </div>
-      <span class="go">{last ? 'Replay last flight' : 'Pick flights'}</span>
+      <span class="go">{last ? m.home_replay_last() : m.home_pick_flights()}</span>
     </a>
 
     <a class="tool" href="/logbook">
-      <h2>Logbook</h2>
-      <p>Every saved flight with airtime per month. Pick flights to replay together.</p>
+      <h2>{m.home_logbook_title()}</h2>
+      <p>{m.home_logbook_desc()}</p>
       <div class="face">
-        <svg class="bars" viewBox="0 0 120 32" preserveAspectRatio="none" role="img" aria-label="Hours per month, last 12 months">
+        <svg class="bars" viewBox="0 0 120 32" preserveAspectRatio="none" role="img" aria-label={m.home_bars_label()}>
           {#each months as m, i (m.month)}
             <rect x={i * 10 + 1} width="8" y={32 - (m.hours / peak) * 30 - 2} height={(m.hours / peak) * 30 + 2} class:now={i === months.length - 1}>
-              <title>{monthFmt.format(new Date(m.month + '-01'))}: {m.hours.toFixed(1)} h</title>
+              <title>{monthFmt.format(new Date(m.month + '-01'))}: {formatNumber(m.hours, 1)} h</title>
             </rect>
           {/each}
         </svg>
-        <span class="unit">hours per month, last 12</span>
+        <span class="unit">{m.home_bars_caption()}</span>
       </div>
-      <span class="go">Open logbook</span>
+      <span class="go">{m.home_open_logbook()}</span>
     </a>
 
     <a class="tool" href="/convert">
-      <h2>Convert</h2>
-      <p>Turn a track into the format another app or instrument reads.</p>
+      <h2>{m.home_convert_title()}</h2>
+      <p>{m.home_convert_desc()}</p>
       <div class="face"><span class="unit">IGC GPX KML FIT GeoJSON</span></div>
-      <span class="go">Convert a file</span>
+      <span class="go">{m.home_convert_go()}</span>
     </a>
 
     <a class="tool" href="/plan">
-      <h2>XC planner</h2>
-      <p>Draw a route on the map, score it per league and share the link.</p>
-      <div class="face"><span class="unit">Distance, XC points, duration</span></div>
-      <span class="go">Plan a route</span>
+      <h2>{m.home_planner_title()}</h2>
+      <p>{m.home_planner_desc()}</p>
+      <div class="face"><span class="unit">{m.home_planner_units()}</span></div>
+      <span class="go">{m.home_planner_go()}</span>
     </a>
   </section>
 
@@ -121,9 +125,9 @@
   {/if}
 
   <section class="recent">
-    <h2>Recent flights</h2>
+    <h2>{m.home_recent()}</h2>
     {#if !ready}
-      <p class="muted">Reading saved flights…</p>
+      <p class="muted">{m.home_reading()}</p>
     {:else if flights.length}
       <ol>
         {#each flights.slice(0, 5) as f (f.id)}
@@ -137,11 +141,11 @@
           </li>
         {/each}
       </ol>
-      {#if flights.length > 5}<a class="more" href="/logbook">All {flights.length} flights in the logbook</a>{/if}
+      {#if flights.length > 5}<a class="more" href="/logbook">{m.home_all_flights({ count: flights.length })}</a>{/if}
     {:else}
       <p class="muted">
-        No flights saved in this browser. Drop a flight file below, or
-        <button onclick={loadDemo} disabled={busy}>load demo flights</button>
+        {m.home_no_flights()}
+        <button onclick={loadDemo} disabled={busy}>{m.home_load_demo()}</button>
       </p>
     {/if}
   </section>

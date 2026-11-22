@@ -1,5 +1,7 @@
 <script lang="ts">
   import { EXAGGERATION } from '#lib/domain/scene';
+  import { m } from '#lib/paraglide/messages';
+  import { formatNumber } from '#lib/ui/format';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
   import AirspaceControls from './AirspaceControls.svelte';
@@ -9,9 +11,9 @@
   let { replay }: { replay: ReplayState } = $props();
 </script>
 
-<Popover label="View">
+<Popover label={m.view_menu()}>
   <div class="fields">
-    <label for="view-exag">Height</label>
+    <label for="view-exag">{m.view_height()}</label>
     <span class="range">
       <input
         id="view-exag"
@@ -21,20 +23,20 @@
         step={EXAGGERATION.step}
         bind:value={replay.exaggeration}
       />
-      <output for="view-exag">{replay.exaggeration.toFixed(1)}×</output>
+      <output for="view-exag">{formatNumber(replay.exaggeration, 1)}×</output>
     </span>
-    <label for="view-sun">Sun lighting</label>
+    <label for="view-sun">{m.view_sun_lighting()}</label>
     <input id="view-sun" type="checkbox" bind:checked={replay.lighting} />
-    <label for="view-labels">Pilot names</label>
+    <label for="view-labels">{m.view_pilot_names()}</label>
     <input id="view-labels" type="checkbox" bind:checked={replay.labels} />
-    <label for="view-thermal-columns">Thermal columns</label>
+    <label for="view-thermal-columns">{m.view_thermal_columns()}</label>
     <input
       id="view-thermal-columns"
       type="checkbox"
       checked={thermalPrefs.columns}
       onchange={(e) => thermalPrefs.set({ columns: e.currentTarget.checked, labels: thermalPrefs.labels })}
     />
-    <label for="view-thermal-labels">Thermal labels</label>
+    <label for="view-thermal-labels">{m.view_thermal_labels()}</label>
     <input
       id="view-thermal-labels"
       type="checkbox"
@@ -42,10 +44,10 @@
       onchange={(e) => thermalPrefs.set({ columns: thermalPrefs.columns, labels: e.currentTarget.checked })}
     />
   </div>
-  <p class="hint">3D only. The sun follows the selected pilot's recorded time.</p>
-  <h3>Airspaces (2D)</h3>
+  <p class="hint">{m.view_hint_3d()}</p>
+  <h3>{m.view_airspaces_2d()}</h3>
   <AirspaceControls />
-  <h3>Thermal overlay (2D and 3D)</h3>
+  <h3>{m.view_thermal_overlay()}</h3>
   <ThermalOverlayControls />
 </Popover>
 

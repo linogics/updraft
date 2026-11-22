@@ -1,3 +1,4 @@
+import { m } from '../../paraglide/messages';
 import type { Fix, Flight } from '../model';
 
 export const baseName = (name: string) => name.replace(/\.[^.]*$/, '');
@@ -8,7 +9,7 @@ export const baseName = (name: string) => name.replace(/\.[^.]*$/, '');
  */
 export function toFlight(sourceName: string, fixes: Fix[]): Flight {
   const valid = fixes.filter((f) => [f.t, f.lat, f.lon].every(Number.isFinite));
-  if (valid.length === 0) throw new Error(`${sourceName}: no usable fixes found`);
+  if (valid.length === 0) throw new Error(m.format_no_usable({ name: sourceName }));
   valid.sort((a, b) => a.t - b.t);
   let alt = valid.find((f) => Number.isFinite(f.alt))?.alt ?? 0;
   for (const f of valid) {
