@@ -62,8 +62,8 @@
 <section>
   <h2>Backup</h2>
   <p class="muted">Save everything this browser keeps (flights, camera keys, settings) to a file, or restore it.</p>
-  <label class="check"><input type="checkbox" bind:checked={includeToken} /> Include Cesium ion token</label>
-  {#if includeToken}<p class="muted">The file then contains your token. Do not share it.</p>{/if}
+  <label class="check"><input type="checkbox" bind:checked={includeToken} /> Include API keys (Cesium ion, openAIP)</label>
+  {#if includeToken}<p class="muted">The file then contains your keys. Do not share it.</p>{/if}
   <div class="row">
     <button onclick={exportBackup}>Export backup</button>
     <label class="file">

@@ -44,6 +44,7 @@ export interface Backup {
   cameraPaths: { key: string; tracks: CameraTracks }[];
   prefs: Record<string, unknown>;
   ionToken?: string;
+  openaipKey?: string;
 }
 
 /**
