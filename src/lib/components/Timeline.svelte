@@ -221,6 +221,8 @@
         <div class="guide" style:left="{x(drag.guide)}px"></div>
       {/if}
       <div class="playhead" style:left="{x(replay.time)}px"></div>
+      {#if replay.exportIn != null}<div class="mark" style:left="{x(replay.exportIn)}px"></div>{/if}
+      {#if replay.exportOut != null}<div class="mark" style:left="{x(replay.exportOut)}px"></div>{/if}
     </div>
   </div>
 </div>
@@ -391,5 +393,14 @@
   }
   .guide {
     background: #f2c94c;
+  }
+  .mark {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #3987e5;
+    pointer-events: none;
+    z-index: 2;
   }
 </style>

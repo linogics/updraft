@@ -14,6 +14,14 @@ export interface OverlayParts {
 
 export const ALL_PARTS: OverlayParts = { hud: true, altitudeGraph: true, stats: true, minimap: true, credits: true };
 
+export const PART_LABELS: [keyof OverlayParts, string][] = [
+  ['hud', 'Flight data'],
+  ['altitudeGraph', 'Altitude graph'],
+  ['stats', 'Stats'],
+  ['minimap', 'Minimap'],
+  ['credits', 'Map credits']
+];
+
 export interface OverlayData {
   /** Flight shown in the HUD, altitude graph and stats. */
   selected: LoadedFlight;
