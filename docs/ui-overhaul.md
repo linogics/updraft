@@ -30,15 +30,14 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 
 ## Open tasks
 
-- Switching the selected pilot in replay can lag without feedback. Not measured yet, profile first.
-- The staged load screen was only seen briefly with the demo flights. Check with many or large flights.
 - TRK reader follows the CompeGPS layout from memory and treats times as UTC. Check against real files.
-- KML only reads `gx:Track`. A LineString with `TimeStamp` placemarks is rejected.
-- GPX and KML are read with regex helpers, not DOMParser, so CDATA and unusual namespaces are not handled.
-- The convert page drop zone still says files from the same day are replayed together.
-- "Download all" starts one download per file. Browsers may ask before allowing many downloads. A zip would avoid that.
-- The collapse chevron sits inside the ARIA separator, so screen readers do not list it. Enter on the separator does the same.
-- Restored settings (units, thermal toggles, panel sizes) apply after a page reload, the page says so.
-- Manual entries have no distance or max altitude, the logbook shows a dash.
-- The yearly chart draws one wide bar while there is only one year of flights.
+- Switching the selected pilot was profiled with three 6 h flights at 1 Hz in headless Chrome. Our JS takes about 50 ms per switch, the rest is native rendering and terrain tiles under software GL. Check on a real GPU before optimising.
+- Restored settings (units, thermal toggles, panel sizes) apply after a reload. The restore message has a Reload now button.
 - XC planner: route, scoring and task export, later.
+
+## Closed follow-ups
+
+- Staged load screen checked with three 6 h flights: all steps show, about 1 s in total (#15).
+- KML reads Placemarks with Point and TimeStamp besides `gx:Track`. GPX and KML readers ignore namespace prefixes and unwrap CDATA (#14). Still regex based, no DOMParser, so tests run in node.
+- Convert drop zone hint, splitter chevron listed by screen readers, slim bars with one year, zip for Download all (#13).
+- Manual entries show a dash for distance and max altitude. Kept on purpose, there is no track.
