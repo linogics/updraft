@@ -1,8 +1,9 @@
 import { flightRepository } from './index';
 import type { Backup } from './repository';
 
-const PREF_KEYS = ['units', 'thermalPrefs', 'panels'];
+const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs'];
 const TOKEN_KEY = 'cesiumIonToken';
+const OPENAIP_KEY = 'openaipKey';
 
 // Storage can throw (private mode, blocked site data) or be missing (node), so every access is guarded.
 function read(key: string): string | null {
@@ -36,6 +37,8 @@ export async function buildBackup(includeToken: boolean): Promise<Backup> {
   }
   const token = read(TOKEN_KEY);
   if (includeToken && token) backup.ionToken = token;
+  const openaip = read(OPENAIP_KEY);
+  if (includeToken && openaip) backup.openaipKey = openaip;
   return backup;
 }
 
@@ -67,6 +70,7 @@ export async function restoreBackup(raw: unknown, mode: 'merge' | 'replace') {
   if (mode === 'replace') for (const key of PREF_KEYS) write(key, null);
   for (const key of PREF_KEYS) if (key in prefs) write(key, JSON.stringify(prefs[key]));
   if (typeof backup.ionToken === 'string') write(TOKEN_KEY, backup.ionToken);
+  if (typeof backup.openaipKey === 'string') write(OPENAIP_KEY, backup.openaipKey);
 
   return { flights: backup.flights.length, manual: backup.manual.length, cameraPaths: backup.cameraPaths.length };
 }

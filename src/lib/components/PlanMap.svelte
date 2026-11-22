@@ -5,6 +5,8 @@
   import 'maplibre-gl/dist/maplibre-gl.css';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow, so bundle it explicitly.
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+  import { syncAirspaces } from '#lib/airspace/layers';
+  import { airspacePrefs } from '#lib/airspace/prefs.svelte';
   import type { LatLon } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
@@ -149,6 +151,12 @@
     (map.getSource('route') as GeoJSONSource).setData(line(points));
     void selected;
     rebuild();
+  });
+
+  $effect(() => {
+    const { show, classes, maxFloor, opacity, key } = airspacePrefs;
+    if (!ready || !map) return;
+    syncAirspaces(map, { show, classes, maxFloor, opacity }, key, 'route-casing');
   });
 
   $effect(() => {

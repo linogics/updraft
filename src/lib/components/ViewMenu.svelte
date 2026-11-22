@@ -2,6 +2,7 @@
   import { EXAGGERATION } from '#lib/domain/scene';
   import type { ReplayState } from '#lib/state/replay.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
+  import AirspaceControls from './AirspaceControls.svelte';
   import Popover from './Popover.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
@@ -41,6 +42,8 @@
     />
   </div>
   <p class="hint">3D only. The sun follows the selected pilot's recorded time.</p>
+  <h3>Airspaces (2D)</h3>
+  <AirspaceControls />
 </Popover>
 
 <style>
@@ -68,6 +71,10 @@
     width: 36px;
     text-align: right;
     font-variant-numeric: tabular-nums;
+  }
+  h3 {
+    margin: 12px 0 6px;
+    font-size: 13px;
   }
   .hint {
     margin: 8px 0 0;

@@ -25,3 +25,24 @@ export function saveIonToken(token: string): boolean {
     return false;
   }
 }
+
+const OPENAIP_KEY = 'openaipKey';
+
+export function loadOpenAipKey(): string {
+  try {
+    return localStorage.getItem(OPENAIP_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/** Returns false when storage is blocked and the key could not be kept. */
+export function saveOpenAipKey(key: string): boolean {
+  try {
+    if (key) localStorage.setItem(OPENAIP_KEY, key);
+    else localStorage.removeItem(OPENAIP_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}

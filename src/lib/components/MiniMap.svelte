@@ -6,6 +6,9 @@
   import 'maplibre-gl/dist/maplibre-gl.css';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow; bundle it explicitly.
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+  import { bindAirspacePopup, syncAirspaces } from '#lib/airspace/layers';
+  import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+  import { unitPrefs } from '#lib/state/units.svelte';
   import { distance } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId, type TrackStyle } from '#lib/domain/scene';
   import { smoothPath } from '#lib/domain/smooth';
@@ -204,6 +207,8 @@
       ready = true;
     });
 
+    bindAirspacePopup(m, () => unitPrefs.units);
+
     // Click near the selected track to jump there in time.
     m.on('click', (e) => {
       const sel = replay.selected;
@@ -242,6 +247,12 @@
     const { trackStyle, trackWidth } = replay;
     if (!ready || !map) return;
     applyTrackStyle(map, trackStyle, trackWidth);
+  });
+
+  $effect(() => {
+    const { show, classes, maxFloor, opacity, key } = airspacePrefs;
+    if (!ready || !map) return;
+    syncAirspaces(map, { show, classes, maxFloor, opacity }, key, 'tracks-casing');
   });
 
   $effect(() => {
