@@ -6,7 +6,7 @@ export function readKml(text: string, sourceName: string): Flight {
   for (const track of xmlTexts(text, 'gx:Track')) {
     const whens = xmlTexts(track, 'when');
     xmlTexts(track, 'gx:coord').forEach((c, i) => {
-      const [lon, lat, alt = '0'] = c.split(/\s+/);
+      const [lon, lat, alt = 'NaN'] = c.split(/\s+/);
       if (whens[i]) fixes.push({ t: Date.parse(whens[i]), lat: +lat, lon: +lon, alt: +alt });
     });
   }

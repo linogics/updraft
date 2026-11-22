@@ -11,7 +11,7 @@ function lineFixes(coords: number[][], times: unknown): Fix[] {
   coords.forEach((c, i) => {
     const raw = Array.isArray(times) ? times[i] : c[3];
     const t = typeof raw === 'string' ? Date.parse(raw) : typeof raw === 'number' ? unixToMs(raw) : NaN;
-    if (Number.isFinite(t)) out.push({ t, lat: c[1], lon: c[0], alt: c[2] ?? 0 });
+    if (Number.isFinite(t)) out.push({ t, lat: c[1], lon: c[0], alt: c[2] ?? NaN });
   });
   return out;
 }

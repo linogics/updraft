@@ -8,7 +8,7 @@ export function readGpx(text: string, sourceName: string): Flight {
     const lon = /\blon\s*=\s*["']([^"']+)["']/.exec(m[1]);
     const time = xmlTexts(m[2] ?? '', 'time')[0];
     if (!lat || !lon || !time) continue;
-    fixes.push({ t: Date.parse(time), lat: +lat[1], lon: +lon[1], alt: +(xmlTexts(m[2], 'ele')[0] ?? 0) });
+    fixes.push({ t: Date.parse(time), lat: +lat[1], lon: +lon[1], alt: +(xmlTexts(m[2], 'ele')[0] ?? NaN) });
   }
   if (!fixes.length) throw new Error(`${sourceName}: no track points with time found`);
   return toFlight(sourceName, fixes);

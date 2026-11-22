@@ -11,7 +11,7 @@ export async function readFit(buf: ArrayBuffer, sourceName: string): Promise<Fli
       t: new Date(r.timestamp).getTime(),
       lat: r.position_lat,
       lon: r.position_long,
-      alt: r.enhanced_altitude ?? r.altitude ?? 0
+      alt: r.enhanced_altitude ?? r.altitude ?? NaN
     });
   }
   if (!fixes.length) throw new Error(`${sourceName}: no GPS records found`);

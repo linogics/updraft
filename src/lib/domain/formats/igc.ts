@@ -29,7 +29,9 @@ function bRecord(f: Fix) {
 export function writeIgc(flight: Flight): string {
   const d = new Date(flight.fixes[0].t);
   const ddmmyy = pad(d.getUTCDate(), 2) + pad(d.getUTCMonth() + 1, 2) + pad(d.getUTCFullYear() % 100, 2);
-  const lines = ['AXXXupdraft', `HFDTE${ddmmyy}`, `HFPLTPILOT:${flight.pilot}`, `HFGTYGLIDERTYPE:${flight.glider ?? ''}`];
-  if (flight.site) lines.push(`HFSITSITE:${flight.site}`);
+  // A line break in a name would start a bogus record.
+  const one = (s: string) => s.replace(/[\r\n]+/g, ' ');
+  const lines = ['AXXXupdraft', `HFDTE${ddmmyy}`, `HFPLTPILOT:${one(flight.pilot)}`, `HFGTYGLIDERTYPE:${one(flight.glider ?? '')}`];
+  if (flight.site) lines.push(`HFSITSITE:${one(flight.site)}`);
   return [...lines, ...flight.fixes.map(bRecord)].join('\r\n') + '\r\n';
 }

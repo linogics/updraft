@@ -25,14 +25,18 @@ Agreed on 2026-11-22. Shipped as a series of small PRs, each merged before the n
 | 1 Dashboard, logbook route, staged loader | merged (#8) |
 | 2 Resizable panels | merged (#9) |
 | 3 Director density | merged (#10) |
-| 4 Converter and formats | open |
+| 4 Converter and formats | merged (#11) |
 | 5 Logbook and backup | open |
 
 ## Open tasks
 
 - Switching the selected pilot in replay can lag without feedback. Not measured yet, profile first.
 - The staged load screen was only seen briefly with the demo flights. Check with many or large flights.
-- The drop zones and `importFlights` only accept `.igc`. Widen with step 4.
+- TRK reader follows the CompeGPS layout from memory and treats times as UTC. Check against real files.
+- KML only reads `gx:Track`. A LineString with `TimeStamp` placemarks is rejected.
+- GPX and KML are read with regex helpers, not DOMParser, so CDATA and unusual namespaces are not handled.
+- The convert page drop zone still says files from the same day are replayed together.
+- "Download all" starts one download per file. Browsers may ask before allowing many downloads. A zip would avoid that.
 - The collapse chevron sits inside the ARIA separator, so screen readers do not list it. Enter on the separator does the same.
 - Update README and `docs/feature-gaps.md` once the series has landed.
 - XC planner: route, scoring and task export, later.

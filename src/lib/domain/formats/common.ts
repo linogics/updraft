@@ -2,11 +2,19 @@ import type { Fix, Flight } from '../model';
 
 export const baseName = (name: string) => name.replace(/\.[^.]*$/, '');
 
-/** Builds a Flight from raw fixes. Throws when no usable fix exists. */
+/**
+ * Builds a Flight from raw fixes. Throws when no usable fix exists. A missing altitude (NaN) takes the
+ * last known one, so a gap does not drop the track to sea level.
+ */
 export function toFlight(sourceName: string, fixes: Fix[]): Flight {
-  const valid = fixes.filter((f) => [f.t, f.lat, f.lon, f.alt].every(Number.isFinite));
+  const valid = fixes.filter((f) => [f.t, f.lat, f.lon].every(Number.isFinite));
   if (valid.length === 0) throw new Error(`${sourceName}: no usable fixes found`);
   valid.sort((a, b) => a.t - b.t);
+  let alt = valid.find((f) => Number.isFinite(f.alt))?.alt ?? 0;
+  for (const f of valid) {
+    if (Number.isFinite(f.alt)) alt = f.alt;
+    else f.alt = alt;
+  }
   return {
     id: crypto.randomUUID(),
     sourceName,

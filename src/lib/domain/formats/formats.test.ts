@@ -63,6 +63,15 @@ describe('readers', () => {
     expect(readGeoJson(json, 'x.json').fixes[1].t).toBe(1700000001000);
   });
 
+  it('fills a missing GPX elevation with the last known one', () => {
+    const gpx = `<gpx><trk><trkseg>
+<trkpt lat="47" lon="11"><time>2026-07-15T10:00:00Z</time></trkpt>
+<trkpt lat="47" lon="11"><ele>1500</ele><time>2026-07-15T10:00:01Z</time></trkpt>
+<trkpt lat="47" lon="11"><time>2026-07-15T10:00:02Z</time></trkpt>
+</trkseg></trk></gpx>`;
+    expect(readGpx(gpx, 'a.gpx').fixes.map((f) => f.alt)).toEqual([1500, 1500, 1500]);
+  });
+
   it('rejects tracks without time', () => {
     const noTime = JSON.stringify({ type: 'LineString', coordinates: [[11, 47, 1000]] });
     expect(() => readGeoJson(noTime, 'x.geojson')).toThrow(/without time/);
