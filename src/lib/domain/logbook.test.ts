@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { monthlyHours, totals } from './logbook';
+import { breakdown, monthlyHours, totals, yearlyHours } from './logbook';
 
 const HOUR = 3_600_000;
 const flight = (date: string, hours: number) => ({ date, startTime: 0, endTime: hours * HOUR });
@@ -24,5 +24,26 @@ describe('logbook', () => {
 
   it('crosses the year boundary', () => {
     expect(monthlyHours([], 2, new Date('2026-01-10T00:00:00Z')).map((m) => m.month)).toEqual(['2025-12', '2026-01']);
+  });
+
+  it('breaks down by site with Unknown label, by hours', () => {
+    const rows = breakdown(
+      [{ ...flight('2026-01-01', 1), site: 'A', maxAlt: 1000 }, { ...flight('2026-01-02', 2), site: null }, { ...flight('2026-01-03', 0.5), site: 'A', maxAlt: 2000 }],
+      'site'
+    );
+    expect(rows.map((r) => r.label)).toEqual(['Unknown', 'A']);
+    expect(rows[1]).toEqual({ label: 'A', flights: 2, hours: 1.5, maxAlt: 2000, longestMin: 60 });
+    expect(rows[0].maxAlt).toBeUndefined();
+  });
+
+  it('breaks down by year newest first and fills yearly gaps', () => {
+    const fs = [flight('2024-05-01', 1), flight('2026-05-01', 2)];
+    expect(breakdown(fs, 'year').map((r) => r.label)).toEqual(['2026', '2024']);
+    expect(yearlyHours(fs)).toEqual([
+      { year: '2024', hours: 1 },
+      { year: '2025', hours: 0 },
+      { year: '2026', hours: 2 }
+    ]);
+    expect(yearlyHours([])).toEqual([]);
   });
 });
