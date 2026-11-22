@@ -1,14 +1,27 @@
 <script lang="ts">
+  import { loadRuntimeConfig, saveIonToken } from '#lib/config';
   import { BASEMAP_IDS, CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
   import type { ReplayState } from '#lib/state/replay.svelte';
+  import Popover from './Popover.svelte';
   import TrackMenu from './TrackMenu.svelte';
   import UnitsMenu from './UnitsMenu.svelte';
 
   let { replay }: { replay: ReplayState } = $props();
 
   const LAYOUT_LABELS = { '3d': '3D', '2d': '2D', split: 'Split' } as const;
-  const ION_HINT = 'Needs CESIUM_ION_TOKEN in the runtime config';
+  const ION_HINT = 'Needs a Cesium ion token (Ion menu)';
+
+  let ionToken = $state('');
+  let ionError = $state('');
+  loadRuntimeConfig().then((c) => (ionToken = c.cesiumIonToken));
+
+  // The viewer reads the token once at start, so reload to apply it.
+  function applyIonToken(e: SubmitEvent) {
+    e.preventDefault();
+    if (saveIonToken(ionToken.trim())) location.reload();
+    else ionError = 'Browser storage is blocked, the token cannot be saved.';
+  }
 </script>
 
 <div class="toolbar">
@@ -46,6 +59,19 @@
     </select>
   </label>
 
+  <Popover label="Ion">
+    <form class="ion" onsubmit={applyIonToken}>
+      <label for="ion-token">Cesium ion token</label>
+      <input id="ion-token" type="password" autocomplete="off" bind:value={ionToken} placeholder="eyJhbGciOi…" />
+      <p>
+        Free at <a href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">ion.cesium.com</a>. Kept only in
+        this browser. Leave empty to remove.
+      </p>
+      {#if ionError}<p class="error" role="alert">{ionError}</p>{/if}
+      <button type="submit">Save and reload</button>
+    </form>
+  </Popover>
+
   <UnitsMenu />
 </div>
 
@@ -80,6 +106,19 @@
     background: #3987e5;
     border-color: #3987e5;
     color: #fff;
+  }
+  .ion {
+    display: grid;
+    gap: 6px;
+    width: 260px;
+  }
+  .ion p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .ion .error {
+    color: #e5484d;
   }
   label {
     display: flex;
