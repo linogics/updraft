@@ -11,11 +11,13 @@
     MAX_SIDE,
     MIN_FPS,
     MIN_SIDE,
+    QUALITIES,
     bitrateFor,
     clampFps,
     clampSide,
     presetSize,
-    type Aspect
+    type Aspect,
+    type QualityId
   } from '#lib/export/videoFormat';
   import { LENGTH_PRESETS, SPEED_PRESETS, planTiming, type TimingMode } from '#lib/export/videoTiming';
   import type { ReplayState } from '#lib/state/replay.svelte';
@@ -65,7 +67,8 @@
       : presetSize(aspect, Number(resolution))
   );
   const fps = $derived(clampFps(fpsInput));
-  const bitrate = $derived(bitrateFor(size.width, size.height, fps));
+  let quality = $state<QualityId>('high');
+  const bitrate = $derived(bitrateFor(size.width, size.height, fps, quality));
   const range = $derived({ inMs: replay.exportIn ?? replay.start, outMs: replay.exportOut ?? replay.end });
   const fitMusic = $derived(!!music && musicMode === 'fit');
   const timingMode = $derived<TimingMode>(
@@ -257,8 +260,15 @@
       {/if}
       <label for="video-fps">Frame rate</label>
       <input id="video-fps" type="number" min={MIN_FPS} max={MAX_FPS} step="1" bind:value={fpsInput} />
+      <label for="video-quality">Quality</label>
+      <select id="video-quality" bind:value={quality}>
+        {#each QUALITIES as q (q.id)}<option value={q.id}>{q.label}</option>{/each}
+      </select>
     </div>
     <p class="hint">{size.width} × {size.height} px at {fps} fps. Sides between {MIN_SIDE} and {MAX_SIDE}, fps between {MIN_FPS} and {MAX_FPS}.</p>
+    <p class="hint">
+      {Math.round(bitrate / 1_000_000)} Mbit/s{#if plan.timing}, about {Math.round((bitrate * plan.timing.seconds) / 8_000_000)} MB{/if}.
+    </p>
   </fieldset>
 
   <fieldset>

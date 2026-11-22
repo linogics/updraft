@@ -25,13 +25,17 @@ async function loadTile(x: number, y: number, level: number): Promise<Float32Arr
 
 /** Free, keyless terrain from AWS Terrain Tiles. Web Mercator tiles map 1:1 onto Cesium's tiling scheme. */
 export function createTerrariumTerrainProvider(): Cesium.CustomHeightmapTerrainProvider {
-  return new Cesium.CustomHeightmapTerrainProvider({
+  const provider = new Cesium.CustomHeightmapTerrainProvider({
     width: SAMPLES,
     height: SAMPLES,
     tilingScheme: new Cesium.WebMercatorTilingScheme(),
     credit: TERRARIUM_ATTRIBUTION,
     callback: (x, y, level) => (level > MAX_LEVEL ? undefined : loadTile(x, y, level))
   });
+  // Cesium reads an undefined callback result as "throttled, retry later", so deeper tiles would never
+  // load and globe.tilesLoaded would stay false. Marking them unavailable makes Cesium upsample the parent.
+  provider.getTileDataAvailable = (_x, _y, level) => level <= MAX_LEVEL;
+  return provider;
 }
 
 /** Terrain provider for a source. ion needs Ion.defaultAccessToken to be set. */

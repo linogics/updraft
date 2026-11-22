@@ -37,7 +37,19 @@ export function clampFps(v: number | null | undefined): number {
   return Math.min(MAX_FPS, Math.max(MIN_FPS, n));
 }
 
-/** Target H.264 bitrate, bits per second: about 0.1 bit per pixel per frame, clamped. */
-export function bitrateFor(width: number, height: number, fps: number): number {
-  return Math.min(50_000_000, Math.max(1_000_000, Math.round(width * height * fps * 0.1)));
+/**
+ * Bits per pixel per frame. Satellite imagery in constant motion needs far more than typical video.
+ * Render time barely changes with quality, file size grows linearly.
+ */
+export const QUALITIES = [
+  { id: 'standard', label: 'Standard', bitsPerPixel: 0.15 },
+  { id: 'high', label: 'High', bitsPerPixel: 0.3 },
+  { id: 'max', label: 'Maximum', bitsPerPixel: 0.6 }
+] as const;
+export type QualityId = (typeof QUALITIES)[number]['id'];
+
+/** Target H.264 bitrate, bits per second, clamped to what browser encoders accept. */
+export function bitrateFor(width: number, height: number, fps: number, quality: QualityId = 'high'): number {
+  const bpp = QUALITIES.find((q) => q.id === quality)!.bitsPerPixel;
+  return Math.min(100_000_000, Math.max(1_000_000, Math.round(width * height * fps * bpp)));
 }
