@@ -23,6 +23,8 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
       // Persistence is only a hint, a failed request must not fail the import.
     }
   }
+  // Perf runs read this mark to time parse and store apart from replay startup.
+  performance.mark('updraft:imported');
   return { ids, errors };
 }
 

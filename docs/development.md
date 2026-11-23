@@ -45,7 +45,7 @@ Two manual benchmark suites, not run in CI because runner timing is noisy:
 - `npm run bench`: domain code on a synthetic 8 h flight (28 801 fixes at 1 Hz), in `src/lib/bench/`.
 - `npm run bench:ui`: Playwright timing of import, play, seek and a logbook with 300 flights, in `e2e/perf.spec.ts`. Run it headed on a machine with a GPU: `npm run bench:ui -- --headed`. Headless Chromium and machines without a GPU render WebGL on the CPU, then frame times are meaningless. The play test prints the WebGL renderer it got.
 
-Budgets: import and analysis of an 8 h flight under 1 s, frames under 16 ms, main-thread tasks under 50 ms, UI response under 100 ms. A test fails when its budget is broken.
+Budgets: parse and store of an 8 h flight under 1 s, replay page ready under 2 s after that, frames under 16 ms, main-thread tasks under 50 ms, UI response under 100 ms. A test fails when its budget is broken.
 
 Baseline from 2026-11-23 (container without GPU):
 
@@ -56,5 +56,7 @@ Baseline from 2026-11-23 (container without GPU):
 | smoothPath | 39 ms (was 58 ms) |
 | writeGpx / writeIgc | 80 / 55 ms |
 | Import 8 h flight until replay ready | 3.9 s, longest task 0.6 s (was 6.3 s and 2.3 s) |
+
+Measured headed on an Apple M3 Max (2026-11-23): import 2.1 s in total, play frame p95 14 ms, seek p50 14 ms, logbook list 91 ms. About 85 % of the import is replay page startup, the same for a 10 min flight.
 | Logbook with 300 flights, list ready | 0.4 s |
 
