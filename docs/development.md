@@ -57,6 +57,6 @@ Baseline from 2026-11-23 (container without GPU):
 | writeGpx / writeIgc | 80 / 55 ms |
 | Import 8 h flight until replay ready | 3.9 s, longest task 0.6 s (was 6.3 s and 2.3 s) |
 
-Measured headed on an Apple M3 Max (2026-11-23): import 2.1 s in total, play frame p95 14 ms, seek p50 14 ms, logbook list 91 ms. About 85 % of the import is replay page startup, the same for a 10 min flight.
+Measured headed on an Apple M3 Max (2026-11-23), all within budget: parse and store 36 ms, replay page ready 0.7 s, play frame p95 7 ms, seek p50 14 ms, logbook list 82 ms.
 | Logbook with 300 flights, list ready | 0.4 s |
 
