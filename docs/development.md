@@ -43,7 +43,7 @@ One-time setup: in the repository settings set Pages source to "GitHub Actions",
 Two manual benchmark suites, not run in CI because runner timing is noisy:
 
 - `npm run bench`: domain code on a synthetic 8 h flight (28 801 fixes at 1 Hz), in `src/lib/bench/`.
-- `npm run bench:ui`: Playwright timing of import, play, seek and a logbook with 300 flights, in `e2e/perf.spec.ts`. Run it on a machine with a GPU. Without one Chromium renders WebGL on the CPU and frame times are meaningless.
+- `npm run bench:ui`: Playwright timing of import, play, seek and a logbook with 300 flights, in `e2e/perf.spec.ts`. Run it headed on a machine with a GPU: `npm run bench:ui -- --headed`. Headless Chromium and machines without a GPU render WebGL on the CPU, then frame times are meaningless. The play test prints the WebGL renderer it got.
 
 Budgets: import and analysis of an 8 h flight under 1 s, frames under 16 ms, main-thread tasks under 50 ms, UI response under 100 ms. A test fails when its budget is broken.
 
