@@ -17,6 +17,8 @@ function labelText(css: string): Cesium.Color {
 const TAIL_MS = 60_000;
 /** Spacing of curtain wall posts; denser adds vertices without visible gain. */
 const CURTAIN_STEP_MS = 5_000;
+/** Long flights get fewer spline points per segment, so the track geometry stays quick to build. */
+const MAX_TRACK_POINTS = 60_000;
 /** Dark casing on each side of an outlined track, px. */
 const OUTLINE_PX = 2;
 
@@ -53,6 +55,9 @@ void main()
 export class FlightLayer {
   /** Track primitives: optional curtain, then the line. */
   private track: Cesium.Primitive[] = [];
+  /** Previous track, shown until the new one is built in Cesium's workers. */
+  private stale: Cesium.Primitive[] = [];
+  private dropStale?: Cesium.Event.RemoveCallback;
   private tailWidth = 6;
   /** Inputs the current track primitive was built from; time shifts do not change it. */
   private trackKey = '';
@@ -145,11 +150,10 @@ export class FlightLayer {
     this.trackKey = key;
     this.trackClimbs = climbs;
     this.tailWidth = width * 2;
-    for (const p of this.track) this.viewer.scene.primitives.remove(p);
-    this.track = [];
+    this.replaceTrack();
 
     const { fixes } = this.loaded.flight;
-    const path = smoothPath(fixes, smooth ? 3 : 0);
+    const path = smoothPath(fixes, smooth ? Math.min(3, Math.floor(MAX_TRACK_POINTS / fixes.length)) : 0);
     const positions = path.points.map((f) => this.cartesian(f.lon, f.lat, f.alt, new Cesium.Cartesian3()));
     const pilot = Cesium.Color.fromCssColorString(this.loaded.color);
     const line = (geometry: Partial<ConstructorParameters<typeof Cesium.PolylineGeometry>[0]>, w: number) =>
@@ -168,7 +172,7 @@ export class FlightLayer {
           appearance: new Cesium.PolylineMaterialAppearance({
             material: Cesium.Material.fromType('PolylineGlow', { color: pilot, glowPower: 0.2 })
           }),
-          asynchronous: false
+          asynchronous: true
         })
       );
       return;
@@ -204,14 +208,21 @@ export class FlightLayer {
                 dashPattern: 0b0000011111111111
               })
             }),
-            asynchronous: false
+            asynchronous: true
           })
         );
       }
       return;
     }
 
-    const colors = path.source.map((i) => Cesium.Color.fromCssColorString(css(i)).withAlpha(0.9));
+    // Few distinct colours over many points, so parse each CSS string once.
+    const parsed = new Map<string, Cesium.Color>();
+    const colors = path.source.map((i) => {
+      const c = css(i);
+      let color = parsed.get(c);
+      if (!color) parsed.set(c, (color = Cesium.Color.fromCssColorString(c).withAlpha(0.9)));
+      return color;
+    });
     this.add(
       new Cesium.Primitive({
         geometryInstances: line(
@@ -219,9 +230,28 @@ export class FlightLayer {
           outline ? width + OUTLINE_PX * 2 : width
         ),
         appearance: outline ? outlinedAppearance(width) : new Cesium.PolylineColorAppearance({ translucent: false }),
-        asynchronous: false
+        asynchronous: true
       })
     );
+  }
+
+  /** Moves the current track to stale and removes it once every new primitive is ready. */
+  private replaceTrack() {
+    const scene = this.viewer.scene;
+    this.removeStale();
+    this.stale = this.track;
+    this.track = [];
+    if (!this.stale.length) return;
+    this.dropStale = scene.postRender.addEventListener(() => {
+      if (this.track.every((p) => p.ready)) this.removeStale();
+    });
+  }
+
+  private removeStale() {
+    this.dropStale?.();
+    this.dropStale = undefined;
+    for (const p of this.stale) this.viewer.scene.primitives.remove(p);
+    this.stale = [];
   }
 
   private add(p: Cesium.Primitive) {
@@ -255,7 +285,7 @@ export class FlightLayer {
         attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(color.withAlpha(0.22)) }
       }),
       appearance: new Cesium.PerInstanceColorAppearance({ flat: true, translucent: true }),
-      asynchronous: false
+      asynchronous: true
     });
   }
 
@@ -324,7 +354,7 @@ export class FlightLayer {
   }
 
   setVisible(visible: boolean) {
-    for (const p of this.track) p.show = visible;
+    for (const p of [...this.track, ...this.stale]) p.show = visible;
     this.pilot.show = visible;
     this.tail.show = visible;
   }
@@ -338,6 +368,7 @@ export class FlightLayer {
   }
 
   destroy() {
+    this.removeStale();
     for (const p of this.track) this.viewer.scene.primitives.remove(p);
     this.viewer.entities.remove(this.pilot);
     this.viewer.entities.remove(this.tail);
