@@ -14,7 +14,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "check": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "svelte-kit sync && vitest run",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "bench": "svelte-kit sync && vitest bench --run --silent=false",
+    "bench:ui": "PERF=1 playwright test perf --reporter=line"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

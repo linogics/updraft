@@ -37,3 +37,24 @@ One-time setup: in the repository settings set Pages source to "GitHub Actions",
 - Flight IDs are UUIDs.
 - Runtime config is read by `loadRuntimeConfig` (`src/lib/config.ts`), so an API base URL can be added there.
 - To add server routes, switch the SvelteKit adapter from `adapter-static` to `adapter-node`.
+
+## Performance
+
+Two manual benchmark suites, not run in CI because runner timing is noisy:
+
+- `npm run bench`: domain code on a synthetic 8 h flight (28 801 fixes at 1 Hz), in `src/lib/bench/`.
+- `npm run bench:ui`: Playwright timing of import, play, seek and a logbook with 300 flights, in `e2e/perf.spec.ts`. Run it on a machine with a GPU. Without one Chromium renders WebGL on the CPU and frame times are meaningless.
+
+Budgets: import and analysis of an 8 h flight under 1 s, frames under 16 ms, main-thread tasks under 50 ms, UI response under 100 ms. A test fails when its budget is broken.
+
+Baseline from 2026-11-23 (container without GPU):
+
+| Step | Time |
+|---|---|
+| readIgc | 74 ms |
+| analyzeFlight | 64 ms |
+| smoothPath | 58 ms (over budget) |
+| writeGpx / writeIgc | 80 / 55 ms |
+| Import 8 h flight until replay ready | 6.3 s, longest task 2.3 s |
+| Logbook with 300 flights, list ready | 0.4 s |
+
