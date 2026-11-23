@@ -4,6 +4,9 @@
   "private": true,
   "license": "BSD-3-Clause",
   "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
   "scripts": {
     "postinstall": "node scripts/copy-cesium.mjs",
     "dev": "vite dev --host 0.0.0.0",
