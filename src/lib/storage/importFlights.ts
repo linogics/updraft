@@ -4,6 +4,7 @@ import { flightRepository } from './index';
 
 /** Parses and stores track files of any supported format. Bad files are reported, the rest are still saved. */
 export async function importFlights(files: File[]): Promise<{ ids: string[]; errors: string[] }> {
+  performance.mark('updraft:import-start');
   const ids: string[] = [];
   const errors: string[] = [];
   for (const file of files) {
