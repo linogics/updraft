@@ -72,6 +72,16 @@ test('import an 8 h flight', async ({ page }) => {
 
 test('play and seek an 8 h flight', async ({ page }) => {
   await importBig(page);
+  // Headless Chromium often renders WebGL on the CPU (SwiftShader). Then frame times say nothing.
+  const renderer = await page.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    return info ? String(gl!.getParameter(info.UNMASKED_RENDERER_WEBGL)) : 'unknown';
+  });
+  console.log(`webgl renderer: ${renderer}`);
+  if (/swiftshader|llvmpipe|software/i.test(renderer)) {
+    console.log('warning: software WebGL, run `npm run bench:ui -- --headed` on a machine with a GPU');
+  }
   await page.waitForTimeout(1000);
   await longTasks(page);
 
