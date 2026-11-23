@@ -531,6 +531,6 @@
   .primary {
     background: var(--primary);
     border-color: var(--primary);
-    color: #fff;
+    color: var(--bg);
   }
 </style>
