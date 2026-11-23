@@ -139,7 +139,7 @@
   .group button.active {
     background: var(--primary);
     border-color: var(--primary);
-    color: #fff;
+    color: var(--bg);
   }
   .ion {
     display: grid;

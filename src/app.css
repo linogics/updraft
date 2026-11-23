@@ -15,11 +15,11 @@
   --muted: #8b8599;
   --danger: #e5484d;
   --warn: #e5a500;
-  /* Brand: purple marks the primary action and selection, cyan marks links, tabs and icons. */
-  --primary: #8e2ab0;
-  --primary-hi: #c17ee0;
-  --primary-dim: rgb(142 42 176 / 0.2);
-  --secondary: #00aed9;
+  /* Brand: cyan marks the primary action and selection, purple marks tabs. */
+  --primary: #00aed9;
+  --primary-hi: #6fd6ef;
+  --primary-dim: rgb(0 174 217 / 0.2);
+  --secondary: #8e2ab0;
   /* Data colors. Needle is the chart cursor, climb and sink the vario scale. */
   --needle: #f0b43c;
   --climb: #e66767;
