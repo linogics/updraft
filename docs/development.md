@@ -55,6 +55,6 @@ Baseline from 2026-11-23 (container without GPU):
 | analyzeFlight | 64 ms |
 | smoothPath | 39 ms (was 58 ms) |
 | writeGpx / writeIgc | 80 / 55 ms |
-| Import 8 h flight until replay ready | 6.3 s, longest task 2.3 s |
+| Import 8 h flight until replay ready | 3.9 s, longest task 0.6 s (was 6.3 s and 2.3 s) |
 | Logbook with 300 flights, list ready | 0.4 s |
 
