@@ -66,7 +66,8 @@
         max={snap(toAlt(MAX_GAIN, u.alt), gainStep)}
         step={gainStep}
         value={gain}
-        oninput={(e) => replay.setThermalFilter({ ...replay.thermalFilter, minGain: fromAlt(+e.currentTarget.value, u.alt) })}
+        oninput={(e) =>
+          replay.setThermalFilter({ ...replay.thermalFilter, minGain: fromAlt(+e.currentTarget.value, u.alt) })}
       />
       <output for="min-gain">{gain ? formatAlt(replay.thermalFilter.minGain, u) : m.common_any()}</output>
       <label for="min-climb">{m.climbs_min_climb()}</label>
@@ -80,11 +81,16 @@
         oninput={(e) =>
           replay.setThermalFilter({ ...replay.thermalFilter, minClimb: fromVario(+e.currentTarget.value, u.vario) })}
       />
-      <output for="min-climb">{climb ? `${formatNumber(climb, 1, 0)} ${UNIT_LABELS.vario[u.vario]}` : m.common_any()}</output>
+      <output for="min-climb">
+        {climb ? `${formatNumber(climb, 1, 0)} ${UNIT_LABELS.vario[u.vario]}` : m.common_any()}
+      </output>
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected={tab === 'thermals'} onclick={() => (tab = 'thermals')}>
-        {m.climbs_tab_thermals()} <span class="count">{thermals.length === total ? total : m.climbs_count_of({ count: thermals.length, total })}</span>
+        {m.climbs_tab_thermals()}
+        <span class="count">
+          {thermals.length === total ? total : m.climbs_count_of({ count: thermals.length, total })}
+        </span>
       </button>
       <button role="tab" aria-selected={tab === 'transitions'} onclick={() => (tab = 'transitions')}>
         {m.climbs_tab_transitions()} <span class="count">{transitions.length}</span>
@@ -95,15 +101,30 @@
         {#each transitions as t (t.start)}
           <li class:active={current >= t.start && current < t.end}>
             <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
-              <span class="n" class:kind={t.kind !== 'glide'}>{t.kind === 'glide' ? '↘' : t.kind === 'launch' ? '⇢' : '⇥'}</span>
+              <span class="n" class:kind={t.kind !== 'glide'}>
+                {t.kind === 'glide' ? '↘' : t.kind === 'launch' ? '⇢' : '⇥'}
+              </span>
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
               <span class="gain">{formatDistance(t.distance, u)}</span>
               <span class="climb">{t.glideRatio ? `${formatNumber(t.glideRatio, 1)} : 1` : '–'}</span>
               <span class="meta">
                 {#if t.kind === 'glide'}
-                  {m.climbs_meta_plain({ from: alt(t, 'start'), to: alt(t, 'end'), agl: agl ? ' AGL' : '', speed: formatSpeed(t.speed, u), duration: formatDuration(t.duration) })}
+                  {m.climbs_meta_plain({
+                    from: alt(t, 'start'),
+                    to: alt(t, 'end'),
+                    agl: agl ? ' AGL' : '',
+                    speed: formatSpeed(t.speed, u),
+                    duration: formatDuration(t.duration)
+                  })}
                 {:else}
-                  {m.climbs_meta_kind({ kind: KIND_LABELS[t.kind](), from: alt(t, 'start'), to: alt(t, 'end'), agl: agl ? ' AGL' : '', speed: formatSpeed(t.speed, u), duration: formatDuration(t.duration) })}
+                  {m.climbs_meta_kind({
+                    kind: KIND_LABELS[t.kind](),
+                    from: alt(t, 'start'),
+                    to: alt(t, 'end'),
+                    agl: agl ? ' AGL' : '',
+                    speed: formatSpeed(t.speed, u),
+                    duration: formatDuration(t.duration)
+                  })}
                 {/if}
               </span>
             </button>
@@ -117,11 +138,15 @@
         {#each thermals as t, i (t.start)}
           <li class:active={current >= t.start && current <= t.end}>
             <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
-              <span class="n"><span class="swatch" style="background: {varioColor(t.avgClimb)}" aria-hidden="true"></span>{i + 1}</span>
+              <span class="n">
+                <span class="swatch" style="background: {varioColor(t.avgClimb)}" aria-hidden="true"></span>{i + 1}
+              </span>
               <span class="time">{formatClock(sel.flight.fixes[t.start].t)}</span>
               <span class="gain">+{formatAlt(t.gain, u)}</span>
               <span class="climb">{formatVario(t.avgClimb, u)}</span>
-              <span class="meta">{m.climbs_thermal_meta({ duration: formatDuration(t.duration), alt: formatAlt(t.exitAlt, u) })}</span>
+              <span class="meta">
+                {m.climbs_thermal_meta({ duration: formatDuration(t.duration), alt: formatAlt(t.exitAlt, u) })}
+              </span>
             </button>
           </li>
         {/each}

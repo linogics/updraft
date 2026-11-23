@@ -24,7 +24,9 @@
     oninput={(e) => replay.seek(Number(e.currentTarget.value))}
     aria-label={m.player_position()}
   />
-  <span class="elapsed">{formatDuration((replay.time - replay.start) / 1000)} / {formatDuration((replay.end - replay.start) / 1000)}</span>
+  <span class="elapsed">
+    {formatDuration((replay.time - replay.start) / 1000)} / {formatDuration((replay.end - replay.start) / 1000)}
+  </span>
 </div>
 
 <style>

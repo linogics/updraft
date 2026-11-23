@@ -61,7 +61,12 @@
     }
     step = 1;
     await paint();
-    replay.setFlights(flights, { syncMode: scene.sync, nudges: scene.nudges, thermalFilter: scene.thermalFilter, colors: scene.colors });
+    replay.setFlights(flights, {
+      syncMode: scene.sync,
+      nudges: scene.nudges,
+      thermalFilter: scene.thermalFilter,
+      colors: scene.colors
+    });
     step = 2;
     await replay.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
@@ -207,7 +212,9 @@
       <div class="transport">
         <PlayerBar {replay} />
         <div class="tabs" role="tablist" hidden={!panels.footerOpen}>
-          <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>{m.replay_tab_altitude()}</button>
+          <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>
+            {m.replay_tab_altitude()}
+          </button>
           <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
             {replay.multiDay ? m.replay_timeline_multi_day() : m.timeline_label()}
           </button>

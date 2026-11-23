@@ -7,11 +7,21 @@ describe('parseThermalOverlayPrefs', () => {
   });
 
   it('keeps valid fields and clamps opacity', () => {
-    expect(parseThermalOverlayPrefs({ hotspots: true, skyways: true, opacity: 5 })).toEqual({ hotspots: true, skyways: true, opacity: 1 });
-    expect(parseThermalOverlayPrefs({ hotspots: true, opacity: 0 })).toEqual({ hotspots: true, skyways: false, opacity: 0.1 });
+    expect(parseThermalOverlayPrefs({ hotspots: true, skyways: true, opacity: 5 })).toEqual({
+      hotspots: true,
+      skyways: true,
+      opacity: 1
+    });
+    expect(parseThermalOverlayPrefs({ hotspots: true, opacity: 0 })).toEqual({
+      hotspots: true,
+      skyways: false,
+      opacity: 0.1
+    });
   });
 
   it('falls back for garbage', () => {
-    expect(parseThermalOverlayPrefs({ hotspots: 'yes', skyways: 1, opacity: NaN })).toEqual(parseThermalOverlayPrefs(null));
+    expect(parseThermalOverlayPrefs({ hotspots: 'yes', skyways: 1, opacity: NaN })).toEqual(
+      parseThermalOverlayPrefs(null)
+    );
   });
 });

@@ -59,7 +59,13 @@ describe('readers', () => {
   });
 
   it('reads geojson with unix seconds as 4th coordinate', () => {
-    const json = JSON.stringify({ type: 'LineString', coordinates: [[11, 47, 1000, 1700000000], [11.1, 47.1, 1010, 1700000001]] });
+    const json = JSON.stringify({
+      type: 'LineString',
+      coordinates: [
+        [11, 47, 1000, 1700000000],
+        [11.1, 47.1, 1010, 1700000001]
+      ]
+    });
     expect(readGeoJson(json, 'x.json').fixes[1].t).toBe(1700000001000);
   });
 
@@ -78,7 +84,10 @@ describe('readers', () => {
 <gpx:trkpt lat='47.2' lon='11.3'><gpx:ele>1510</gpx:ele><gpx:time>2026-07-15T10:00:01Z</gpx:time></gpx:trkpt>
 </gpx:trkseg></gpx:trk></gpx:gpx>`;
     const f = readGpx(gpx, 'a.gpx');
-    expect(f.fixes.map((x) => [x.lat, x.lon, x.alt])).toEqual([[47.1, 11.2, 1500], [47.2, 11.3, 1510]]);
+    expect(f.fixes.map((x) => [x.lat, x.lon, x.alt])).toEqual([
+      [47.1, 11.2, 1500],
+      [47.2, 11.3, 1510]
+    ]);
   });
 
   it('reads KML with prefixes and CDATA times', () => {
@@ -131,7 +140,10 @@ describe('readers', () => {
       ])
     );
     const bytes = enc.close();
-    const f = await readFit(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer, 'ride.fit');
+    const f = await readFit(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      'ride.fit'
+    );
     expect(f.fixes).toHaveLength(3);
     expect(f.fixes[1].lat).toBeCloseTo(47.101, 5);
     expect(f.fixes[1].alt).toBeCloseTo(1501, 0);

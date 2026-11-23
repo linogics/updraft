@@ -5,11 +5,11 @@
   import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
   import { FlightLayer } from '#lib/cesium/flightLayer';
   import { XcRoute } from '#lib/cesium/xcRoute';
-import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
-import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-import { ThermalLayer } from '#lib/cesium/thermalLayer';
-import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
-import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
+  import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
+  import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+  import { ThermalLayer } from '#lib/cesium/thermalLayer';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
+  import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
   import { loadRuntimeConfig } from '#lib/config';
   import { m } from '#lib/paraglide/messages';
@@ -26,6 +26,8 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   let viewer: Cesium.Viewer | undefined = $state.raw();
   let ready = $state(false);
   let notice = $state<string>(m.cesium_loading_view());
+  // Plain registry read by imperative code, never by templates.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const layers = new Map<string, FlightLayer>();
   let xcRoute: XcRoute | undefined = $state.raw();
   let airspaceLayer: AirspaceLayer | undefined = $state.raw();
@@ -43,6 +45,8 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
     notice = m.cesium_loading_terrain();
     const used = await setTerrain(v, source);
     appliedTerrain = used;
+    // Local lookup handed to replay state once, not reactive itself.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const offsets = new Map<string, number>();
     await Promise.all(
       replay.flights.map(async ({ flight }) => {
@@ -72,7 +76,16 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
       await applyTerrain(v, replay.terrain);
       if (!alive) return;
 
-      for (const lf of replay.flights) layers.set(lf.flight.id, new FlightLayer(v, lf, () => replay.time, () => replay.exaggeration));
+      for (const lf of replay.flights)
+        layers.set(
+          lf.flight.id,
+          new FlightLayer(
+            v,
+            lf,
+            () => replay.time,
+            () => replay.exaggeration
+          )
+        );
       camera = new CameraController(v);
       xcRoute = new XcRoute(v);
       airspaceLayer = new AirspaceLayer(v);
@@ -207,7 +220,8 @@ import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
     if (!ready) return;
     const { colorBy, trackStyle, trackWidth, smoothTrack } = replay;
     void replay.exaggeration;
-    for (const lf of replay.flights) layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
+    for (const lf of replay.flights)
+      layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
   });
 
   $effect(() => {

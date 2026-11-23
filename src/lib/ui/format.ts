@@ -14,9 +14,7 @@ export function formatDuration(seconds: number): string {
 /** Airtime as "3 h 12" or "35 min", so it reads as a duration and never as a clock. */
 export function formatAirtime(ms: number): string {
   const min = Math.round(ms / 60_000);
-  return min < 60
-    ? m.airtime_minutes({ min })
-    : m.airtime_hours({ h: Math.floor(min / 60), min: pad(min % 60) });
+  return min < 60 ? m.airtime_minutes({ min }) : m.airtime_hours({ h: Math.floor(min / 60), min: pad(min % 60) });
 }
 
 /** Clock time (HH:MM:SS, 24 h) of a Unix ms timestamp in the given or local time zone. */

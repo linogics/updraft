@@ -30,7 +30,10 @@ export function clampPanel(key: PanelSize, v: number): number {
 export function parsePanelPrefs(raw: unknown): PanelPrefsValue {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const size = (key: PanelSize) =>
-    clampPanel(key, typeof o[key] === 'number' && Number.isFinite(o[key]) ? (o[key] as number) : PANEL_LIMITS[key].initial);
+    clampPanel(
+      key,
+      typeof o[key] === 'number' && Number.isFinite(o[key]) ? (o[key] as number) : PANEL_LIMITS[key].initial
+    );
   return {
     outliner: size('outliner'),
     side: size('side'),

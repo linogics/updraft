@@ -107,7 +107,11 @@ function absorbShortRuns(fixes: Fix[], runs: Phase[]): Phase[] {
     const prev = eligible(runs[shortest - 1]);
     const next = eligible(runs[shortest + 1]);
     const target =
-      prev && next ? (duration(fixes, prev) >= duration(fixes, next) ? prev : next) : (prev ?? next ?? runs[shortest - 1] ?? runs[shortest + 1]);
+      prev && next
+        ? duration(fixes, prev) >= duration(fixes, next)
+          ? prev
+          : next
+        : (prev ?? next ?? runs[shortest - 1] ?? runs[shortest + 1]);
     target.start = Math.min(target.start, runs[shortest].start);
     target.end = Math.max(target.end, runs[shortest].end);
     runs.splice(shortest, 1);

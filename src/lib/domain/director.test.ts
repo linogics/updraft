@@ -7,8 +7,12 @@ import type { Fix, Phase } from './model';
 /** Shots as {t, heading, pitch, range} rows, read back from the tracks. */
 const shotsOf = (tr: CameraTracks) =>
   tr.heading.keys.map((k, i) => ({ t: k.t, heading: k.v, pitch: tr.pitch.keys[i].v, range: tr.range.keys[i].v }));
-const directCamera = (flight: Parameters<typeof directTracks>[0], ph: Phase[], r: Parameters<typeof directTracks>[2], d: Density = 'high') =>
-  shotsOf(directTracks(flight, ph, r, d));
+const directCamera = (
+  flight: Parameters<typeof directTracks>[0],
+  ph: Phase[],
+  r: Parameters<typeof directTracks>[2],
+  d: Density = 'high'
+) => shotsOf(directTracks(flight, ph, r, d));
 
 /** One fix per second, flying north at about 11 m/s. */
 const northbound = (count: number): Fix[] =>

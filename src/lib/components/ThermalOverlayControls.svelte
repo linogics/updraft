@@ -5,9 +5,19 @@
 
 <div class="fields">
   <label for="th-hotspots">{m.thermal_hotspots()}</label>
-  <input id="th-hotspots" type="checkbox" checked={prefs.hotspots} onchange={(e) => prefs.set({ hotspots: e.currentTarget.checked })} />
+  <input
+    id="th-hotspots"
+    type="checkbox"
+    checked={prefs.hotspots}
+    onchange={(e) => prefs.set({ hotspots: e.currentTarget.checked })}
+  />
   <label for="th-skyways">{m.thermal_skyways()}</label>
-  <input id="th-skyways" type="checkbox" checked={prefs.skyways} onchange={(e) => prefs.set({ skyways: e.currentTarget.checked })} />
+  <input
+    id="th-skyways"
+    type="checkbox"
+    checked={prefs.skyways}
+    onchange={(e) => prefs.set({ skyways: e.currentTarget.checked })}
+  />
   <label for="th-opacity">{m.common_opacity()}</label>
   <input
     id="th-opacity"

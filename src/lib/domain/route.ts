@@ -4,7 +4,8 @@ export const MAX_ROUTE_POINTS = 100;
 export const DEFAULT_SPEED = 20;
 
 /** Route as `lat,lon` pairs with 5 decimals joined by `~`. */
-export const encodeRoute = (pts: LatLon[]): string => pts.map((p) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('~');
+export const encodeRoute = (pts: LatLon[]): string =>
+  pts.map((p) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('~');
 
 /** Parses an encoded route. Invalid pairs are skipped and the result is capped at 100 points. */
 export function decodeRoute(raw: string | null): LatLon[] {
@@ -23,7 +24,8 @@ export function densify(points: LatLon[], steps = 10): LatLon[] {
   const out: LatLon[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     const [a, b] = [points[i], points[i + 1]];
-    for (let k = 0; k < steps; k++) out.push({ lat: a.lat + ((b.lat - a.lat) * k) / steps, lon: a.lon + ((b.lon - a.lon) * k) / steps });
+    for (let k = 0; k < steps; k++)
+      out.push({ lat: a.lat + ((b.lat - a.lat) * k) / steps, lon: a.lon + ((b.lon - a.lon) * k) / steps });
   }
   if (points.length) out.push(points[points.length - 1]);
   return out;

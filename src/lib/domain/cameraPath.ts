@@ -105,11 +105,7 @@ function segmentAt(keys: Key[], t: number): number {
 }
 
 const catmullRom = (p0: number, p1: number, p2: number, p3: number, u: number) =>
-  0.5 *
-  (2 * p1 +
-    (p2 - p0) * u +
-    (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u +
-    (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
+  0.5 * (2 * p1 + (p2 - p0) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
 
 /**
  * Value of one property at replay time t. Clamps before the first and after the last key.

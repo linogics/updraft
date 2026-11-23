@@ -1,7 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as maplibregl from 'maplibre-gl';
-  import type { ExpressionSpecification, GeoJSONSource, LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl';
+  import type {
+    ExpressionSpecification,
+    GeoJSONSource,
+    LayerSpecification,
+    SourceSpecification,
+    StyleSpecification
+  } from 'maplibre-gl';
   import type { FeatureCollection } from 'geojson';
   import 'maplibre-gl/dist/maplibre-gl.css';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow; bundle it explicitly.
@@ -114,8 +120,16 @@
     return {
       type: 'FeatureCollection',
       features: [
-        ...lines.map((pts) => ({ type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: coords(pts) } })),
-        ...(xc?.turnpoints ?? []).map((p) => ({ type: 'Feature' as const, properties: {}, geometry: { type: 'Point' as const, coordinates: [p.lon, p.lat] } }))
+        ...lines.map((pts) => ({
+          type: 'Feature' as const,
+          properties: {},
+          geometry: { type: 'LineString' as const, coordinates: coords(pts) }
+        })),
+        ...(xc?.turnpoints ?? []).map((p) => ({
+          type: 'Feature' as const,
+          properties: {},
+          geometry: { type: 'Point' as const, coordinates: [p.lon, p.lat] }
+        }))
       ]
     };
   }
@@ -158,7 +172,13 @@
       m.addSource('pilots', { type: 'geojson', data: pilotData(replay.time) });
       m.addSource('thermals', { type: 'geojson', data: thermalData() });
       const round = { 'line-join': 'round', 'line-cap': 'round' } as const;
-      m.addLayer({ id: 'tracks-casing', type: 'line', source: 'tracks', layout: round, paint: { 'line-color': '#0b0c0f' } });
+      m.addLayer({
+        id: 'tracks-casing',
+        type: 'line',
+        source: 'tracks',
+        layout: round,
+        paint: { 'line-color': '#0b0c0f' }
+      });
       m.addLayer({
         id: 'tracks-glow',
         type: 'line',
@@ -180,7 +200,14 @@
         paint: { 'circle-radius': 5, 'circle-color': ['get', 'color'], 'circle-opacity': 0.7 }
       });
       m.addSource('xc', { type: 'geojson', data: xcData() });
-      m.addLayer({ id: 'xc-casing', type: 'line', source: 'xc', filter: ['!=', '$type', 'Point'], layout: round, paint: { 'line-color': '#0b0c0f', 'line-width': 5 } });
+      m.addLayer({
+        id: 'xc-casing',
+        type: 'line',
+        source: 'xc',
+        filter: ['!=', '$type', 'Point'],
+        layout: round,
+        paint: { 'line-color': '#0b0c0f', 'line-width': 5 }
+      });
       m.addLayer({
         id: 'xc',
         type: 'line',
@@ -193,7 +220,12 @@
         type: 'circle',
         source: 'xc',
         filter: ['==', '$type', 'Point'],
-        paint: { 'circle-radius': 4, 'circle-color': '#fff', 'circle-stroke-color': '#0b0c0f', 'circle-stroke-width': 2 }
+        paint: {
+          'circle-radius': 4,
+          'circle-color': '#fff',
+          'circle-stroke-color': '#0b0c0f',
+          'circle-stroke-width': 2
+        }
       });
       m.addLayer({
         id: 'pilots',
@@ -222,7 +254,7 @@
         const d = distance(click, f);
         if (d < bestDist) [best, bestDist] = [i, d];
       });
-      const pxPerMetre = 1 / (156543 * Math.cos((click.lat * Math.PI) / 180) / 2 ** m.getZoom());
+      const pxPerMetre = 1 / ((156543 * Math.cos((click.lat * Math.PI) / 180)) / 2 ** m.getZoom());
       if (bestDist * pxPerMetre < 20) replay.seek(sel.flight.fixes[best].t);
     });
 

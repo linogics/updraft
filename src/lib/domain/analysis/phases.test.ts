@@ -8,10 +8,14 @@ function phasesOf(fixes: Fix[]): Phase[] {
   return detectPhases(fixes, computeSeries(fixes).heading);
 }
 
-const glide = (duration: number, headingDeg = 90) => (f: Parameters<typeof straight>[0]) =>
-  straight(f, { headingDeg, speed: 10, climb: -1, duration });
-const thermal = (duration: number, direction: 1 | -1 = 1) => (f: Parameters<typeof circle>[0]) =>
-  circle(f, { radius: 40, period: 25, climb: 2, duration, direction });
+const glide =
+  (duration: number, headingDeg = 90) =>
+  (f: Parameters<typeof straight>[0]) =>
+    straight(f, { headingDeg, speed: 10, climb: -1, duration });
+const thermal =
+  (duration: number, direction: 1 | -1 = 1) =>
+  (f: Parameters<typeof circle>[0]) =>
+    circle(f, { radius: 40, period: 25, climb: 2, duration, direction });
 
 describe('detectPhases', () => {
   it('returns no phases for an empty track', () => {

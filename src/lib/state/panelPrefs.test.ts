@@ -15,7 +15,17 @@ describe('parsePanelPrefs', () => {
   });
 
   it('clamps sizes and drops bad fields', () => {
-    expect(parsePanelPrefs({ outliner: 10, side: 9999, footer: 'x', split: 0, outlinerOpen: 'no', sideOpen: false, footerOpen: 1 })).toEqual({
+    expect(
+      parsePanelPrefs({
+        outliner: 10,
+        side: 9999,
+        footer: 'x',
+        split: 0,
+        outlinerOpen: 'no',
+        sideOpen: false,
+        footerOpen: 1
+      })
+    ).toEqual({
       outliner: 200,
       side: 640,
       footer: 200,

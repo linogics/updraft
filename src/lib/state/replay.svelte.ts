@@ -220,6 +220,8 @@ export class ReplayState {
 
   /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
   private async loadGround() {
+    // Local lookup filled in parallel, then handed to state once.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const ground = new Map<string, Float32Array>();
     await Promise.all(
       this.flights.map(async (f) => {
@@ -336,9 +338,7 @@ export class ReplayState {
   setPilotColor(id: string, hex: string | null) {
     const { [id]: _, ...rest } = this.colorOverrides;
     this.colorOverrides = hex ? { ...rest, [id]: hex } : rest;
-    this.flights = this.flights.map((f, i) =>
-      f.flight.id === id ? { ...f, color: hex ?? pilotColor(i) } : f
-    );
+    this.flights = this.flights.map((f, i) => (f.flight.id === id ? { ...f, color: hex ?? pilotColor(i) } : f));
   }
 
   setVisible(id: string, visible: boolean) {

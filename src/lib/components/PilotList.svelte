@@ -59,7 +59,14 @@
             title={m.pilots_change_colour()}
           />
           {#if replay.colorOverrides[r.f.flight.id]}
-            <button class="reset" onclick={() => replay.setPilotColor(r.f.flight.id, null)} title={m.pilots_reset_colour()} aria-label={m.pilots_reset_colour_of({ pilot: r.f.flight.pilot })}>✕</button>
+            <button
+              class="reset"
+              onclick={() => replay.setPilotColor(r.f.flight.id, null)}
+              title={m.pilots_reset_colour()}
+              aria-label={m.pilots_reset_colour_of({ pilot: r.f.flight.pilot })}
+            >
+              ✕
+            </button>
           {/if}
         </span>
         <button class="name" onclick={() => (replay.selectedId = r.f.flight.id)}>

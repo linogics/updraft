@@ -69,6 +69,8 @@ test('phone layout stacks the panels without sideways scrolling', async ({ page 
   await page.setViewportSize({ width: 390, height: 844 });
   await openDemoReplay(page);
   await expect(page.locator('aside')).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+  );
   expect(overflow).toBe(0);
 });

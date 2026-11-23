@@ -77,5 +77,12 @@ export function summarize(flight: Flight): FlightSummary {
     maxAlt = Math.max(maxAlt, f.alt);
     if (i) m += distance(fixes[i - 1], f);
   });
-  return { ...meta, fixCount: fixes.length, startTime: fixes[0].t, endTime: fixes[fixes.length - 1].t, maxAlt, trackKm: m / 1000 };
+  return {
+    ...meta,
+    fixCount: fixes.length,
+    startTime: fixes[0].t,
+    endTime: fixes[fixes.length - 1].t,
+    maxAlt,
+    trackKm: m / 1000
+  };
 }

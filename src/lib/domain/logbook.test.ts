@@ -6,7 +6,11 @@ const flight = (date: string, hours: number) => ({ date, startTime: 0, endTime: 
 
 describe('logbook', () => {
   it('sums known xc points and groups them in the breakdown', () => {
-    const fs = [{ id: 'a', ...flight('2026-01-01', 1) }, { id: 'b', ...flight('2026-02-01', 1) }, { id: 'c', ...flight('2026-03-01', 1) }];
+    const fs = [
+      { id: 'a', ...flight('2026-01-01', 1) },
+      { id: 'b', ...flight('2026-02-01', 1) },
+      { id: 'c', ...flight('2026-03-01', 1) }
+    ];
     const points = { a: 10.5, b: 4 };
     expect(totalXcPoints(fs, points)).toBe(14.5);
     expect(breakdown(fs, 'year', points)[0].points).toBe(14.5);
@@ -35,7 +39,11 @@ describe('logbook', () => {
 
   it('breaks down by site with Unknown label, by hours', () => {
     const rows = breakdown(
-      [{ ...flight('2026-01-01', 1), site: 'A', maxAlt: 1000 }, { ...flight('2026-01-02', 2), site: null }, { ...flight('2026-01-03', 0.5), site: 'A', maxAlt: 2000 }],
+      [
+        { ...flight('2026-01-01', 1), site: 'A', maxAlt: 1000 },
+        { ...flight('2026-01-02', 2), site: null },
+        { ...flight('2026-01-03', 0.5), site: 'A', maxAlt: 2000 }
+      ],
       'site'
     );
     expect(rows.map((r) => r.label)).toEqual(['Unknown', 'A']);

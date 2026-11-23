@@ -32,14 +32,26 @@
   let editing = $state<string | null>(null);
   let draft = $state({ pilot: '', site: '', glider: '', notes: '' });
   let adding = $state(false);
-  let manual = $state({ date: new Date().toISOString().slice(0, 10), durationMin: 60, pilot: '', site: '', glider: '', notes: '' });
+  let manual = $state({
+    date: new Date().toISOString().slice(0, 10),
+    durationMin: 60,
+    pilot: '',
+    site: '',
+    glider: '',
+    notes: ''
+  });
 
   const u = $derived(unitPrefs.units);
   const sum = $derived(totals(flights));
   const longest = $derived(Math.max(0, ...flights.map((f) => f.endTime - f.startTime)));
   const highest = $derived(Math.max(0, ...flights.map((f) => f.maxAlt ?? 0)));
   const monthFmt = new Intl.DateTimeFormat(getLocale(), { month: 'short', year: 'numeric', timeZone: 'UTC' });
-  const months = $derived(monthlyHours(flights, 12, new Date()).map((m) => ({ label: monthFmt.format(new Date(m.month + '-01')), hours: m.hours })));
+  const months = $derived(
+    monthlyHours(flights, 12, new Date()).map((m) => ({
+      label: monthFmt.format(new Date(m.month + '-01')),
+      hours: m.hours
+    }))
+  );
   const years = $derived(yearlyHours(flights).map((y) => ({ label: y.year, hours: y.hours })));
   const points = $derived(Object.fromEntries(Object.entries(xc).flatMap(([id, s]) => (s ? [[id, s.points]] : []))));
   const rows = $derived(breakdown(flights, by, points));
@@ -175,11 +187,26 @@
       <h1>{m.home_logbook_title()}</h1>
     </div>
     <dl class="readouts" aria-busy={!ready}>
-      <div><dt>{m.home_hours_flown()}</dt><dd>{ready ? hours(sum.seconds) : '–'}</dd></div>
-      <div><dt>{m.home_flights()}</dt><dd>{ready ? sum.flights : '–'}</dd></div>
-      <div><dt>{m.logbook_xc_points()}</dt><dd>{ready ? formatNumber(xcTotal, 2) : '–'}</dd></div>
-      <div><dt>{m.logbook_longest()}</dt><dd>{ready && longest ? formatAirtime(longest) : '–'}</dd></div>
-      <div><dt>{m.logbook_highest()}</dt><dd>{ready && highest ? formatAlt(highest, u) : '–'}</dd></div>
+      <div>
+        <dt>{m.home_hours_flown()}</dt>
+        <dd>{ready ? hours(sum.seconds) : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.home_flights()}</dt>
+        <dd>{ready ? sum.flights : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.logbook_xc_points()}</dt>
+        <dd>{ready ? formatNumber(xcTotal, 2) : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.logbook_longest()}</dt>
+        <dd>{ready && longest ? formatAirtime(longest) : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.logbook_highest()}</dt>
+        <dd>{ready && highest ? formatAlt(highest, u) : '–'}</dd>
+      </div>
     </dl>
   </header>
 
@@ -200,7 +227,15 @@
       </div>
       <table>
         <thead>
-          <tr><th>{BY_LABELS[by]()}</th><th class="num">{m.logbook_col_flights()}</th><th class="num">{m.logbook_col_hours()}</th><th class="num">{m.logbook_col_points()}</th><th class="num hide">{m.logbook_col_longest()}</th><th class="num hide">{m.export_row_max_altitude()}</th></tr>
+          <tr>
+            <th>{BY_LABELS[by]()}</th><th class="num">{m.logbook_col_flights()}</th><th class="num">
+              {m.logbook_col_hours()}
+            </th><th class="num">{m.logbook_col_points()}</th><th class="num hide">{m.logbook_col_longest()}</th><th
+              class="num hide"
+            >
+              {m.export_row_max_altitude()}
+            </th>
+          </tr>
         </thead>
         <tbody>
           {#each rows as r (r.label)}
@@ -232,26 +267,37 @@
     <div class="head">
       <h2>{m.logbook_col_flights()}</h2>
       <div class="actions">
-        <label class="league">{m.xc_league()}
+        <label class="league">
+          {m.xc_league()}
           <select value={xcPrefs.league} onchange={(e) => setLeague(e.currentTarget.value as XcLeague)}>
             {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
           </select>
         </label>
-        {#if ready && scored < todo.length}<span class="muted">{m.logbook_scoring({ scored, total: todo.length })}</span>{/if}
+        {#if ready && scored < todo.length}<span class="muted">
+            {m.logbook_scoring({ scored, total: todo.length })}
+          </span>{/if}
         <button onclick={() => (adding = !adding)} aria-expanded={adding}>{m.logbook_add_manual()}</button>
-        <button disabled={!selected.length} onclick={() => openReplay(selected)}>{m.logbook_replay_selected({ count: selected.length })}</button>
+        <button disabled={!selected.length} onclick={() => openReplay(selected)}>
+          {m.logbook_replay_selected({ count: selected.length })}
+        </button>
       </div>
     </div>
 
     {#if adding}
       <form class="form" onsubmit={addManual}>
         <label>{m.export_row_date()} <input type="date" required bind:value={manual.date} /></label>
-        <label>{m.logbook_duration_min()} <input type="number" min="1" required bind:value={manual.durationMin} /></label>
+        <label>
+          {m.logbook_duration_min()} <input type="number" min="1" required bind:value={manual.durationMin} />
+        </label>
         <label>{m.export_row_pilot()} <input bind:value={manual.pilot} /></label>
         <label>{m.export_row_site()} <input bind:value={manual.site} /></label>
         <label>{m.export_row_glider()} <input bind:value={manual.glider} /></label>
         <label class="wide">{m.logbook_col_notes()} <textarea rows="2" bind:value={manual.notes}></textarea></label>
-        <div class="actions"><button type="submit">{m.common_save()}</button><button type="button" onclick={() => (adding = false)}>{m.common_cancel()}</button></div>
+        <div class="actions">
+          <button type="submit">{m.common_save()}</button><button type="button" onclick={() => (adding = false)}>
+            {m.common_cancel()}
+          </button>
+        </div>
       </form>
     {/if}
 
@@ -259,38 +305,79 @@
       <table>
         <thead>
           <tr>
-            <th><span class="sr">{m.logbook_col_select()}</span></th><th>{m.export_row_date()}</th><th>{m.export_row_pilot()}</th><th class="hide">{m.export_row_site()}</th><th class="hide">{m.export_row_glider()}</th>
-            <th class="num">{m.export_row_duration()}</th><th class="num hide">{m.logbook_col_distance()}</th><th class="num hide">{m.export_row_max_altitude()}</th><th class="hide">{m.logbook_col_xc_type()}</th><th class="num hide">{m.logbook_col_points()}</th><th><span class="sr">{m.logbook_col_notes()}</span></th><th><span class="sr">{m.logbook_col_actions()}</span></th>
+            <th><span class="sr">{m.logbook_col_select()}</span></th><th>{m.export_row_date()}</th><th>
+              {m.export_row_pilot()}
+            </th><th class="hide">{m.export_row_site()}</th><th class="hide">{m.export_row_glider()}</th>
+            <th class="num">{m.export_row_duration()}</th><th class="num hide">{m.logbook_col_distance()}</th><th
+              class="num hide"
+            >
+              {m.export_row_max_altitude()}
+            </th><th class="hide">{m.logbook_col_xc_type()}</th><th class="num hide">{m.logbook_col_points()}</th><th>
+              <span class="sr">{m.logbook_col_notes()}</span>
+            </th><th><span class="sr">{m.logbook_col_actions()}</span></th>
           </tr>
         </thead>
         <tbody>
           {#each flights as f (f.id)}
             <tr>
-              <td><input type="checkbox" value={f.id} bind:group={selected} disabled={f.manual} aria-label={m.logbook_select_aria({ pilot: f.pilot, date: f.date })} /></td>
+              <td>
+                <input
+                  type="checkbox"
+                  value={f.id}
+                  bind:group={selected}
+                  disabled={f.manual}
+                  aria-label={m.logbook_select_aria({ pilot: f.pilot, date: f.date })}
+                />
+              </td>
               <td>{f.date}</td>
-              <td>{#if f.manual}{f.pilot}{:else}<a href={replayHref([f.id])}>{f.pilot}</a>{/if}</td>
+              <td>
+                {#if f.manual}{f.pilot}{:else}<a href={replayHref([f.id])}>{f.pilot}</a>{/if}
+              </td>
               <td class="muted hide">{f.site ?? '–'}</td>
               <td class="muted hide">{f.glider ?? '–'}</td>
               <td class="num">{dur(f)}</td>
               <td class="num hide">{f.trackKm === undefined ? '–' : formatDistance(f.trackKm * 1000, u)}</td>
               <td class="num hide">{f.maxAlt === undefined ? '–' : formatAlt(f.maxAlt, u)}</td>
               <td class="hide">{f.manual ? '–' : !(f.id in xc) ? '…' : xc[f.id] ? TYPES[xc[f.id]!.type]() : '–'}</td>
-              <td class="num hide">{f.manual ? '–' : !(f.id in xc) ? '…' : xc[f.id] ? formatNumber(xc[f.id]!.points, 2) : '–'}</td>
-              <td title={f.notes}>{#if f.notes}<span aria-label={m.logbook_has_notes()}>✎</span>{/if}</td>
+              <td class="num hide">
+                {f.manual ? '–' : !(f.id in xc) ? '…' : xc[f.id] ? formatNumber(xc[f.id]!.points, 2) : '–'}
+              </td>
+              <td title={f.notes}>
+                {#if f.notes}<span aria-label={m.logbook_has_notes()}>✎</span>{/if}
+              </td>
               <td class="actions">
-                <button onclick={() => edit(f)} aria-label={m.logbook_edit_aria({ pilot: f.pilot, date: f.date })}>{m.common_edit()}</button>
-                <button onclick={() => remove(f)} aria-label={m.logbook_delete_aria({ pilot: f.pilot, date: f.date })}>✕</button>
+                <button onclick={() => edit(f)} aria-label={m.logbook_edit_aria({ pilot: f.pilot, date: f.date })}>
+                  {m.common_edit()}
+                </button>
+                <button onclick={() => remove(f)} aria-label={m.logbook_delete_aria({ pilot: f.pilot, date: f.date })}>
+                  ✕
+                </button>
               </td>
             </tr>
             {#if editing === f.id}
               <tr>
                 <td colspan="12">
-                  <form class="form" onsubmit={(e) => { e.preventDefault(); saveEdit(); }}>
+                  <form
+                    class="form"
+                    onsubmit={(e) => {
+                      e.preventDefault();
+                      saveEdit();
+                    }}
+                  >
                     <label>{m.export_row_pilot()} <input bind:value={draft.pilot} /></label>
                     <label>{m.export_row_site()} <input bind:value={draft.site} /></label>
                     <label>{m.export_row_glider()} <input bind:value={draft.glider} /></label>
-                    <label class="wide">{m.logbook_col_notes()} <textarea rows="2" bind:value={draft.notes}></textarea></label>
-                    <div class="actions"><button type="submit">{m.common_save()}</button><button type="button" onclick={() => (editing = null)}>{m.common_cancel()}</button></div>
+                    <label class="wide">
+                      {m.logbook_col_notes()} <textarea rows="2" bind:value={draft.notes}></textarea>
+                    </label>
+                    <div class="actions">
+                      <button type="submit">{m.common_save()}</button><button
+                        type="button"
+                        onclick={() => (editing = null)}
+                      >
+                        {m.common_cancel()}
+                      </button>
+                    </div>
                   </form>
                 </td>
               </tr>

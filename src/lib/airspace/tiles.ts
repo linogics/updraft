@@ -29,19 +29,23 @@ const tileY = (lat: number, z: number) => {
  * Airspaces of the tiles covering bbox [west, south, east, north].
  * shortcut: polygons stay clipped at tile edges and are not merged per source_id, merge when 3D needs whole shapes.
  */
-export async function loadAirspaces(bbox: [number, number, number, number], key: string, zoom = 9): Promise<AirspaceFeature[]> {
+export async function loadAirspaces(
+  bbox: [number, number, number, number],
+  key: string,
+  zoom = 9
+): Promise<AirspaceFeature[]> {
   const [w, s, e, n] = bbox;
   const jobs: Promise<AirspaceFeature[]>[] = [];
   for (let x = tileX(w, zoom); x <= tileX(e, zoom); x++) {
     for (let y = tileY(n, zoom); y <= tileY(s, zoom); y++) {
       jobs.push(
-        fetch(`${TILE_URL.replace('{z}', String(zoom)).replace('{x}', String(x)).replace('{y}', String(y))}?apiKey=${encodeURIComponent(key)}`).then(
-          async (r) => {
-            if (r.status === 404 || r.status === 204) return [];
-            if (!r.ok) throw new Error(`openAIP tile ${zoom}/${x}/${y}: HTTP ${r.status}`);
-            return decodeTile(await r.arrayBuffer(), x, y, zoom);
-          }
-        )
+        fetch(
+          `${TILE_URL.replace('{z}', String(zoom)).replace('{x}', String(x)).replace('{y}', String(y))}?apiKey=${encodeURIComponent(key)}`
+        ).then(async (r) => {
+          if (r.status === 404 || r.status === 204) return [];
+          if (!r.ok) throw new Error(`openAIP tile ${zoom}/${x}/${y}: HTTP ${r.status}`);
+          return decodeTile(await r.arrayBuffer(), x, y, zoom);
+        })
       );
     }
   }

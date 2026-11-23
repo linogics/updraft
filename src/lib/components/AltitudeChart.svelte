@@ -20,7 +20,9 @@
   let needsGround = $state(false);
   // Set by build(), read by the draw hooks.
   let agl = false;
-  let tooltip = $state<{ left: number; time: string; rows: { name: string; color: string; alt: string }[] } | null>(null);
+  let tooltip = $state<{ left: number; time: string; rows: { name: string; color: string; alt: string }[] } | null>(
+    null
+  );
 
   const INK = '#8b8599';
   const GRID = 'rgba(255,255,255,0.06)';
@@ -92,7 +94,13 @@
       if (t.kind !== 'glide') continue;
       for (const i of [t.start, t.end]) {
         ctx.beginPath();
-        ctx.arc(u.valToPos(fixes[i].t / 1000, 'x', true), u.valToPos(agl ? replay.aglAt(sel, i)! : fixes[i].alt, 'y', true), 4 * px, 0, 2 * Math.PI);
+        ctx.arc(
+          u.valToPos(fixes[i].t / 1000, 'x', true),
+          u.valToPos(agl ? replay.aglAt(sel, i)! : fixes[i].alt, 'y', true),
+          4 * px,
+          0,
+          2 * Math.PI
+        );
         ctx.stroke();
         ctx.fill();
       }
@@ -107,7 +115,9 @@
     agl = altRefPrefs.ref === 'agl' && flights.every((f) => f.ground);
     needsGround = altRefPrefs.ref === 'agl' && !agl;
     const { x, series } = resampleAltitudes(
-      flights.map((f) => (agl ? f.flight.fixes.map((fix, i) => ({ ...fix, alt: replay.aglAt(f, i)! })) : f.flight.fixes)),
+      flights.map((f) =>
+        agl ? f.flight.fixes.map((fix, i) => ({ ...fix, alt: replay.aglAt(f, i)! })) : f.flight.fixes
+      ),
       2
     );
     const selectedId = replay.selected?.flight.id;
@@ -183,7 +193,9 @@
   }
 
   onMount(() => {
-    const resize = new ResizeObserver(() => plot?.setSize({ width: container.clientWidth, height: container.clientHeight }));
+    const resize = new ResizeObserver(() =>
+      plot?.setSize({ width: container.clientWidth, height: container.clientHeight })
+    );
     resize.observe(container);
     return () => {
       resize.disconnect();
@@ -216,7 +228,12 @@
 <div class="chart" bind:this={container}>
   {#if needsGround}<div class="note">{m.chart_agl_needs_ground()}</div>{/if}
   {#if plot && cursorX !== null}
-    <div class="now" style:left="{plot.over.offsetLeft + cursorX}px" style:top="{plot.over.offsetTop}px" style:height="{plot.over.clientHeight}px"></div>
+    <div
+      class="now"
+      style:left="{plot.over.offsetLeft + cursorX}px"
+      style:top="{plot.over.offsetTop}px"
+      style:height="{plot.over.clientHeight}px"
+    ></div>
   {/if}
   {#if plot && tooltip}
     <div class="tip" style:left="{plot.over.offsetLeft + tooltip.left + 12}px">

@@ -126,7 +126,13 @@ describe('manual entries, meta and backup', () => {
 
   it('computes maxAlt and trackKm', async () => {
     const repo = fresh();
-    await repo.save({ ...flight('a'), fixes: [{ t: 0, lat: 47, lon: 11, alt: 900 }, { t: 1000, lat: 47.01, lon: 11, alt: 1200 }] });
+    await repo.save({
+      ...flight('a'),
+      fixes: [
+        { t: 0, lat: 47, lon: 11, alt: 900 },
+        { t: 1000, lat: 47.01, lon: 11, alt: 1200 }
+      ]
+    });
     const [s] = await repo.list();
     expect(s.maxAlt).toBe(1200);
     expect(s.trackKm).toBeGreaterThan(1);

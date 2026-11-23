@@ -39,6 +39,8 @@
   }
 
   function downloadAll() {
+    // Local duplicate counter for file names, not reactive state.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const seen = new Map<string, number>();
     const enc = new TextEncoder();
     const files = ok.map((r) => {
@@ -96,7 +98,11 @@
   {#if rows.length}
     <table>
       <thead>
-        <tr><th>{m.convert_col_file()}</th><th>{m.convert_col_format()}</th><th>{m.convert_col_fixes()}</th><th>{m.export_row_date()}</th><th></th></tr>
+        <tr>
+          <th>{m.convert_col_file()}</th><th>{m.convert_col_format()}</th><th>{m.convert_col_fixes()}</th><th>
+            {m.export_row_date()}
+          </th><th></th>
+        </tr>
       </thead>
       <tbody>
         {#each rows as r, i (i)}

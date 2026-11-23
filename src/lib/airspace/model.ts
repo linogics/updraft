@@ -48,7 +48,11 @@ export type AirspaceProps = Record<string, unknown>;
 export function airspaceLabel(p: AirspaceProps, units: Units): string {
   const lim = (side: 'lower' | 'upper') =>
     formatLimit(
-      limitOf(Number(p[`${side}_limit_value`]) || 0, String(p[`${side}_limit_unit`]), String(p[`${side}_limit_reference_datum`])),
+      limitOf(
+        Number(p[`${side}_limit_value`]) || 0,
+        String(p[`${side}_limit_unit`]),
+        String(p[`${side}_limit_reference_datum`])
+      ),
       units
     );
   const cls = classOf(p.icao_class);
@@ -62,7 +66,11 @@ export function airspaceLabel(p: AirspaceProps, units: Units): string {
 
 /** Same rule as the 2D filter: class shown and floor not above the limit. GND floors count as 0. */
 export function isVisible(p: AirspaceProps, prefs: { classes: AirspaceClass[]; maxFloor: number }): boolean {
-  const lower = limitOf(Number(p.lower_limit_value) || 0, String(p.lower_limit_unit), String(p.lower_limit_reference_datum));
+  const lower = limitOf(
+    Number(p.lower_limit_value) || 0,
+    String(p.lower_limit_unit),
+    String(p.lower_limit_reference_datum)
+  );
   return prefs.classes.includes(classOf(p.icao_class)) && (lower.ref === 'GND' ? 0 : lower.value) <= prefs.maxFloor;
 }
 
@@ -72,7 +80,11 @@ export function isVisible(p: AirspaceProps, prefs: { classes: AirspaceClass[]; m
  */
 export function volumeHeights(p: AirspaceProps, exaggeration: number): { floor: number; ceiling: number } {
   const h = (side: 'lower' | 'upper') => {
-    const l = limitOf(Number(p[`${side}_limit_value`]) || 0, String(p[`${side}_limit_unit`]), String(p[`${side}_limit_reference_datum`]));
+    const l = limitOf(
+      Number(p[`${side}_limit_value`]) || 0,
+      String(p[`${side}_limit_unit`]),
+      String(p[`${side}_limit_reference_datum`])
+    );
     return (l.ref === 'GND' && side === 'lower' ? 0 : l.value) * exaggeration;
   };
   return { floor: h('lower'), ceiling: h('upper') };

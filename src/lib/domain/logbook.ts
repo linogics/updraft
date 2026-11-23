@@ -1,5 +1,5 @@
 import { m } from '../paraglide/messages';
- 
+
 interface Logged {
   id?: string;
   date: string;
@@ -45,7 +45,11 @@ export interface BreakdownRow {
 }
 
 /** Flights grouped by year, site or glider. Years sort newest first, the rest by hours. */
-export function breakdown(flights: Logged[], key: 'year' | 'site' | 'glider', points: Record<string, number> = {}): BreakdownRow[] {
+export function breakdown(
+  flights: Logged[],
+  key: 'year' | 'site' | 'glider',
+  points: Record<string, number> = {}
+): BreakdownRow[] {
   const rows = new Map<string, BreakdownRow>();
   for (const f of flights) {
     const label = key === 'year' ? f.date.slice(0, 4) : (f[key] ?? '') || m.common_unknown();
@@ -68,5 +72,8 @@ export function yearlyHours(flights: Logged[]): { year: string; hours: number }[
   const byYear = new Map(breakdown(flights, 'year').map((r) => [Number(r.label), r.hours]));
   const years = [...byYear.keys()];
   const first = Math.min(...years);
-  return Array.from({ length: Math.max(...years) - first + 1 }, (_, i) => ({ year: String(first + i), hours: byYear.get(first + i) ?? 0 }));
+  return Array.from({ length: Math.max(...years) - first + 1 }, (_, i) => ({
+    year: String(first + i),
+    hours: byYear.get(first + i) ?? 0
+  }));
 }

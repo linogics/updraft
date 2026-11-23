@@ -45,6 +45,8 @@
   }
 
   function syncUrl() {
+    // Local query builder, not reactive state.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const q = new URLSearchParams();
     if (points.length) q.set('r', encodeRoute(points));
     if (speed !== DEFAULT_SPEED) q.set('v', String(speed));
@@ -107,7 +109,15 @@
 <div class="page">
   <div class="mapbox">
     {#if mounted}
-      <PlanMap {points} {selected} {basemap} onadd={add} onmove={move} oninsert={insert} onselect={(i) => (selected = i)} />
+      <PlanMap
+        {points}
+        {selected}
+        {basemap}
+        onadd={add}
+        onmove={move}
+        oninsert={insert}
+        onselect={(i) => (selected = i)}
+      />
     {/if}
   </div>
 
@@ -169,7 +179,9 @@
       {:else if score}
         <p>
           <strong>{m.plan_points({ points: Math.round(score.points) })}</strong>
-          <span class="muted">{XC_TYPE_LABELS[score.type]()}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}</span>
+          <span class="muted">
+            {XC_TYPE_LABELS[score.type]()}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}
+          </span>
         </p>
       {:else}
         <p class="muted">–</p>
@@ -181,7 +193,9 @@
         <h2>{m.plan_legs()}</h2>
         <ol>
           {#each legs as d, i (i)}
-            <li><span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span></li>
+            <li>
+              <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span>
+            </li>
           {/each}
         </ol>
       </section>
