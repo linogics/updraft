@@ -50,11 +50,9 @@ function report(name: string, values: Record<string, number>) {
   );
 }
 
-/** Times the import in two parts: parse and store (until the app marks it done), then replay page startup. */
+/** Times the import from marks set by importFlights: parse and store, then replay page startup. File upload by the test is left out. */
 async function importBig(page: Page) {
   await page.goto('/');
-  await page.evaluate(() => performance.mark('perf:drop'));
-  const t0 = Date.now();
   await page.locator('input[type=file]').setInputFiles({
     name: 'long.igc',
     mimeType: 'text/plain',
@@ -62,10 +60,12 @@ async function importBig(page: Page) {
   });
   await page.waitForURL(/\/replay\?/);
   await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 60_000 });
-  const total = Date.now() - t0;
-  // Client-side navigation keeps the document, so marks from the home page are still there.
-  const saved = await page.evaluate(() => performance.measure('perf:saved', 'perf:drop', 'updraft:imported').duration);
-  return { saved, replay: total - saved };
+  // Client-side navigation keeps the document, so the marks set by importFlights are still there.
+  return page.evaluate(() => {
+    const [start] = performance.getEntriesByName('updraft:import-start');
+    const [end] = performance.getEntriesByName('updraft:imported');
+    return { saved: end.startTime - start.startTime, replay: performance.now() - end.startTime };
+  });
 }
 
 // Replay startup is mostly fixed cost (Cesium bundle, viewer, shaders), so it gets its own budget.
