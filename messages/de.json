@@ -124,6 +124,7 @@
   "drop_here": "Flugdateien hier ablegen",
   "drop_hint": "IGC, GPX, KML, FIT, TRK oder GeoJSON. Mehrere Dateien vom selben Tag werden gemeinsam abgespielt.",
   "drop_processing": "Verarbeitung…",
+  "drop_privacy": "Dateien werden auf diesem Gerät gelesen. Nichts wird hochgeladen.",
   "export_aspect": "Seitenverhältnis",
   "export_aspect_preset": "Seitenverhältnis-Vorgabe",
   "export_audio_file": "Audiodatei",

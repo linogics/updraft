@@ -124,6 +124,7 @@
   "drop_here": "Déposez vos fichiers de vol ici",
   "drop_hint": "IGC, GPX, KML, FIT, TRK ou GeoJSON. Plusieurs fichiers du même jour sont rejoués ensemble.",
   "drop_processing": "Traitement…",
+  "drop_privacy": "Les fichiers sont lus sur cet appareil. Rien n'est envoyé.",
   "export_aspect": "Format",
   "export_aspect_preset": "Préréglage de format",
   "export_audio_file": "Fichier audio",

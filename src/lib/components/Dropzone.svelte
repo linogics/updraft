@@ -40,6 +40,7 @@
   />
   <strong>{busy ? m.drop_processing() : m.drop_here()}</strong>
   <span>{hint}</span>
+  <small>{m.drop_privacy()}</small>
 </label>
 
 <style>
@@ -77,5 +78,9 @@
   span {
     color: var(--muted);
     font-size: 13px;
+  }
+  small {
+    color: var(--muted);
+    font-size: 12px;
   }
 </style>
