@@ -3,6 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 // UI tests run against the production build, like the deployed static site.
 export default defineConfig({
   testDir: 'e2e',
+  // Timing runs only via `npm run bench:ui`.
+  testIgnore: process.env.PERF ? undefined : /perf\.spec\.ts/,
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: 'http://localhost:4173', trace: 'retain-on-failure' },
