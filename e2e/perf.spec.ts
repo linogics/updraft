@@ -43,7 +43,11 @@ const longTasks = (page: Page) =>
   });
 
 function report(name: string, values: Record<string, number>) {
-  console.log(`${name}: ${Object.entries(values).map(([k, v]) => `${k}=${Math.round(v)}`).join(' ')}`);
+  console.log(
+    `${name}: ${Object.entries(values)
+      .map(([k, v]) => `${k}=${Math.round(v)}`)
+      .join(' ')}`
+  );
 }
 
 async function importBig(page: Page) {
@@ -129,11 +133,15 @@ test('logbook with 300 flights', async ({ page }) => {
   const backup = { app: 'updraft', version: 1, exportedAt: '', flights, manual: [], cameraPaths: [], prefs: {} };
 
   await page.goto('/logbook');
-  await page.getByText('Import backup').locator('..').locator('input[type=file]').setInputFiles({
-    name: 'perf.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(JSON.stringify(backup))
-  });
+  await page
+    .getByText('Import backup')
+    .locator('..')
+    .locator('input[type=file]')
+    .setInputFiles({
+      name: 'perf.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(backup))
+    });
   const r0 = Date.now();
   await page.getByRole('button', { name: 'Merge with this browser' }).click();
   await expect(page.getByText(/Restored 300 flights/)).toBeVisible({ timeout: 120_000 });
