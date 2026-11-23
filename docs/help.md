@@ -2,7 +2,7 @@
 
 How to use updraft. A list of all features is in [features.md](features.md).
 
-updraft runs fully in your browser. There is no account. Your flights and settings stay in this browser until you delete them or clear the site data.
+updraft runs fully in your browser. There is no account. Your flights and settings stay in this browser until you delete them or clear the site data. See [Privacy](#privacy).
 
 ## Getting started
 
@@ -169,6 +169,23 @@ Airspace limits are approximate. Flight levels and AGL ceilings are treated as M
 - Once loaded, the logbook, converter and stored flights work offline. Maps, terrain and the 3D view need the network.
 - When a new version is out, a banner offers to reload.
 - On Chromium the installed app can open track files from the desktop.
+
+## Privacy
+
+- updraft runs fully in your browser on your device. There is no server that stores your data.
+- Flight files are read and analysed on your device. They are never uploaded.
+- Flights, settings and API keys are kept in this browser only (IndexedDB and local storage).
+- There is no account, no tracking and no analytics.
+- Backups and exports are files you save yourself.
+
+The map needs tiles from public servers. These servers see your IP address and the map area you look at, never your flight track:
+
+- Satellite imagery: Esri (ArcGIS Online)
+- Street map: OpenStreetMap
+- Terrain heights: AWS open data (Terrarium tiles)
+- Airspaces: OpenAIP
+- Thermal hotspots: thermal.kk7.ch
+- 3D terrain and imagery: Cesium ion, only if you add an ion token
 
 ## Troubleshooting
 

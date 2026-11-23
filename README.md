@@ -10,7 +10,7 @@ Live at https://updraft.linogics.io
 - **Flight analysis and XC score**: thermals, glides and flight stats, scored for XContest, FFVL, FAI or UK XC League.
 - **Video export and route planner**: render the replay as an MP4 or PNG with overlays, draw and share XC routes with thermal hotspots and airspaces.
 - **Logbook and backup**: totals and breakdowns, flights without a track, one-file backup of everything.
-- **Local-first, no account**: flights stay in your browser. Imports IGC, GPX, KML, FIT, TRK and GeoJSON. Installable as an app, in English, German and French.
+- **Local-first, no account**: runs fully in your browser. Flights and settings never leave your device, no tracking or analytics. Map tiles load from public tile servers, see [Privacy](docs/help.md#privacy). Imports IGC, GPX, KML, FIT, TRK and GeoJSON. Installable as an app, in English, German and French.
 
 All features are listed in [docs/features.md](docs/features.md). How to use the app is described in [docs/help.md](docs/help.md).
 

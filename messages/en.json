@@ -124,6 +124,7 @@
   "drop_here": "Drop flight files here",
   "drop_hint": "IGC, GPX, KML, FIT, TRK or GeoJSON. Several files from the same day are replayed together.",
   "drop_processing": "Processing…",
+  "drop_privacy": "Files are read on this device. Nothing is uploaded.",
   "export_aspect": "Aspect",
   "export_aspect_preset": "Aspect preset",
   "export_audio_file": "Audio file",
