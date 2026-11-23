@@ -15,13 +15,17 @@ const mix = (a: Vec, b: Vec, wa: number, wb: number): Vec => [
   a[2] * wa + b[2] * wb
 ];
 
-/** Barry-Goldman evaluation of a centripetal Catmull-Rom segment p1..p2 at u in 0..1. */
-function catmullRom(p: [Vec, Vec, Vec, Vec], u: number): Vec {
-  // Knots come from planar lat/lon distance only, fine at these scales.
-  const k = [0];
+/** Centripetal knots of the four control points. Planar lat/lon distance only, fine at these scales. */
+function knots(p: [Vec, Vec, Vec, Vec]): [number, number, number, number] {
+  const k: [number, number, number, number] = [0, 0, 0, 0];
   for (let i = 1; i < 4; i++) {
-    k.push(k[i - 1] + Math.max(Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) ** ALPHA, 1e-9));
+    k[i] = k[i - 1] + Math.max(Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) ** ALPHA, 1e-9);
   }
+  return k;
+}
+
+/** Barry-Goldman evaluation of a centripetal Catmull-Rom segment p1..p2 at u in 0..1. */
+function catmullRom(p: [Vec, Vec, Vec, Vec], k: [number, number, number, number], u: number): Vec {
   const t = k[1] + u * (k[2] - k[1]);
   const lerp = (a: Vec, b: Vec, ka: number, kb: number) => mix(a, b, (kb - t) / (kb - ka), (t - ka) / (kb - ka));
   const a1 = lerp(p[0], p[1], k[0], k[1]);
@@ -67,8 +71,9 @@ export function smoothPath(fixes: Fix[], perSegment = 3): SmoothPath {
       vec(i + 1),
       ctrl(i + 2, fixes.length - 1, fixes.length - 2)
     ];
+    const k = knots(seg);
     for (let j = 1; j <= perSegment; j++) {
-      const [lat, lon, alt] = catmullRom(seg, j / (perSegment + 1));
+      const [lat, lon, alt] = catmullRom(seg, k, j / (perSegment + 1));
       points.push({ lat, lon, alt });
       source.push(i);
     }
