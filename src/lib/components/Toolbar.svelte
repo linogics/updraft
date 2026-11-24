@@ -3,7 +3,7 @@
   import { BASEMAP_IDS, CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
   import { BASEMAPS } from '#lib/map/basemaps';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import Logo from './Logo.svelte';
   import ExportImage from './ExportImage.svelte';
   import ExportVideo from './ExportVideo.svelte';
@@ -13,7 +13,7 @@
   import UnitsMenu from './UnitsMenu.svelte';
   import ViewMenu from './ViewMenu.svelte';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   const LAYOUT_LABELS = { '3d': () => '3D', '2d': () => '2D', split: () => m.layout_split() } as const;
   const CAMERA_LABELS = {
@@ -50,36 +50,36 @@
 
   <div class="group" role="group" aria-label={m.toolbar_layout()}>
     {#each LAYOUTS as l (l)}
-      <button class:active={replay.layout === l} onclick={() => (replay.layout = l)}>{LAYOUT_LABELS[l]()}</button>
+      <button class:active={studio.layout === l} onclick={() => (studio.layout = l)}>{LAYOUT_LABELS[l]()}</button>
     {/each}
   </div>
 
   <div class="group" role="group" aria-label={m.toolbar_camera()}>
     {#each CAMERA_MODES as c (c)}
-      <button class:active={replay.camera === c} onclick={() => (replay.camera = c)}>{CAMERA_LABELS[c]()}</button>
+      <button class:active={studio.camera === c} onclick={() => (studio.camera = c)}>{CAMERA_LABELS[c]()}</button>
     {/each}
   </div>
 
-  <TrackMenu {replay} />
-  <ViewMenu {replay} />
+  <TrackMenu {studio} />
+  <ViewMenu {studio} />
 
   <Popover label={m.export_menu()}>
-    <ExportImage {replay} />
-    <ExportVideo {replay} />
+    <ExportImage {studio} />
+    <ExportVideo {studio} />
   </Popover>
 
   <label>
     {m.toolbar_map()}
-    <select bind:value={replay.basemap}>
+    <select bind:value={studio.basemap}>
       {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
     </select>
   </label>
 
-  <label title={replay.ionAvailable ? undefined : m.toolbar_ion_hint()}>
+  <label title={studio.ionAvailable ? undefined : m.toolbar_ion_hint()}>
     {m.toolbar_terrain()}
-    <select bind:value={replay.terrain}>
-      <option value="ion" disabled={!replay.ionAvailable}>
-        {replay.ionAvailable ? m.toolbar_terrain_ion() : m.toolbar_terrain_ion_locked()}
+    <select bind:value={studio.terrain}>
+      <option value="ion" disabled={!studio.ionAvailable}>
+        {studio.ionAvailable ? m.toolbar_terrain_ion() : m.toolbar_terrain_ion_locked()}
       </option>
       <option value="terrarium">{m.toolbar_terrain_aws()}</option>
       <option value="none">{m.toolbar_terrain_flat()}</option>

@@ -23,11 +23,11 @@
   import { positionAt } from '#lib/domain/timeline';
   import { ring } from '#lib/xc/ring';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { varioColor } from '#lib/ui/colors';
   import { colorRuns, trackColorAt } from '#lib/ui/trackColors';
 
-  let { replay, follow = false }: { replay: ReplayState; follow?: boolean } = $props();
+  let { studio, follow = false }: { studio: StudioState; follow?: boolean } = $props();
 
   /** Topo is already shaded and satellite shows real relief; hillshade only helps the flat OSM map. */
   const shaded = (id: BasemapId) => id === 'osm';
@@ -67,13 +67,13 @@
     return {
       type: 'FeatureCollection',
       // One line per colour run, so the 2D track follows the colour mode like the 3D one.
-      features: replay.flights
+      features: studio.flights
         .filter((f) => f.visible)
         .flatMap((f) => {
           const { fixes } = f.flight;
-          const selected = f.flight.id === replay.selected?.flight.id;
-          const path = smoothPath(fixes, replay.smoothTrack ? 3 : 0);
-          return colorRuns(fixes.length, trackColorAt(f, replay.colorBy, true)).map((run) => ({
+          const selected = f.flight.id === studio.selected?.flight.id;
+          const path = smoothPath(fixes, studio.smoothTrack ? 3 : 0);
+          return colorRuns(fixes.length, trackColorAt(f, studio.colorBy, true)).map((run) => ({
             type: 'Feature' as const,
             properties: { color: run.color, selected },
             geometry: {
@@ -88,7 +88,7 @@
   function pilotData(t: number): FeatureCollection {
     return {
       type: 'FeatureCollection',
-      features: replay.flights
+      features: studio.flights
         .filter((f) => f.visible)
         .map((f) => {
           const p = positionAt(f.flight.fixes, t);
@@ -102,7 +102,7 @@
   }
 
   function thermalData(): FeatureCollection {
-    const sel = replay.selected;
+    const sel = studio.selected;
     return {
       type: 'FeatureCollection',
       features: (sel?.climbs.thermals ?? []).map((t) => ({
@@ -114,7 +114,7 @@
   }
 
   function xcData(): FeatureCollection {
-    const xc = replay.selected?.xc;
+    const xc = studio.selected?.xc;
     const coords = (pts: { lat: number; lon: number }[]) => pts.map((p) => [p.lon, p.lat]);
     const lines = xc ? [xc.turnpoints, ...(xc.closing ? [ring(xc.closing.center, xc.closing.radius)] : [])] : [];
     return {
@@ -156,11 +156,11 @@
   onMount(() => {
     maplibregl.setWorkerUrl(maplibreWorkerUrl);
     const bounds = new maplibregl.LngLatBounds();
-    for (const f of replay.flights) for (const x of f.flight.fixes) bounds.extend([x.lon, x.lat]);
+    for (const f of studio.flights) for (const x of f.flight.fixes) bounds.extend([x.lon, x.lat]);
 
     map = new maplibregl.Map({
       container,
-      style: baseStyle(replay.basemap),
+      style: baseStyle(studio.basemap),
       bounds: bounds.isEmpty() ? undefined : bounds,
       fitBoundsOptions: { padding: 30 },
       attributionControl: { compact: true }
@@ -169,7 +169,7 @@
 
     m.on('load', () => {
       m.addSource('tracks', { type: 'geojson', data: trackData() });
-      m.addSource('pilots', { type: 'geojson', data: pilotData(replay.time) });
+      m.addSource('pilots', { type: 'geojson', data: pilotData(studio.time) });
       m.addSource('thermals', { type: 'geojson', data: thermalData() });
       const round = { 'line-join': 'round', 'line-cap': 'round' } as const;
       m.addLayer({
@@ -192,7 +192,7 @@
         layout: round,
         paint: { 'line-color': ['get', 'color'], 'line-opacity': 0.9 }
       });
-      applyTrackStyle(m, replay.trackStyle, replay.trackWidth);
+      applyTrackStyle(m, studio.trackStyle, studio.trackWidth);
       m.addLayer({
         id: 'thermals',
         type: 'circle',
@@ -245,7 +245,7 @@
 
     // Click near the selected track to jump there in time.
     m.on('click', (e) => {
-      const sel = replay.selected;
+      const sel = studio.selected;
       if (!sel) return;
       const click = { lat: e.lngLat.lat, lon: e.lngLat.lng };
       let best = 0;
@@ -255,7 +255,7 @@
         if (d < bestDist) [best, bestDist] = [i, d];
       });
       const pxPerMetre = 1 / ((156543 * Math.cos((click.lat * Math.PI) / 180)) / 2 ** m.getZoom());
-      if (bestDist * pxPerMetre < 20) replay.seek(sel.flight.fixes[best].t);
+      if (bestDist * pxPerMetre < 20) studio.seek(sel.flight.fixes[best].t);
     });
 
     const resize = new ResizeObserver(() => m.resize());
@@ -267,18 +267,18 @@
   });
 
   $effect(() => {
-    const t = replay.time;
+    const t = studio.time;
     if (!ready || !map) return;
     (map.getSource('pilots') as GeoJSONSource).setData(pilotData(t));
-    const sel = replay.selected;
-    if (follow && sel && replay.camera !== 'free') {
+    const sel = studio.selected;
+    if (follow && sel && studio.camera !== 'free') {
       const p = positionAt(sel.flight.fixes, t);
       map.setCenter([p.lon, p.lat]);
     }
   });
 
   $effect(() => {
-    const { trackStyle, trackWidth } = replay;
+    const { trackStyle, trackWidth } = studio;
     if (!ready || !map) return;
     applyTrackStyle(map, trackStyle, trackWidth);
   });
@@ -296,24 +296,24 @@
   });
 
   $effect(() => {
-    const active = replay.basemap;
+    const active = studio.basemap;
     if (!ready || !map) return;
     for (const id of BASEMAP_IDS) map.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none');
     map.setLayoutProperty('hillshade', 'visibility', shaded(active) ? 'visible' : 'none');
   });
 
   $effect(() => {
-    void replay.flights;
-    void replay.selected;
-    void replay.colorBy;
-    void replay.smoothTrack;
+    void studio.flights;
+    void studio.selected;
+    void studio.colorBy;
+    void studio.smoothTrack;
     if (!ready || !map) return;
     (map.getSource('tracks') as GeoJSONSource).setData(trackData());
     (map.getSource('thermals') as GeoJSONSource).setData(thermalData());
   });
 
   $effect(() => {
-    void replay.selected?.xc;
+    void studio.selected?.xc;
     if (!ready || !map) return;
     (map.getSource('xc') as GeoJSONSource).setData(xcData());
   });

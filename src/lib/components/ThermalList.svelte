@@ -3,7 +3,7 @@
   import { transitionAlts, type Transition } from '#lib/domain/analysis/transitions';
   import { m } from '#lib/paraglide/messages';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { varioColor } from '#lib/ui/colors';
   import { formatClock, formatDuration, formatNumber } from '#lib/ui/format';
@@ -19,7 +19,7 @@
     UNIT_LABELS
   } from '#lib/ui/units';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   /** Slider ranges in SI units; display steps per unit keep the values round. */
   const MAX_GAIN = 1500;
@@ -34,24 +34,24 @@
   } as const;
 
   let tab = $state<'thermals' | 'transitions'>('thermals');
-  const sel = $derived(replay.selected);
+  const sel = $derived(studio.selected);
   const u = $derived(unitPrefs.units);
   const thermals = $derived(sel?.climbs.thermals ?? []);
   const transitions = $derived(sel?.climbs.transitions ?? []);
   const total = $derived(sel ? sel.analysis.thermals.filter((t) => t.gain > 0).length : 0);
-  const current = $derived(sel ? indexAt(sel.flight.fixes, replay.time) : -1);
+  const current = $derived(sel ? indexAt(sel.flight.fixes, studio.time) : -1);
 
   const agl = $derived(altRefPrefs.ref === 'agl');
   const alt = (t: Transition, end: 'start' | 'end') => {
-    const v = transitionAlts(t, agl && sel ? (i) => replay.aglAt(sel, i) : undefined)[end];
+    const v = transitionAlts(t, agl && sel ? (i) => studio.aglAt(sel, i) : undefined)[end];
     return v === undefined ? '–' : formatAlt(v, u);
   };
 
   const gainStep = $derived(GAIN_STEP[u.alt]);
   const climbStep = $derived(CLIMB_STEP[u.vario]);
   const snap = (v: number, step: number) => Math.round(v / step) * step;
-  const gain = $derived(snap(toAlt(replay.thermalFilter.minGain, u.alt), gainStep));
-  const climb = $derived(snap(toVario(replay.thermalFilter.minClimb, u.vario), climbStep));
+  const gain = $derived(snap(toAlt(studio.thermalFilter.minGain, u.alt), gainStep));
+  const climb = $derived(snap(toVario(studio.thermalFilter.minClimb, u.vario), climbStep));
 </script>
 
 {#if sel}
@@ -67,9 +67,9 @@
         step={gainStep}
         value={gain}
         oninput={(e) =>
-          replay.setThermalFilter({ ...replay.thermalFilter, minGain: fromAlt(+e.currentTarget.value, u.alt) })}
+          studio.setThermalFilter({ ...studio.thermalFilter, minGain: fromAlt(+e.currentTarget.value, u.alt) })}
       />
-      <output for="min-gain">{gain ? formatAlt(replay.thermalFilter.minGain, u) : m.common_any()}</output>
+      <output for="min-gain">{gain ? formatAlt(studio.thermalFilter.minGain, u) : m.common_any()}</output>
       <label for="min-climb">{m.climbs_min_climb()}</label>
       <input
         id="min-climb"
@@ -79,7 +79,7 @@
         step={climbStep}
         value={climb}
         oninput={(e) =>
-          replay.setThermalFilter({ ...replay.thermalFilter, minClimb: fromVario(+e.currentTarget.value, u.vario) })}
+          studio.setThermalFilter({ ...studio.thermalFilter, minClimb: fromVario(+e.currentTarget.value, u.vario) })}
       />
       <output for="min-climb">
         {climb ? `${formatNumber(climb, 1, 0)} ${UNIT_LABELS.vario[u.vario]}` : m.common_any()}
@@ -100,7 +100,7 @@
       <ol>
         {#each transitions as t (t.start)}
           <li class:active={current >= t.start && current < t.end}>
-            <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
+            <button class="row" onclick={() => studio.seek(sel.flight.fixes[t.start].t)}>
               <span class="n" class:kind={t.kind !== 'glide'}>
                 {t.kind === 'glide' ? '↘' : t.kind === 'launch' ? '⇢' : '⇥'}
               </span>
@@ -137,7 +137,7 @@
       <ol>
         {#each thermals as t, i (t.start)}
           <li class:active={current >= t.start && current <= t.end}>
-            <button class="row" onclick={() => replay.seek(sel.flight.fixes[t.start].t)}>
+            <button class="row" onclick={() => studio.seek(sel.flight.fixes[t.start].t)}>
               <span class="n">
                 <span class="swatch" style="background: {varioColor(t.avgClimb)}" aria-hidden="true"></span>{i + 1}
               </span>

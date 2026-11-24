@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { routeFromFlight } from '#lib/domain/routeFromFlight';
   import { encodeRoute } from '#lib/domain/route';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { phaseColor } from '#lib/ui/colors';
   import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
   import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
@@ -14,17 +14,17 @@
   import { formatDuration, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   let turnpoints = $state(3);
   const makeRoute = () => {
-    const sel = replay.selected;
+    const sel = studio.selected;
     if (!sel) return;
     const n = Math.min(30, Math.max(1, Math.round(turnpoints) || 3));
     void goto(`/plan?r=${encodeURIComponent(encodeRoute(routeFromFlight(sel.flight.fixes, n)))}`);
   };
 
-  const stats = $derived(replay.selected?.analysis.stats);
+  const stats = $derived(studio.selected?.analysis.stats);
   const u = $derived(unitPrefs.units);
   const items = $derived(
     stats
@@ -42,7 +42,7 @@
       : []
   );
   const agl = $derived(altRefPrefs.ref === 'agl');
-  const summary = $derived(replay.selected && replay.transitionSummary(replay.selected, agl));
+  const summary = $derived(studio.selected && studio.transitionSummary(studio.selected, agl));
   const alt = (v: number | null) => (v == null ? '–' : formatAlt(v, u));
   const transitionItems = $derived(
     summary && summary.count
@@ -60,7 +60,7 @@
     gliding: () => m.phase_gliding(),
     searching: () => m.phase_searching()
   } as const;
-  const xc = $derived(replay.selected?.xc);
+  const xc = $derived(studio.selected?.xc);
   const xcItems = $derived(
     xc
       ? [
@@ -76,12 +76,12 @@
   );
 </script>
 
-{#if replay.selected}
+{#if studio.selected}
   <section>
     <h3>XC</h3>
     <select
       value={xcPrefs.league}
-      onchange={(e) => replay.setLeague(e.currentTarget.value as XcLeague)}
+      onchange={(e) => studio.setLeague(e.currentTarget.value as XcLeague)}
       aria-label={m.xc_league()}
     >
       {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
@@ -101,9 +101,9 @@
       <input type="number" min="1" max="30" bind:value={turnpoints} />
     </label>
     <button type="button" onclick={makeRoute}>{m.xc_open_planner()}</button>
-    {#if replay.flights.length > 1}
+    {#if studio.flights.length > 1}
       <ul class="xc-list">
-        {#each replay.flights as f (f.flight.id)}
+        {#each studio.flights as f (f.flight.id)}
           <li>
             <span class="dot" style:background={f.color}></span>
             <span class="xc-name">{f.flight.pilot}</span>

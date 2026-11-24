@@ -19,14 +19,14 @@
   import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
   import type { Flight } from '#lib/domain/model';
-  import { ReplayState } from '#lib/state/replay.svelte';
+  import { StudioState } from '#lib/state/studio.svelte';
   import { flightRepository } from '#lib/storage';
 
-  const replay = new ReplayState();
+  const studio = new StudioState();
   let error = $state('');
   let loaded = $state(false);
   let footerTab = $state<'altitude' | 'timeline'>('altitude');
-  let steps = $state<string[]>([m.replay_step_read_flights(), m.replay_step_thermals(), m.replay_step_camera()]);
+  let steps = $state<string[]>([m.studio_step_read_flights(), m.studio_step_thermals(), m.studio_step_camera()]);
   let step = $state(0);
   // Analysis runs synchronously, so let the browser paint the loader before each heavy step.
   let viewsWidth = $state(1);
@@ -36,66 +36,66 @@
 
   onMount(async () => {
     const scene = decodeScene(page.url.searchParams);
-    replay.camera = scene.camera;
-    replay.colorBy = scene.colorBy;
-    replay.layout = scene.layout;
-    replay.trackStyle = scene.trackStyle;
-    replay.trackWidth = scene.trackWidth;
-    replay.smoothTrack = scene.smoothTrack;
-    replay.exaggeration = scene.exaggeration;
-    replay.lighting = scene.lighting;
-    replay.labels = scene.labels;
-    replay.basemap = scene.basemap;
+    studio.camera = scene.camera;
+    studio.colorBy = scene.colorBy;
+    studio.layout = scene.layout;
+    studio.trackStyle = scene.trackStyle;
+    studio.trackWidth = scene.trackWidth;
+    studio.smoothTrack = scene.smoothTrack;
+    studio.exaggeration = scene.exaggeration;
+    studio.lighting = scene.lighting;
+    studio.labels = scene.labels;
+    studio.basemap = scene.basemap;
     const n = scene.flightIds.length;
-    steps[0] = n === 1 ? m.replay_step_read_one() : m.replay_step_read_many({ count: n });
+    steps[0] = n === 1 ? m.studio_step_read_one() : m.studio_step_read_many({ count: n });
     const { cesiumIonToken } = await loadRuntimeConfig();
-    replay.ionAvailable = !!cesiumIonToken;
-    replay.terrain = resolveTerrain(scene.terrain, replay.ionAvailable);
+    studio.ionAvailable = !!cesiumIonToken;
+    studio.terrain = resolveTerrain(scene.terrain, studio.ionAvailable);
 
     const flights = (await Promise.all(scene.flightIds.map((id) => flightRepository.get(id)))).filter(
       (f): f is Flight => !!f
     );
     if (!flights.length) {
-      error = m.replay_none_found();
+      error = m.studio_none_found();
       return;
     }
     step = 1;
     await paint();
-    replay.setFlights(flights, {
+    studio.setFlights(flights, {
       syncMode: scene.sync,
       nudges: scene.nudges,
       thermalFilter: scene.thermalFilter,
       colors: scene.colors
     });
     step = 2;
-    await replay.loadCameraTracks();
+    await studio.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
-    if (replay.multiDay) footerTab = 'timeline';
+    if (studio.multiDay) footerTab = 'timeline';
     loaded = true;
   });
 
-  onDestroy(() => replay.destroy());
+  onDestroy(() => studio.destroy());
 
   // Keep the URL in sync so a reload (and later a share link) restores the view.
   $effect(() => {
     if (!loaded) return;
     const query = encodeScene({
-      flightIds: replay.flights.map((f) => f.flight.id),
-      camera: replay.camera,
-      colorBy: replay.colorBy,
-      layout: replay.layout,
-      basemap: replay.basemap,
-      terrain: replay.terrain,
-      sync: replay.syncMode,
-      nudges: replay.nudges,
-      thermalFilter: replay.thermalFilter,
-      trackStyle: replay.trackStyle,
-      trackWidth: replay.trackWidth,
-      smoothTrack: replay.smoothTrack,
-      colors: replay.colorOverrides,
-      exaggeration: replay.exaggeration,
-      lighting: replay.lighting,
-      labels: replay.labels
+      flightIds: studio.flights.map((f) => f.flight.id),
+      camera: studio.camera,
+      colorBy: studio.colorBy,
+      layout: studio.layout,
+      basemap: studio.basemap,
+      terrain: studio.terrain,
+      sync: studio.syncMode,
+      nudges: studio.nudges,
+      thermalFilter: studio.thermalFilter,
+      trackStyle: studio.trackStyle,
+      trackWidth: studio.trackWidth,
+      smoothTrack: studio.smoothTrack,
+      colors: studio.colorOverrides,
+      exaggeration: studio.exaggeration,
+      lighting: studio.lighting,
+      labels: studio.labels
     });
     goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });
@@ -104,14 +104,14 @@
     if (!loaded || (e.target as HTMLElement).closest('input, select, textarea')) return;
     if (e.code === 'Space') {
       e.preventDefault();
-      replay.toggle();
-    } else if (e.code === 'ArrowRight') replay.seek(replay.time + 30_000);
-    else if (e.code === 'ArrowLeft') replay.seek(replay.time - 30_000);
+      studio.toggle();
+    } else if (e.code === 'ArrowRight') studio.seek(studio.time + 30_000);
+    else if (e.code === 'ArrowLeft') studio.seek(studio.time - 30_000);
   }
 </script>
 
 <svelte:head>
-  <title>{m.replay_title()}</title>
+  <title>{m.studio_title()}</title>
 </svelte:head>
 
 <svelte:window onkeydown={onKey} />
@@ -124,22 +124,22 @@
 {:else if loaded}
   <div
     class="app"
-    data-layout={replay.layout}
+    data-layout={studio.layout}
     style:--outliner="{panels.outlinerOpen ? panels.outliner : 0}px"
     style:--side="{panels.sideOpen ? panels.side : 0}px"
     style:--chart="{panels.footer}px"
     style:--split="{panels.split * 100}%"
   >
-    <header><Toolbar {replay} /></header>
+    <header><Toolbar {studio} /></header>
 
-    <nav class="outliner panel" hidden={!panels.outlinerOpen} aria-label={m.replay_outliner()}>
-      <PilotList {replay} />
-      <ThermalList {replay} />
+    <nav class="outliner panel" hidden={!panels.outlinerOpen} aria-label={m.studio_outliner()}>
+      <PilotList {studio} />
+      <ThermalList {studio} />
     </nav>
 
     <div class="outliner-handle">
       <Splitter
-        label={m.replay_outliner()}
+        label={m.studio_outliner()}
         axis="x"
         value={panels.outliner}
         min={L.outliner.min}
@@ -152,13 +152,13 @@
     </div>
 
     <div class="views panel" bind:clientWidth={viewsWidth}>
-      {#if replay.layout !== '2d'}
-        <div class="view3d"><CesiumView {replay} /></div>
+      {#if studio.layout !== '2d'}
+        <div class="view3d"><CesiumView {studio} /></div>
       {/if}
-      {#if replay.layout === 'split'}
+      {#if studio.layout === 'split'}
         <div class="split-handle">
           <Splitter
-            label={m.replay_split_label()}
+            label={m.studio_split_label()}
             axis="x"
             value={panels.split}
             min={L.split.min}
@@ -169,14 +169,14 @@
           />
         </div>
       {/if}
-      {#if replay.layout !== '3d'}
-        <div class="view2d"><MiniMap {replay} follow={replay.layout === '2d'} /></div>
+      {#if studio.layout !== '3d'}
+        <div class="view2d"><MiniMap {studio} follow={studio.layout === '2d'} /></div>
       {/if}
     </div>
 
     <div class="side-handle">
       <Splitter
-        label={m.replay_side_panel()}
+        label={m.studio_side_panel()}
         axis="x"
         sign={-1}
         value={panels.side}
@@ -190,12 +190,12 @@
     </div>
 
     <aside class="panel" hidden={!panels.sideOpen}>
-      <StatsPanel {replay} />
+      <StatsPanel {studio} />
     </aside>
 
     <div class="footer-handle">
       <Splitter
-        label={m.replay_bottom_panel()}
+        label={m.studio_bottom_panel()}
         axis="y"
         sign={-1}
         value={panels.footer}
@@ -210,18 +210,18 @@
 
     <footer class="panel">
       <div class="transport">
-        <PlayerBar {replay} />
+        <PlayerBar {studio} />
         <div class="tabs" role="tablist" hidden={!panels.footerOpen}>
           <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>
-            {m.replay_tab_altitude()}
+            {m.studio_tab_altitude()}
           </button>
           <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
-            {replay.multiDay ? m.replay_timeline_multi_day() : m.timeline_label()}
+            {studio.multiDay ? m.studio_timeline_multi_day() : m.timeline_label()}
           </button>
         </div>
       </div>
       <div class="chart" hidden={!panels.footerOpen}>
-        {#if footerTab === 'altitude'}<AltitudeChart {replay} />{:else}<Timeline {replay} />{/if}
+        {#if footerTab === 'altitude'}<AltitudeChart {studio} />{:else}<Timeline {studio} />{/if}
       </div>
     </footer>
   </div>

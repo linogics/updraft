@@ -17,11 +17,11 @@
   } from '#lib/domain/cameraPath';
   import { DENSITIES, directCamera, type Density } from '#lib/domain/director';
   import type { CameraEditor } from '#lib/state/cameraEditor.svelte';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { m } from '#lib/paraglide/messages';
   import { INTERP_INFO, PROP_LABEL, nextKeyTime, prevKeyTime } from '#lib/ui/keyLanes';
 
-  let { replay, editor }: { replay: ReplayState; editor: CameraEditor } = $props();
+  let { studio, editor }: { studio: StudioState; editor: CameraEditor } = $props();
 
   const DENSITY_LABELS: Record<Density, () => string> = {
     low: () => m.density_low(),
@@ -31,21 +31,21 @@
 
   let density = $state<Density>('low');
 
-  const active = $derived(replay.camera === 'keys');
+  const active = $derived(studio.camera === 'keys');
 
   /** Headings read within one turn, the others as whole numbers. */
   const shown = (prop: CameraProp, v: number) =>
     prop === 'heading' ? ((Math.round(v) % 360) + 360) % 360 : Math.round(v);
 
   function auto() {
-    const sel = replay.selected;
+    const sel = studio.selected;
     if (!sel) return;
     const next = directCamera(
       sel.flight,
       sel.analysis.phases,
       {
-        inMs: replay.exportIn ?? replay.start,
-        outMs: replay.exportOut ?? replay.end
+        inMs: studio.exportIn ?? studio.start,
+        outMs: studio.exportOut ?? studio.end
       },
       density
     );
@@ -53,53 +53,53 @@
       editor.message = m.camera_range_empty();
       return;
     }
-    if (hasKeys(replay.cameraTracks) && !confirm(m.camera_confirm_replace())) return;
-    replay.editCamera(next);
+    if (hasKeys(studio.cameraTracks) && !confirm(m.camera_confirm_replace())) return;
+    studio.editCamera(next);
     editor.message = m.camera_made_shots({ count: next.heading.keys.length });
   }
 
   function capture() {
-    const view = replay.captureCameraView?.();
+    const view = studio.captureCameraView?.();
     if (!view) {
       editor.message = m.camera_no_pilot();
       return;
     }
-    replay.editCamera(captureView(replay.cameraTracks, view, replay.time));
+    studio.editCamera(captureView(studio.cameraTracks, view, studio.time));
   }
 
   function clear() {
-    if (hasKeys(replay.cameraTracks) && confirm(m.camera_confirm_clear())) {
-      replay.editCamera(clearKeys(replay.cameraTracks, replay.time));
+    if (hasKeys(studio.cameraTracks) && confirm(m.camera_confirm_clear())) {
+      studio.editCamera(clearKeys(studio.cameraTracks, studio.time));
       editor.clear();
     }
   }
 
   function toggleAnimated(prop: CameraProp) {
-    const track = replay.cameraTracks[prop];
-    const t = replay.time;
+    const track = studio.cameraTracks[prop];
+    const t = studio.time;
     const next = setAnimated(track, !track.animated, t, valueAt(track, t, prop));
-    replay.editCamera(setTrack(replay.cameraTracks, prop, next));
+    studio.editCamera(setTrack(studio.cameraTracks, prop, next));
   }
 
   /** Value field: a key at the playhead when animated, the constant otherwise. */
   function setFromField(prop: CameraProp, e: Event) {
     const n = (e.currentTarget as HTMLInputElement).valueAsNumber;
     if (!Number.isFinite(n)) return;
-    const track = replay.cameraTracks[prop];
-    replay.editCamera(setTrack(replay.cameraTracks, prop, setValueAt(track, prop, replay.time, n)));
+    const track = studio.cameraTracks[prop];
+    studio.editCamera(setTrack(studio.cameraTracks, prop, setValueAt(track, prop, studio.time, n)));
   }
 
   /** Diamond button: adds a key at the playhead, or removes the one there. */
   function togglePlayheadKey(prop: CameraProp) {
-    const track = replay.cameraTracks[prop];
-    const t = replay.time;
+    const track = studio.cameraTracks[prop];
+    const t = studio.time;
     let next: PropTrack;
     if (!track.animated) next = setAnimated(track, true, t, valueAt(track, t, prop));
     else {
       const at = keyAt(track, t);
       next = at ? removeKeys(track, new Set([at.t])) : setKey(track, prop, t, valueAt(track, t, prop));
     }
-    replay.editCamera(setTrack(replay.cameraTracks, prop, next));
+    studio.editCamera(setTrack(studio.cameraTracks, prop, next));
   }
 </script>
 
@@ -119,7 +119,7 @@
       <option value={d}>{DENSITY_LABELS[d]()}</option>
     {/each}
   </select>
-  <button onclick={capture} disabled={!replay.captureCameraView} title={m.camera_capture_title()}>
+  <button onclick={capture} disabled={!studio.captureCameraView} title={m.camera_capture_title()}>
     {m.camera_capture()}
   </button>
   <button onclick={clear} title={m.camera_clear_title()}>{m.camera_clear()}</button>
@@ -138,12 +138,12 @@
 
 {#if editor.expanded}
   {#each CAMERA_PROPS as prop (prop)}
-    {@const track = replay.cameraTracks[prop]}
+    {@const track = studio.cameraTracks[prop]}
     {@const label = PROP_LABEL[prop]()}
-    {@const v = valueAt(track, replay.time, prop)}
-    {@const atPlayhead = track.animated && !!keyAt(track, replay.time)}
-    {@const prev = prevKeyTime(track.keys, replay.time)}
-    {@const next = nextKeyTime(track.keys, replay.time)}
+    {@const v = valueAt(track, studio.time, prop)}
+    {@const atPlayhead = track.animated && !!keyAt(track, studio.time)}
+    {@const prev = prevKeyTime(track.keys, studio.time)}
+    {@const next = nextKeyTime(track.keys, studio.time)}
     <div class="cam-row lane" class:dim={!active}>
       <button
         class="stopwatch"
@@ -169,7 +169,7 @@
           aria-label={m.camera_prev_key_aria({ prop: label })}
           title={m.camera_prev_key()}
           disabled={prev === undefined}
-          onclick={() => replay.seek(prev!)}
+          onclick={() => studio.seek(prev!)}
         >
           ‹
         </button>
@@ -187,7 +187,7 @@
           aria-label={m.camera_next_key_aria({ prop: label })}
           title={m.camera_next_key()}
           disabled={next === undefined}
-          onclick={() => replay.seek(next!)}
+          onclick={() => studio.seek(next!)}
         >
           ›
         </button>

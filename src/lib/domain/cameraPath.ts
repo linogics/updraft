@@ -7,9 +7,9 @@ export type Interp = 'auto' | 'linear' | 'hold' | 'ease';
 export const INTERPS: readonly Interp[] = ['auto', 'linear', 'hold', 'ease'];
 const isInterp = (v: unknown): v is Interp => INTERPS.includes(v as Interp);
 
-/** A value at a replay time. interp shapes the segment that leaves this key. */
+/** A value at a playback time. interp shapes the segment that leaves this key. */
 export interface Key {
-  /** Replay time, Unix ms. */
+  /** Playback time, Unix ms. */
   t: number;
   /** Degrees for heading and pitch, metres for range. */
   v: number;
@@ -108,7 +108,7 @@ const catmullRom = (p0: number, p1: number, p2: number, p3: number, u: number) =
   0.5 * (2 * p1 + (p2 - p0) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
 
 /**
- * Value of one property at replay time t. Clamps before the first and after the last key.
+ * Value of one property at playback time t. Clamps before the first and after the last key.
  * The interp of the key before t shapes the segment. Output is clamped to the prop limits.
  */
 export function valueAt(track: PropTrack, t: number, prop: CameraProp): number {

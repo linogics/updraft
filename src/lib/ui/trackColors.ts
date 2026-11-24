@@ -1,5 +1,5 @@
 import type { ColorMode } from '#lib/domain/scene';
-import type { LoadedFlight } from '#lib/state/replay.svelte';
+import type { LoadedFlight } from '#lib/state/studio.svelte';
 import { phaseColor, varioColor } from './colors';
 
 /** A stretch of track in one colour, inclusive fix range (runs share their joint fix). */

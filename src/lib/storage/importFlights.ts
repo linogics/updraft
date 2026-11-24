@@ -24,10 +24,10 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
       // Persistence is only a hint, a failed request must not fail the import.
     }
   }
-  // Perf runs read this mark to time parse and store apart from replay startup.
+  // Perf runs read this mark to time parse and store apart from studio startup.
   performance.mark('updraft:imported');
   return { ids, errors };
 }
 
-/** Replay URL for a set of flights with the default scene. */
-export const replayHref = (ids: string[]) => `/replay?${encodeScene({ ...DEFAULT_SCENE, flightIds: ids })}`;
+/** Studio URL for a set of flights with the default scene. */
+export const studioHref = (ids: string[]) => `/studio?${encodeScene({ ...DEFAULT_SCENE, flightIds: ids })}`;

@@ -1,4 +1,4 @@
-// Serialisable replay scene. Lives in the URL today; becomes a shareable server-side scene later.
+// Serialisable studio scene. Lives in the URL today; becomes a shareable server-side scene later.
 
 import { DEFAULT_FILTER, type ThermalFilter } from './analysis/filter';
 import { SYNC_MODES, type SyncMode } from './sync';
@@ -41,7 +41,7 @@ export interface SceneConfig {
   colors: Record<string, string>;
   /** 3D height exaggeration of terrain and tracks. */
   exaggeration: number;
-  /** Sun lighting at the replay time in 3D. */
+  /** Sun lighting at the playback time in 3D. */
   lighting: boolean;
   /** Pilot name labels in 3D. */
   labels: boolean;

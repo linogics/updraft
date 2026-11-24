@@ -1,6 +1,6 @@
 import type { Fix } from './model';
 
-// Time alignment of several flights on one replay clock, e.g. flights from different days.
+// Time alignment of several flights on one playback clock, e.g. flights from different days.
 
 export const SYNC_MODES = ['real', 'timeOfDay', 'takeoff'] as const;
 export type SyncMode = (typeof SYNC_MODES)[number];

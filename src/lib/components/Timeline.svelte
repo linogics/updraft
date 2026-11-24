@@ -3,13 +3,13 @@
   import { snapStart, type SyncMode } from '#lib/domain/sync';
   import { m } from '#lib/paraglide/messages';
   import { CameraEditor } from '#lib/state/cameraEditor.svelte';
-  import type { LoadedFlight, ReplayState } from '#lib/state/replay.svelte';
+  import type { LoadedFlight, StudioState } from '#lib/state/studio.svelte';
   import { SNAP_PX } from '#lib/ui/keyLanes';
   import { formatClock, formatDuration } from '#lib/ui/format';
   import CameraLabels from './CameraLabels.svelte';
   import CameraLanes from './CameraLanes.svelte';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   const MIN_SPAN = 60_000;
   const MODES: { mode: SyncMode; label: () => string; title: () => string }[] = [
@@ -19,7 +19,7 @@
   ];
   const TICK_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440].map((m) => m * 60_000);
 
-  const editor = untrack(() => new CameraEditor(replay));
+  const editor = untrack(() => new CameraEditor(studio));
 
   let width = $state(0);
   /** Visible time window; null fits all flights. */
@@ -28,8 +28,8 @@
   let drag = $state<{ id: string; pointerX: number; origin: number; start: number; guide: number | null } | null>(null);
 
   const full = $derived.by(() => {
-    const pad = Math.max((replay.end - replay.start) * 0.03, 30_000);
-    return { a: replay.start - pad, b: replay.end + pad };
+    const pad = Math.max((studio.end - studio.start) * 0.03, 30_000);
+    return { a: studio.start - pad, b: studio.end + pad };
   });
   const view = $derived(zoom ?? full);
   const msPerPx = $derived(width > 0 ? (view.b - view.a) / width : 1);
@@ -64,7 +64,7 @@
   }
 
   const rows = $derived(
-    replay.flights.map((f) => ({
+    studio.flights.map((f) => ({
       f,
       path: sparkline(f),
       thermals: f.climbs.thermals.map(
@@ -85,7 +85,7 @@
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const start = f.flight.fixes[0].t;
     drag = { id: f.flight.id, pointerX: e.clientX, origin: start, start, guide: null };
-    replay.selectedId = f.flight.id;
+    studio.selectedId = f.flight.id;
   }
 
   function onClipMove(e: PointerEvent, f: LoadedFlight) {
@@ -95,8 +95,8 @@
       drag = { ...drag, start: candidate, guide: null };
       return;
     }
-    const targets = [replay.time];
-    for (const other of replay.flights) {
+    const targets = [studio.time];
+    for (const other of studio.flights) {
       if (other.flight.id === f.flight.id) continue;
       targets.push(other.flight.fixes[0].t, other.flight.fixes.at(-1)!.t);
     }
@@ -109,14 +109,14 @@
     const delta = Math.round(drag.start - drag.origin);
     drag = null;
     if (Math.abs(delta) < 1000) return;
-    replay.setNudge(f.flight.id, (replay.nudges[f.flight.id] ?? 0) + delta);
+    studio.setNudge(f.flight.id, (studio.nudges[f.flight.id] ?? 0) + delta);
   }
 
   // Seeking on the ruler / empty track area -----------------------------------
 
   let scrubbing = false;
   function seekAt(e: PointerEvent, el: HTMLElement) {
-    replay.seek(tAt(e.clientX - el.getBoundingClientRect().left));
+    studio.seek(tAt(e.clientX - el.getBoundingClientRect().left));
   }
   function onScrubDown(e: PointerEvent) {
     if (e.button !== 0) return;
@@ -158,8 +158,8 @@
     const key = e.key.toLowerCase();
     if (mod && key === 'z') {
       e.preventDefault();
-      if (e.shiftKey) replay.redoCamera();
-      else replay.undoCamera();
+      if (e.shiftKey) studio.redoCamera();
+      else studio.undoCamera();
     } else if (mod && key === 'c') {
       editor.copy();
     } else if (mod && key === 'v') {
@@ -179,19 +179,19 @@
     <div class="modes" role="group" aria-label={m.timeline_alignment()}>
       {#each MODES as entry (entry.mode)}
         <button
-          class:active={replay.syncMode === entry.mode}
+          class:active={studio.syncMode === entry.mode}
           title={entry.title()}
-          onclick={() => replay.setSyncMode(entry.mode)}
+          onclick={() => studio.setSyncMode(entry.mode)}
         >
           {entry.label()}
         </button>
       {/each}
     </div>
     <span class="hint">{m.timeline_hint()}</span>
-    <button onclick={() => replay.undoCamera()} disabled={!replay.canUndoCamera} title={m.timeline_undo_title()}>
+    <button onclick={() => studio.undoCamera()} disabled={!studio.canUndoCamera} title={m.timeline_undo_title()}>
       {m.timeline_undo()}
     </button>
-    <button onclick={() => replay.redoCamera()} disabled={!replay.canRedoCamera} title={m.timeline_redo_title()}>
+    <button onclick={() => studio.redoCamera()} disabled={!studio.canRedoCamera} title={m.timeline_redo_title()}>
       {m.timeline_redo()}
     </button>
     {#if zoom}<button onclick={() => (zoom = null)}>{m.timeline_fit()}</button>{/if}
@@ -201,21 +201,21 @@
     <div class="labels">
       <div class="ruler-pad"></div>
       {#each rows as { f } (f.flight.id)}
-        {@const nudge = replay.nudges[f.flight.id] ?? 0}
-        <div class="label" class:selected={f.flight.id === replay.selected?.flight.id}>
+        {@const nudge = studio.nudges[f.flight.id] ?? 0}
+        <div class="label" class:selected={f.flight.id === studio.selected?.flight.id}>
           <span class="swatch" style:background={f.color}></span>
           <span class="name" title="{f.source.pilot} · {f.source.date}">
             {f.source.pilot}
             <small>{f.source.date}</small>
           </span>
           {#if nudge}
-            <button class="nudge" title={m.timeline_remove_shift()} onclick={() => replay.setNudge(f.flight.id, 0)}>
+            <button class="nudge" title={m.timeline_remove_shift()} onclick={() => studio.setNudge(f.flight.id, 0)}>
               {formatNudge(nudge)} ✕
             </button>
           {/if}
         </div>
       {/each}
-      <CameraLabels {replay} {editor} />
+      <CameraLabels {studio} {editor} />
     </div>
 
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -240,7 +240,7 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
             class="clip"
-            class:selected={f.flight.id === replay.selected?.flight.id}
+            class:selected={f.flight.id === studio.selected?.flight.id}
             class:dragging={drag?.id === f.flight.id}
             class:hidden={!f.visible}
             style:left="{left}px"
@@ -264,14 +264,14 @@
         </div>
       {/each}
 
-      <CameraLanes {replay} {editor} {x} {msPerPx} {width} {view} />
+      <CameraLanes {studio} {editor} {x} {msPerPx} {width} {view} />
 
       {#if drag?.guide != null}
         <div class="guide" style:left="{x(drag.guide)}px"></div>
       {/if}
-      <div class="playhead" style:left="{x(replay.time)}px"></div>
-      {#if replay.exportIn != null}<div class="mark" style:left="{x(replay.exportIn)}px"></div>{/if}
-      {#if replay.exportOut != null}<div class="mark" style:left="{x(replay.exportOut)}px"></div>{/if}
+      <div class="playhead" style:left="{x(studio.time)}px"></div>
+      {#if studio.exportIn != null}<div class="mark" style:left="{x(studio.exportIn)}px"></div>{/if}
+      {#if studio.exportOut != null}<div class="mark" style:left="{x(studio.exportOut)}px"></div>{/if}
     </div>
   </div>
 </div>

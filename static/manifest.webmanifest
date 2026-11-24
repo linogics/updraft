@@ -1,7 +1,7 @@
 {
   "name": "updraft",
   "short_name": "updraft",
-  "description": "Replay, log and plan paragliding and hang gliding flights in your browser.",
+  "description": "Play back, log and plan paragliding and hang gliding flights in your browser.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

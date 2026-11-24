@@ -1,5 +1,5 @@
 // UI timing on big data. Run with `npm run bench:ui`, skipped in CI (runner timing is noisy).
-// Budgets: parse and store of an 8 h flight under 1 s, replay page ready under 2 s, frames under 16 ms, main-thread tasks under 50 ms.
+// Budgets: parse and store of an 8 h flight under 1 s, studio page ready under 2 s, frames under 16 ms, main-thread tasks under 50 ms.
 // Run it on a machine with a GPU. Without one Chromium renders WebGL on the CPU and frame times are meaningless.
 import type { Page } from '@playwright/test';
 import { buildIgc } from '../src/lib/domain/testing/igc-builder';
@@ -50,7 +50,7 @@ function report(name: string, values: Record<string, number>) {
   );
 }
 
-/** Times the import from marks set by importFlights: parse and store, then replay page startup. File upload by the test is left out. */
+/** Times the import from marks set by importFlights: parse and store, then studio page startup. File upload by the test is left out. */
 async function importBig(page: Page) {
   await page.goto('/');
   await page.locator('input[type=file]').setInputFiles({
@@ -58,23 +58,23 @@ async function importBig(page: Page) {
     mimeType: 'text/plain',
     buffer: Buffer.from(igcOf(track(48)))
   });
-  await page.waitForURL(/\/replay\?/);
+  await page.waitForURL(/\/studio\?/);
   await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 60_000 });
   // Client-side navigation keeps the document, so the marks set by importFlights are still there.
   return page.evaluate(() => {
     const [start] = performance.getEntriesByName('updraft:import-start');
     const [end] = performance.getEntriesByName('updraft:imported');
-    return { saved: end.startTime - start.startTime, replay: performance.now() - end.startTime };
+    return { saved: end.startTime - start.startTime, studio: performance.now() - end.startTime };
   });
 }
 
-// Replay startup is mostly fixed cost (Cesium bundle, viewer, shaders), so it gets its own budget.
+// Studio startup is mostly fixed cost (Cesium bundle, viewer, shaders), so it gets its own budget.
 test('import an 8 h flight', async ({ page }) => {
-  const { saved, replay } = await importBig(page);
+  const { saved, studio } = await importBig(page);
   const long = await longTasks(page);
-  report('import 8h', { saved, replay, total: saved + replay, longTasks: long.count, maxTask: long.max });
+  report('import 8h', { saved, studio, total: saved + studio, longTasks: long.count, maxTask: long.max });
   expect.soft(saved, 'parse and store').toBeLessThan(1000);
-  expect.soft(replay, 'replay page ready').toBeLessThan(2000);
+  expect.soft(studio, 'studio page ready').toBeLessThan(2000);
 });
 
 test('play and seek an 8 h flight', async ({ page }) => {
@@ -115,7 +115,7 @@ test('play and seek an 8 h flight', async ({ page }) => {
   report('play', { frames: frames.length, p95, max: frames.at(-1)!, longTasks: play.count, maxTask: play.max });
 
   // Seek like a scrub: 20 jumps, each timed until the next painted frame.
-  const seeks = await page.getByRole('slider', { name: 'Replay position' }).evaluate(async (el) => {
+  const seeks = await page.getByRole('slider', { name: 'Playback position' }).evaluate(async (el) => {
     const input = el as HTMLInputElement;
     const [min, max] = [Number(input.min), Number(input.max)];
     const out: number[] = [];

@@ -1,31 +1,31 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
-  import { SPEEDS, type ReplayState } from '#lib/state/replay.svelte';
+  import { SPEEDS, type StudioState } from '#lib/state/studio.svelte';
   import { formatClock, formatDuration } from '#lib/ui/format';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 </script>
 
 <div class="player">
-  <button class="play" onclick={() => replay.toggle()} aria-label={replay.playing ? m.player_pause() : m.player_play()}>
-    {replay.playing ? '❚❚' : '▶'}
+  <button class="play" onclick={() => studio.toggle()} aria-label={studio.playing ? m.player_pause() : m.player_play()}>
+    {studio.playing ? '❚❚' : '▶'}
   </button>
-  <select bind:value={replay.speed} aria-label={m.player_speed()}>
+  <select bind:value={studio.speed} aria-label={m.player_speed()}>
     {#each SPEEDS as s (s)}<option value={s}>{s}×</option>{/each}
   </select>
-  <button onclick={() => replay.nextThermal()} title={m.player_next_thermal_title()}>{m.player_next_thermal()}</button>
-  <span class="clock">{formatClock(replay.time)}</span>
+  <button onclick={() => studio.nextThermal()} title={m.player_next_thermal_title()}>{m.player_next_thermal()}</button>
+  <span class="clock">{formatClock(studio.time)}</span>
   <input
     type="range"
-    min={replay.start}
-    max={replay.end}
+    min={studio.start}
+    max={studio.end}
     step={1000}
-    value={replay.time}
-    oninput={(e) => replay.seek(Number(e.currentTarget.value))}
+    value={studio.time}
+    oninput={(e) => studio.seek(Number(e.currentTarget.value))}
     aria-label={m.player_position()}
   />
   <span class="elapsed">
-    {formatDuration((replay.time - replay.start) / 1000)} / {formatDuration((replay.end - replay.start) / 1000)}
+    {formatDuration((studio.time - studio.start) / 1000)} / {formatDuration((studio.end - studio.start) / 1000)}
   </span>
 </div>
 

@@ -4,14 +4,14 @@
   import 'uplot/dist/uPlot.min.css';
   import { resampleAltitudes } from '#lib/domain/timeline';
   import { m } from '#lib/paraglide/messages';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { phaseColor } from '#lib/ui/colors';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   let container: HTMLDivElement;
   let plot: uPlot | undefined = $state.raw();
@@ -29,7 +29,7 @@
 
   /** Phase bands of the selected flight, drawn behind the series. */
   function drawPhases(u: uPlot) {
-    const sel = replay.selected;
+    const sel = studio.selected;
     if (!sel) return;
     const { ctx, bbox } = u;
     const { fixes } = sel.flight;
@@ -49,8 +49,8 @@
    * and departure height of glides, with direct labels in text ink.
    */
   function drawWorkingBand(u: uPlot) {
-    const sel = replay.selected;
-    const s = sel && replay.transitionSummary(sel, agl);
+    const sel = studio.selected;
+    const s = sel && studio.transitionSummary(sel, agl);
     if (!s || s.avgStartAlt == null || s.avgEndAlt == null) return;
     const { ctx, bbox } = u;
     const px = uPlot.pxRatio;
@@ -81,7 +81,7 @@
 
   /** Where each glide left a climb and reached the next one, on top of the series. */
   function drawTransitionMarks(u: uPlot) {
-    const sel = replay.selected;
+    const sel = studio.selected;
     if (!sel?.visible) return;
     const { ctx } = u;
     const { fixes } = sel.flight;
@@ -96,7 +96,7 @@
         ctx.beginPath();
         ctx.arc(
           u.valToPos(fixes[i].t / 1000, 'x', true),
-          u.valToPos(agl ? replay.aglAt(sel, i)! : fixes[i].alt, 'y', true),
+          u.valToPos(agl ? studio.aglAt(sel, i)! : fixes[i].alt, 'y', true),
           4 * px,
           0,
           2 * Math.PI
@@ -110,17 +110,17 @@
 
   function build() {
     plot?.destroy();
-    const flights = replay.flights.filter((f) => f.visible);
+    const flights = studio.flights.filter((f) => f.visible);
     if (!flights.length || !container) return;
     agl = altRefPrefs.ref === 'agl' && flights.every((f) => f.ground);
     needsGround = altRefPrefs.ref === 'agl' && !agl;
     const { x, series } = resampleAltitudes(
       flights.map((f) =>
-        agl ? f.flight.fixes.map((fix, i) => ({ ...fix, alt: replay.aglAt(f, i)! })) : f.flight.fixes
+        agl ? f.flight.fixes.map((fix, i) => ({ ...fix, alt: studio.aglAt(f, i)! })) : f.flight.fixes
       ),
       2
     );
-    const selectedId = replay.selected?.flight.id;
+    const selectedId = studio.selected?.flight.id;
 
     plot = new uPlot(
       {
@@ -183,7 +183,7 @@
     // Click or drag on the plot to scrub.
     const over = plot.over;
     let dragging = false;
-    const seekTo = (e: MouseEvent) => plot && replay.seek(plot.posToVal(e.offsetX, 'x') * 1000);
+    const seekTo = (e: MouseEvent) => plot && studio.seek(plot.posToVal(e.offsetX, 'x') * 1000);
     over.addEventListener('mousedown', (e) => {
       dragging = true;
       seekTo(e);
@@ -205,8 +205,8 @@
 
   // Rebuild on flight set, visibility or selection change.
   $effect(() => {
-    void replay.flights;
-    void replay.selected;
+    void studio.flights;
+    void studio.selected;
     void altRefPrefs.ref;
     // build() reads and replaces `plot`; untrack it so the effect does not re-trigger itself.
     untrack(build);
@@ -220,7 +220,7 @@
 
   // Current-time marker, positioned in plot (CSS px) coordinates.
   $effect(() => {
-    const t = replay.time;
+    const t = studio.time;
     cursorX = plot ? plot.valToPos(t / 1000, 'x') : null;
   });
 </script>

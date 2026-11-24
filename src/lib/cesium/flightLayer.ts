@@ -2,7 +2,7 @@ import * as Cesium from 'cesium';
 import { smoothPath } from '#lib/domain/smooth';
 import { indexAt, positionAt } from '#lib/domain/timeline';
 import type { ColorMode, TrackStyle } from '#lib/domain/scene';
-import type { LoadedFlight } from '#lib/state/replay.svelte';
+import type { LoadedFlight } from '#lib/state/studio.svelte';
 import { varioColor } from '#lib/ui/colors';
 import { colorRuns, trackColorAt } from '#lib/ui/trackColors';
 import { formatAlt, formatVario, type Units } from '#lib/ui/units';

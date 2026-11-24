@@ -1,18 +1,18 @@
-/** Replay range and timing of a video export. Times are Unix ms on the replay clock. */
+/** Playback range and timing of a video export. Times are Unix ms on the playback clock. */
 
 import { m } from '../paraglide/messages';
 
-export interface ReplayRange {
+export interface StudioRange {
   inMs: number;
   outMs: number;
 }
 
-/** Either the video length in seconds or the replay speed, in replay seconds per video second. */
+/** Either the video length in seconds or the playback speed, in playback seconds per video second. */
 export type TimingMode = { kind: 'length'; seconds: number } | { kind: 'speed'; factor: number };
 
 export interface Timing {
   frames: number;
-  /** Replay ms per video ms. */
+  /** Studio ms per video ms. */
   speed: number;
   /** Video length in seconds, frames / fps. */
   seconds: number;
@@ -31,7 +31,7 @@ export function lengthForSpeed(rangeMs: number, factor: number): number {
   return rangeMs / (factor * 1000);
 }
 
-export function planTiming(range: ReplayRange, mode: TimingMode, fps: number): Timing {
+export function planTiming(range: StudioRange, mode: TimingMode, fps: number): Timing {
   const rangeMs = range.outMs - range.inMs;
   if (!(rangeMs > 0)) throw new Error(m.export_range_empty());
   const speed = mode.kind === 'speed' ? mode.factor : speedForLength(rangeMs, mode.seconds);
@@ -41,7 +41,7 @@ export function planTiming(range: ReplayRange, mode: TimingMode, fps: number): T
   return { frames, speed, seconds: frames / fps };
 }
 
-/** Replay time of output frame k. */
-export function frameTime(range: ReplayRange, timing: Timing, fps: number, k: number): number {
+/** Playback time of output frame k. */
+export function frameTime(range: StudioRange, timing: Timing, fps: number, k: number): number {
   return range.inMs + (k * timing.speed * 1000) / fps;
 }

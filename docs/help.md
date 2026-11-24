@@ -8,13 +8,13 @@ updraft runs fully in your browser. There is no account. Your flights and settin
 
 1. Open the dashboard at https://updraft.linogics.io.
 2. Drop one or more flight files on the drop zone (IGC, GPX, KML, FIT, TRK or GeoJSON). No file at hand? Click "load demo flights".
-3. The flights are saved in the logbook. Files from the same day open together in the replay.
+3. The flights are saved in the logbook. Files from the same day open together in the studio.
 
 The logo in the top left always brings you back to the dashboard.
 
-## Replay
+## Studio
 
-Open a replay from the dashboard ("Replay last flight") or from the logbook (tick flights, then "Replay selected").
+Open the studio from the dashboard ("Open last flight in Studio") or from the logbook (tick flights, then "Open selected in Studio").
 
 ### Layout
 
@@ -50,7 +50,7 @@ Open a replay from the dashboard ("Replay last flight") or from the logbook (tic
 - **Map** and **Terrain** pick the base map and the 3D terrain.
 - The full screen button hides the browser UI.
 
-The replay URL holds the flights and most view settings. Bookmark it to come back to the same view in this browser.
+The studio URL holds the flights and most view settings. Bookmark it to come back to the same view in this browser.
 
 ## Camera
 
@@ -101,7 +101,7 @@ Open "Plan a route" on the dashboard.
 - Undo and Clear fix mistakes.
 - Set a speed in km/h for a duration estimate. The score is shown for the chosen league.
 - **Copy link** copies a URL with the route, ready to share.
-- The planner map has the same base maps, thermal overlay and airspaces as the replay.
+- The planner map has the same base maps, thermal overlay and airspaces as the studio.
 
 ## Logbook
 
@@ -110,7 +110,7 @@ Open "Open logbook" on the dashboard.
 - Totals, hours per year and a breakdown by year, site or glider.
 - The table lists every flight. Edit pilot, site, glider and notes with the edit button, or delete a flight.
 - "Add flight without a track" logs a flight you have no file for.
-- Tick flights and click "Replay selected" to replay them together.
+- Tick flights and click "Open selected in Studio" to open them together.
 - XC type and points are scored in the background for the chosen league.
 
 ## Convert
@@ -119,11 +119,11 @@ Open "Convert a file" on the dashboard. Drop files, pick an output format (IGC, 
 
 ## Export images and videos
 
-Export works in 3D and Split layout. Open the **Export** menu in the replay toolbar.
+Export works in 3D and Split layout. Open the **Export** menu in the studio toolbar.
 
 - **Download PNG** saves the current 3D frame. Pick the aspect (16:9, 9:16, 1:1), the size and the overlays.
 - **Export video…** renders an MP4.
-  1. Set in and out marks at the playhead, or leave them to export the whole replay.
+  1. Set in and out marks at the playhead, or leave them to export the whole flight.
   2. Pick the aspect, resolution, frame rate and quality.
   3. Choose a target length or a speed factor.
   4. Optionally add music. The video can fit the music length, or the music is trimmed to the video.
@@ -155,7 +155,7 @@ The **Units** menu picks a preset (metric, imperial, aviation) or each unit on i
 | Cesium World Terrain | a free [Cesium ion](https://ion.cesium.com) token | Higher resolution. Default once a token is set. Falls back to AWS Terrain Tiles if ion fails |
 | Flat | nothing | No relief |
 
-To add a token, open the **Ion** menu in the replay toolbar, paste the token and click "Save and reload". Leave the field empty to remove it. The token is kept only in this browser.
+To add a token, open the **Ion** menu in the studio toolbar, paste the token and click "Save and reload". Leave the field empty to remove it. The token is kept only in this browser.
 
 ### Airspaces and the openAIP key
 
@@ -193,4 +193,4 @@ The map needs tiles from public servers. These servers see your IP address and t
 - **The 3D view does not load**: the browser needs WebGL. Try another browser or update the graphics driver. 2D still works.
 - **The track floats or sinks into the ground**: some loggers record a different height reference. updraft shifts each track by at most ±150 m so takeoff sits on the ground.
 - **The API key is not saved**: the browser blocks site storage. Allow storage for the site.
-- **A replay link shows no flights**: replay links only work in the browser that holds the flights.
+- **A studio link shows no flights**: studio links only work in the browser that holds the flights.

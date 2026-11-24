@@ -10,10 +10,10 @@ export const test = base.extend({
 
 export { expect };
 
-/** Loads the demo flights from the home page and waits for the replay editor. */
-export async function openDemoReplay(page: Page) {
+/** Loads the demo flights from the home page and waits for the studio editor. */
+export async function openDemoStudio(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'load demo flights' }).click();
-  await page.waitForURL(/\/replay\?/);
+  await page.waitForURL(/\/studio\?/);
   await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 30_000 });
 }
