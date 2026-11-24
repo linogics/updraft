@@ -25,6 +25,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Timeline like a video editor: one clip per pilot, drag clips to shift them in time with snapping, Ctrl+wheel to zoom. Quick alignment: real time, same day (keeps time of day) or aligned takeoffs. Works for flights from different days.
 - Altitude chart for all pilots with phase bands of the selected pilot. Click or drag to seek.
 - Pilot list with altitude and height above ground (AGL).
+- Add pilots without leaving the studio: the "Add pilot" button opens a picker over the logbook (filter, multi-select, import files), or drop track files anywhere on the page.
 - Track colour by vario, flight phase, climb and transition, or pilot. Any pilot colour can be picked.
 - Track style: solid, outline, dashed, curtain (3D wall down to the ground) or glow, width 1 to 10 px, smoothing (on by default).
 - View toggles: full screen, pilot names, height exaggeration 1× to 3×, sun lighting at the recorded time, thermal columns and labels.
