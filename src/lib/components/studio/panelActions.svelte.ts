@@ -7,7 +7,7 @@ import { DOCK_LABELS, panelById, type Dock } from '#lib/studio/panels';
 export const panelStatus = $state({ text: '' });
 
 // Clear first and set a moment later, so an identical message and a refocused control are announced again.
-function announce(text: string) {
+export function announce(text: string) {
   panelStatus.text = '';
   setTimeout(() => (panelStatus.text = text), 60);
 }

@@ -7,6 +7,7 @@
   import Menu from '../Menu.svelte';
   import { hidePanel, movePanel, panelMenuId } from './panelActions.svelte';
   import PanelHost from './PanelHost.svelte';
+  import { drag, liftStyle, startDrag } from './panelDrag.svelte';
 
   /** Side docks stack their panels, the bottom dock shows one at a time behind tabs, next to `lead`. */
   let { dock, studio, ids, lead }: { dock: Dock; studio: StudioState; ids: string[]; lead?: Snippet } = $props();
@@ -14,8 +15,17 @@
   const panels = $derived(ids.map(panelById).filter((p): p is PanelDef => !!p));
   const open = $derived(studioLayout.value.open[dock]);
   const active = $derived(panels.find((p) => p.id === studioLayout.activeTab));
+  const marker = $derived(drag.dock === dock ? drag.marker : null);
   const sideLabel = $derived(dock === 'left' ? m.studio_outliner() : m.studio_side_panel());
 </script>
+
+{#snippet grip()}
+  <svg viewBox="0 0 8 12" width="8" height="12" aria-hidden="true" fill="currentColor">
+    <circle cx="2" cy="2" r="1.1" /><circle cx="6" cy="2" r="1.1" />
+    <circle cx="2" cy="6" r="1.1" /><circle cx="6" cy="6" r="1.1" />
+    <circle cx="2" cy="10" r="1.1" /><circle cx="6" cy="10" r="1.1" />
+  </svg>
+{/snippet}
 
 {#snippet actions(p: PanelDef, i: number)}
   {@const back = dock === 'bottom' ? m.panel_move_left() : m.panel_move_up()}
@@ -36,19 +46,35 @@
 {/snippet}
 
 {#if dock === 'bottom'}
-  <div class="transport">
+  <div
+    class="transport"
+    data-dock={panels.length && open ? dock : undefined}
+    data-drop={marker ? '' : undefined}
+    style:--drop-x={marker && `${marker.x}px`}
+    style:--drop-y={marker && `${marker.y}px`}
+    style:--drop-w={marker && `${marker.w}px`}
+  >
     {@render lead?.()}
     {#if panels.length}
-      <div class="tabs" role="tablist" aria-label={m.studio_bottom_panel()} hidden={!open}>
+      <div class="tabs" role="tablist" aria-label={m.studio_bottom_panel()} hidden={!open} data-items>
         {#each panels as p, i (p.id)}
-          <div class="tab" role="presentation" style:view-transition-name="panel-{p.id}">
+          <div
+            class="tab"
+            role="presentation"
+            data-panel={p.id}
+            data-lifted={drag.id === p.id ? '' : undefined}
+            style={liftStyle(p.id)}
+            style:view-transition-name="panel-{p.id}"
+          >
             <button
               role="tab"
               id="tab-{p.id}"
               aria-selected={active?.id === p.id}
               aria-controls="bottom-panel"
               onclick={() => studioLayout.setTab(p.id)}
+              onpointerdown={(e) => startDrag(e, p.id)}
             >
+              {@render grip()}
               {p.title()}
             </button>
             {@render actions(p, i)}
@@ -68,11 +94,32 @@
     class="side panel"
     aria-label={sideLabel}
     hidden={!open}
+    data-dock={dock}
+    data-items
+    data-drop={marker ? '' : undefined}
+    style:--drop-x={marker && `${marker.x}px`}
+    style:--drop-y={marker && `${marker.y}px`}
+    style:--drop-w={marker && `${marker.w}px`}
     style:grid-area={dock === 'left' ? 'outliner' : 'aside'}
   >
     {#each panels as p, i (p.id)}
-      <section aria-labelledby="panel-title-{p.id}" style:view-transition-name="panel-{p.id}">
+      <section
+        aria-labelledby="panel-title-{p.id}"
+        data-panel={p.id}
+        data-lifted={drag.id === p.id ? '' : undefined}
+        style={liftStyle(p.id)}
+        style:view-transition-name="panel-{p.id}"
+      >
         <header>
+          <button
+            type="button"
+            class="grip"
+            tabindex="-1"
+            aria-label={m.panel_drag({ title: p.title() })}
+            onpointerdown={(e) => startDrag(e, p.id)}
+          >
+            {@render grip()}
+          </button>
           <h3 id="panel-title-{p.id}">{p.title()}</h3>
           {@render actions(p, i)}
         </header>
@@ -90,6 +137,7 @@
     overflow: hidden;
   }
   .side {
+    position: relative;
     overflow-y: auto;
     padding: 12px;
     display: grid;
@@ -104,11 +152,91 @@
   header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 4px;
     margin-bottom: 8px;
   }
   header h3 {
+    flex: 1;
+    min-width: 0;
     margin: 0;
+  }
+  /* Only the grip starts a drag, so text stays selectable and touch scrolling still works elsewhere. */
+  .grip,
+  .tab [role='tab'] {
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .grip {
+    display: flex;
+    border: 0;
+    background: none;
+    padding: 4px;
+    color: var(--muted);
+  }
+  .grip:hover {
+    color: var(--text);
+  }
+  :global(html.panel-dragging),
+  :global(html.panel-dragging *) {
+    cursor: grabbing !important;
+  }
+  /* The lifted real item follows the pointer, leaves its slot and ignores the pointer so hit tests see the docks. */
+  [data-lifted] {
+    position: fixed;
+    z-index: 30;
+    scale: 1.02;
+    pointer-events: none;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: var(--drop-lift-shadow, 0 8px 24px rgb(0 0 0 / 0.35));
+    opacity: var(--drop-lift-opacity, 0.95);
+    overflow: hidden;
+  }
+  .tab[data-lifted] {
+    background: var(--bg);
+  }
+  /* Drop marker: a ring and a line in the gap, fixed so nothing shifts while dragging. */
+  [data-drop]::before,
+  [data-drop]::after {
+    content: '';
+    position: fixed;
+    left: var(--drop-x);
+    top: var(--drop-y);
+    z-index: 40;
+    pointer-events: none;
+    background: var(--drop-marker-color, var(--primary));
+  }
+  [data-drop]::after {
+    width: var(--drop-w);
+    height: var(--drop-line, 3px);
+    border-radius: 2px;
+    translate: 0 -50%;
+  }
+  [data-drop]::before {
+    width: var(--drop-ring, 10px);
+    height: var(--drop-ring, 10px);
+    border-radius: 50%;
+    translate: -50% -50%;
+  }
+  [data-drop][data-dock='bottom']::after {
+    width: var(--drop-line, 3px);
+    height: var(--drop-w);
+    translate: -50% 0;
+  }
+  [data-drop][data-dock='bottom']::before {
+    translate: -50% 0;
+  }
+  @media (forced-colors: active) {
+    [data-drop]::before,
+    [data-drop]::after {
+      background: Highlight;
+    }
+    [data-lifted] {
+      border: 1px solid CanvasText;
+    }
   }
   .transport {
     display: flex;
@@ -126,6 +254,7 @@
     border-top: 1px solid var(--border);
   }
   .tabs {
+    position: relative;
     display: flex;
     padding: 2px;
     border-radius: 7px;
@@ -139,7 +268,10 @@
     border: 0;
     border-radius: 5px;
     background: none;
-    padding: 4px 4px 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 4px 4px 8px;
     color: var(--muted);
     font-size: 12px;
     font-weight: 500;

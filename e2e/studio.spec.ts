@@ -107,3 +107,34 @@ test('the actions menu moves Stats to the left dock and keeps focus on it', asyn
   await expect(page.getByRole('button', { name: 'Stats panel actions' })).toBeFocused();
   await expect(page.getByText('Stats moved to left dock, position 3')).toBeAttached();
 });
+
+test('dragging Stats by its handle into the left dock moves it there', async ({ page }) => {
+  await openDemoStudio(page);
+  const grip = (await page.getByRole('button', { name: 'Drag Stats' }).boundingBox())!;
+  const left = (await page.getByRole('navigation', { name: 'Outliner' }).boundingBox())!;
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x - 40, grip.y + 40, { steps: 5 });
+  await page.mouse.move(left.x + left.width / 2, left.y + left.height - 20, { steps: 10 });
+  await page.mouse.up();
+
+  await expect(page.getByRole('navigation', { name: 'Outliner' }).getByRole('region', { name: 'Stats' })).toBeVisible();
+  await expect(page.locator('aside')).toHaveCount(0);
+  await expect(page.getByText('Stats moved to left dock, position 3')).toBeAttached();
+});
+
+test('dragging the Altitude tab after the Timeline tab reorders the tabs', async ({ page }) => {
+  await openDemoStudio(page);
+  const tabs = page.getByRole('tablist', { name: 'Bottom panel' }).getByRole('tab');
+  await expect(tabs).toHaveText(['Altitude', 'Timeline']);
+  const alt = (await tabs.first().boundingBox())!;
+  await page.mouse.move(alt.x + alt.width / 2, alt.y + alt.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(alt.x + alt.width / 2 + 10, alt.y + alt.height / 2, { steps: 3 });
+  // The lifted tab leaves its slot, so the Timeline tab has shifted left.
+  const timeline = (await tabs.nth(1).boundingBox())!;
+  await page.mouse.move(timeline.x + timeline.width - 4, timeline.y + timeline.height / 2, { steps: 10 });
+  await page.mouse.up();
+
+  await expect(tabs).toHaveText(['Timeline', 'Altitude']);
+});
