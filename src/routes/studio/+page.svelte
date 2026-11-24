@@ -7,6 +7,8 @@
   import Splitter from '#lib/components/Splitter.svelte';
   import Dock from '#lib/components/studio/Dock.svelte';
   import { panelStatus } from '#lib/components/studio/panelActions.svelte';
+  import { drag } from '#lib/components/studio/panelDrag.svelte';
+  import { DOCK_LABELS, DOCKS } from '#lib/studio/panels';
   import { LAYOUT_LIMITS as L } from '#lib/state/studioLayout';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
   import MiniMap from '#lib/components/MiniMap.svelte';
@@ -167,6 +169,14 @@
       {#if studio.layout !== '3d'}
         <div class="view2d"><MiniMap {studio} follow={studio.layout === '2d'} /></div>
       {/if}
+      <!-- Docks without a visible panel are not rendered, so a drag offers a strip for each of them. -->
+      {#if drag.id}
+        {#each DOCKS.filter((d) => !docked(d) || !layout.open[d]) as d (d)}
+          <div class="zone" data-dock={d} data-over={drag.dock === d ? '' : undefined}>
+            {m.dock_drop_here({ dock: DOCK_LABELS[d]() })}
+          </div>
+        {/each}
+      {/if}
     </div>
 
     {#if docked('right')}
@@ -280,6 +290,52 @@
   }
   footer {
     grid-area: footer;
+  }
+  /* Drop zones of empty docks, shown only while a panel is dragged. */
+  .zone {
+    position: absolute;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--text);
+    background: color-mix(in srgb, var(--drop-marker-color, var(--primary)) 18%, var(--surface));
+    border: 2px dashed var(--drop-marker-color, var(--primary));
+  }
+  .zone[data-over] {
+    background: color-mix(in srgb, var(--drop-marker-color, var(--primary)) 45%, var(--surface));
+    border-style: solid;
+  }
+  .zone[data-dock='left'],
+  .zone[data-dock='right'] {
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    writing-mode: vertical-rl;
+  }
+  .zone[data-dock='left'] {
+    left: 0;
+  }
+  .zone[data-dock='right'] {
+    right: 0;
+  }
+  .zone[data-dock='bottom'] {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 48px;
+  }
+  @media (forced-colors: active) {
+    .zone {
+      border-color: Highlight;
+    }
+    .zone[data-over] {
+      background: Highlight;
+      color: HighlightText;
+    }
   }
   .visually-hidden {
     position: absolute;
