@@ -11,6 +11,7 @@ export function readKml(text: string, sourceName: string): Flight {
       if (whens[i]) fixes.push({ t: Date.parse(whens[i]), lat: +lat, lon: +lon, alt: +alt });
     });
   }
+
   if (!fixes.length) {
     // Fallback: one Placemark per fix, with a Point and a TimeStamp.
     for (const pm of xmlTexts(text, 'Placemark')) {
@@ -21,10 +22,12 @@ export function readKml(text: string, sourceName: string): Flight {
       fixes.push({ t: Date.parse(when), lat: +lat, lon: +lon, alt: +alt });
     }
   }
+
   if (!fixes.length) {
     // A plain LineString carries no times, so there is nothing to play back.
     throw new Error(m.format_kml_no_time({ name: sourceName }));
   }
+
   return toFlight(sourceName, fixes);
 }
 

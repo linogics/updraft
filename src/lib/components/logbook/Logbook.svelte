@@ -96,10 +96,12 @@
       } catch (err) {
         console.error('Could not read XC score', err);
       }
+
       if (run !== xcRun) return;
       if (score === undefined) missing.push(f.id);
       else xc[f.id] = score;
     }
+
     for (const id of missing) {
       let score: XcScore | null;
       try {
@@ -110,6 +112,7 @@
         console.error('Could not score flight', err);
         score = null;
       }
+
       if (run !== xcRun) return;
       xc[id] = score;
     }
@@ -128,13 +131,13 @@
     errors = result.errors;
     busy = false;
     await refresh();
-    if (result.ids.length && errors.length === 0) openStudio(result.ids);
+    if (result.ids.length && errors.length === 0) void openStudio(result.ids);
   }
 
   async function loadDemo() {
     const demo = buildDemoFlights();
     for (const f of demo) await flightRepository.save(f);
-    openStudio(demo.map((f) => f.id));
+    void openStudio(demo.map((f) => f.id));
   }
 
   async function remove(f: FlightSummary) {
@@ -177,7 +180,7 @@
   onMount(() => {
     // Chromium: track files opened with the installed app arrive here (file_handlers in the manifest).
     window.launchQueue?.setConsumer(async (params) => {
-      importFiles(await Promise.all(params.files.map((handle) => handle.getFile())));
+      void importFiles(await Promise.all(params.files.map((handle) => handle.getFile())));
     });
     void refresh();
   });
@@ -362,7 +365,7 @@
                     class="form"
                     onsubmit={(e) => {
                       e.preventDefault();
-                      saveEdit();
+                      void saveEdit();
                     }}
                   >
                     <label>{m.export_row_pilot()} <input bind:value={draft.pilot} /></label>

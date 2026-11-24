@@ -24,6 +24,7 @@ export function zipStore(files: { name: string; data: Uint8Array }[]): Uint8Arra
     fn(v);
     return buf;
   };
+
   for (const f of files) {
     const name = enc.encode(f.name);
     const crc = crc32(f.data);
@@ -38,6 +39,7 @@ export function zipStore(files: { name: string; data: Uint8Array }[]): Uint8Arra
       v.setUint32(o + 18, f.data.length, true);
       v.setUint16(o + 22, name.length, true);
     };
+
     const local = header(30 + name.length, 0x04034b50, (v) => common(v, 4));
     local.set(name, 30);
     const cen = header(46 + name.length, 0x02014b50, (v) => {
@@ -50,6 +52,7 @@ export function zipStore(files: { name: string; data: Uint8Array }[]): Uint8Arra
     central.push(cen);
     offset += local.length + f.data.length;
   }
+
   const size = central.reduce((n, c) => n + c.length, 0);
   const end = header(22, 0x06054b50, (v) => {
     v.setUint16(8, files.length, true);
@@ -64,5 +67,6 @@ export function zipStore(files: { name: string; data: Uint8Array }[]): Uint8Arra
     out.set(p, o);
     o += p.length;
   }
+
   return out;
 }

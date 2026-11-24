@@ -101,6 +101,7 @@ function segmentAt(keys: Key[], t: number): number {
     if (keys[mid].t <= t) lo = mid;
     else hi = mid - 1;
   }
+
   return lo;
 }
 
@@ -134,6 +135,7 @@ export function valueAt(track: PropTrack, t: number, prop: CameraProp): number {
     const p3 = toLane(prop, keys[Math.min(last, i + 2)].v);
     lane = catmullRom(p0, a, b, p3, u);
   }
+
   return clampProp(prop, fromLane(prop, lane));
 }
 
@@ -252,6 +254,7 @@ export function copyKeys(tracks: CameraTracks, picked: TimeSets): KeyClip | null
     const keys = tracks[p].keys.filter((k) => picked[p].has(k.t)).map((k) => ({ ...k, t: k.t - t0 }));
     if (keys.length) clip[p] = keys;
   }
+
   return clip;
 }
 
@@ -282,6 +285,7 @@ function parseKeys(raw: unknown, prop: CameraProp): Key[] {
     if (!isKeyObject(item)) continue;
     keys.push({ t: item.t, v: clampProp(prop, item.v), interp: isInterp(item.interp) ? item.interp : 'auto' });
   }
+
   return sortKeys(keys).slice(0, MAX_KEYS);
 }
 

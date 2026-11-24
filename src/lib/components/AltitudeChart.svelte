@@ -49,6 +49,7 @@
       ctx.fillStyle = phaseColor(p.kind) + '22';
       ctx.fillRect(x0, bbox.top, Math.max(1, x1 - x0), bbox.height);
     }
+
     ctx.restore();
   }
 
@@ -76,6 +77,7 @@
       ctx.lineTo(bbox.left + bbox.width, y);
       ctx.stroke();
     }
+
     ctx.fillStyle = INK;
     ctx.font = `${11 * px}px sans-serif`;
     ctx.textAlign = 'right';
@@ -100,6 +102,7 @@
     ctx.lineWidth = 2 * px;
     for (const t of sel.climbs.transitions) {
       if (t.kind !== 'glide') continue;
+
       for (const i of [t.start, t.end]) {
         ctx.beginPath();
         ctx.arc(
@@ -113,6 +116,7 @@
         ctx.fill();
       }
     }
+
     ctx.restore();
   }
 

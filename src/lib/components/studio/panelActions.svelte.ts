@@ -22,6 +22,7 @@ export async function movePanel(id: string, dock: Dock, index: number) {
     await tick();
     document.getElementById(panelMenuId(id))?.focus({ preventScroll: true });
   };
+
   const animate = !matchMedia('(prefers-reduced-motion: reduce)').matches && 'startViewTransition' in document;
   if (animate) await document.startViewTransition(apply).updateCallbackDone;
   else await apply();

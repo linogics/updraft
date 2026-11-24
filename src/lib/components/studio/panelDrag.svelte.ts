@@ -109,6 +109,7 @@ export function startDrag(e: PointerEvent, id: string) {
       if (depth) list.scrollTop += Math.sign(depth) * Math.min(1.5, Math.abs(depth) / zone) * SCROLL_SPEED * dt;
       if (list.scrollTop !== before) update();
     }
+
     raf = requestAnimationFrame(frame);
   }
 
@@ -117,6 +118,7 @@ export function startDrag(e: PointerEvent, id: string) {
     x = ev.clientX;
     y = ev.clientY;
     if (!active && Math.hypot(x - startX, y - startY) < THRESHOLD) return;
+
     if (!active) {
       active = true;
       Object.assign(drag, { id, rect: box, dock: null, marker: null });
@@ -124,6 +126,7 @@ export function startDrag(e: PointerEvent, id: string) {
       last = performance.now();
       raf = requestAnimationFrame(frame);
     }
+
     update();
   }
 
@@ -144,8 +147,9 @@ export function startDrag(e: PointerEvent, id: string) {
     setTimeout(() => document.removeEventListener('click', swallow, true));
     if (!drop) announce(m.panel_drag_cancelled({ title }));
     // No marker in the own dock means the panel would stay in its slot. Clear the lift first, then move once.
-    else if (dock && (marker || dock !== currentDock)) tick().then(() => movePanel(id, dock, index));
+    else if (dock && (marker || dock !== currentDock)) void tick().then(() => movePanel(id, dock, index));
   }
+
   const swallow = (c: Event) => c.stopPropagation();
   const onUp = (ev: PointerEvent) => ev.pointerId === pointerId && finish(true);
   const onCancel = () => finish(false);

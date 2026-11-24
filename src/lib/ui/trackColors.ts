@@ -18,6 +18,7 @@ export function colorRuns(n: number, colorAt: (i: number) => string): ColorRun[]
     if (last && last.color === color) last.end = i + 1;
     else runs.push({ color, start: i, end: i + 1 });
   }
+
   return runs;
 }
 
@@ -34,11 +35,13 @@ export function trackColorAt(
   switch (colorBy) {
     case 'vario':
       return coarse ? (i) => varioColor(Math.round(analysis.vario[i] * 2) / 2) : (i) => varioColor(analysis.vario[i]);
+
     case 'phase': {
       const kinds = new Array<string>(analysis.vario.length);
       for (const p of analysis.phases) kinds.fill(phaseColor(p.kind), p.start, p.end + 1);
       return (i) => kinds[i];
     }
+
     case 'climb':
       return (i) => phaseColor(climbs.kinds[i]);
     case 'pilot':

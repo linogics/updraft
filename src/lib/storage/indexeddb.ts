@@ -48,6 +48,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
           db.createObjectStore('flights', { keyPath: 'id' });
           db.createObjectStore('summaries', { keyPath: 'id' });
         }
+
         if (oldVersion < 2) db.createObjectStore('cameraPaths', { keyPath: 'key' });
         if (oldVersion < 3) db.createObjectStore('xcScores', { keyPath: 'key' }).createIndex('flightId', 'flightId');
       }
@@ -153,10 +154,12 @@ export class IndexedDbFlightRepository implements FlightRepository {
     const ops: Promise<unknown>[] = [tx.done];
     if (mode === 'replace')
       for (const n of ['flights', 'summaries', 'cameraPaths', 'xcScores'] as const) ops.push(tx.objectStore(n).clear());
+
     // Notes live on the flight record, so rebuilt summaries keep them.
     for (const f of backup.flights) {
       ops.push(tx.objectStore('flights').put(f), tx.objectStore('summaries').put(summarize(f)));
     }
+
     for (const m of backup.manual) ops.push(tx.objectStore('summaries').put(m));
     for (const c of backup.cameraPaths) ops.push(tx.objectStore('cameraPaths').put(c));
     await Promise.all(ops);

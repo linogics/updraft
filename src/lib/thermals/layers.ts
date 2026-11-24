@@ -21,6 +21,7 @@ export function syncThermals(map: maplibregl.Map, p: ThermalOverlayPrefsValue, b
       if (map.getSource(id)) map.removeSource(id);
       continue;
     }
+
     if (!map.getSource(id)) {
       // Source and layer share the id. The kk7 tiles are TMS, so the y axis is flipped.
       map.addSource(id, {
@@ -33,6 +34,7 @@ export function syncThermals(map: maplibregl.Map, p: ThermalOverlayPrefsValue, b
       });
       map.addLayer({ id, type: 'raster', source: id }, under);
     }
+
     map.setPaintProperty(id, 'raster-opacity', p.opacity);
   }
 }

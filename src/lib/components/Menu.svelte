@@ -21,11 +21,13 @@
   function onToggle(e: ToggleEvent) {
     open = e.newState === 'open';
     if (!open) return;
+
     if (!anchored) {
       const r = button.getBoundingClientRect();
       popup.style.top = `${r.bottom + 4}px`;
       popup.style.left = `${Math.max(8, Math.min(r.left, innerWidth - popup.offsetWidth - 8))}px`;
     }
+
     if (enterOnOpen) items()[0]?.focus();
     enterOnOpen = false;
   }
@@ -58,6 +60,7 @@
       const next = e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : (at + step + list.length) % list.length;
       list[next].focus();
     };
+
     group.addEventListener('keydown', onKey);
     return () => group.removeEventListener('keydown', onKey);
   });

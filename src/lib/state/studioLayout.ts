@@ -44,8 +44,10 @@ export function parseStudioLayout(raw: unknown, defaults: Record<string, Dock>):
           seen.add(id);
           out.push(id);
         }
+
     return out;
   };
+
   const stored = obj(o.docks);
   const docks: Record<Dock, string[]> = {
     left: take(stored.left),

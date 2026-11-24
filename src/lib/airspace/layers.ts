@@ -51,6 +51,7 @@ export function syncAirspaces(map: maplibregl.Map, p: AirspacePrefsValue, key: s
     if (map.getSource(SOURCE)) map.removeSource(SOURCE);
     return;
   }
+
   const src = map.getSource(SOURCE) as VectorTileSource | undefined;
   if (!src) {
     map.addSource(SOURCE, { type: 'vector', tiles: [tiles], minzoom: 0, maxzoom: 14, attribution: '© openAIP' });
@@ -81,6 +82,7 @@ export function bindAirspacePopup(map: maplibregl.Map, units: () => Units) {
       seen.add(id);
       lines.push(airspaceLabel(f.properties, units()));
     }
+
     if (!lines.length) return;
     const el = document.createElement('div');
     for (const l of lines) el.append(Object.assign(document.createElement('div'), { textContent: l }));

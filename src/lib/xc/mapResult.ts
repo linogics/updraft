@@ -29,10 +29,12 @@ export function mapResult(league: XcLeague, s: RawSolution): XcScore | null {
     points.unshift(info.ep.start);
     points.push(info.ep.finish);
   }
+
   if (type === 'oar' && cp) {
     points.unshift(cp.in);
     points.push(cp.out);
   }
+
   if (closed) points.push(info.tp[0]);
   return {
     league,

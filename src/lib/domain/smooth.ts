@@ -21,6 +21,7 @@ function knots(p: [Vec, Vec, Vec, Vec]): [number, number, number, number] {
   for (let i = 1; i < 4; i++) {
     k[i] = k[i - 1] + Math.max(Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) ** ALPHA, 1e-9);
   }
+
   return k;
 }
 
@@ -78,5 +79,6 @@ export function smoothPath(fixes: Fix[], perSegment = 3): SmoothPath {
       source.push(i);
     }
   }
+
   return { points, source, index };
 }

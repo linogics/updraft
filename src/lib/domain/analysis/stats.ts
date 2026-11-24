@@ -32,6 +32,7 @@ export function computeStats(fixes: Fix[], vario: number[], phases: Phase[]): Fl
     for (let i = p.start + 1; i <= p.end; i++) glideDistance += distance(fixes[i - 1], fixes[i]);
     glideAltLoss += fixes[p.start].alt - fixes[p.end].alt;
   }
+
   // Gaps between phases (one fix interval each) are not attributed; normalise by the attributed total.
   const attributed = phaseTime.thermalling + phaseTime.gliding + phaseTime.searching;
   const share = (k: PhaseKind) => (attributed > 0 ? phaseTime[k] / attributed : 0);

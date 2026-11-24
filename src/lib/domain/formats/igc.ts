@@ -14,6 +14,7 @@ function coord(v: number, degW: number, pos: string, neg: string) {
     deg++;
     mm = 0;
   }
+
   return pad(deg, degW) + pad(mm, 5) + (v >= 0 ? pos : neg);
 }
 

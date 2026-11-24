@@ -14,6 +14,7 @@
       // A failed import can be retried the next time the panel is shown.
       p.catch(() => loads.delete(panel.id));
     }
+
     return p;
   }
 </script>

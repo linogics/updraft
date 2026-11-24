@@ -11,6 +11,7 @@ export function readGpx(text: string, sourceName: string): Flight {
     if (!lat || !lon || !time) continue;
     fixes.push({ t: Date.parse(time), lat: +lat[1], lon: +lon[1], alt: +(xmlTexts(m[2], 'ele')[0] ?? NaN) });
   }
+
   if (!fixes.length) throw new Error(m.format_gpx_no_points({ name: sourceName }));
   return toFlight(sourceName, fixes);
 }

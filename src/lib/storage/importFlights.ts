@@ -16,6 +16,7 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
       errors.push(`${file.name}: ${err instanceof Error ? err.message : err}`);
     }
   }
+
   // Installed apps and Safari home-screen apps keep IndexedDB from eviction, persist asks the browser to keep the logbook too.
   if (ids.length && typeof navigator !== 'undefined') {
     try {
@@ -24,6 +25,7 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
       // Persistence is only a hint, a failed request must not fail the import.
     }
   }
+
   // Perf runs read this mark to time parse and store apart from studio startup.
   performance.mark('updraft:imported');
   return { ids, errors };

@@ -87,5 +87,6 @@ export function volumeHeights(p: AirspaceProps, exaggeration: number): { floor: 
     );
     return (l.ref === 'GND' && side === 'lower' ? 0 : l.value) * exaggeration;
   };
+
   return { floor: h('lower'), ceiling: h('upper') };
 }

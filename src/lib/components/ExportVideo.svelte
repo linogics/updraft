@@ -148,6 +148,7 @@
     musicName = '';
     musicError = '';
     if (!file) return;
+
     try {
       music = await decodeMusic(file);
       musicName = file.name;
@@ -200,6 +201,7 @@
       if (!(await enc.videoEncodable(width, height, bitrate, fps))) {
         throw new Error(m.export_video_cannot_encode({ width, height }));
       }
+
       const audio = music ? await renderMusic(music, timing.seconds) : undefined;
       session = await begin(width, height);
       const blob = await enc.renderVideo({

@@ -18,6 +18,7 @@ export function extractThermals(fixes: Fix[], vario: number[], phases: Phase[]):
         lon += fixes[i].lon;
         maxClimb = Math.max(maxClimb, vario[i]);
       }
+
       const count = end - start + 1;
 
       return {

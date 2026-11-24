@@ -46,6 +46,7 @@ describe('buildDemoFlights', () => {
         expect(fix.lon).toBeLessThanOrEqual(g.east);
         minAgl = Math.min(minAgl, fix.alt - groundAt(fix.lat, fix.lon));
       }
+
       expect(minAgl, f.pilot).toBeGreaterThanOrEqual(150);
     }
   });

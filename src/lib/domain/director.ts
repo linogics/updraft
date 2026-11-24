@@ -85,6 +85,7 @@ function directShots(
       if (b - a < MIN_PHASE_MS && segs.length) segs.at(-1)!.b = b;
       else segs.push({ kind: phase.kind, a, b });
     }
+
     for (const { kind, a, b } of segs) {
       const times = [a];
       if (density === 'mid' && b - a > LONG_PHASE_MS)
@@ -99,12 +100,14 @@ function directShots(
           const next = trackBearing(fixes, t, CHASE.lookAhead);
           if (next !== undefined) heading = unwrapNear(next, heading);
         }
+
         if (t <= inMs || t >= outMs || t - keys.at(-1)!.t < MIN_KEY_GAP_MS) continue;
         const shot = kind === 'thermalling' ? ORBIT : CHASE;
         keys.push({ t, heading, pitch: shot.pitch, range: shot.range });
       }
     }
   }
+
   if (density === 'high')
     for (const phase of sorted) {
       const a = fixes[phase.start].t;

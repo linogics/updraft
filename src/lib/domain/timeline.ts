@@ -6,11 +6,13 @@ export function indexAt(fixes: Fix[], t: number): number {
   let lo = 0;
   let hi = fixes.length - 1;
   if (t >= fixes[hi].t) return hi;
+
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
     if (fixes[mid].t <= t) lo = mid;
     else hi = mid - 1;
   }
+
   return lo;
 }
 
