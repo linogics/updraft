@@ -36,7 +36,6 @@
 </script>
 
 <section>
-  <h3>{m.pilots_heading()}</h3>
   <div class="head"><span class="live"><span>{m.pilots_alt()}</span><span>AGL</span></span></div>
   <ul>
     {#each rows as r (r.f.flight.id)}

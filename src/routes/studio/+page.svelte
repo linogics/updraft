@@ -2,18 +2,15 @@
   import { onDestroy, onMount } from 'svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import AltitudeChart from '#lib/components/AltitudeChart.svelte';
   import CesiumView from '#lib/components/CesiumView.svelte';
   import LoadScreen from '#lib/components/LoadScreen.svelte';
   import Splitter from '#lib/components/Splitter.svelte';
-  import { PANEL_LIMITS } from '#lib/state/panelPrefs';
-  import { panelPrefs } from '#lib/state/panelPrefs.svelte';
+  import Dock from '#lib/components/studio/Dock.svelte';
+  import { panelStatus } from '#lib/components/studio/panelActions.svelte';
+  import { LAYOUT_LIMITS as L } from '#lib/state/studioLayout';
+  import { studioLayout } from '#lib/state/studioLayout.svelte';
   import MiniMap from '#lib/components/MiniMap.svelte';
-  import PilotList from '#lib/components/PilotList.svelte';
   import PlayerBar from '#lib/components/PlayerBar.svelte';
-  import StatsPanel from '#lib/components/StatsPanel.svelte';
-  import ThermalList from '#lib/components/ThermalList.svelte';
-  import Timeline from '#lib/components/Timeline.svelte';
   import Toolbar from '#lib/components/Toolbar.svelte';
   import { loadRuntimeConfig } from '#lib/config';
   import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
@@ -25,13 +22,12 @@
   const studio = new StudioState();
   let error = $state('');
   let loaded = $state(false);
-  let footerTab = $state<'altitude' | 'timeline'>('altitude');
   let steps = $state<string[]>([m.studio_step_read_flights(), m.studio_step_thermals(), m.studio_step_camera()]);
   let step = $state(0);
   // Analysis runs synchronously, so let the browser paint the loader before each heavy step.
   let viewsWidth = $state(1);
-  const panels = $derived(panelPrefs.value);
-  const L = PANEL_LIMITS;
+  const layout = $derived(studioLayout.value);
+  const docked = (d: 'left' | 'right' | 'bottom') => layout.docks[d].length > 0;
   const paint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
 
   onMount(async () => {
@@ -70,7 +66,7 @@
     step = 2;
     await studio.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
-    if (studio.multiDay) footerTab = 'timeline';
+    if (studio.multiDay) studioLayout.setTab('timeline', false);
     loaded = true;
   });
 
@@ -125,31 +121,30 @@
   <div
     class="app"
     data-layout={studio.layout}
-    style:--outliner="{panels.outlinerOpen ? panels.outliner : 0}px"
-    style:--side="{panels.sideOpen ? panels.side : 0}px"
-    style:--chart="{panels.footer}px"
-    style:--split="{panels.split * 100}%"
+    style:--outliner="{docked('left') && layout.open.left ? layout.sizes.left : 0}px"
+    style:--side="{docked('right') && layout.open.right ? layout.sizes.right : 0}px"
+    style:--chart="{layout.sizes.bottom}px"
+    style:--split="{layout.sizes.split * 100}%"
   >
     <header><Toolbar {studio} /></header>
 
-    <nav class="outliner panel" hidden={!panels.outlinerOpen} aria-label={m.studio_outliner()}>
-      <PilotList {studio} />
-      <ThermalList {studio} />
-    </nav>
+    <Dock dock="left" {studio} ids={layout.docks.left} />
 
-    <div class="outliner-handle">
-      <Splitter
-        label={m.studio_outliner()}
-        axis="x"
-        value={panels.outliner}
-        min={L.outliner.min}
-        max={L.outliner.max}
-        open={panels.outlinerOpen}
-        onchange={(v) => panelPrefs.resize('outliner', v)}
-        onreset={() => panelPrefs.reset('outliner')}
-        ontoggle={() => panelPrefs.toggle('outlinerOpen')}
-      />
-    </div>
+    {#if docked('left')}
+      <div class="outliner-handle">
+        <Splitter
+          label={m.studio_outliner()}
+          axis="x"
+          value={layout.sizes.left}
+          min={L.left.min}
+          max={L.left.max}
+          open={layout.open.left}
+          onchange={(v) => studioLayout.resize('left', v)}
+          onreset={() => studioLayout.reset('left')}
+          ontoggle={() => studioLayout.toggleDock('left')}
+        />
+      </div>
+    {/if}
 
     <div class="views panel" bind:clientWidth={viewsWidth}>
       {#if studio.layout !== '2d'}
@@ -160,12 +155,12 @@
           <Splitter
             label={m.studio_split_label()}
             axis="x"
-            value={panels.split}
+            value={layout.sizes.split}
             min={L.split.min}
             max={L.split.max}
             scale={1 / viewsWidth}
-            onchange={(v) => panelPrefs.resize('split', v)}
-            onreset={() => panelPrefs.reset('split')}
+            onchange={(v) => studioLayout.resize('split', v)}
+            onreset={() => studioLayout.reset('split')}
           />
         </div>
       {/if}
@@ -174,56 +169,49 @@
       {/if}
     </div>
 
-    <div class="side-handle">
-      <Splitter
-        label={m.studio_side_panel()}
-        axis="x"
-        sign={-1}
-        value={panels.side}
-        min={L.side.min}
-        max={L.side.max}
-        open={panels.sideOpen}
-        onchange={(v) => panelPrefs.resize('side', v)}
-        onreset={() => panelPrefs.reset('side')}
-        ontoggle={() => panelPrefs.toggle('sideOpen')}
-      />
-    </div>
+    {#if docked('right')}
+      <div class="side-handle">
+        <Splitter
+          label={m.studio_side_panel()}
+          axis="x"
+          sign={-1}
+          value={layout.sizes.right}
+          min={L.right.min}
+          max={L.right.max}
+          open={layout.open.right}
+          onchange={(v) => studioLayout.resize('right', v)}
+          onreset={() => studioLayout.reset('right')}
+          ontoggle={() => studioLayout.toggleDock('right')}
+        />
+      </div>
+    {/if}
 
-    <aside class="panel" hidden={!panels.sideOpen}>
-      <StatsPanel {studio} />
-    </aside>
+    <Dock dock="right" {studio} ids={layout.docks.right} />
 
-    <div class="footer-handle">
-      <Splitter
-        label={m.studio_bottom_panel()}
-        axis="y"
-        sign={-1}
-        value={panels.footer}
-        min={L.footer.min}
-        max={L.footer.max}
-        open={panels.footerOpen}
-        onchange={(v) => panelPrefs.resize('footer', v)}
-        onreset={() => panelPrefs.reset('footer')}
-        ontoggle={() => panelPrefs.toggle('footerOpen')}
-      />
-    </div>
+    {#if docked('bottom')}
+      <div class="footer-handle">
+        <Splitter
+          label={m.studio_bottom_panel()}
+          axis="y"
+          sign={-1}
+          value={layout.sizes.bottom}
+          min={L.bottom.min}
+          max={L.bottom.max}
+          open={layout.open.bottom}
+          onchange={(v) => studioLayout.resize('bottom', v)}
+          onreset={() => studioLayout.reset('bottom')}
+          ontoggle={() => studioLayout.toggleDock('bottom')}
+        />
+      </div>
+    {/if}
 
     <footer class="panel">
-      <div class="transport">
-        <PlayerBar {studio} />
-        <div class="tabs" role="tablist" hidden={!panels.footerOpen}>
-          <button role="tab" aria-selected={footerTab === 'altitude'} onclick={() => (footerTab = 'altitude')}>
-            {m.studio_tab_altitude()}
-          </button>
-          <button role="tab" aria-selected={footerTab === 'timeline'} onclick={() => (footerTab = 'timeline')}>
-            {studio.multiDay ? m.studio_timeline_multi_day() : m.timeline_label()}
-          </button>
-        </div>
-      </div>
-      <div class="chart" hidden={!panels.footerOpen}>
-        {#if footerTab === 'altitude'}<AltitudeChart {studio} />{:else}<Timeline {studio} />{/if}
-      </div>
+      <Dock dock="bottom" {studio} ids={layout.docks.bottom}>
+        {#snippet lead()}<PlayerBar {studio} />{/snippet}
+      </Dock>
     </footer>
+
+    <p class="visually-hidden" role="status">{panelStatus.text}</p>
   </div>
 {:else}
   <LoadScreen {steps} {step} />
@@ -252,20 +240,6 @@
   }
   header {
     grid-area: header;
-  }
-  .outliner {
-    grid-area: outliner;
-  }
-  .outliner,
-  aside {
-    overflow-y: auto;
-    padding: 12px;
-    display: grid;
-    align-content: start;
-    gap: 20px;
-  }
-  aside {
-    grid-area: aside;
   }
   .views {
     grid-area: views;
@@ -304,48 +278,29 @@
   .footer-handle > :global(*) {
     flex: 1;
   }
-  .outliner[hidden],
-  aside[hidden],
-  .chart[hidden],
-  .tabs[hidden] {
-    display: none;
-  }
   footer {
     grid-area: footer;
   }
-  .transport {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-right: 10px;
-    border-bottom: 1px solid var(--border);
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
-  .transport > :global(:first-child) {
-    flex: 1;
-    min-width: 0;
+  /* Only the moving panels animate when a move is wrapped in a view transition. */
+  :global(::view-transition-old(root)),
+  :global(::view-transition-new(root)) {
+    animation: none;
   }
-  .chart {
-    height: var(--chart);
-    padding: 6px 8px;
-  }
-  .tabs {
-    display: flex;
-    padding: 2px;
-    border-radius: 7px;
-    background: var(--surface-2);
-  }
-  .tabs button {
-    border: 0;
-    border-radius: 5px;
-    background: none;
-    padding: 4px 10px;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 500;
-  }
-  .tabs button[aria-selected='true'] {
-    color: var(--text);
-    background: var(--bg);
+  @media (prefers-reduced-motion: reduce) {
+    :global(::view-transition-group(*)),
+    :global(::view-transition-old(*)),
+    :global(::view-transition-new(*)) {
+      animation: none;
+    }
   }
   .error {
     display: grid;
@@ -380,17 +335,6 @@
     .side-handle,
     .footer-handle {
       display: none;
-    }
-    .outliner[hidden],
-    aside[hidden],
-    .chart[hidden] {
-      display: grid;
-    }
-    .tabs[hidden] {
-      display: flex;
-    }
-    .chart {
-      height: 150px;
     }
   }
 </style>

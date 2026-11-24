@@ -19,6 +19,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 ## Studio
 
 - 3D view on CesiumJS, 2D map (MapLibre) or a split view of both. Panels are resizable and collapsible, sizes are kept per browser.
+- Dockable panels: pilots, climbs, stats, altitude chart and timeline live in a left, right or bottom dock. Move a panel between docks or within a dock from its actions menu, hide it, or bring it back from the toolbar Panels menu. Hidden panels are not even loaded. The layout is kept per browser.
 - Several pilots on one shared clock, with live markers, trail and pilot names.
 - Player: play and pause, 1× to 200× speed, scrubbing, jump to the next thermal, keyboard control.
 - Timeline like a video editor: one clip per pilot, drag clips to shift them in time with snapping, Ctrl+wheel to zoom. Quick alignment: real time, same day (keeps time of day) or aligned takeoffs. Works for flights from different days.
@@ -53,7 +54,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 ## XC scoring
 
-- XC section in the studio side panel: type (free distance, flat triangle, FAI triangle, out and return), distance, multiplier and points.
+- XC section in the studio Stats panel: type (free distance, flat triangle, FAI triangle, out and return), distance, multiplier and points.
 - Leagues: XContest, FFVL, FAI and UK XC League.
 - Points list when several pilots are loaded. The scored route is drawn in 2D and 3D, with the closing circle for triangles.
 - "Make route" turns a flight into 1 to 30 turnpoints and opens them in the planner.
