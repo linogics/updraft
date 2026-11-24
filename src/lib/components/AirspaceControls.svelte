@@ -78,10 +78,13 @@
 <style>
   .fields {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     justify-items: start;
     gap: 6px 10px;
+  }
+  .fields > :global(input) {
+    max-width: 100%;
   }
   label,
   .fields > span:first-of-type {

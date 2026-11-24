@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { replaceState } from '$app/navigation';
-  import Logo from '#lib/components/Logo.svelte';
+  import SideDrawer from '#lib/components/SideDrawer.svelte';
+  import SidebarHeader from '#lib/components/SidebarHeader.svelte';
   import { m } from '#lib/paraglide/messages';
   import { XC_TYPE_LABELS } from '#lib/xc/labels';
   import PlanMap from '#lib/components/PlanMap.svelte';
@@ -65,7 +66,13 @@
 
   function onkey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
-    if ((e.key === 'Delete' || e.key === 'Backspace') && t.tagName !== 'INPUT' && t.tagName !== 'SELECT') {
+    // The desktop sidebar is a closed popover, so only the open mobile drawer keeps the keys for its controls.
+    if (
+      (e.key === 'Delete' || e.key === 'Backspace') &&
+      t.tagName !== 'INPUT' &&
+      t.tagName !== 'SELECT' &&
+      !document.querySelector('[popover]:popover-open')
+    ) {
       e.preventDefault();
       remove();
     }
@@ -107,7 +114,90 @@
 <svelte:window onkeydown={onkey} />
 
 <div class="page">
-  <div class="mapbox">
+  <SideDrawer label={m.plan_title()}>
+    {#snippet header()}<SidebarHeader title={m.home_planner_title()} />{/snippet}
+    <div class="side">
+      <p class="hint">{m.plan_hint()}</p>
+
+      <div class="row">
+        <button onclick={undo} disabled={!history.length}>{m.timeline_undo()}</button>
+        <button onclick={remove} disabled={selected === null}>{m.plan_remove_point()}</button>
+        <button onclick={() => commit([])} disabled={!points.length}>{m.common_clear()}</button>
+        <button onclick={copy} disabled={!points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
+      </div>
+
+      <label>
+        {m.plan_base_map()}
+        <select bind:value={basemap}>
+          {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
+        </select>
+      </label>
+
+      <div class="readout">
+        <span class="big">{formatDistance(total, unitPrefs.units)}</span>
+        <span class="unit">{m.plan_total_distance()}</span>
+      </div>
+
+      <div class="row">
+        <label>
+          {m.plan_speed()}
+          <input type="number" min="1" max="300" bind:value={speed} onchange={syncUrl} />
+        </label>
+        <div class="readout">
+          <span class="big">{speed > 0 && total ? formatDuration((total / 1000 / speed) * 3600) : '–'}</span>
+          <span class="unit">{m.plan_estimated_time()}</span>
+        </div>
+      </div>
+
+      <section>
+        <h2>{m.airspace_show()}</h2>
+        <AirspaceControls />
+      </section>
+
+      <section>
+        <h2>{m.plan_thermal_overlay()}</h2>
+        <ThermalOverlayControls />
+      </section>
+
+      <section>
+        <h2>{m.plan_xc_score()}</h2>
+        <label>
+          {m.plan_league()}
+          <select value={xcPrefs.league} onchange={(e) => xcPrefs.set(e.currentTarget.value as XcLeague)}>
+            {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+          </select>
+        </label>
+        {#if scoring}
+          <p class="muted">{m.xc_scoring()}</p>
+        {:else if score}
+          <p>
+            <strong>{m.plan_points({ points: Math.round(score.points) })}</strong>
+            <span class="muted">
+              {XC_TYPE_LABELS[score.type]()}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}
+            </span>
+          </p>
+        {:else}
+          <p class="muted">–</p>
+        {/if}
+      </section>
+
+      {#if legs.length}
+        <section>
+          <h2>{m.plan_legs()}</h2>
+          <ol>
+            {#each legs as d, i (i)}
+              <li>
+                <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
+    </div>
+  </SideDrawer>
+
+  <main class="mapbox">
+    <h1 class="sr">{m.home_planner_title()}</h1>
     {#if mounted}
       <PlanMap
         {points}
@@ -119,112 +209,33 @@
         onselect={(i) => (selected = i)}
       />
     {/if}
-  </div>
-
-  <aside>
-    <Logo />
-    <h1>{m.home_planner_title()}</h1>
-    <p class="hint">{m.plan_hint()}</p>
-
-    <div class="row">
-      <button onclick={undo} disabled={!history.length}>{m.timeline_undo()}</button>
-      <button onclick={remove} disabled={selected === null}>{m.plan_remove_point()}</button>
-      <button onclick={() => commit([])} disabled={!points.length}>{m.common_clear()}</button>
-      <button onclick={copy} disabled={!points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
-    </div>
-
-    <label>
-      {m.plan_base_map()}
-      <select bind:value={basemap}>
-        {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
-      </select>
-    </label>
-
-    <div class="readout">
-      <span class="big">{formatDistance(total, unitPrefs.units)}</span>
-      <span class="unit">{m.plan_total_distance()}</span>
-    </div>
-
-    <div class="row">
-      <label>
-        {m.plan_speed()}
-        <input type="number" min="1" max="300" bind:value={speed} onchange={syncUrl} />
-      </label>
-      <div class="readout">
-        <span class="big">{speed > 0 && total ? formatDuration((total / 1000 / speed) * 3600) : '–'}</span>
-        <span class="unit">{m.plan_estimated_time()}</span>
-      </div>
-    </div>
-
-    <section>
-      <h2>{m.airspace_show()}</h2>
-      <AirspaceControls />
-    </section>
-
-    <section>
-      <h2>{m.plan_thermal_overlay()}</h2>
-      <ThermalOverlayControls />
-    </section>
-
-    <section>
-      <h2>{m.plan_xc_score()}</h2>
-      <label>
-        {m.plan_league()}
-        <select value={xcPrefs.league} onchange={(e) => xcPrefs.set(e.currentTarget.value as XcLeague)}>
-          {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
-        </select>
-      </label>
-      {#if scoring}
-        <p class="muted">{m.xc_scoring()}</p>
-      {:else if score}
-        <p>
-          <strong>{m.plan_points({ points: Math.round(score.points) })}</strong>
-          <span class="muted">
-            {XC_TYPE_LABELS[score.type]()}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}
-          </span>
-        </p>
-      {:else}
-        <p class="muted">–</p>
-      {/if}
-    </section>
-
-    {#if legs.length}
-      <section>
-        <h2>{m.plan_legs()}</h2>
-        <ol>
-          {#each legs as d, i (i)}
-            <li>
-              <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span>
-            </li>
-          {/each}
-        </ol>
-      </section>
-    {/if}
-  </aside>
+  </main>
 </div>
 
 <style>
   .page {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
     height: 100dvh;
   }
   .mapbox {
     min-height: 0;
     min-width: 0;
   }
-  aside {
+  .side {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-content: start;
     gap: 14px;
-    padding: 20px 16px;
-    overflow-y: auto;
-    border-left: 1px solid var(--border);
-    background: var(--surface);
+    padding: 4px 16px 20px;
   }
-  h1 {
-    margin: 0;
-    font: 600 28px/1.1 var(--display);
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   h2 {
     margin: 0 0 6px;
@@ -274,15 +285,10 @@
     padding: 4px 0;
     border-bottom: 1px solid var(--border);
   }
-  @media (max-width: 760px) {
+  @media (max-width: 800px) {
     .page {
-      grid-template-columns: 1fr;
-      grid-template-rows: 55dvh auto;
-      height: auto;
-    }
-    aside {
-      border-left: 0;
-      border-top: 1px solid var(--border);
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
     }
   }
 </style>

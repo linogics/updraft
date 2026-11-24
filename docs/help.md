@@ -102,6 +102,7 @@ Open "XC Planner" in the navigation.
 - Set a speed in km/h for a duration estimate. The score is shown for the chosen league.
 - **Copy link** copies a URL with the route, ready to share.
 - The planner map has the same base maps, thermal overlay and airspaces as the studio.
+- On a phone the controls are in a drawer. Tap the menu button or swipe it open.
 
 ## Logbook
 
