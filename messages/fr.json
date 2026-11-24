@@ -154,6 +154,7 @@
   "export_part_hud": "Données de vol",
   "export_part_minimap": "Mini-carte",
   "export_part_stats": "Statistiques",
+  "export_plugin_failed": "Le plugin {name} a échoué au dessin et a été omis.",
   "export_png_error": "Le navigateur n'a pas pu encoder le PNG.",
   "export_progress": "Image {done} sur {total} · {elapsed} écoulées · environ {left} restantes",
   "export_quality": "Qualité",

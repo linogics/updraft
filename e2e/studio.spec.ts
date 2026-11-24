@@ -1,4 +1,5 @@
 import { expect, openDemoStudio, test } from './fixtures';
+import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { buildIgc } from '../src/lib/domain/testing/igc-builder';
 
@@ -356,5 +357,33 @@ test.describe('plugins', () => {
     await expect(page.getByRole('region', { name: 'Hello' }).getByRole('alert')).toContainText('boom');
     await expect(page.getByRole('region', { name: 'Stats' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Hello' }).getByRole('alert')).toBeVisible();
+  });
+
+  test('a plugin draws into the image export and can be switched off', async ({ page }) => {
+    test.slow();
+    await openDemoStudio(page);
+    await serve(page, plugin(`drawExport(c) { c.fillStyle = '#ff00ff'; c.fillRect(0, 0, 20, 20); }`));
+    await expect(await add(page)).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Hello' })).toContainText('pilot=');
+
+    await page.getByRole('button', { name: /^Export/ }).click();
+    const box = page.getByRole('checkbox', { name: 'Hello' });
+    await expect(box).toBeChecked();
+
+    const corner = async () => {
+      const download = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Download PNG' }).click();
+      const bytes = [...readFileSync((await (await download).path())!)];
+      return page.evaluate(async (b) => {
+        const bmp = await createImageBitmap(new Blob([new Uint8Array(b)]));
+        const c = new OffscreenCanvas(bmp.width, bmp.height).getContext('2d')!;
+        c.drawImage(bmp, 0, 0);
+        return [...c.getImageData(5, 5, 1, 1).data.slice(0, 3)];
+      }, bytes);
+    };
+
+    expect(await corner()).toEqual([255, 0, 255]);
+    await box.uncheck();
+    expect(await corner()).not.toEqual([255, 0, 255]);
   });
 });
