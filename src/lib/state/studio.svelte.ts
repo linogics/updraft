@@ -1,3 +1,4 @@
+import type { Viewer } from 'cesium';
 import type { BeginCapture } from '#lib/cesium/capture';
 import { DEFAULT_TRACKS, type CameraTracks, type CameraView } from '#lib/domain/cameraPath';
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
@@ -106,6 +107,10 @@ export class StudioState {
   labels = $state(DEFAULT_SCENE.labels);
   /** Pilot colours picked by the user, per flight id. */
   colorOverrides = $state.raw<Record<string, string>>({});
+  /** The Cesium viewer while the 3D view is mounted, for plugins. */
+  viewer = $state.raw<Viewer | null>(null);
+  /** The element that holds the 3D and 2D views, plugin overlays go inside it. */
+  viewsEl = $state.raw<HTMLElement | null>(null);
   /** Renders the 3D frame at a size. Null until the 3D viewer is ready. */
   capture = $state.raw<((w: number, h: number) => Promise<HTMLCanvasElement>) | null>(null);
   /** Starts a frame-by-frame capture session for video export. Null until the 3D viewer is ready. */

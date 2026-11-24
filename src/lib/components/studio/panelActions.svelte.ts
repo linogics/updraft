@@ -1,7 +1,8 @@
 import { tick } from 'svelte';
 import { m } from '#lib/paraglide/messages';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
-import { DOCK_LABELS, panelById, type Dock } from '#lib/studio/panels';
+import { DOCK_LABELS, type Dock } from '#lib/studio/panels';
+import { panelById } from '#lib/studio/registry.svelte';
 
 /** Text of the one polite live region the studio page renders. */
 export const panelStatus = $state({ text: '' });

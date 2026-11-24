@@ -26,6 +26,12 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 - Drag a panel by its grip (in the panel header, or on its tab in the bottom dock) and drop it anywhere in any dock. A marker shows where it will land, and a dock without panels shows a drop strip at its edge while you drag. The dock under the pointer scrolls when you hold the panel near its top or bottom edge. Escape cancels the drag.
 - Every panel has an actions menu (the "..." button in its header or tab). Use it to move the panel up, down, left or right inside its dock, to move it to another dock, or to hide it. Moves are announced to screen readers and the focus stays on the menu button.
 - The toolbar **Panels** menu has a switch per panel to show or hide it, and **Restore default layout** puts everything back.
+
+### Plugins
+
+- **Panels**, **Add plugin...** adds a panel from the URL of a JavaScript module (http or https). A plugin runs with full access to the page and your flights, so only add plugins you trust. The studio checks the module and shows what is wrong in the dialog if it cannot use it.
+- A plugin appears in the Panels menu like any panel, with a **Remove** button. It is only loaded while its panel is shown. If it fails, only its own panel shows an error and the rest of the studio keeps working.
+- To work offline, the plugin should be one bundled file served with CORS (the `Access-Control-Allow-Origin` header), because only that file is stored and the browser needs CORS to import it from another site. The stored copy is used only when the network is not reachable.
 - The layout is kept in this browser. It is not part of the share link.
 
 ### Player

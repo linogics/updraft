@@ -257,3 +257,104 @@ test('a drag without files does not show the drop overlay', async ({ page }) => 
   await page.locator('body').dispatchEvent('dragenter', { dataTransfer: data });
   await expect(page.getByText('Drop to add pilots')).toBeHidden();
 });
+
+test.describe('plugins', () => {
+  // The service worker would answer plugin requests itself, bypassing page.route.
+  test.use({ serviceWorkers: 'block' });
+
+  const URL = 'https://plugins.example.test/hello.js';
+  const plugin = (over = '') => `
+    export default {
+      id: 'hello', name: 'Hello', apiVersion: 1, dock: 'right',
+      mount(el, ctx) {
+        const marker = document.createElement('i');
+        marker.dataset.testid = 'plugin-marker';
+        ctx.overlay.append(marker);
+        const draw = () => {
+          const f = ctx.flights().find((x) => x.id === ctx.selectedId());
+          el.textContent = 'pilot=' + f.pilot + ' time=' + ctx.time();
+        };
+        const stop = ctx.subscribe(draw);
+        draw();
+        return () => stop();
+      },
+      ${over}
+    };`;
+
+  async function serve(page: Page, body: string) {
+    await page.route(URL, (route) =>
+      route.fulfill({ contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' }, body })
+    );
+  }
+
+  async function add(page: Page) {
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    await page.getByRole('button', { name: 'Add plugin…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add plugin' });
+    await expect(dialog.getByText('A plugin runs with full access to this page and your flights.')).toBeVisible();
+    await dialog.getByLabel(/^Plugin address/).fill(URL);
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    return dialog;
+  }
+
+  test('a plugin added by URL shows its panel, follows playback, unmounts when hidden and can be removed', async ({
+    page
+  }) => {
+    // Two studio loads and a reload.
+    test.slow();
+    await openDemoStudio(page);
+    await serve(page, plugin());
+    const dialog = await add(page);
+    await expect(dialog).toBeHidden();
+
+    const panel = page.getByRole('region', { name: 'Hello' });
+    await expect(panel).toContainText(/pilot=.+ time=\d+/);
+    await expect(page.getByTestId('plugin-marker')).toHaveCount(1);
+
+    const before = await panel.textContent();
+    await page.keyboard.press('ArrowRight');
+    await expect(panel).not.toHaveText(before!);
+
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    await page.getByRole('checkbox', { name: 'Hello' }).uncheck();
+    await expect(panel).toHaveCount(0);
+    await expect(page.getByTestId('plugin-marker')).toHaveCount(0);
+
+    await page.getByRole('checkbox', { name: 'Hello' }).check();
+    await expect(page.getByTestId('plugin-marker')).toHaveCount(1);
+
+    await page.reload();
+    await expect(panel).toContainText('pilot=', { timeout: 30_000 });
+
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    await page.getByRole('button', { name: 'Remove plugin Hello' }).click();
+    await expect(panel).toHaveCount(0);
+    await expect(page.getByTestId('plugin-marker')).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Hello' })).toHaveCount(0);
+  });
+
+  test('a plugin with an unsupported apiVersion is rejected inline', async ({ page }) => {
+    await openDemoStudio(page);
+    await serve(page, plugin().replace('apiVersion: 1', 'apiVersion: 2'));
+    const dialog = await add(page);
+    await expect(dialog.getByRole('alert')).toContainText('Unsupported apiVersion 2');
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByRole('region', { name: 'Hello' })).toHaveCount(0);
+  });
+
+  test('a plugin whose mount throws shows an error in its panel only', async ({ page }) => {
+    await openDemoStudio(page);
+    await serve(page, plugin().replace('mount(el, ctx) {', "mount(el, ctx) { throw new Error('boom');"));
+    await add(page);
+
+    await expect(page.getByRole('region', { name: 'Hello' }).getByRole('alert')).toContainText('boom');
+    await expect(page.getByRole('region', { name: 'Stats' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Hello' }).getByRole('alert')).toBeVisible();
+  });
+});

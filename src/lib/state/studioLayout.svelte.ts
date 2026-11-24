@@ -1,6 +1,8 @@
-import { PANEL_DEFAULTS, type Dock } from '#lib/studio/panels';
+import type { Dock } from '#lib/studio/panels';
+import { registry } from '#lib/studio/registry.svelte';
 import {
   clampSize,
+  forgetInLayout,
   hideInLayout,
   LAYOUT_LIMITS,
   moveInLayout,
@@ -14,16 +16,16 @@ const KEY = 'studioLayout';
 // Storage can throw (private mode, blocked site data). The layout then starts at its defaults.
 function load(): StudioLayoutValue {
   try {
-    return parseStudioLayout(JSON.parse(localStorage.getItem(KEY) ?? 'null'), PANEL_DEFAULTS);
+    return parseStudioLayout(JSON.parse(localStorage.getItem(KEY) ?? 'null'), registry.defaults);
   } catch {
-    return parseStudioLayout(null, PANEL_DEFAULTS);
+    return parseStudioLayout(null, registry.defaults);
   }
 }
 
 /** Studio dock layout, kept in this browser (not in the shareable scene URL). */
 class StudioLayout {
   value = $state<StudioLayoutValue>(
-    typeof localStorage === 'undefined' ? parseStudioLayout(null, PANEL_DEFAULTS) : load()
+    typeof localStorage === 'undefined' ? parseStudioLayout(null, registry.defaults) : load()
   );
   /** Bottom tab picked for this session only, for example the timeline when flights span several days. */
   private sessionTab = $state<string | null>(null);
@@ -46,8 +48,13 @@ class StudioLayout {
     this.save(hideInLayout(this.value, id));
   }
 
+  forget(id: string) {
+    this.lastDock.delete(id);
+    this.save(forgetInLayout(this.value, id));
+  }
+
   show(id: string) {
-    this.move(id, this.lastDock.get(id) ?? PANEL_DEFAULTS[id], Infinity);
+    this.move(id, this.lastDock.get(id) ?? registry.defaults[id], Infinity);
   }
 
   resize(key: LayoutSize, v: number) {
@@ -72,7 +79,7 @@ class StudioLayout {
   restoreDefaults() {
     this.sessionTab = null;
     this.lastDock.clear();
-    this.save(parseStudioLayout(null, PANEL_DEFAULTS));
+    this.save(parseStudioLayout(null, registry.defaults));
   }
 
   private save(next: StudioLayoutValue) {

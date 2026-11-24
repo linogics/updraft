@@ -3,7 +3,8 @@
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
-  import { DOCK_LABELS, DOCKS, panelById, type Dock, type PanelDef } from '#lib/studio/panels';
+  import { DOCK_LABELS, DOCKS, type Dock, type PanelDef } from '#lib/studio/panels';
+  import { panelById } from '#lib/studio/registry.svelte';
   import Menu from '../Menu.svelte';
   import { hidePanel, movePanel, panelMenuId } from './panelActions.svelte';
   import PanelHost from './PanelHost.svelte';
@@ -12,6 +13,8 @@
   /** Side docks stack their panels, the bottom dock shows one at a time behind tabs, next to `lead`. */
   let { dock, studio, ids, lead }: { dock: Dock; studio: StudioState; ids: string[]; lead?: Snippet } = $props();
 
+  // Plugin ids hold a colon, which is not valid in a CSS identifier.
+  const viewName = (id: string) => `panel-${id.replace(':', '-')}`;
   const panels = $derived(ids.map(panelById).filter((p): p is PanelDef => !!p));
   const open = $derived(studioLayout.value.open[dock]);
   const active = $derived(panels.find((p) => p.id === studioLayout.activeTab));
@@ -70,7 +73,7 @@
             data-panel={p.id}
             data-lifted={drag.id === p.id ? '' : undefined}
             style={liftStyle(p.id)}
-            style:view-transition-name="panel-{p.id}"
+            style:view-transition-name={viewName(p.id)}
           >
             <button
               role="tab"
@@ -115,7 +118,7 @@
         data-panel={p.id}
         data-lifted={drag.id === p.id ? '' : undefined}
         style={liftStyle(p.id)}
-        style:view-transition-name="panel-{p.id}"
+        style:view-transition-name={viewName(p.id)}
       >
         <header>
           <button

@@ -98,3 +98,14 @@ export function hideInLayout(v: StudioLayoutValue, id: string): StudioLayoutValu
     hidden: [...without(v.hidden), id]
   };
 }
+
+/** Drops a panel from the layout altogether, for a panel that no longer exists. */
+export function forgetInLayout(v: StudioLayoutValue, id: string): StudioLayoutValue {
+  const without = (list: string[]) => list.filter((x) => x !== id);
+  return {
+    ...v,
+    docks: { left: without(v.docks.left), right: without(v.docks.right), bottom: without(v.docks.bottom) },
+    hidden: without(v.hidden),
+    tab: v.tab === id ? null : v.tab
+  };
+}

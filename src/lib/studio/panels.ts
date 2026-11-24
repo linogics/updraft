@@ -18,7 +18,15 @@ export interface PanelDef {
   title: () => string;
   /** Dock the panel starts in. */
   dock: Dock;
-  load: () => Promise<{ default: Component<{ studio: StudioState }> }>;
+  load: () => Promise<PanelModule>;
+  /** Cache key of the loaded module, defaults to the id. A plugin that is removed and added again from another URL gets a new one. */
+  key?: string;
+}
+
+export interface PanelModule {
+  default: Component<{ studio: StudioState }>;
+  /** Extra props for the component, a plugin host gets its plugin here. */
+  props?: Record<string, unknown>;
 }
 
 export const BUILTIN_PANELS: PanelDef[] = [
@@ -49,8 +57,3 @@ export const BUILTIN_PANELS: PanelDef[] = [
     load: () => import('#lib/components/Timeline.svelte')
   }
 ];
-
-export const panelById = (id: string) => BUILTIN_PANELS.find((p) => p.id === id);
-
-/** Default dock per panel id, the shape the layout state validates against. */
-export const PANEL_DEFAULTS: Record<string, Dock> = Object.fromEntries(BUILTIN_PANELS.map((p) => [p.id, p.dock]));
