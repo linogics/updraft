@@ -56,7 +56,6 @@
 
 {#if sel}
   <section>
-    <h3>{m.climbs_heading()}</h3>
     <div class="filter">
       <label for="min-gain">{m.climbs_min_gain()}</label>
       <input

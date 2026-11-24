@@ -74,3 +74,36 @@ test('phone layout stacks the panels without sideways scrolling', async ({ page 
   );
   expect(overflow).toBe(0);
 });
+
+test('a hidden panel stays hidden after reload and can be shown again', async ({ page }) => {
+  await openDemoStudio(page);
+  const thermals = page.getByRole('region', { name: 'Climbs & glides' });
+  await expect(thermals).toBeVisible();
+
+  await page.getByRole('button', { name: /^Panels/ }).click();
+  await page.getByRole('checkbox', { name: 'Climbs & glides' }).uncheck();
+  await expect(thermals).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 30_000 });
+  await expect(thermals).toHaveCount(0);
+
+  await page.getByRole('button', { name: /^Panels/ }).click();
+  await page.getByRole('checkbox', { name: 'Climbs & glides' }).check();
+  await expect(thermals).toBeVisible();
+});
+
+test('the actions menu moves Stats to the left dock and keeps focus on it', async ({ page }) => {
+  await openDemoStudio(page);
+  const stats = page.getByRole('region', { name: 'Stats' });
+  await expect(page.locator('aside').getByRole('region', { name: 'Stats' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Stats panel actions' }).click();
+  await page.getByRole('menuitem', { name: 'Move to left dock' }).click();
+
+  await expect(page.getByRole('navigation', { name: 'Outliner' }).getByRole('region', { name: 'Stats' })).toBeVisible();
+  await expect(stats).toHaveCount(1);
+  await expect(page.locator('aside')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Stats panel actions' })).toBeFocused();
+  await expect(page.getByText('Stats moved to left dock, position 3')).toBeAttached();
+});

@@ -8,6 +8,7 @@
   import ExportImage from './ExportImage.svelte';
   import ExportVideo from './ExportVideo.svelte';
   import Popover from './Popover.svelte';
+  import PanelsMenu from './studio/PanelsMenu.svelte';
   import TrackMenu from './TrackMenu.svelte';
   import LanguageSelect from './LanguageSelect.svelte';
   import UnitsMenu from './UnitsMenu.svelte';
@@ -62,6 +63,7 @@
 
   <TrackMenu {studio} />
   <ViewMenu {studio} />
+  <PanelsMenu />
 
   <Popover label={m.export_menu()}>
     <ExportImage {studio} />

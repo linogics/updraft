@@ -19,7 +19,13 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 ### Layout
 
 - The toolbar switches between **3D**, **2D** and **Split**.
-- The side panel (pilots, stats, climbs, XC) and the bottom panel (altitude chart, timeline) can be resized by dragging their edge, or collapsed. With the edge focused, the arrow keys, Home and End resize it and Enter collapses it.
+- The left dock (pilots, climbs), the right dock (stats, XC) and the bottom dock (altitude chart, timeline) can be resized by dragging their edge, or collapsed. With the edge focused, the arrow keys, Home and End resize it and Enter collapses it. A dock without panels disappears and the views take its space.
+
+### Panels
+
+- Every panel has an actions menu (the "..." button in its header or tab). Use it to move the panel up, down, left or right inside its dock, to move it to another dock, or to hide it. Moves are announced to screen readers and the focus stays on the menu button.
+- The toolbar **Panels** menu has a switch per panel to show or hide it, and **Restore default layout** puts everything back.
+- The layout is kept in this browser. It is not part of the share link.
 
 ### Player
 
@@ -78,7 +84,7 @@ Keys are saved per set of flights in this browser.
 
 ## Climbs and glides
 
-The "Climbs & glides" section in the side panel has two tabs:
+The "Climbs & glides" panel has two tabs:
 
 - **Thermals**: each climb with start time, gain, average climb, duration and top altitude. Click a row to jump there.
 - **Transitions**: glides between the thermals with distance, glide ratio, altitudes, speed and duration.
@@ -89,7 +95,7 @@ The stats switch transition altitudes between MSL and AGL. With AGL the altitude
 
 ## XC score
 
-The XC section in the side panel scores the selected pilot's flight. Pick a league (XContest, FFVL, FAI, UK XC League), the choice is kept for the whole app. The scored route is drawn on the map.
+The XC section in the Stats panel scores the selected pilot's flight. Pick a league (XContest, FFVL, FAI, UK XC League), the choice is kept for the whole app. The scored route is drawn on the map.
 
 **Open in planner** turns the flight into a route with the chosen number of turnpoints and opens it in the planner.
 

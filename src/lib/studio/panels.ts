@@ -1,0 +1,55 @@
+import type { Component } from 'svelte';
+import { m } from '#lib/paraglide/messages';
+import type { StudioState } from '#lib/state/studio.svelte';
+
+export type Dock = 'left' | 'right' | 'bottom';
+
+export const DOCKS: readonly Dock[] = ['left', 'right', 'bottom'];
+
+export const DOCK_LABELS: Record<Dock, () => string> = {
+  left: () => m.dock_left(),
+  right: () => m.dock_right(),
+  bottom: () => m.dock_bottom()
+};
+
+/** A panel that can sit in a dock. `load` is only called when the panel is shown, so hidden panels cost nothing. */
+export interface PanelDef {
+  id: string;
+  title: () => string;
+  /** Dock the panel starts in. */
+  dock: Dock;
+  load: () => Promise<{ default: Component<{ studio: StudioState }> }>;
+}
+
+export const BUILTIN_PANELS: PanelDef[] = [
+  {
+    id: 'pilots',
+    title: () => m.pilots_heading(),
+    dock: 'left',
+    load: () => import('#lib/components/PilotList.svelte')
+  },
+  {
+    id: 'thermals',
+    title: () => m.climbs_heading(),
+    dock: 'left',
+    load: () => import('#lib/components/ThermalList.svelte')
+  },
+  { id: 'stats', title: () => m.panel_stats(), dock: 'right', load: () => import('#lib/components/StatsPanel.svelte') },
+  {
+    id: 'altitude',
+    title: () => m.studio_tab_altitude(),
+    dock: 'bottom',
+    load: () => import('#lib/components/AltitudeChart.svelte')
+  },
+  {
+    id: 'timeline',
+    title: () => m.timeline_label(),
+    dock: 'bottom',
+    load: () => import('#lib/components/Timeline.svelte')
+  }
+];
+
+export const panelById = (id: string) => BUILTIN_PANELS.find((p) => p.id === id);
+
+/** Default dock per panel id, the shape the layout state validates against. */
+export const PANEL_DEFAULTS: Record<string, Dock> = Object.fromEntries(BUILTIN_PANELS.map((p) => [p.id, p.dock]));
