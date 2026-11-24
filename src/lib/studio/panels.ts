@@ -34,6 +34,7 @@ export const BUILTIN_PANELS: PanelDef[] = [
     dock: 'left',
     load: () => import('#lib/components/ThermalList.svelte')
   },
+  { id: 'xc', title: () => m.panel_xc(), dock: 'right', load: () => import('#lib/components/XcPanel.svelte') },
   { id: 'stats', title: () => m.panel_stats(), dock: 'right', load: () => import('#lib/components/StatsPanel.svelte') },
   {
     id: 'altitude',

@@ -273,6 +273,7 @@
   "panel_move_up": "Move up",
   "panel_moved": "{title} moved to {dock}, position {position}",
   "panel_stats": "Stats",
+  "panel_xc": "XC",
   "panels_menu": "Panels",
   "panels_restore": "Restore default layout",
   "phase_gliding": "gliding",

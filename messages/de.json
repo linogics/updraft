@@ -273,6 +273,7 @@
   "panel_move_up": "Nach oben",
   "panel_moved": "{title} in die {dock} verschoben, Position {position}",
   "panel_stats": "Statistik",
+  "panel_xc": "XC",
   "panels_menu": "Panels",
   "panels_restore": "Standardlayout wiederherstellen",
   "phase_gliding": "gleiten",

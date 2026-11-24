@@ -26,6 +26,10 @@ import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import { flightRepository } from '#lib/storage';
 import { pilotColor } from '#lib/ui/colors';
 import { scoreFlight, type XcScore } from '#lib/xc/score';
+import { yieldToMain } from '#lib/ui/yield';
+
+/** Work that only runs while a view asks for it, see StudioState.need. */
+export type NeedKind = 'xc' | 'ground';
 
 /** Camera edits wait this long after the last change before they are stored, ms. */
 const CAMERA_SAVE_DELAY = 300;
@@ -155,8 +159,49 @@ export class StudioState {
     });
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
-    void this.loadGround();
-    void this.scoreAll();
+    this.flightsGen++;
+    this.restart('ground');
+    this.restart('xc');
+  }
+
+  /** Number of views that currently need each kind of work. */
+  private needs: Record<NeedKind, number> = { xc: 0, ground: 0 };
+  /** Ground height loads in flight, scoring running. For spinners. */
+  private groundLoads = $state(0);
+  xcBusy = $state(false);
+  groundBusy = $derived(this.groundLoads > 0);
+  /** Bumped per set of flights, so late results of an old set are dropped. */
+  private flightsGen = 0;
+  private groundTask: Promise<void> = Promise.resolve();
+
+  /**
+   * Asks for heavy background work: 'xc' scores the flights, 'ground' loads ground heights (for AGL).
+   * Nothing runs until the first need. Call the returned function when the view goes away.
+   * Releasing the last need stops the work at its next step, finished results are kept.
+   */
+  need(kind: NeedKind): () => void {
+    this.needs[kind]++;
+    if (this.needs[kind] === 1) this.restart(kind);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      if (--this.needs[kind] > 0 || kind !== 'xc') return;
+      this.xcRun++;
+      this.xcBusy = false;
+    };
+  }
+
+  /** Resolves when the work of a kind has finished for the current flights. Call after need(). */
+  whenReady(kind: NeedKind): Promise<void> {
+    return kind === 'ground' ? this.groundTask : this.xcTask;
+  }
+
+  /** Starts the work of a kind when something needs it, resuming over flights that are already done. */
+  private restart(kind: NeedKind) {
+    if (this.needs[kind] === 0) return;
+    if (kind === 'ground') this.groundTask = this.loadGround();
+    else this.xcTask = this.scoreAll();
   }
 
   /** Loads the camera tracks saved for the loaded flights. Storage errors keep the defaults. */
@@ -218,50 +263,69 @@ export class StudioState {
     this.pendingCameraSave = undefined;
   }
 
-  /** Fetches ground heights per flight in the background. Failures leave ground undefined. */
+  /** Fetches ground heights of the flights that have none. Failures leave ground undefined. */
   private async loadGround() {
-    // Local lookup filled in parallel, then handed to state once.
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity
-    const ground = new Map<string, Float32Array>();
-    await Promise.all(
-      this.flights.map(async (f) => {
-        try {
-          ground.set(f.flight.id, await groundSeries(f.source.fixes));
-        } catch {
-          // Offline or tile error: AGL stays unavailable for this flight.
-        }
-      })
-    );
-    this.flights = this.flights.map((f) => (ground.has(f.flight.id) ? { ...f, ground: ground.get(f.flight.id) } : f));
+    const gen = this.flightsGen;
+    const todo = this.flights.filter((f) => !f.ground);
+    this.groundLoads++;
+    try {
+      await Promise.all(
+        todo.map(async (f) => {
+          try {
+            const ground = await groundSeries(f.source.fixes);
+            // Finished results are kept even when the need went away meanwhile.
+            if (gen !== this.flightsGen) return;
+            this.flights = this.flights.map((g) => (g.flight.id === f.flight.id ? { ...g, ground } : g));
+          } catch {
+            // Offline or tile error: AGL stays unavailable for this flight.
+          }
+        })
+      );
+    } finally {
+      this.groundLoads--;
+    }
   }
 
   private xcRun = 0;
+  private xcTask: Promise<void> = Promise.resolve();
 
-  /** Switches the scoring league and rescores. */
+  /** Switches the scoring league. Scores of the old league are dropped, scoring restarts only if needed. */
   setLeague(league: typeof xcPrefs.league) {
     xcPrefs.set(league);
-    void this.scoreAll();
+    this.xcRun++;
+    this.flights = this.flights.map((f) => ({ ...f, xc: undefined }));
+    this.restart('xc');
   }
 
-  /** Scores one flight at a time in the background, cached results first. A newer run supersedes this one. */
+  /**
+   * Scores the flights without a score, one at a time, cached results first.
+   * A newer run or the last release supersedes this one at the next flight.
+   */
   private async scoreAll() {
     const run = ++this.xcRun;
     const league = xcPrefs.league;
-    this.flights = this.flights.map((f) => ({ ...f, xc: undefined }));
-    for (const { source } of this.flights) {
-      let xc: XcScore | null | undefined;
-      try {
-        xc = await flightRepository.getXcScore(source.id, league);
-        if (xc === undefined) {
-          xc = await scoreFlight(source.fixes, league);
-          await flightRepository.putXcScore(source.id, league, xc);
+    this.xcBusy = true;
+    try {
+      for (const { source, xc: done } of this.flights) {
+        if (done !== undefined) continue;
+        let xc: XcScore | null | undefined;
+        try {
+          xc = await flightRepository.getXcScore(source.id, league);
+          if (xc === undefined) {
+            xc = await scoreFlight(source.fixes, league);
+            await flightRepository.putXcScore(source.id, league, xc);
+          }
+        } catch (err) {
+          console.error('Could not score flight', err);
+          xc ??= null;
         }
-      } catch (err) {
-        console.error('Could not score flight', err);
-        xc ??= null;
+        if (run !== this.xcRun) return;
+        this.flights = this.flights.map((f) => (f.source.id === source.id ? { ...f, xc } : f));
+        await yieldToMain();
+        if (run !== this.xcRun) return;
       }
-      if (run !== this.xcRun) return;
-      this.flights = this.flights.map((f) => (f.source.id === source.id ? { ...f, xc } : f));
+    } finally {
+      if (run === this.xcRun) this.xcBusy = false;
     }
   }
 

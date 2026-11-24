@@ -193,7 +193,10 @@
     total = timing.frames;
     started = now = Date.now();
     studio.pause();
+    // The HUD shows AGL, so wait for the ground heights.
+    const release = overlay.hud ? studio.need('ground') : undefined;
     try {
+      await studio.whenReady('ground');
       if (!(await enc.videoEncodable(width, height, bitrate, fps))) {
         throw new Error(m.export_video_cannot_encode({ width, height }));
       }
@@ -227,6 +230,7 @@
       }
     } finally {
       clearInterval(clock);
+      release?.();
       session?.end();
       studio.seek(savedTime);
       abort = null;
