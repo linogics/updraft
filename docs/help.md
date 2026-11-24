@@ -42,7 +42,7 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 
 - Click a pilot in the pilot list to select them. Stats, climbs and XC follow the selected pilot.
 - The checkbox shows or hides a pilot. Click the colour dot to pick a colour, the reset button restores the default.
-- The list shows the current altitude and height above ground. AGL shows a dash while ground heights load or when offline.
+- The list shows the current altitude and height above ground. Ground heights are only loaded while the pilot list is shown, the AGL altitude mode is on, or an export with the HUD needs them. AGL shows a dash while ground heights load or when offline.
 
 ### Several flights and the timeline
 
@@ -96,7 +96,7 @@ The stats switch transition altitudes between MSL and AGL. With AGL the altitude
 
 ## XC score
 
-The XC section in the Stats panel scores the selected pilot's flight. Pick a league (XContest, FFVL, FAI, UK XC League), the choice is kept for the whole app. The scored route is drawn on the map.
+The XC panel scores the selected pilot's flight. Scoring only runs while the panel is shown, so hide it if you do not need XC. A spinner shows while flights are scored. Pick a league (XContest, FFVL, FAI, UK XC League), the choice is kept for the whole app. The scored route is drawn on the maps once the XC panel has scored the flight.
 
 **Open in planner** turns the flight into a route with the chosen number of turnpoints and opens it in the planner.
 

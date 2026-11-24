@@ -273,6 +273,7 @@
   "panel_move_up": "Monter",
   "panel_moved": "{title} déplacé vers la {dock}, position {position}",
   "panel_stats": "Statistiques",
+  "panel_xc": "XC",
   "panels_menu": "Panneaux",
   "panels_restore": "Rétablir la disposition par défaut",
   "phase_gliding": "plané",

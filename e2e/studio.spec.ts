@@ -1,4 +1,5 @@
 import { expect, openDemoStudio, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 test('home page uses the Sora display font', async ({ page }) => {
   await page.goto('/');
@@ -103,12 +104,17 @@ test('the actions menu moves Stats to the left dock and keeps focus on it', asyn
 
   await expect(page.getByRole('navigation', { name: 'Outliner' }).getByRole('region', { name: 'Stats' })).toBeVisible();
   await expect(stats).toHaveCount(1);
-  await expect(page.locator('aside')).toHaveCount(0);
+  await expect(page.locator('aside').getByRole('region', { name: 'Stats' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Stats panel actions' })).toBeFocused();
   await expect(page.getByText('Stats moved to left dock, position 3')).toBeAttached();
 });
 
+/** Hides the XC panel, so scoring neither moves the panels nor competes for the CPU during a drag. */
+const withoutXc = (page: Page) =>
+  page.addInitScript(() => localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc'] })));
+
 test('dragging Stats by its handle into the left dock moves it there', async ({ page }) => {
+  await withoutXc(page);
   await openDemoStudio(page);
   const grip = (await page.getByRole('button', { name: 'Drag Stats' }).boundingBox())!;
   const left = (await page.getByRole('navigation', { name: 'Outliner' }).boundingBox())!;
@@ -119,11 +125,12 @@ test('dragging Stats by its handle into the left dock moves it there', async ({ 
   await page.mouse.up();
 
   await expect(page.getByRole('navigation', { name: 'Outliner' }).getByRole('region', { name: 'Stats' })).toBeVisible();
-  await expect(page.locator('aside')).toHaveCount(0);
+  await expect(page.locator('aside').getByRole('region', { name: 'Stats' })).toHaveCount(0);
   await expect(page.getByText('Stats moved to left dock, position 3')).toBeAttached();
 });
 
 test('dragging the Altitude tab after the Timeline tab reorders the tabs', async ({ page }) => {
+  await withoutXc(page);
   await openDemoStudio(page);
   const tabs = page.getByRole('tablist', { name: 'Bottom panel' }).getByRole('tab');
   await expect(tabs).toHaveText(['Altitude', 'Timeline']);
@@ -137,4 +144,30 @@ test('dragging the Altitude tab after the Timeline tab reorders the tabs', async
   await page.mouse.up();
 
   await expect(tabs).toHaveText(['Timeline', 'Altitude']);
+});
+
+test('hidden XC and Pilots panels cost nothing, showing XC starts scoring', async ({ page }) => {
+  // Scoring runs in one worker per flight.
+  const workers: string[] = [];
+  page.on('worker', (w) => {
+    if (/score\.worker/.test(w.url())) workers.push(w.url());
+  });
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('studioLayout')) {
+      localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc', 'pilots'] }));
+    }
+  });
+  await openDemoStudio(page);
+  await expect(page.getByRole('region', { name: 'Stats' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'XC' })).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'XC league' })).toHaveCount(0);
+  await page.waitForTimeout(3000);
+  expect(workers).toEqual([]);
+
+  await page.getByRole('button', { name: /^Panels/ }).click();
+  await page.getByRole('checkbox', { name: 'XC' }).check();
+  const league = page.getByRole('combobox', { name: 'XC league' });
+  await expect(league).toBeVisible();
+  // Showing the panel starts scoring.
+  await expect.poll(() => workers.length, { timeout: 30_000 }).toBeGreaterThan(0);
 });

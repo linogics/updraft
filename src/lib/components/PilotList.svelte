@@ -2,12 +2,16 @@
   import { distance } from '#lib/domain/geo';
   import { indexAt, positionAt } from '#lib/domain/timeline';
   import type { StudioState } from '#lib/state/studio.svelte';
+  import { useNeed } from '#lib/state/useNeed.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { m } from '#lib/paraglide/messages';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
   let { studio }: { studio: StudioState } = $props();
+
+  // The AGL column needs ground heights.
+  useNeed(() => studio, 'ground');
 
   // Live values, recomputed as time advances.
   const rows = $derived(

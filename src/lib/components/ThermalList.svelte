@@ -2,6 +2,7 @@
   import { indexAt } from '#lib/domain/timeline';
   import { transitionAlts, type Transition } from '#lib/domain/analysis/transitions';
   import { m } from '#lib/paraglide/messages';
+  import { useNeed } from '#lib/state/useNeed.svelte';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
@@ -42,6 +43,11 @@
   const current = $derived(sel ? indexAt(sel.flight.fixes, studio.time) : -1);
 
   const agl = $derived(altRefPrefs.ref === 'agl');
+  useNeed(
+    () => studio,
+    'ground',
+    () => agl
+  );
   const alt = (t: Transition, end: 'start' | 'end') => {
     const v = transitionAlts(t, agl && sel ? (i) => studio.aglAt(sel, i) : undefined)[end];
     return v === undefined ? '–' : formatAlt(v, u);

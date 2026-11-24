@@ -1,3 +1,4 @@
+import './nodeGlobal';
 import { scoringRules, solver } from 'igc-xc-score';
 import type { Fix } from '../domain/model';
 import type { XcLeague } from '../state/xcPrefs';

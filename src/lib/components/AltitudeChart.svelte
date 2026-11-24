@@ -6,12 +6,20 @@
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { phaseColor } from '#lib/ui/colors';
+  import { useNeed } from '#lib/state/useNeed.svelte';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
 
   let { studio }: { studio: StudioState } = $props();
+
+  // The AGL chart needs ground heights.
+  useNeed(
+    () => studio,
+    'ground',
+    () => altRefPrefs.ref === 'agl'
+  );
 
   let container: HTMLDivElement;
   let plot: uPlot | undefined = $state.raw();

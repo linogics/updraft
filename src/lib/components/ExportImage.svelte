@@ -42,7 +42,10 @@
     if (!sel || !capture) return;
     busy = true;
     error = '';
+    // The HUD shows AGL, so wait for the ground heights.
+    const release = parts.hud ? studio.need('ground') : undefined;
     try {
+      await studio.whenReady('ground');
       // The captured frame is already w x h, so the overlay is painted straight onto it.
       const out = await capture(w, h);
       const ctx = out.getContext('2d')!;
@@ -70,6 +73,7 @@
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
     } finally {
+      release?.();
       busy = false;
     }
   }
