@@ -4,7 +4,6 @@
   import Backup from '#lib/components/logbook/Backup.svelte';
   import BarChart from '#lib/components/logbook/BarChart.svelte';
   import Dropzone from '#lib/components/Dropzone.svelte';
-  import Logo from '#lib/components/Logo.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
   import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from '#lib/domain/logbook';
   import { scoreFlight } from '#lib/xc/score';
@@ -18,6 +17,8 @@
   import { getLocale } from '#lib/paraglide/runtime';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance } from '#lib/ui/units';
+
+  let { onchange }: { onchange?: (flights: FlightSummary[]) => void } = $props();
 
   let flights = $state<FlightSummary[]>([]);
   let selected = $state<string[]>([]);
@@ -78,6 +79,7 @@
     flights = await flightRepository.list();
     selected = selected.filter((id) => flights.some((f) => f.id === id));
     ready = true;
+    onchange?.(flights);
     void scoreMissing();
   }
 
@@ -172,20 +174,19 @@
     await refresh();
   }
 
-  onMount(refresh);
+  onMount(() => {
+    // Chromium: track files opened with the installed app arrive here (file_handlers in the manifest).
+    window.launchQueue?.setConsumer(async (params) => {
+      importFiles(await Promise.all(params.files.map((handle) => handle.getFile())));
+    });
+    void refresh();
+  });
   onDestroy(() => xcRun++);
 </script>
 
-<svelte:head>
-  <title>{m.logbook_title()}</title>
-</svelte:head>
-
-<main>
+<div class="logbook">
   <header>
-    <div>
-      <Logo />
-      <h1>{m.home_logbook_title()}</h1>
-    </div>
+    <h1>{m.home_logbook_title()}</h1>
     <dl class="readouts" aria-busy={!ready}>
       <div>
         <dt>{m.home_hours_flown()}</dt>
@@ -216,7 +217,7 @@
       <BarChart bars={years} label={m.logbook_hours_per_year()} />
     </section>
 
-    <section>
+    <section class="deferred breakdown">
       <div class="head">
         <h2>{m.logbook_breakdown()}</h2>
         <div class="seg" role="group" aria-label={m.logbook_group_by()}>
@@ -388,16 +389,25 @@
     {/if}
   </section>
 
-  <Backup ondone={refresh} />
-</main>
+  <div class="deferred backup">
+    <Backup ondone={refresh} />
+  </div>
+</div>
 
 <style>
-  main {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 28px 16px 48px;
+  .logbook {
     display: grid;
     gap: 24px;
+  }
+  /* Below the fold: skip layout and paint until near the viewport. The size is remembered once rendered. */
+  .deferred {
+    content-visibility: auto;
+  }
+  .breakdown {
+    contain-intrinsic-size: auto none auto 300px;
+  }
+  .backup {
+    contain-intrinsic-size: auto none auto 220px;
   }
   header {
     display: flex;
@@ -407,7 +417,7 @@
     flex-wrap: wrap;
   }
   h1 {
-    margin: 12px 0 0;
+    margin: 0;
     font: 600 32px/1.1 var(--display);
   }
   h2 {
@@ -553,6 +563,19 @@
     }
     .hide {
       display: none;
+    }
+    /* Five readouts wrap unevenly in a flex row, a 3-column grid keeps them aligned. */
+    .readouts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px 12px;
+      width: 100%;
+    }
+    .readouts div {
+      justify-items: start;
+    }
+    .readouts dd {
+      font-size: 24px;
     }
   }
 </style>

@@ -2,10 +2,12 @@
 
 Everything updraft can do today, grouped by area. A short guide to using it is in [help.md](help.md).
 
-## Dashboard
+## Start page
 
-- One tile per tool: Studio, Logbook, Convert and XC planner.
-- Tiles show live numbers from the saved flights: flights, hours flown, hours per month over the last 12 months, recent flights.
+- Two columns: a sticky sidebar with navigation on the left, the full logbook on the right. The logbook is the start page, there is no separate logbook route.
+- Sidebar entries: Studio (opens the last saved flight, disabled while there is none), Converter and XC planner. Language and help sit at the bottom of the sidebar.
+- On narrow screens (800 px and below) the sidebar is a navigation drawer. Open it with the menu button, swipe it away, tap outside, press Escape or use the close button.
+- Pages fade into each other when you navigate, unless reduced motion is requested.
 - Demo flights to try the app without own files.
 
 ## Import and formats
@@ -65,7 +67,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 ## Logbook
 
-- `/logbook`: every saved flight with totals, hours per month and per year, breakdown by year, site or glider.
+- `/`: every saved flight with totals, hours per month and per year, breakdown by year, site or glider.
 - Editable pilot, site, glider and notes. Flights entered by hand without a track.
 - XC type and points per flight and in total, scored in the background for the chosen league.
 - Pick flights and open them together in the studio.

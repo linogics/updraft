@@ -53,11 +53,14 @@ function report(name: string, values: Record<string, number>) {
 /** Times the import from marks set by importFlights: parse and store, then studio page startup. File upload by the test is left out. */
 async function importBig(page: Page) {
   await page.goto('/');
-  await page.locator('input[type=file]').setInputFiles({
-    name: 'long.igc',
-    mimeType: 'text/plain',
-    buffer: Buffer.from(igcOf(track(48)))
-  });
+  await page
+    .locator('input[type=file]')
+    .first()
+    .setInputFiles({
+      name: 'long.igc',
+      mimeType: 'text/plain',
+      buffer: Buffer.from(igcOf(track(48)))
+    });
   await page.waitForURL(/\/studio\?/);
   await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 60_000 });
   // Client-side navigation keeps the document, so the marks set by importFlights are still there.
@@ -149,7 +152,7 @@ test('logbook with 300 flights', async ({ page }) => {
   }));
   const backup = { app: 'updraft', version: 1, exportedAt: '', flights, manual: [], cameraPaths: [], prefs: {} };
 
-  await page.goto('/logbook');
+  await page.goto('/');
   await page
     .getByText('Import backup')
     .locator('..')

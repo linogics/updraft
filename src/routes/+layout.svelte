@@ -1,12 +1,24 @@
 <script lang="ts">
   import '../app.css';
   import { onMount } from 'svelte';
+  import { onNavigate } from '$app/navigation';
   import { navigating, updated } from '$app/state';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
 
   // The locale only changes on reload, so setting the lang attribute once is enough.
   onMount(() => (document.documentElement.lang = getLocale()));
+
+  // Plain cross-fade between pages. Browsers without view transitions and users who prefer reduced motion navigate as before.
+  onNavigate((navigation) => {
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    return new Promise((resolve) => {
+      document.startViewTransition(async () => {
+        resolve();
+        await navigation.complete;
+      });
+    });
+  });
 
   let { children } = $props();
 </script>

@@ -6,15 +6,15 @@ updraft runs fully in your browser. There is no account. Your flights and settin
 
 ## Getting started
 
-1. Open the dashboard at https://updraft.linogics.io.
+1. Open https://updraft.linogics.io. The start page shows the navigation on the left and your logbook on the right.
 2. Drop one or more flight files on the drop zone (IGC, GPX, KML, FIT, TRK or GeoJSON). No file at hand? Click "load demo flights".
 3. The flights are saved in the logbook. Files from the same day open together in the studio.
 
-The logo in the top left always brings you back to the dashboard.
+The logo in the top left always brings you back to the start page. On a phone the navigation is behind the menu button in the top bar.
 
 ## Studio
 
-Open the studio from the dashboard ("Open last flight in Studio") or from the logbook (tick flights, then "Open selected in Studio").
+Open the studio from the navigation ("Studio" opens the last flight) or from the logbook (tick flights, then "Open selected in Studio").
 
 ### Layout
 
@@ -95,7 +95,7 @@ The XC section in the side panel scores the selected pilot's flight. Pick a leag
 
 ## XC planner
 
-Open "Plan a route" on the dashboard.
+Open "XC Planner" in the navigation.
 
 - Click the map to add points. Drag a point to move it, click a leg midpoint to insert one.
 - Undo and Clear fix mistakes.
@@ -105,7 +105,7 @@ Open "Plan a route" on the dashboard.
 
 ## Logbook
 
-Open "Open logbook" on the dashboard.
+The logbook is the start page.
 
 - Totals, hours per year and a breakdown by year, site or glider.
 - The table lists every flight. Edit pilot, site, glider and notes with the edit button, or delete a flight.
@@ -115,7 +115,7 @@ Open "Open logbook" on the dashboard.
 
 ## Convert
 
-Open "Convert a file" on the dashboard. Drop files, pick an output format (IGC, GPX, KML or GeoJSON) and download one file or all of them. IGC files written here are not signed, so competitions and XContest will not accept them.
+Open "Convert" in the navigation. Drop files, pick an output format (IGC, GPX, KML or GeoJSON) and download one file or all of them. IGC files written here are not signed, so competitions and XContest will not accept them.
 
 ## Export images and videos
 

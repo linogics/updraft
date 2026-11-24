@@ -119,7 +119,7 @@
 {#if error}
   <main class="error">
     <p>{error}</p>
-    <a href="/logbook">{m.home_open_logbook()}</a>
+    <a href="/">{m.home_open_logbook()}</a>
   </main>
 {:else if loaded}
   <div
