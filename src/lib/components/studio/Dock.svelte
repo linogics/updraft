@@ -27,6 +27,11 @@
   </svg>
 {/snippet}
 
+<!-- Keeps the lifted panel's place, so nothing jumps while it is dragged. -->
+{#snippet slot()}
+  <div class="slot" style:width="{drag.rect.width}px" style:height="{drag.rect.height}px" aria-hidden="true"></div>
+{/snippet}
+
 {#snippet actions(p: PanelDef, i: number)}
   {@const back = dock === 'bottom' ? m.panel_move_left() : m.panel_move_up()}
   {@const forward = dock === 'bottom' ? m.panel_move_right() : m.panel_move_down()}
@@ -58,6 +63,7 @@
     {#if panels.length}
       <div class="tabs" role="tablist" aria-label={m.studio_bottom_panel()} hidden={!open} data-items>
         {#each panels as p, i (p.id)}
+          {#if drag.id === p.id}{@render slot()}{/if}
           <div
             class="tab"
             role="presentation"
@@ -103,6 +109,7 @@
     style:grid-area={dock === 'left' ? 'outliner' : 'aside'}
   >
     {#each panels as p, i (p.id)}
+      {#if drag.id === p.id}{@render slot()}{/if}
       <section
         aria-labelledby="panel-title-{p.id}"
         data-panel={p.id}
@@ -194,6 +201,12 @@
     box-shadow: var(--drop-lift-shadow, 0 8px 24px rgb(0 0 0 / 0.35));
     opacity: var(--drop-lift-opacity, 0.95);
     overflow: hidden;
+  }
+  .slot {
+    flex: none;
+    box-sizing: border-box;
+    border: 1px dashed var(--drop-slot-border, var(--border));
+    border-radius: 8px;
   }
   .tab[data-lifted] {
     background: var(--bg);

@@ -135,11 +135,13 @@ test('dragging the Altitude tab after the Timeline tab reorders the tabs', async
   const tabs = page.getByRole('tablist', { name: 'Bottom panel' }).getByRole('tab');
   await expect(tabs).toHaveText(['Altitude', 'Timeline']);
   const alt = (await tabs.first().boundingBox())!;
+  const timeline = (await tabs.nth(1).boundingBox())!;
   await page.mouse.move(alt.x + alt.width / 2, alt.y + alt.height / 2);
   await page.mouse.down();
   await page.mouse.move(alt.x + alt.width / 2 + 10, alt.y + alt.height / 2, { steps: 3 });
-  // The lifted tab leaves its slot, so the Timeline tab has shifted left.
-  const timeline = (await tabs.nth(1).boundingBox())!;
+  // A placeholder keeps the lifted tab's place, so the Timeline tab stays where it was.
+  await expect(page.locator('.slot')).toHaveCount(1);
+  expect((await tabs.nth(1).boundingBox())!.x).toBe(timeline.x);
   await page.mouse.move(timeline.x + timeline.width - 4, timeline.y + timeline.height / 2, { steps: 10 });
   await page.mouse.up();
 

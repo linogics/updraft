@@ -10,8 +10,10 @@
   onMount(() => (document.documentElement.lang = getLocale()));
 
   // Plain cross-fade between pages. Browsers without view transitions and users who prefer reduced motion navigate as before.
+  // Query updates within a page (like the studio's scene URL) are not page changes and must not block input.
   onNavigate((navigation) => {
     if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (navigation.from?.route.id === navigation.to?.route.id) return;
     return new Promise((resolve) => {
       document.startViewTransition(async () => {
         resolve();
