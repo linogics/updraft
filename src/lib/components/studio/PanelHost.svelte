@@ -2,6 +2,8 @@
   import type { PanelDef } from '#lib/studio/panels';
 
   // One import per panel for the whole session, so moving a panel to another dock does not load it twice.
+  // Plain cache, nothing renders from it.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const loads = new Map<string, ReturnType<PanelDef['load']>>();
 
   function load(panel: PanelDef) {
