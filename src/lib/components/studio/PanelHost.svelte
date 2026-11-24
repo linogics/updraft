@@ -6,13 +6,15 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const loads = new Map<string, ReturnType<PanelDef['load']>>();
 
+  const key = (panel: PanelDef) => panel.key ?? panel.id;
+
   function load(panel: PanelDef) {
-    let p = loads.get(panel.id);
+    let p = loads.get(key(panel));
     if (!p) {
       p = panel.load();
-      loads.set(panel.id, p);
+      loads.set(key(panel), p);
       // A failed import can be retried the next time the panel is shown.
-      p.catch(() => loads.delete(panel.id));
+      p.catch(() => loads.delete(key(panel)));
     }
 
     return p;
@@ -21,6 +23,7 @@
 
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
+  import PanelError from './PanelError.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
 
@@ -34,22 +37,11 @@
     <Spinner label={m.panel_loading({ title: panel.title() })} />
   {:then mod}
     {@const Panel = mod.default}
-    <Panel {studio} />
+    <Panel {studio} {...mod.props} />
   {:catch e}
-    <p class="error" role="alert">{m.panel_failed({ title: panel.title(), message: message(e) })}</p>
+    <PanelError message={m.panel_failed({ title: panel.title(), message: message(e) })} />
   {/await}
   {#snippet failed(e)}
-    <p class="error" role="alert">{m.panel_failed({ title: panel.title(), message: message(e) })}</p>
+    <PanelError message={m.panel_failed({ title: panel.title(), message: message(e) })} />
   {/snippet}
 </svelte:boundary>
-
-<style>
-  .error {
-    margin: 0;
-    padding: 8px 10px;
-    border: 1px solid var(--danger);
-    border-radius: 6px;
-    color: var(--danger);
-    font-size: 12px;
-  }
-</style>

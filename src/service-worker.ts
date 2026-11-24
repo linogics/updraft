@@ -7,6 +7,8 @@ import { version } from '$app/env';
 
 const sw = globalThis as unknown as ServiceWorkerGlobalScope;
 const CACHE = `updraft-${version}`;
+// Plugin modules the page stored by URL. Not "updraft-" prefixed, so activate keeps it across versions.
+const PLUGIN_CACHE = 'plugins';
 const absolute = (path: string) => (path.startsWith('/') ? path : `/${path}`);
 // Cesium runtime is large and only needed online, so it stays out of the precache.
 const PRECACHE = [...immutable, ...assets, ...prerendered]
@@ -38,8 +40,14 @@ sw.addEventListener('activate', (event) => {
 sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  // Other origins (map tiles, terrain, fonts) and non-GET requests are not touched.
-  if (request.method !== 'GET' || url.origin !== sw.location.origin) return;
+  if (request.method !== 'GET') return;
+
+  // A plugin is imported as a script from another origin. Whether it is stored is only known asynchronously.
+  if (url.origin !== sw.location.origin) {
+    if (request.destination === 'script') event.respondWith(plugin(request));
+    return;
+  }
+  // Other origins (map tiles, terrain, fonts) are not touched.
 
   if (request.mode === 'navigate') {
     event.respondWith(navigate(request, url.pathname));
@@ -60,5 +68,19 @@ async function navigate(request: Request, path: string): Promise<Response> {
     const cache = await caches.open(CACHE);
     const page = (PAGES.has(path) && (await cache.match(path))) || (await cache.match('/'));
     return page ?? Response.error();
+  }
+}
+
+/** Network first, so an updated plugin is picked up. A stored plugin falls back to its copy when offline. */
+async function plugin(request: Request): Promise<Response> {
+  const cache = await caches.open(PLUGIN_CACHE);
+  if (!(await cache.match(request.url))) return fetch(request);
+
+  try {
+    const res = await fetch(request);
+    if (res.ok) await cache.put(request.url, res.clone());
+    return res;
+  } catch (err) {
+    return (await cache.match(request.url)) ?? Promise.reject(err);
   }
 }

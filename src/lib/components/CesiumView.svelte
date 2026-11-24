@@ -73,6 +73,7 @@
       appliedBasemap = studio.basemap;
       const v = createViewer(container, appliedBasemap, cesiumIonToken);
       viewer = v;
+      studio.viewer = v;
       await applyTerrain(v, studio.terrain);
       if (!alive) return;
 
@@ -127,6 +128,7 @@
 
     return () => {
       alive = false;
+      studio.viewer = null;
       studio.capture = null;
       studio.beginCapture = null;
       studio.captureCameraView = null;

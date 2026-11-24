@@ -195,7 +195,7 @@
       </div>
     {/if}
 
-    <div class="views panel" bind:clientWidth={viewsWidth}>
+    <div class="views panel" bind:clientWidth={viewsWidth} bind:this={studio.viewsEl}>
       {#if studio.layout !== '2d'}
         <div class="view3d"><CesiumView {studio} /></div>
       {/if}

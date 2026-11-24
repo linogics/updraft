@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Dock } from '#lib/studio/panels';
-import { hideInLayout, moveInLayout, parseStudioLayout } from './studioLayout';
+import { forgetInLayout, hideInLayout, moveInLayout, parseStudioLayout } from './studioLayout';
 
 const defaults: Record<string, Dock> = { a: 'left', b: 'left', c: 'right', d: 'bottom', e: 'bottom' };
 
@@ -60,5 +60,15 @@ describe('layout moves', () => {
     const shown = moveInLayout(hidden, 'a', 'left', Infinity);
     expect(shown.docks.left).toEqual(['b', 'a']);
     expect(shown.hidden).toEqual([]);
+  });
+});
+
+describe('forgetInLayout', () => {
+  it('drops a panel from docks, hidden and the bottom tab', () => {
+    const v = hideInLayout(parseStudioLayout({ tab: 'e' }, defaults), 'c');
+    const next = forgetInLayout(forgetInLayout(v, 'c'), 'e');
+    expect(next.hidden).toEqual([]);
+    expect(next.docks.bottom).toEqual(['d']);
+    expect(next.tab).toBeNull();
   });
 });

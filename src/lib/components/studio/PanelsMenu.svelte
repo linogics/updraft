@@ -1,13 +1,17 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
-  import { BUILTIN_PANELS } from '#lib/studio/panels';
+  import { removePlugin } from '#lib/studio/pluginActions';
+  import { PLUGIN_PREFIX, registry } from '#lib/studio/registry.svelte';
   import Popover from '../Popover.svelte';
+  import AddPluginDialog from './AddPluginDialog.svelte';
+
+  let addPlugin: AddPluginDialog;
 </script>
 
 <Popover label={m.panels_menu()}>
   <ul>
-    {#each BUILTIN_PANELS as p (p.id)}
+    {#each registry.list as p (p.id)}
       <li>
         <label>
           <!-- The switch attribute is Safari only for now, other browsers draw a checkbox. -->
@@ -19,11 +23,25 @@
           />
           {p.title()}
         </label>
+        {#if p.id.startsWith(PLUGIN_PREFIX)}
+          <button
+            type="button"
+            aria-label={m.plugin_remove_label({ name: p.title() })}
+            onclick={() => removePlugin(p.id.slice(PLUGIN_PREFIX.length))}
+          >
+            {m.plugin_remove()}
+          </button>
+        {/if}
       </li>
     {/each}
   </ul>
-  <button type="button" onclick={() => studioLayout.restoreDefaults()}>{m.panels_restore()}</button>
+  <div class="actions">
+    <button type="button" onclick={() => addPlugin.open()}>{m.plugin_add_menu()}</button>
+    <button type="button" onclick={() => studioLayout.restoreDefaults()}>{m.panels_restore()}</button>
+  </div>
 </Popover>
+
+<AddPluginDialog bind:this={addPlugin} />
 
 <style>
   ul {
@@ -32,6 +50,16 @@
     margin: 0 0 10px;
     padding: 0;
     list-style: none;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .actions {
+    display: grid;
+    gap: 6px;
   }
   label {
     display: flex;
