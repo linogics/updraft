@@ -22,11 +22,13 @@ function featureFixes(f: Json): Fix[] {
   const p = f?.properties ?? {};
   const times = p.coordTimes ?? p.coordinateProperties?.times;
   if (g?.type === 'LineString') return lineFixes(g.coordinates, times);
+
   if (g?.type === 'MultiLineString') {
     return (g.coordinates as number[][][]).flatMap((line, i) =>
       lineFixes(line, Array.isArray(times) ? times[i] : undefined)
     );
   }
+
   return [];
 }
 

@@ -16,6 +16,7 @@ export function resampleTerrarium(rgba: Uint8ClampedArray, srcSize: number, outS
     const i = (y * srcSize + x) * 4;
     return terrariumHeight(rgba[i], rgba[i + 1], rgba[i + 2]);
   };
+
   const scale = (srcSize - 1) / (outSize - 1);
 
   for (let row = 0; row < outSize; row++) {
@@ -33,5 +34,6 @@ export function resampleTerrarium(rgba: Uint8ClampedArray, srcSize: number, outS
       out[row * outSize + col] = top * (1 - fy) + bottom * fy;
     }
   }
+
   return out;
 }

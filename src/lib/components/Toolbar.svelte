@@ -27,12 +27,12 @@
 
   let ionToken = $state('');
   let ionError = $state('');
-  loadRuntimeConfig().then((c) => (ionToken = c.cesiumIonToken));
+  void loadRuntimeConfig().then((c) => (ionToken = c.cesiumIonToken));
 
   const canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
   let fullscreen = $state(false);
   function toggleFullscreen() {
-    if (document.fullscreenElement) document.exitFullscreen();
+    if (document.fullscreenElement) void document.exitFullscreen();
     else document.documentElement.requestFullscreen().catch(() => {});
   }
 

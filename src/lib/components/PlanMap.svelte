@@ -51,6 +51,7 @@
       sources[id] = { type: 'raster', tiles, tileSize: 256, maxzoom: maxZoom, attribution };
       layers.push({ id, type: 'raster', source: id, layout: { visibility: id === active ? 'visible' : 'none' } });
     }
+
     layers.push({
       id: 'hillshade',
       type: 'hillshade',
@@ -91,13 +92,14 @@
         e.stopPropagation();
         onselect(i);
       };
+
       const mk = marker(el, p, true);
       const at = () => ({ lat: mk.getLngLat().lat, lon: mk.getLngLat().lng });
       // Update the line while dragging, commit only on drag end.
       mk.on('drag', () => {
         const next = points.slice();
         next[i] = at();
-        (map!.getSource('route') as GeoJSONSource).setData(line(next));
+        void (map!.getSource('route') as GeoJSONSource).setData(line(next));
       });
       mk.on('dragend', () => onmove(i, at()));
       if (i === 0) return;
@@ -111,6 +113,7 @@
         e.stopPropagation();
         oninsert(i, mid);
       };
+
       marker(h, mid, false);
     });
   }
@@ -163,7 +166,7 @@
 
   $effect(() => {
     if (!ready || !map) return;
-    (map.getSource('route') as GeoJSONSource).setData(line(points));
+    void (map.getSource('route') as GeoJSONSource).setData(line(points));
     void selected;
     rebuild();
   });

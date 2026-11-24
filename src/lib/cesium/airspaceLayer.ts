@@ -39,6 +39,7 @@ export class AirspaceLayer {
         );
       }
     }
+
     if (instances.length) {
       this.primitive = this.viewer.scene.primitives.add(
         new Cesium.Primitive({
@@ -48,6 +49,7 @@ export class AirspaceLayer {
         })
       );
     }
+
     this.viewer.scene.requestRender();
   }
 

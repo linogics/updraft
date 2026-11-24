@@ -68,6 +68,7 @@ export const DEFAULT_SCENE: SceneConfig = {
 
 function pick<T extends string>(allowed: readonly T[], value: string | null, fallback: T): T;
 function pick<T extends string>(allowed: readonly T[], value: string | null, fallback: null): T | null;
+
 function pick<T extends string>(allowed: readonly T[], value: string | null, fallback: T | null): T | null {
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
@@ -81,10 +82,12 @@ export function encodeScene(scene: SceneConfig): string {
   params.set('map', scene.basemap);
   if (scene.terrain) params.set('terrain', scene.terrain);
   if (scene.sync) params.set('sync', scene.sync);
+
   for (const [id, ms] of Object.entries(scene.nudges)) {
     const seconds = Math.round(ms / 1000);
     if (seconds !== 0) params.append('nudge', `${id}:${seconds}`);
   }
+
   const { minGain, minClimb } = scene.thermalFilter;
   if (minGain !== DEFAULT_FILTER.minGain) params.set('tgain', String(minGain));
   if (minClimb !== DEFAULT_FILTER.minClimb) params.set('tclimb', String(minClimb));
@@ -106,6 +109,7 @@ function decodeNudges(values: string[]): Record<string, number> {
     const seconds = Number(value.slice(sep + 1));
     if (Number.isFinite(seconds) && seconds !== 0) nudges[value.slice(0, sep)] = seconds * 1000;
   }
+
   return nudges;
 }
 
@@ -118,6 +122,7 @@ function decodeColors(values: string[]): Record<string, string> {
     const hex = value.slice(sep + 1);
     if (sep > 0 && HEX_COLOR.test(hex)) colors[value.slice(0, sep)] = hex.toLowerCase();
   }
+
   return colors;
 }
 

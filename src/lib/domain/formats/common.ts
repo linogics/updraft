@@ -16,6 +16,7 @@ export function toFlight(sourceName: string, fixes: Fix[]): Flight {
     if (Number.isFinite(f.alt)) alt = f.alt;
     else f.alt = alt;
   }
+
   return {
     id: crypto.randomUUID(),
     sourceName,

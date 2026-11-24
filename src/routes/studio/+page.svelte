@@ -53,10 +53,12 @@
     const flights = (await Promise.all(scene.flightIds.map((id) => flightRepository.get(id)))).filter(
       (f): f is Flight => !!f
     );
+
     if (!flights.length) {
       error = m.studio_none_found();
       return;
     }
+
     step = 1;
     await paint();
     studio.setFlights(flights, {
@@ -95,7 +97,7 @@
       lighting: studio.lighting,
       labels: studio.labels
     });
-    goto(`?${query}`, { shallow: true, replace: true, reset: false });
+    void goto(`?${query}`, { shallow: true, replace: true, reset: false });
   });
 
   function onKey(e: KeyboardEvent) {

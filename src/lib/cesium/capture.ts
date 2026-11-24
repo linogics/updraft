@@ -57,6 +57,7 @@ export async function beginCapture(
         if (ended || viewer.isDestroyed()) throw new Error(m.capture_closed());
         render();
       }
+
       // Assigning a size clears the canvas, so only do it when it changes.
       if (target.width !== width) target.width = width;
       if (target.height !== height) target.height = height;

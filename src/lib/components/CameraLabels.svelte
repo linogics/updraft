@@ -49,10 +49,12 @@
       },
       density
     );
+
     if (!hasKeys(next)) {
       editor.message = m.camera_range_empty();
       return;
     }
+
     if (hasKeys(studio.cameraTracks) && !confirm(m.camera_confirm_replace())) return;
     studio.editCamera(next);
     editor.message = m.camera_made_shots({ count: next.heading.keys.length });
@@ -64,6 +66,7 @@
       editor.message = m.camera_no_pilot();
       return;
     }
+
     studio.editCamera(captureView(studio.cameraTracks, view, studio.time));
   }
 
@@ -99,6 +102,7 @@
       const at = keyAt(track, t);
       next = at ? removeKeys(track, new Set([at.t])) : setKey(track, prop, t, valueAt(track, t, prop));
     }
+
     studio.editCamera(setTrack(studio.cameraTracks, prop, next));
   }
 </script>

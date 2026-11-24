@@ -51,6 +51,7 @@
       // Two frames, so the jump commits before the next scroll cancels it.
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     }
+
     settling = false;
     scroller.scrollTo({ left: 0, behavior: 'auto' });
   }
@@ -75,6 +76,7 @@
       mobile = e.matches;
       if (!e.matches) finishClose();
     };
+
     query.addEventListener('change', onQuery);
 
     // The observer is the single source of truth: swipe, button, backdrop tap and Escape all end here.

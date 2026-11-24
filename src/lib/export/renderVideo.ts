@@ -57,6 +57,7 @@ export async function renderVideo(job: VideoJob): Promise<Blob> {
       await audio.add(job.music);
       audio.close();
     }
+
     for (let k = 0; k < job.timing.frames; k++) {
       if (job.signal.aborted) throw new DOMException('Export cancelled.', 'AbortError');
       const t = frameTime(job.range, job.timing, job.fps, k);
@@ -66,6 +67,7 @@ export async function renderVideo(job: VideoJob): Promise<Blob> {
       await video.add(k / job.fps, 1 / job.fps);
       job.onProgress(k + 1);
     }
+
     video.close();
     await output.finalize();
     return new Blob([target.buffer!], { type: 'video/mp4' });

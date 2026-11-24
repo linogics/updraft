@@ -29,6 +29,7 @@ export function straight(
     const p = offset(from.lat, from.lon, Math.sin(rad) * opts.speed * s, Math.cos(rad) * opts.speed * s);
     fixes.push({ t: from.t + s * 1000, ...p, alt: from.alt + opts.climb * s });
   }
+
   return fixes;
 }
 
@@ -49,6 +50,7 @@ export function circle(
     const p = offset(from.lat, from.lon, dx, dy);
     fixes.push({ t: from.t + s * 1000, ...p, alt: from.alt + opts.climb * s });
   }
+
   return fixes;
 }
 
@@ -61,5 +63,6 @@ export function chain(...segments: ((from: Start) => Fix[])[]): Fix[] {
     out.push(...(out.length ? fixes.slice(1) : fixes));
     from = fixes[fixes.length - 1];
   }
+
   return out;
 }

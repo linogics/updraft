@@ -78,6 +78,7 @@ export function laneCurve(
     xs.push((i / n) * width);
     us.push(toLane(prop, valueAt(track, a + ((b - a) * i) / n, prop)));
   }
+
   const inView = track.keys.filter((k) => k.t >= a && k.t <= b).map((k) => toLane(prop, k.v));
   const scale = laneScale([...us, ...inView]);
   return {
@@ -105,6 +106,7 @@ export function snapTime(t: number, targets: number[], threshold: number): Snap 
       best = { t: target, guide: target };
     }
   }
+
   return best;
 }
 

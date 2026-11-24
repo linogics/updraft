@@ -40,11 +40,13 @@ function fly(start: Cursor, segments: Segment[], seed: number): Fix[] {
         // Thermal core: climb varies around the mean.
         c.alt += s.climb * (1 + 0.35 * Math.sin((i + seed) / 7));
       }
+
       c.t += 1000;
       // Small deterministic altitude noise like a real logger.
       fixes.push({ t: c.t, lat: c.lat, lon: c.lon, alt: Math.round(c.alt + Math.sin(c.t / 3100 + seed) * 0.8) });
     }
   }
+
   return fixes;
 }
 

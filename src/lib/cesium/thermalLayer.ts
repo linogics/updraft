@@ -22,6 +22,7 @@ export class ThermalLayer {
         if (layer) this.remove(kind, layer);
         continue;
       }
+
       if (!layer) {
         // Cesium's TMS placeholder is {reverseY}.
         const provider = new Cesium.UrlTemplateImageryProvider({
@@ -32,8 +33,10 @@ export class ThermalLayer {
         layer = this.viewer.imageryLayers.addImageryProvider(provider);
         this.layers.set(kind, layer);
       }
+
       layer.alpha = p.opacity;
     }
+
     this.viewer.scene.requestRender();
   }
 

@@ -60,6 +60,7 @@
       const py = 96 - ((fixes[i].alt - minAlt) / span) * 88;
       d += `${d ? 'L' : 'M'}${px.toFixed(1)},${py.toFixed(1)}`;
     }
+
     return d;
   }
 
@@ -95,11 +96,13 @@
       drag = { ...drag, start: candidate, guide: null };
       return;
     }
+
     const targets = [studio.time];
     for (const other of studio.flights) {
       if (other.flight.id === f.flight.id) continue;
       targets.push(other.flight.fixes[0].t, other.flight.fixes.at(-1)!.t);
     }
+
     const snap = snapStart(candidate, duration(f), targets, SNAP_PX * msPerPx);
     drag = { ...drag, start: snap.start, guide: snap.guide };
   }

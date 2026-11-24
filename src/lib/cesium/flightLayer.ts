@@ -195,6 +195,7 @@ export class FlightLayer {
         });
         byColor.set(run.color, [...(byColor.get(run.color) ?? []), instance]);
       }
+
       for (const [color, geometryInstances] of byColor) {
         this.add(
           new Cesium.Primitive({
@@ -212,6 +213,7 @@ export class FlightLayer {
           })
         );
       }
+
       return;
     }
 
@@ -297,6 +299,7 @@ export class FlightLayer {
     for (const e of this.thermals) this.viewer.entities.remove(e);
     this.thermals = [];
     if (!show || (!parts.columns && !parts.labels)) return;
+
     for (const th of this.loaded.climbs.thermals) {
       const mid = (th.entryAlt + th.exitAlt) / 2;
       // Hide the column while the pilot is circling in it, otherwise it blocks the chase camera.

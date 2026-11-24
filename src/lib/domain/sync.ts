@@ -60,5 +60,6 @@ export function snapStart(start: number, duration: number, targets: number[], th
       }
     }
   }
+
   return best;
 }

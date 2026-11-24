@@ -13,10 +13,12 @@ export function scoreFlight(fixes: Fix[], league: XcLeague): Promise<XcScore | n
       if (e.data.error) reject(new Error(e.data.error));
       else resolve(e.data.score ?? null);
     };
+
     worker.onerror = (e) => {
       worker.terminate();
       reject(new Error(e.message));
     };
+
     worker.postMessage({ fixes, league });
   });
 }

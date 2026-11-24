@@ -109,6 +109,7 @@
       if (spheres.length) {
         v.camera.flyToBoundingSphere(Cesium.BoundingSphere.fromBoundingSpheres(spheres), { duration: 0 });
       }
+
       studio.capture = (w, h) => captureFrame(v, w, h, setHold);
       studio.beginCapture = (w, h) => beginCapture(v, w, h, setHold);
       studio.captureCameraView = () => {
@@ -117,6 +118,7 @@
         if (!layer) return null;
         return viewFromCamera(v.camera.position, layer.cartesianAt(studio.time, new Cesium.Cartesian3()));
       };
+
       ready = true;
     })().catch((err) => {
       console.error(err);
@@ -147,12 +149,14 @@
       n = -90,
       w = 180,
       e = -180;
+
     for (const f of fixes) {
       s = Math.min(s, f.lat);
       n = Math.max(n, f.lat);
       w = Math.min(w, f.lon);
       e = Math.max(e, f.lon);
     }
+
     const dLat = 5 / 111;
     const dLon = dLat / Math.max(0.1, Math.cos((((s + n) / 2) * Math.PI) / 180));
     const bbox: [number, number, number, number] = [w - dLon, s - dLat, e + dLon, n + dLat];

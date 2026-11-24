@@ -49,6 +49,7 @@
       sources[id] = { type: 'raster', tiles, tileSize: 256, maxzoom: maxZoom, attribution };
       layers.push({ id, type: 'raster', source: id, layout: { visibility: id === active ? 'visible' : 'none' } });
     }
+
     layers.push({
       id: 'hillshade',
       type: 'hillshade',
@@ -269,7 +270,7 @@
   $effect(() => {
     const t = studio.time;
     if (!ready || !map) return;
-    (map.getSource('pilots') as GeoJSONSource).setData(pilotData(t));
+    void (map.getSource('pilots') as GeoJSONSource).setData(pilotData(t));
     const sel = studio.selected;
     if (follow && sel && studio.camera !== 'free') {
       const p = positionAt(sel.flight.fixes, t);
@@ -308,14 +309,14 @@
     void studio.colorBy;
     void studio.smoothTrack;
     if (!ready || !map) return;
-    (map.getSource('tracks') as GeoJSONSource).setData(trackData());
-    (map.getSource('thermals') as GeoJSONSource).setData(thermalData());
+    void (map.getSource('tracks') as GeoJSONSource).setData(trackData());
+    void (map.getSource('thermals') as GeoJSONSource).setData(thermalData());
   });
 
   $effect(() => {
     void studio.selected?.xc;
     if (!ready || !map) return;
-    (map.getSource('xc') as GeoJSONSource).setData(xcData());
+    void (map.getSource('xc') as GeoJSONSource).setData(xcData());
   });
 </script>
 

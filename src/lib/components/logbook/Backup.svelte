@@ -37,6 +37,7 @@
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
+
     try {
       pending = JSON.parse(await file.text());
       say(m.backup_loaded({ name: file.name }));
@@ -48,6 +49,7 @@
 
   async function restore(mode: 'merge' | 'replace') {
     if (mode === 'replace' && !confirm(m.backup_confirm_replace())) return;
+
     try {
       const n = await restoreBackup(pending, mode);
       pending = null;

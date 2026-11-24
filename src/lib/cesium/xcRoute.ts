@@ -25,6 +25,7 @@ export class XcRoute {
         );
       }
     }
+
     for (const p of score.turnpoints) {
       this.entities.push(
         this.viewer.entities.add({
@@ -40,6 +41,7 @@ export class XcRoute {
         })
       );
     }
+
     this.viewer.scene.requestRender();
   }
 

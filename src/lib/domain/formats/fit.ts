@@ -15,6 +15,7 @@ export async function readFit(buf: ArrayBuffer, sourceName: string): Promise<Fli
       alt: r.enhanced_altitude ?? r.altitude ?? NaN
     });
   }
+
   if (!fixes.length) throw new Error(m.format_fit_no_gps({ name: sourceName }));
   return toFlight(sourceName, fixes);
 }

@@ -28,6 +28,7 @@ export function routeFromFlight(fixes: Fix[], turnpoints: number): LatLon[] {
           prev[i] = p;
         }
       }
+
     best.push(cur);
     from.push(prev);
   }
@@ -39,5 +40,6 @@ export function routeFromFlight(fixes: Fix[], turnpoints: number): LatLon[] {
     route.unshift({ lat: cand[i].lat, lon: cand[i].lon });
     i = from[j][i];
   }
+
   return route;
 }

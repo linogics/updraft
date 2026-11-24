@@ -9,8 +9,11 @@ if (!existsSync(src)) {
   console.warn(`[copy-cesium] ${src} not found, skipping`);
   process.exit(0);
 }
+
 rmSync(dest, { recursive: true, force: true });
+
 for (const dir of ['Workers', 'ThirdParty', 'Assets', 'Widgets']) {
   cpSync(`${src}/${dir}`, `${dest}/${dir}`, { recursive: true });
 }
+
 console.log(`[copy-cesium] copied Cesium assets to ${dest}`);

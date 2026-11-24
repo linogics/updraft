@@ -16,6 +16,7 @@ export function decodeTile(buf: ArrayBuffer, x: number, y: number, z: number): A
     const f = layer.feature(i);
     if (f.type === 3) out.push(f.toGeoJSON(x, y, z) as AirspaceFeature);
   }
+
   return out;
 }
 
@@ -49,5 +50,6 @@ export async function loadAirspaces(
       );
     }
   }
+
   return (await Promise.all(jobs)).flat();
 }

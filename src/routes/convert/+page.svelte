@@ -27,6 +27,7 @@
         next.push({ name: file.name, format, error: err instanceof Error ? err.message : String(err) });
       }
     }
+
     rows = [...rows, ...next];
     busy = false;
   }

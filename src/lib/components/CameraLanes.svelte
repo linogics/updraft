@@ -98,6 +98,7 @@
         if (!moving.some((r) => r.prop === p && r.t === k.t)) out.push(k.t);
       }
     }
+
     return out;
   }
 
@@ -108,6 +109,7 @@
       editor.toggle(refs);
       return;
     }
+
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const anchor = refs[0];
     const moving = editor.isOn(anchor) ? editor.live : refs;
@@ -135,6 +137,7 @@
     if (axis === null && Math.max(Math.abs(dx), Math.abs(dy)) > 3) {
       axis = d.scale && Math.abs(dy) > Math.abs(dx) ? 'y' : 'x';
     }
+
     if (axis === 'x') {
       const candidate = d.anchor.t + dx * msPerPx;
       const snap = e.altKey

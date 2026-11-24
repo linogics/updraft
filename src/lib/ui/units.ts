@@ -83,6 +83,7 @@ export function presetOf(u: Units): UnitPreset | 'custom' {
   for (const [name, p] of Object.entries(UNIT_PRESETS) as [UnitPreset, Units][]) {
     if (p.distance === u.distance && p.alt === u.alt && p.vario === u.vario && p.speed === u.speed) return name;
   }
+
   return 'custom';
 }
 

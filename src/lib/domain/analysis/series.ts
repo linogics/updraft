@@ -62,5 +62,6 @@ export function computeSeries(fixes: Fix[]): Series {
     const b = fixes[Math.min(n - 1, i + 1)];
     heading[i] = distance(a, b) > 0.5 ? bearing(a, b) : i > 0 ? heading[i - 1] : 0;
   }
+
   return { vario, speed, heading };
 }

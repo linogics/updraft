@@ -24,6 +24,7 @@ export function readTrk(text: string, sourceName: string): Flight {
       alt: +m[11]
     });
   }
+
   if (!fixes.length) throw new Error(m.format_trk_no_points({ name: sourceName }));
   return toFlight(sourceName, fixes);
 }

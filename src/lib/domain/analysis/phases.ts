@@ -41,6 +41,7 @@ function classify(fixes: Fix[], turn: number[]): PhaseKind[] {
     kinds[i] =
       Math.abs(netTurn) >= CIRCLING_NET_TURN ? 'thermalling' : absTurn < STRAIGHT_MAX_TURN ? 'gliding' : 'searching';
   }
+
   return kinds;
 }
 
@@ -64,6 +65,7 @@ function trimThermalEdges(fixes: Fix[], turn: number[], kinds: PhaseKind[]): Pha
     const dt = i === 0 ? 0 : (fixes[i].t - fixes[i - 1].t) / 1000;
     return dt > 0 && Math.abs(turn[i]) / dt >= THERMAL_EDGE_TURN_RATE;
   };
+
   for (const run of toRuns(kinds)) {
     if (run.kind !== 'thermalling') continue;
     const before = run.start > 0 ? kinds[run.start - 1] : null;
@@ -73,6 +75,7 @@ function trimThermalEdges(fixes: Fix[], turn: number[], kinds: PhaseKind[]): Pha
     if (before) while (s < e && !turning(s)) out[s++] = before;
     if (after) while (e > s && !turning(e)) out[e--] = after;
   }
+
   return out;
 }
 
@@ -98,6 +101,7 @@ function absorbShortRuns(fixes: Fix[], runs: Phase[]): Phase[] {
       const d = duration(fixes, runs[i]);
       if (d < MIN_PHASE_DURATION && (shortest < 0 || d < duration(fixes, runs[shortest]))) shortest = i;
     }
+
     if (shortest < 0) return runs;
 
     // Thermal boundaries come from trimThermalEdges; never grow a thermal with non-circling fixes.

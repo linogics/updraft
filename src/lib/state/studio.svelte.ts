@@ -319,6 +319,7 @@ export class StudioState {
           console.error('Could not score flight', err);
           xc ??= null;
         }
+
         if (run !== this.xcRun) return;
         this.flights = this.flights.map((f) => (f.source.id === source.id ? { ...f, xc } : f));
         await yieldToMain();
@@ -429,6 +430,7 @@ export class StudioState {
       if (this.time >= this.end) this.playing = false;
       else this.frame = requestAnimationFrame(tick);
     };
+
     this.frame = requestAnimationFrame(tick);
   }
 

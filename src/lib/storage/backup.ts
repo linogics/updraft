@@ -29,12 +29,14 @@ export async function buildBackup(includeToken: boolean): Promise<Backup> {
   for (const key of PREF_KEYS) {
     const raw = read(key);
     if (raw === null) continue;
+
     try {
       backup.prefs[key] = JSON.parse(raw);
     } catch {
       // Broken value, skip.
     }
   }
+
   const token = read(TOKEN_KEY);
   if (includeToken && token) backup.ionToken = token;
   const openaip = read(OPENAIP_KEY);
@@ -49,22 +51,27 @@ const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 
 export async function restoreBackup(raw: unknown, mode: 'merge' | 'replace') {
   if (!isObj(raw) || raw.app !== 'updraft') throw new Error(m.backup_not_backup());
   if (raw.version !== 1) throw new Error(m.backup_version({ version: String(raw.version) }));
+
   if (!Array.isArray(raw.flights) || !Array.isArray(raw.manual) || !Array.isArray(raw.cameraPaths)) {
     throw new Error(m.backup_incomplete());
   }
+
   for (const f of raw.flights) {
     if (!isObj(f) || typeof f.id !== 'string' || !Array.isArray(f.fixes) || !f.fixes.length) {
       throw new Error(m.backup_bad_flight());
     }
   }
+
   for (const entry of raw.manual) {
     if (!isObj(entry) || typeof entry.id !== 'string' || typeof entry.date !== 'string' || entry.manual !== true) {
       throw new Error(m.backup_bad_manual());
     }
   }
+
   for (const c of raw.cameraPaths) {
     if (!isObj(c) || typeof c.key !== 'string') throw new Error(m.backup_bad_camera());
   }
+
   const backup = raw as unknown as Backup;
   await flightRepository.importAll(backup, mode);
 

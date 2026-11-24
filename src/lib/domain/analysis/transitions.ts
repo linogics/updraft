@@ -87,6 +87,7 @@ export function summarizeTransitions(
   if (!glides.length) {
     return { count: 0, avgStartAlt: null, avgEndAlt: null, lowestArrival: null, avgGlideRatio: null, avgSpeed: null };
   }
+
   const sum = (f: (t: Transition) => number) => glides.reduce((s, t) => s + f(t), 0);
   const dist = sum((t) => t.distance);
   const loss = sum((t) => t.altLoss);

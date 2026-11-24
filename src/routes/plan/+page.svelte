@@ -51,7 +51,7 @@
     const q = new URLSearchParams();
     if (points.length) q.set('r', encodeRoute(points));
     if (speed !== DEFAULT_SPEED) q.set('v', String(speed));
-    replaceState(q.size ? `?${q}` : location.pathname, {});
+    void replaceState(q.size ? `?${q}` : location.pathname, {});
   }
 
   const add = (p: LatLon) => points.length < MAX_ROUTE_POINTS && commit([...points, p]);

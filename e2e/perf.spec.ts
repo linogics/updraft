@@ -92,6 +92,7 @@ test('play and seek an 8 h flight', async ({ page }) => {
   if (/swiftshader|llvmpipe|software/i.test(renderer)) {
     console.log('warning: software WebGL, run `npm run bench:ui -- --headed` on a machine with a GPU');
   }
+
   await page.waitForTimeout(1000);
   await longTasks(page);
 
@@ -108,6 +109,7 @@ test('play and seek an 8 h flight', async ({ page }) => {
           if (now < end) requestAnimationFrame(tick);
           else done(out);
         };
+
         requestAnimationFrame(tick);
       })
   );
@@ -129,6 +131,7 @@ test('play and seek an 8 h flight', async ({ page }) => {
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       out.push(performance.now() - t0);
     }
+
     return out.sort((a, b) => a - b);
   });
   const seek = await longTasks(page);

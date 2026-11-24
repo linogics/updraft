@@ -97,15 +97,18 @@ export function overlayLayout(w: number, h: number, parts: OverlayParts): Overla
       out.hud = { x: m, y, w: w - 2 * m, h: hudH };
       y += hudH + g;
     }
+
     if (parts.stats) {
       out.stats = { x: m, y, w: w - 2 * m, h: statsH };
       y += statsH + g;
     }
+
     let mapBottom = bottom;
     if (parts.altitudeGraph) {
       out.altitudeGraph = { x: m, y: bottom - graphH, w: w - 2 * m, h: graphH };
       mapBottom = bottom - graphH - g;
     }
+
     if (parts.minimap) out.minimap = { x: m, y, w: w - 2 * m, h: mapBottom - y };
     return out;
   }
@@ -113,10 +116,12 @@ export function overlayLayout(w: number, h: number, parts: OverlayParts): Overla
   if (parts.hud) out.hud = { x: m, y: m, w: HUD_W * s, h: hudH };
   if (parts.stats) out.stats = { x: w - m - STATS_W * s, y: m, w: STATS_W * s, h: statsH };
   if (parts.minimap) out.minimap = { x: w - m - mapS, y: bottom - mapS, w: mapS, h: mapS };
+
   if (parts.altitudeGraph) {
     const right = out.minimap ? out.minimap.x - g : w - m;
     out.altitudeGraph = { x: m, y: bottom - graphH, w: right - m, h: graphH };
   }
+
   return out;
 }
 
@@ -230,6 +235,7 @@ function paintGraph(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Overla
     if (k === 0) ctx.moveTo(x(f.t), y(f.alt));
     else ctx.lineTo(x(f.t), y(f.alt));
   }
+
   ctx.strokeStyle = color;
   ctx.lineWidth = 3 * s;
   ctx.lineJoin = 'round';
@@ -269,6 +275,7 @@ function paintMinimap(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Over
       maxLon = Math.max(maxLon, f.lon);
     }
   }
+
   if (!Number.isFinite(minLat)) return;
 
   const pad = 16 * s;
@@ -291,6 +298,7 @@ function paintMinimap(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Over
       if (j === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);
     }
+
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.5 * s;
     ctx.lineJoin = 'round';

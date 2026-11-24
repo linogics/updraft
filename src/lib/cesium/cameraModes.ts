@@ -52,6 +52,7 @@ export class CameraController {
       e.preventDefault();
       this.range = Math.min(MAX_RANGE, Math.max(MIN_RANGE, this.range * (e.deltaY > 0 ? 1.12 : 1 / 1.12)));
     };
+
     viewer.canvas.addEventListener('wheel', onWheel, { passive: false });
     this.removeWheel = () => viewer.canvas.removeEventListener('wheel', onWheel);
   }
@@ -66,6 +67,7 @@ export class CameraController {
       this.viewer.scene.screenSpaceCameraController.enableInputs = mode === 'free';
       this.lastMode = mode;
     }
+
     if (mode === 'free' || !target) return;
 
     // Keys are stateless: the view depends on playback time only, so export frames are repeatable.

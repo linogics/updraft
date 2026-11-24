@@ -49,8 +49,10 @@ function decodePng(buf) {
     } else if (type === 'IEND') {
       break;
     }
+
     pos += 12 + len;
   }
+
   if (colorType !== 2 && colorType !== 6) throw new Error(`unsupported PNG colour type ${colorType}`);
   const bpp = colorType === 6 ? 4 : 3;
   const stride = width * bpp;
@@ -70,6 +72,7 @@ function decodePng(buf) {
       out[dst + i] = (x + predictor) & 0xff;
     }
   }
+
   return { bpp, pixels: out };
 }
 
@@ -128,6 +131,7 @@ for (let row = 0; row < rows; row++) {
     const lon = west + (col * (east - west)) / (cols - 1);
     line.push(Math.round(groundAt(lat, lon)));
   }
+
   heights.push(line.join(','));
 }
 

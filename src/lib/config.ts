@@ -12,6 +12,7 @@ export function loadRuntimeConfig(): Promise<RuntimeConfig> {
   } catch {
     // Storage blocked (private mode): run without ion.
   }
+
   return Promise.resolve({ cesiumIonToken: token });
 }
 

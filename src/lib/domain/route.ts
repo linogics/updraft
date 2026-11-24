@@ -16,6 +16,7 @@ export function decodeRoute(raw: string | null): LatLon[] {
     out.push({ lat, lon });
     if (out.length === MAX_ROUTE_POINTS) break;
   }
+
   return out;
 }
 
@@ -27,6 +28,7 @@ export function densify(points: LatLon[], steps = 10): LatLon[] {
     for (let k = 0; k < steps; k++)
       out.push({ lat: a.lat + ((b.lat - a.lat) * k) / steps, lon: a.lon + ((b.lon - a.lon) * k) / steps });
   }
+
   if (points.length) out.push(points[points.length - 1]);
   return out;
 }

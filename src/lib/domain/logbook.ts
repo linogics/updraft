@@ -27,6 +27,7 @@ export function monthlyHours(flights: Logged[], months: number, now: Date): { mo
     const i = index.get(f.date.slice(0, 7));
     if (i !== undefined) out[i].hours += (f.endTime - f.startTime) / 3_600_000;
   }
+
   return out;
 }
 
@@ -62,6 +63,7 @@ export function breakdown(
     if (f.maxAlt !== undefined) row.maxAlt = Math.max(row.maxAlt ?? -Infinity, f.maxAlt);
     rows.set(label, row);
   }
+
   const out = [...rows.values()];
   return key === 'year' ? out.sort((a, b) => b.label.localeCompare(a.label)) : out.sort((a, b) => b.hours - a.hours);
 }
