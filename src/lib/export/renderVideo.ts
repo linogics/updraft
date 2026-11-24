@@ -9,7 +9,7 @@ import {
   Quality
 } from 'mediabunny';
 import type { CaptureSession } from '#lib/cesium/capture';
-import { frameTime, type ReplayRange, type Timing } from './videoTiming';
+import { frameTime, type StudioRange, type Timing } from './videoTiming';
 
 /** Whether the browser can encode H.264 at this size, bitrate and frame rate. */
 export function videoEncodable(width: number, height: number, bitrate: number, fps: number): Promise<boolean> {
@@ -25,14 +25,14 @@ export interface VideoJob {
   height: number;
   fps: number;
   bitrate: number;
-  range: ReplayRange;
+  range: StudioRange;
   timing: Timing;
   /** Already fitted to timing.seconds. */
   music?: AudioBuffer;
   session: CaptureSession;
-  /** Moves the replay clock to t and waits until Svelte has applied it. */
+  /** Moves the playback clock to t and waits until Svelte has applied it. */
   seek: (t: number) => Promise<void>;
-  /** Paints the overlay for replay time t onto the frame. */
+  /** Paints the overlay for playback time t onto the frame. */
   paint: (ctx: CanvasRenderingContext2D, t: number) => void;
   onProgress: (done: number) => void;
   signal: AbortSignal;

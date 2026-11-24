@@ -3,7 +3,7 @@ import { m } from '../paraglide/messages';
 import { formatClock, formatDuration } from '../ui/format';
 import { formatAlt, formatDistance, formatSpeed, formatVario, type Units } from '../ui/units';
 import { indexAt } from '../domain/timeline';
-import type { LoadedFlight } from '../state/replay.svelte';
+import type { LoadedFlight } from '../state/studio.svelte';
 
 export interface OverlayParts {
   hud: boolean;
@@ -28,8 +28,8 @@ export interface OverlayData {
   selected: LoadedFlight;
   /** Visible flights, drawn on the minimap. */
   flights: LoadedFlight[];
-  /** Replay clock, Unix ms. */
-  replayTime: number;
+  /** Playback clock, Unix ms. */
+  studioTime: number;
   units: Units;
   /** Map and terrain attribution, one line. */
   credits: string;
@@ -140,7 +140,7 @@ export function paintOverlay(
   ctx.restore();
 }
 
-/** Height above ground of fix i, as ReplayState.aglAt. */
+/** Height above ground of fix i, as StudioState.aglAt. */
 function aglOf(f: LoadedFlight, i: number): number | undefined {
   return f.ground ? f.flight.fixes[i].alt + f.altOffset - f.ground[i] : undefined;
 }
@@ -178,11 +178,11 @@ function paintHud(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: OverlayD
   panel(ctx, r, RADIUS * s);
   const { selected: sel, units: u } = d;
   const { fixes } = sel.flight;
-  const i = indexAt(fixes, d.replayTime);
-  const inFlight = d.replayTime >= fixes[0].t && d.replayTime <= fixes[fixes.length - 1].t;
+  const i = indexAt(fixes, d.studioTime);
+  const inFlight = d.studioTime >= fixes[0].t && d.studioTime <= fixes[fixes.length - 1].t;
   const agl = aglOf(sel, i);
   const rows: [string, string][] = [
-    [m.export_row_time(), formatClock(d.replayTime - sel.timeOffset)],
+    [m.export_row_time(), formatClock(d.studioTime - sel.timeOffset)],
     [m.export_row_altitude(), formatAlt(fixes[i].alt, u)],
     ['AGL', agl === undefined ? '–' : formatAlt(agl, u)],
     [m.units_vario(), formatVario(inFlight ? sel.analysis.vario[i] : 0, u)],
@@ -211,7 +211,7 @@ function paintGraph(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Overla
   panel(ctx, r, RADIUS * s);
   const { flight, analysis, color } = d.selected;
   const { fixes } = flight;
-  const i = indexAt(fixes, d.replayTime);
+  const i = indexAt(fixes, d.studioTime);
   const pad = 14 * s;
   const top = pad + 26 * s;
   const plot = { x: r.x + pad, y: r.y + top, w: r.w - 2 * pad, h: r.h - top - pad };
@@ -299,7 +299,7 @@ function paintMinimap(ctx: CanvasRenderingContext2D, r: Rect, s: number, d: Over
 
   for (const { flight, color } of d.flights) {
     const { fixes } = flight;
-    const f = fixes[indexAt(fixes, d.replayTime)];
+    const f = fixes[indexAt(fixes, d.studioTime)];
     const [px, py] = project(f.lat, f.lon);
     const isSelected = flight.id === d.selected.flight.id;
     ctx.beginPath();

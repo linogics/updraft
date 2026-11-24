@@ -13,7 +13,7 @@
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { flightRepository, type FlightSummary } from '#lib/storage';
-  import { importFlights, replayHref } from '#lib/storage/importFlights';
+  import { importFlights, studioHref } from '#lib/storage/importFlights';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
@@ -118,7 +118,7 @@
     void scoreMissing(true);
   }
 
-  const openReplay = (ids: string[]) => goto(replayHref(ids));
+  const openStudio = (ids: string[]) => goto(studioHref(ids));
 
   async function importFiles(files: File[]) {
     busy = true;
@@ -126,13 +126,13 @@
     errors = result.errors;
     busy = false;
     await refresh();
-    if (result.ids.length && errors.length === 0) openReplay(result.ids);
+    if (result.ids.length && errors.length === 0) openStudio(result.ids);
   }
 
   async function loadDemo() {
     const demo = buildDemoFlights();
     for (const f of demo) await flightRepository.save(f);
-    openReplay(demo.map((f) => f.id));
+    openStudio(demo.map((f) => f.id));
   }
 
   async function remove(f: FlightSummary) {
@@ -277,8 +277,8 @@
             {m.logbook_scoring({ scored, total: todo.length })}
           </span>{/if}
         <button onclick={() => (adding = !adding)} aria-expanded={adding}>{m.logbook_add_manual()}</button>
-        <button disabled={!selected.length} onclick={() => openReplay(selected)}>
-          {m.logbook_replay_selected({ count: selected.length })}
+        <button disabled={!selected.length} onclick={() => openStudio(selected)}>
+          {m.logbook_studio_selected({ count: selected.length })}
         </button>
       </div>
     </div>
@@ -331,7 +331,7 @@
               </td>
               <td>{f.date}</td>
               <td>
-                {#if f.manual}{f.pilot}{:else}<a href={replayHref([f.id])}>{f.pilot}</a>{/if}
+                {#if f.manual}{f.pilot}{:else}<a href={studioHref([f.id])}>{f.pilot}</a>{/if}
               </td>
               <td class="muted hide">{f.site ?? '–'}</td>
               <td class="muted hide">{f.glider ?? '–'}</td>

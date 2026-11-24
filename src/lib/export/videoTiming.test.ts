@@ -23,7 +23,7 @@ describe('planTiming', () => {
 
   it('counts frames from the speed factor', () => {
     const t = planTiming(range, { kind: 'speed', factor: 60 }, 30);
-    // 600 s of replay at 60x is 10 s of video, 300 frames.
+    // 600 s of studio at 60x is 10 s of video, 300 frames.
     expect(t.frames).toBe(300);
     expect(t.seconds).toBe(10);
   });

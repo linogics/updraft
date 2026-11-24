@@ -4,19 +4,19 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 ## Dashboard
 
-- One tile per tool: Replay, Logbook, Convert and XC planner.
+- One tile per tool: Studio, Logbook, Convert and XC planner.
 - Tiles show live numbers from the saved flights: flights, hours flown, hours per month over the last 12 months, recent flights.
 - Demo flights to try the app without own files.
 
 ## Import and formats
 
 - Drag and drop one or more files: IGC, GPX, KML (`gx:Track`), FIT, CompeGPS TRK or GeoJSON.
-- Flights are stored in the browser (IndexedDB). Several files from the same day are replayed together.
+- Flights are stored in the browser (IndexedDB). Several files from the same day are opened together.
 - Converter (`/convert`): write any imported track as IGC (unsigned), GPX, KML or GeoJSON, one file or all at once, optionally also saved to the logbook.
 
-## Replay
+## Studio
 
-- 3D replay on CesiumJS, 2D map (MapLibre) or a split view of both. Panels are resizable and collapsible, sizes are kept per browser.
+- 3D view on CesiumJS, 2D map (MapLibre) or a split view of both. Panels are resizable and collapsible, sizes are kept per browser.
 - Several pilots on one shared clock, with live markers, trail and pilot names.
 - Player: play and pause, 1× to 200× speed, scrubbing, jump to the next thermal, keyboard control.
 - Timeline like a video editor: one clip per pilot, drag clips to shift them in time with snapping, Ctrl+wheel to zoom. Quick alignment: real time, same day (keeps time of day) or aligned takeoffs. Works for flights from different days.
@@ -29,8 +29,8 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Base maps: satellite (Esri), topo (OpenTopoMap) or OSM with hillshade, in 3D and 2D.
 - Thermal hotspots and skyways from thermal.kk7.ch, in 2D, 3D and the planner.
 - Airspaces from openAIP with your own free key, filtered by class and floor. Click for details in 2D, translucent volumes in 3D.
-- The replay view (flights, layout, track style, filters, alignment) lives in the URL, so a link restores it in the same browser.
-- Staged load screen while a replay opens.
+- The studio view (flights, layout, track style, filters, alignment) lives in the URL, so a link restores it in the same browser.
+- Staged load screen while the studio opens.
 
 ## Camera
 
@@ -51,7 +51,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 ## XC scoring
 
-- XC section in the replay side panel: type (free distance, flat triangle, FAI triangle, out and return), distance, multiplier and points.
+- XC section in the studio side panel: type (free distance, flat triangle, FAI triangle, out and return), distance, multiplier and points.
 - Leagues: XContest, FFVL, FAI and UK XC League.
 - Points list when several pilots are loaded. The scored route is drawn in 2D and 3D, with the closing circle for triangles.
 - "Make route" turns a flight into 1 to 30 turnpoints and opens them in the planner.
@@ -68,7 +68,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - `/logbook`: every saved flight with totals, hours per month and per year, breakdown by year, site or glider.
 - Editable pilot, site, glider and notes. Flights entered by hand without a track.
 - XC type and points per flight and in total, scored in the background for the chosen league.
-- Pick flights and replay them together.
+- Pick flights and open them together in the studio.
 
 ## Export
 

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { COLOR_MODES, TRACK_STYLES, TRACK_WIDTH } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import Popover from './Popover.svelte';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   const COLOR_LABELS = {
     vario: () => m.track_color_vario(),
@@ -24,12 +24,12 @@
 <Popover label={m.track_menu()}>
   <div class="fields">
     <label for="track-color">{m.track_colour()}</label>
-    <select id="track-color" bind:value={replay.colorBy}>
+    <select id="track-color" bind:value={studio.colorBy}>
       {#each COLOR_MODES as mode (mode)}<option value={mode}>{COLOR_LABELS[mode]()}</option>{/each}
     </select>
 
     <label for="track-style">{m.track_style()}</label>
-    <select id="track-style" bind:value={replay.trackStyle}>
+    <select id="track-style" bind:value={studio.trackStyle}>
       {#each TRACK_STYLES as s (s)}<option value={s}>{STYLE_LABELS[s]()}</option>{/each}
     </select>
 
@@ -41,17 +41,17 @@
         min={TRACK_WIDTH.min}
         max={TRACK_WIDTH.max}
         step="1"
-        bind:value={replay.trackWidth}
+        bind:value={studio.trackWidth}
       />
-      <output for="track-width">{replay.trackWidth} px</output>
+      <output for="track-width">{studio.trackWidth} px</output>
     </span>
 
     <span></span>
-    <label class="check"><input type="checkbox" bind:checked={replay.smoothTrack} /> {m.track_smooth()}</label>
+    <label class="check"><input type="checkbox" bind:checked={studio.smoothTrack} /> {m.track_smooth()}</label>
   </div>
-  {#if replay.trackStyle === 'glow' && replay.colorBy !== 'pilot'}
+  {#if studio.trackStyle === 'glow' && studio.colorBy !== 'pilot'}
     <p class="hint">{m.track_hint_glow()}</p>
-  {:else if replay.trackStyle === 'curtain'}
+  {:else if studio.trackStyle === 'curtain'}
     <p class="hint">{m.track_hint_curtain()}</p>
   {/if}
   <p class="hint">{m.track_hint_dot()}</p>

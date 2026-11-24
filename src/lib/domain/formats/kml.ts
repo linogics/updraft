@@ -22,7 +22,7 @@ export function readKml(text: string, sourceName: string): Flight {
     }
   }
   if (!fixes.length) {
-    // A plain LineString carries no times, so there is nothing to replay.
+    // A plain LineString carries no times, so there is nothing to play back.
     throw new Error(m.format_kml_no_time({ name: sourceName }));
   }
   return toFlight(sourceName, fixes);

@@ -2,13 +2,13 @@
   import { EXAGGERATION } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
   import { formatNumber } from '#lib/ui/format';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
   import AirspaceControls from './AirspaceControls.svelte';
   import ThermalOverlayControls from './ThermalOverlayControls.svelte';
   import Popover from './Popover.svelte';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 </script>
 
 <Popover label={m.view_menu()}>
@@ -21,14 +21,14 @@
         min={EXAGGERATION.min}
         max={EXAGGERATION.max}
         step={EXAGGERATION.step}
-        bind:value={replay.exaggeration}
+        bind:value={studio.exaggeration}
       />
-      <output for="view-exag">{formatNumber(replay.exaggeration, 1)}×</output>
+      <output for="view-exag">{formatNumber(studio.exaggeration, 1)}×</output>
     </span>
     <label for="view-sun">{m.view_sun_lighting()}</label>
-    <input id="view-sun" type="checkbox" bind:checked={replay.lighting} />
+    <input id="view-sun" type="checkbox" bind:checked={studio.lighting} />
     <label for="view-labels">{m.view_pilot_names()}</label>
-    <input id="view-labels" type="checkbox" bind:checked={replay.labels} />
+    <input id="view-labels" type="checkbox" bind:checked={studio.labels} />
     <label for="view-thermal-columns">{m.view_thermal_columns()}</label>
     <input
       id="view-thermal-columns"

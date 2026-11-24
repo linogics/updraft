@@ -1,7 +1,7 @@
 <script lang="ts">
   import { CAMERA_PROPS, keyAt, toLane, type CameraProp, type KeyRef } from '#lib/domain/cameraPath';
   import type { CameraEditor } from '#lib/state/cameraEditor.svelte';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import {
     INTERP_INFO,
     PROP_LABEL,
@@ -22,14 +22,14 @@
   import { formatClock } from '#lib/ui/format';
 
   let {
-    replay,
+    studio,
     editor,
     x,
     msPerPx,
     width,
     view
   }: {
-    replay: ReplayState;
+    studio: StudioState;
     editor: CameraEditor;
     /** Time to px, as the clips use it. */
     x: (t: number) => number;
@@ -57,8 +57,8 @@
   let marquee = $state<(Box & { base: KeyRef[] }) | null>(null);
   let area: HTMLElement;
 
-  const tracks = $derived(replay.cameraTracks);
-  const active = $derived(replay.camera === 'keys');
+  const tracks = $derived(studio.cameraTracks);
+  const active = $derived(studio.camera === 'keys');
   const lanes = $derived(
     editor.expanded && width > 0
       ? CAMERA_PROPS.map((prop) => ({ prop, ...laneCurve(prop, tracks[prop], view.a, view.b, width) }))
@@ -92,7 +92,7 @@
   }
 
   function snapTargets(moving: KeyRef[]): number[] {
-    const out = [replay.time];
+    const out = [studio.time];
     for (const p of CAMERA_PROPS) {
       for (const k of tracks[p].keys) {
         if (!moving.some((r) => r.prop === p && r.t === k.t)) out.push(k.t);
@@ -184,7 +184,7 @@
   {#if editor.message}<span class="msg" role="status">{editor.message}</span>{/if}
   {#if !active}
     <span class="hint">{m.camera_keys_inactive()}</span>
-    <button onclick={() => (replay.camera = 'keys')}>{m.camera_use()}</button>
+    <button onclick={() => (studio.camera = 'keys')}>{m.camera_use()}</button>
   {/if}
 </div>
 

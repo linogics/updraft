@@ -50,7 +50,7 @@ function toTracks(shots: Shot[]): CameraTracks {
 }
 
 /**
- * Camera shot list for one pilot over the replay range: a wide establishing shot, chase keys on
+ * Camera shot list for one pilot over the playback range: a wide establishing shot, chase keys on
  * glides, orbit keys in thermals and a final pull-back. Headings are unwrapped to the previous key.
  */
 export function directCamera(

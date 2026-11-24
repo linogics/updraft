@@ -4,10 +4,10 @@
   import { m } from '#lib/paraglide/messages';
   import { mapCredits } from '#lib/export/credits';
   import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   const PRESETS = [
     { label: '16:9', width: 1920, height: 1080 },
@@ -27,9 +27,9 @@
   const w = $derived(clamp(width));
   const h = $derived(clamp(height));
   const credits = $derived(
-    mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
+    mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
   );
-  const canExport = $derived(!!replay.capture && !!replay.selected && !busy);
+  const canExport = $derived(!!studio.capture && !!studio.selected && !busy);
 
   function pick(p: { width: number; height: number }) {
     width = p.width;
@@ -37,8 +37,8 @@
   }
 
   async function download() {
-    const sel = replay.selected;
-    const capture = replay.capture;
+    const sel = studio.selected;
+    const capture = studio.capture;
     if (!sel || !capture) return;
     busy = true;
     error = '';
@@ -52,8 +52,8 @@
         h,
         {
           selected: sel,
-          flights: replay.flights.filter((f) => f.visible),
-          replayTime: replay.time,
+          flights: studio.flights.filter((f) => f.visible),
+          studioTime: studio.time,
           units: unitPrefs.units,
           credits
         },
@@ -108,7 +108,7 @@
   <button type="button" class="download" onclick={download} disabled={!canExport}>
     {busy ? m.export_rendering() : m.export_image_button()}
   </button>
-  {#if !replay.capture}
+  {#if !studio.capture}
     <p class="hint">{m.export_menu_hint_switch()}</p>
   {/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}

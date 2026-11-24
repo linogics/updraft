@@ -16,11 +16,11 @@
   import { altitudeOffset } from '#lib/domain/align';
   import { viewAt } from '#lib/domain/cameraPath';
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   let container: HTMLDivElement;
   let viewer: Cesium.Viewer | undefined = $state.raw();
@@ -45,18 +45,18 @@
     notice = m.cesium_loading_terrain();
     const used = await setTerrain(v, source);
     appliedTerrain = used;
-    // Local lookup handed to replay state once, not reactive itself.
+    // Local lookup handed to studio state once, not reactive itself.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const offsets = new Map<string, number>();
     await Promise.all(
-      replay.flights.map(async ({ flight }) => {
+      studio.flights.map(async ({ flight }) => {
         const f0 = flight.fixes[0];
         offsets.set(flight.id, altitudeOffset(f0.alt, await sampleGroundHeight(v, used, f0.lat, f0.lon)));
       })
     );
     if (request !== terrainRequest || v.isDestroyed()) return;
-    replay.setAltOffsets(offsets);
-    if (used !== source) replay.terrain = used;
+    studio.setAltOffsets(offsets);
+    if (used !== source) studio.terrain = used;
     notice = used !== source ? m.cesium_ion_fallback() : '';
   }
 
@@ -70,20 +70,20 @@
     (async () => {
       const { cesiumIonToken } = await loadRuntimeConfig();
       if (!alive) return;
-      appliedBasemap = replay.basemap;
+      appliedBasemap = studio.basemap;
       const v = createViewer(container, appliedBasemap, cesiumIonToken);
       viewer = v;
-      await applyTerrain(v, replay.terrain);
+      await applyTerrain(v, studio.terrain);
       if (!alive) return;
 
-      for (const lf of replay.flights)
+      for (const lf of studio.flights)
         layers.set(
           lf.flight.id,
           new FlightLayer(
             v,
             lf,
-            () => replay.time,
-            () => replay.exaggeration
+            () => studio.time,
+            () => studio.exaggeration
           )
         );
       camera = new CameraController(v);
@@ -92,15 +92,15 @@
       thermalLayer = new ThermalLayer(v);
 
       v.scene.preRender.addEventListener(() => {
-        const sel = replay.selected;
+        const sel = studio.selected;
         // Sun position follows the recorded clock of the selected flight.
-        if (replay.lighting && sel) Cesium.JulianDate.fromDate(new Date(replay.localTime(sel)), v.clock.currentTime);
+        if (studio.lighting && sel) Cesium.JulianDate.fromDate(new Date(studio.localTime(sel)), v.clock.currentTime);
         const layer = sel && layers.get(sel.flight.id);
         if (cameraHold) return;
-        const view = replay.camera === 'keys' ? viewAt(replay.cameraTracks, replay.time) : undefined;
+        const view = studio.camera === 'keys' ? viewAt(studio.cameraTracks, studio.time) : undefined;
         camera!.update(
-          replay.camera,
-          layer ? { position: layer.cartesianAt(replay.time), heading: layer.headingAt(replay.time) } : undefined,
+          studio.camera,
+          layer ? { position: layer.cartesianAt(studio.time), heading: layer.headingAt(studio.time) } : undefined,
           view
         );
       });
@@ -109,13 +109,13 @@
       if (spheres.length) {
         v.camera.flyToBoundingSphere(Cesium.BoundingSphere.fromBoundingSpheres(spheres), { duration: 0 });
       }
-      replay.capture = (w, h) => captureFrame(v, w, h, setHold);
-      replay.beginCapture = (w, h) => beginCapture(v, w, h, setHold);
-      replay.captureCameraView = () => {
-        const sel = replay.selected;
+      studio.capture = (w, h) => captureFrame(v, w, h, setHold);
+      studio.beginCapture = (w, h) => beginCapture(v, w, h, setHold);
+      studio.captureCameraView = () => {
+        const sel = studio.selected;
         const layer = sel && layers.get(sel.flight.id);
         if (!layer) return null;
-        return viewFromCamera(v.camera.position, layer.cartesianAt(replay.time, new Cesium.Cartesian3()));
+        return viewFromCamera(v.camera.position, layer.cartesianAt(studio.time, new Cesium.Cartesian3()));
       };
       ready = true;
     })().catch((err) => {
@@ -125,9 +125,9 @@
 
     return () => {
       alive = false;
-      replay.capture = null;
-      replay.beginCapture = null;
-      replay.captureCameraView = null;
+      studio.capture = null;
+      studio.beginCapture = null;
+      studio.captureCameraView = null;
       for (const l of layers.values()) l.destroy();
       layers.clear();
       camera?.destroy();
@@ -140,7 +140,7 @@
 
   // Fetch airspaces for the loaded flights (+5 km margin), only when the box or key changes.
   $effect(() => {
-    const fixes = replay.flights.flatMap((lf) => lf.flight.fixes);
+    const fixes = studio.flights.flatMap((lf) => lf.flight.fixes);
     const key = airspacePrefs.key;
     if (!ready || !airspacePrefs.show || !key || !fixes.length) return;
     let s = 90,
@@ -169,7 +169,7 @@
   $effect(() => {
     if (!ready || !airspaceLayer) return;
     const { show, classes, maxFloor, opacity, key } = airspacePrefs;
-    airspaceLayer.set(show && key ? airspaces : [], { show, classes, maxFloor, opacity }, replay.exaggeration);
+    airspaceLayer.set(show && key ? airspaces : [], { show, classes, maxFloor, opacity }, studio.exaggeration);
   });
 
   $effect(() => {
@@ -180,7 +180,7 @@
 
   // Terrain dropdown: switch source after the initial load.
   $effect(() => {
-    const source = replay.terrain;
+    const source = studio.terrain;
     if (!ready || !viewer || source === appliedTerrain) return;
     const v = viewer;
     untrack(() => applyTerrain(v, source)).catch((err) => {
@@ -190,7 +190,7 @@
   });
 
   $effect(() => {
-    const id = replay.basemap;
+    const id = studio.basemap;
     if (!ready || !viewer || id === appliedBasemap) return;
     appliedBasemap = id;
     setBasemap(viewer, id);
@@ -198,44 +198,44 @@
 
   $effect(() => {
     if (!ready || !viewer) return;
-    viewer.scene.verticalExaggeration = replay.exaggeration;
-    viewer.scene.globe.enableLighting = replay.lighting;
+    viewer.scene.verticalExaggeration = studio.exaggeration;
+    viewer.scene.globe.enableLighting = studio.lighting;
     viewer.scene.requestRender();
   });
 
   $effect(() => {
     if (!ready) return;
-    const show = replay.labels;
+    const show = studio.labels;
     for (const layer of layers.values()) layer.setLabelVisible(show);
   });
 
   // Keep layers in sync with state snapshots (visibility, altitude and time offsets).
   $effect(() => {
     if (!ready) return;
-    for (const lf of replay.flights) layers.get(lf.flight.id)?.update(lf);
+    for (const lf of studio.flights) layers.get(lf.flight.id)?.update(lf);
   });
 
   // Rebuild tracks when colour mode, style, width, colours or altitude offsets change (layers skip unchanged input).
   $effect(() => {
     if (!ready) return;
-    const { colorBy, trackStyle, trackWidth, smoothTrack } = replay;
-    void replay.exaggeration;
-    for (const lf of replay.flights)
+    const { colorBy, trackStyle, trackWidth, smoothTrack } = studio;
+    void studio.exaggeration;
+    for (const lf of studio.flights)
       layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
   });
 
   $effect(() => {
     if (!ready) return;
-    const id = replay.selected?.flight.id;
+    const id = studio.selected?.flight.id;
     const units = unitPrefs.units;
     const parts = { columns: thermalPrefs.columns, labels: thermalPrefs.labels };
-    void replay.flights;
-    void replay.exaggeration;
+    void studio.flights;
+    void studio.exaggeration;
     for (const [key, layer] of layers) layer.renderThermals(key === id, units, parts);
   });
 
   $effect(() => {
-    xcRoute?.set(replay.selected?.xc);
+    xcRoute?.set(studio.selected?.xc);
   });
 </script>
 

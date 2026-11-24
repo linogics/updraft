@@ -1,24 +1,24 @@
 <script lang="ts">
   import { distance } from '#lib/domain/geo';
   import { indexAt, positionAt } from '#lib/domain/timeline';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { m } from '#lib/paraglide/messages';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   // Live values, recomputed as time advances.
   const rows = $derived(
-    replay.flights.map((f) => {
+    studio.flights.map((f) => {
       const { fixes } = f.flight;
-      const t = replay.time;
+      const t = studio.time;
       const inFlight = t >= fixes[0].t && t <= fixes[fixes.length - 1].t;
       const i = indexAt(fixes, t);
       const p = positionAt(fixes, t);
       const u = unitPrefs.units;
-      const agl = replay.aglAt(f, i);
+      const agl = studio.aglAt(f, i);
       return {
         f,
         inFlight,
@@ -28,8 +28,8 @@
         speed: formatSpeed(inFlight ? f.analysis.speed[i] : 0, u),
         varioUp: f.analysis.vario[i] > 0.2,
         dist: formatDistance(distance(fixes[0], p), u),
-        // Recorded clock time, shown when the flight is shifted on the replay clock.
-        local: f.timeOffset ? `${f.source.date} ${formatClock(replay.localTime(f))}` : null
+        // Recorded clock time, shown when the flight is shifted on the playback clock.
+        local: f.timeOffset ? `${f.source.date} ${formatClock(studio.localTime(f))}` : null
       };
     })
   );
@@ -40,12 +40,12 @@
   <div class="head"><span class="live"><span>{m.pilots_alt()}</span><span>AGL</span></span></div>
   <ul>
     {#each rows as r (r.f.flight.id)}
-      {@const selected = r.f.flight.id === replay.selected?.flight.id}
+      {@const selected = r.f.flight.id === studio.selected?.flight.id}
       <li class:selected class:landed={!r.inFlight}>
         <input
           type="checkbox"
           checked={r.f.visible}
-          onchange={(e) => replay.setVisible(r.f.flight.id, e.currentTarget.checked)}
+          onchange={(e) => studio.setVisible(r.f.flight.id, e.currentTarget.checked)}
           aria-label={m.pilots_show({ pilot: r.f.flight.pilot })}
         />
         <span class="color">
@@ -54,14 +54,14 @@
             class="swatch"
             value={r.f.color}
             style:background={r.f.color}
-            onchange={(e) => replay.setPilotColor(r.f.flight.id, e.currentTarget.value)}
+            onchange={(e) => studio.setPilotColor(r.f.flight.id, e.currentTarget.value)}
             aria-label={m.pilots_colour_of({ pilot: r.f.flight.pilot })}
             title={m.pilots_change_colour()}
           />
-          {#if replay.colorOverrides[r.f.flight.id]}
+          {#if studio.colorOverrides[r.f.flight.id]}
             <button
               class="reset"
-              onclick={() => replay.setPilotColor(r.f.flight.id, null)}
+              onclick={() => studio.setPilotColor(r.f.flight.id, null)}
               title={m.pilots_reset_colour()}
               aria-label={m.pilots_reset_colour_of({ pilot: r.f.flight.pilot })}
             >
@@ -69,7 +69,7 @@
             </button>
           {/if}
         </span>
-        <button class="name" onclick={() => (replay.selectedId = r.f.flight.id)}>
+        <button class="name" onclick={() => (studio.selectedId = r.f.flight.id)}>
           <span>
             <span class="pilot">{r.f.flight.pilot}</span>
             <span class="glider">{r.f.flight.glider ?? r.f.flight.sourceName}</span>

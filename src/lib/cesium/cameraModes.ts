@@ -68,7 +68,7 @@ export class CameraController {
     }
     if (mode === 'free' || !target) return;
 
-    // Keys are stateless: the view depends on replay time only, so export frames are repeatable.
+    // Keys are stateless: the view depends on playback time only, so export frames are repeatable.
     if (mode === 'keys' && view) {
       camera.lookAt(
         target.position,

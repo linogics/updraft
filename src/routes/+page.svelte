@@ -8,7 +8,7 @@
   import { buildDemoFlights } from '#lib/demo/demoFlights';
   import { monthlyHours, totals } from '#lib/domain/logbook';
   import { flightRepository, type FlightSummary } from '#lib/storage';
-  import { importFlights, replayHref } from '#lib/storage/importFlights';
+  import { importFlights, studioHref } from '#lib/storage/importFlights';
   import { m } from '#lib/paraglide/messages';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
 
@@ -21,7 +21,7 @@
   const sum = $derived(totals(flights));
   const months = $derived(monthlyHours(flights, 12, new Date()));
   const peak = $derived(Math.max(1, ...months.map((m) => m.hours)));
-  // Manual logbook entries have no track to replay.
+  // Manual logbook entries have no track to play back.
   const last = $derived(flights.find((f) => !f.manual));
 
   const dateFmt = new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
@@ -44,7 +44,7 @@
     const result = await importFlights(files);
     busy = false;
     errors = result.errors;
-    if (result.ids.length && !errors.length) goto(replayHref(result.ids));
+    if (result.ids.length && !errors.length) goto(studioHref(result.ids));
     else flights = await flightRepository.list();
   }
 
@@ -52,7 +52,7 @@
     busy = true;
     const demo = buildDemoFlights();
     for (const f of demo) await flightRepository.save(f);
-    goto(replayHref(demo.map((f) => f.id)));
+    goto(studioHref(demo.map((f) => f.id)));
   }
 </script>
 
@@ -82,9 +82,9 @@
   </header>
 
   <section class="tools" aria-label={m.home_tools()}>
-    <a class="tool" href={last ? replayHref([last.id]) : '/logbook'}>
-      <h2>{m.home_replay_title()}</h2>
-      <p>{m.home_replay_desc()}</p>
+    <a class="tool" href={last ? studioHref([last.id]) : '/logbook'}>
+      <h2>{m.home_studio_title()}</h2>
+      <p>{m.home_studio_desc()}</p>
       <div class="face">
         {#if last}
           <span class="big">{airtime(last.endTime - last.startTime)}</span>
@@ -93,7 +93,7 @@
           <span class="unit">{m.home_no_flight()}</span>
         {/if}
       </div>
-      <span class="go">{last ? m.home_replay_last() : m.home_pick_flights()}</span>
+      <span class="go">{last ? m.home_studio_last() : m.home_pick_flights()}</span>
     </a>
 
     <a class="tool" href="/logbook">
@@ -148,7 +148,7 @@
       <ol>
         {#each flights.slice(0, 5) as f (f.id)}
           <li>
-            <a href={f.manual ? '/logbook' : replayHref([f.id])}>
+            <a href={f.manual ? '/logbook' : studioHref([f.id])}>
               <span class="date">{day(f.date)}</span>
               <span class="pilot">{f.pilot}</span>
               <span class="muted">{f.site ?? f.glider ?? ''}</span>

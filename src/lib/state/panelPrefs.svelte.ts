@@ -11,7 +11,7 @@ function load(): PanelPrefsValue {
   }
 }
 
-/** Replay panel sizes and open state, kept in this browser (not in the shareable scene URL). */
+/** Studio panel sizes and open state, kept in this browser (not in the shareable scene URL). */
 class PanelPrefs {
   value = $state<PanelPrefsValue>(typeof localStorage === 'undefined' ? parsePanelPrefs(null) : load());
 

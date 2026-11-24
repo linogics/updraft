@@ -1,4 +1,4 @@
-import { expect, openDemoReplay, test } from './fixtures';
+import { expect, openDemoStudio, test } from './fixtures';
 
 test('home page uses the Sora display font', async ({ page }) => {
   await page.goto('/');
@@ -9,7 +9,7 @@ test('home page uses the Sora display font', async ({ page }) => {
 });
 
 test('demo opens the editor layout: outliner, viewport, inspector and timeline', async ({ page }) => {
-  await openDemoReplay(page);
+  await openDemoStudio(page);
   await expect(page.locator('aside')).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Altitude' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('separator', { name: 'Outliner' })).toBeVisible();
@@ -17,7 +17,7 @@ test('demo opens the editor layout: outliner, viewport, inspector and timeline',
 });
 
 test('smooth lines are on by default and stay out of the URL', async ({ page }) => {
-  await openDemoReplay(page);
+  await openDemoStudio(page);
   expect(new URL(page.url()).searchParams.has('smooth')).toBe(false);
   await page.getByRole('button', { name: /^Track/ }).click();
   const smooth = page.getByRole('checkbox', { name: 'Smooth' });
@@ -31,7 +31,7 @@ test('smooth lines are on by default and stay out of the URL', async ({ page }) 
 });
 
 test('airspaces start hidden, also after they were shown in an earlier session', async ({ page }) => {
-  await openDemoReplay(page);
+  await openDemoStudio(page);
   await page.getByRole('button', { name: /^View/ }).click();
   const show = page.getByRole('checkbox', { name: 'Airspaces' });
   await expect(show).not.toBeChecked();
@@ -43,7 +43,7 @@ test('airspaces start hidden, also after they were shown in an earlier session',
 });
 
 test('a collapsed outliner stays collapsed after reload', async ({ page }) => {
-  await openDemoReplay(page);
+  await openDemoStudio(page);
   const outliner = page.getByRole('navigation', { name: 'Outliner' });
   await page.getByRole('button', { name: 'Collapse outliner' }).click();
   await expect(outliner).toBeHidden();
@@ -56,7 +56,7 @@ test('a collapsed outliner stays collapsed after reload', async ({ page }) => {
 });
 
 test('arrow keys resize the outliner from its splitter', async ({ page }) => {
-  await openDemoReplay(page);
+  await openDemoStudio(page);
   const outliner = page.getByRole('navigation', { name: 'Outliner' });
   const before = (await outliner.boundingBox())!.width;
   await page.getByRole('separator', { name: 'Outliner' }).focus();
@@ -67,7 +67,7 @@ test('arrow keys resize the outliner from its splitter', async ({ page }) => {
 
 test('phone layout stacks the panels without sideways scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openDemoReplay(page);
+  await openDemoStudio(page);
   await expect(page.locator('aside')).toBeVisible();
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth

@@ -21,12 +21,12 @@
     type QualityId
   } from '#lib/export/videoFormat';
   import { LENGTH_PRESETS, SPEED_PRESETS, planTiming, type TimingMode } from '#lib/export/videoTiming';
-  import type { ReplayState } from '#lib/state/replay.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { m } from '#lib/paraglide/messages';
   import { formatClock, formatDuration } from '#lib/ui/format';
 
-  let { replay }: { replay: ReplayState } = $props();
+  let { studio }: { studio: StudioState } = $props();
 
   type Encoder = typeof import('#lib/export/renderVideo');
   const RESOLUTIONS = [
@@ -76,7 +76,7 @@
   const fps = $derived(clampFps(fpsInput));
   let quality = $state<QualityId>('high');
   const bitrate = $derived(bitrateFor(size.width, size.height, fps, quality));
-  const range = $derived({ inMs: replay.exportIn ?? replay.start, outMs: replay.exportOut ?? replay.end });
+  const range = $derived({ inMs: studio.exportIn ?? studio.start, outMs: studio.exportOut ?? studio.end });
   const fitMusic = $derived(!!music && musicMode === 'fit');
   const timingMode = $derived<TimingMode>(
     fitMusic
@@ -93,7 +93,7 @@
     }
   });
   const credits = $derived(
-    mapCredits(replay.basemap, replay.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
+    mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
   );
   const otherValue = $derived.by(() => {
     const t = plan.timing;
@@ -130,16 +130,16 @@
   }
 
   function setIn() {
-    replay.exportIn = replay.time;
+    studio.exportIn = studio.time;
   }
 
   function setOut() {
-    replay.exportOut = replay.time;
+    studio.exportOut = studio.time;
   }
 
   function resetRange() {
-    replay.exportIn = null;
-    replay.exportOut = null;
+    studio.exportIn = null;
+    studio.exportOut = null;
   }
 
   async function pickMusic(e: Event) {
@@ -166,20 +166,20 @@
   }
 
   async function seek(t: number) {
-    replay.seek(t);
+    studio.seek(t);
     // Track tails and labels update in Svelte effects, so wait for them before the frame.
     await tick();
   }
 
   async function render() {
-    const sel = replay.selected;
-    const begin = replay.beginCapture;
+    const sel = studio.selected;
+    const begin = studio.beginCapture;
     const timing = plan.timing;
     if (!sel || !begin || !timing || !encoder) return;
     const { width, height } = size;
     const name = mp4Filename(sel.source.pilot, sel.source.date, width, height);
     const enc = encoder;
-    const savedTime = replay.time;
+    const savedTime = studio.time;
     const overlay = { ...parts };
     const units = unitPrefs.units;
     const controller = new AbortController();
@@ -192,7 +192,7 @@
     done = 0;
     total = timing.frames;
     started = now = Date.now();
-    replay.pause();
+    studio.pause();
     try {
       if (!(await enc.videoEncodable(width, height, bitrate, fps))) {
         throw new Error(m.export_video_cannot_encode({ width, height }));
@@ -214,7 +214,7 @@
             ctx,
             width,
             height,
-            { selected: sel, flights: replay.flights.filter((f) => f.visible), replayTime: t, units, credits },
+            { selected: sel, flights: studio.flights.filter((f) => f.visible), studioTime: t, units, credits },
             overlay
           ),
         onProgress: (n) => (done = n),
@@ -228,19 +228,19 @@
     } finally {
       clearInterval(clock);
       session?.end();
-      replay.seek(savedTime);
+      studio.seek(savedTime);
       abort = null;
       busy = false;
     }
   }
 </script>
 
-<button type="button" class="open" onclick={open} disabled={!codecs?.video || !replay.beginCapture}>
+<button type="button" class="open" onclick={open} disabled={!codecs?.video || !studio.beginCapture}>
   {m.export_video_button()}
 </button>
 {#if codecs && !codecs.video}
   <p class="hint">{m.export_video_needs_codec()}</p>
-{:else if !replay.beginCapture}
+{:else if !studio.beginCapture}
   <p class="hint">{m.export_menu_hint_switch()}</p>
 {/if}
 
@@ -305,7 +305,7 @@
   <fieldset>
     <legend>{m.export_range()}</legend>
     <p class="hint">
-      {#if replay.exportIn == null && replay.exportOut == null}
+      {#if studio.exportIn == null && studio.exportOut == null}
         {m.export_range_info_whole({
           from: formatClock(range.inMs),
           to: formatClock(range.outMs),
@@ -417,7 +417,7 @@
       {m.export_progress({ done, total, elapsed: formatDuration((now - started) / 1000), left: formatDuration(eta) })}
     </p>
   {/if}
-  {#if !replay.beginCapture}<p class="hint">{m.export_menu_hint_switch()}</p>{/if}
+  {#if !studio.beginCapture}<p class="hint">{m.export_menu_hint_switch()}</p>{/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 
   <div class="row end">
@@ -430,7 +430,7 @@
       type="button"
       class="primary"
       onclick={render}
-      disabled={busy || !replay.beginCapture || !plan.timing || !encoder}
+      disabled={busy || !studio.beginCapture || !plan.timing || !encoder}
     >
       {busy ? m.export_rendering() : m.export_render_mp4()}
     </button>

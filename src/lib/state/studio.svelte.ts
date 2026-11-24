@@ -45,9 +45,9 @@ export interface Climbs {
 export interface LoadedFlight {
   /** Flight as stored, real timestamps. */
   source: Flight;
-  /** Flight on the replay clock: source fixes shifted by timeOffset. */
+  /** Flight on the playback clock: source fixes shifted by timeOffset. */
   flight: Flight;
-  /** Shift from real time to replay time, ms (sync mode + manual nudge). */
+  /** Shift from real time to playback time, ms (sync mode + manual nudge). */
   timeOffset: number;
   /** Indices and durations only, so it is valid for source and shifted flight alike. */
   analysis: FlightAnalysis;
@@ -72,13 +72,13 @@ export interface SceneInit {
 }
 
 /**
- * Replay state shared by all views. The replay clock lives here (not in Cesium) so the
+ * Studio state shared by all views. The playback clock lives here (not in Cesium) so the
  * 2D-only layout keeps playing without a 3D viewer mounted.
  */
-export class ReplayState {
+export class StudioState {
   // Raw (not deeply reactive): tracks hold tens of thousands of fixes. Replace the array to update.
   flights = $state.raw<LoadedFlight[]>([]);
-  /** Unix ms on the replay clock. */
+  /** Unix ms on the playback clock. */
   time = $state(0);
   playing = $state(false);
   speed = $state<number>(25);
@@ -106,7 +106,7 @@ export class ReplayState {
   capture = $state.raw<((w: number, h: number) => Promise<HTMLCanvasElement>) | null>(null);
   /** Starts a frame-by-frame capture session for video export. Null until the 3D viewer is ready. */
   beginCapture = $state.raw<BeginCapture | null>(null);
-  /** Video export range marks, Unix ms. Null means replay start or end. */
+  /** Video export range marks, Unix ms. Null means studio start or end. */
   exportIn = $state<number | null>(null);
   exportOut = $state<number | null>(null);
   /** Camera tracks for 'keys' mode. Stored per set of flights on this device. */
@@ -304,7 +304,7 @@ export class ReplayState {
     return flights.map((f, i) => base[i] + (this.nudges[f.id] ?? 0));
   }
 
-  /** Re-applies sync mode and nudges, keeping the replay position within the new range. */
+  /** Re-applies sync mode and nudges, keeping the studio position within the new range. */
   private reshift() {
     const offsets = this.offsets(this.flights.map((f) => f.source));
     this.flights = this.flights.map((f, i) =>
@@ -329,7 +329,7 @@ export class ReplayState {
     this.reshift();
   }
 
-  /** Real (recorded) clock time of a flight at the current replay time. */
+  /** Real (recorded) clock time of a flight at the current playback time. */
   localTime(f: LoadedFlight): number {
     return this.time - f.timeOffset;
   }
