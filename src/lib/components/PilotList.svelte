@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AddPilotDialog from '#lib/components/studio/AddPilotDialog.svelte';
   import { distance } from '#lib/domain/geo';
   import { indexAt, positionAt } from '#lib/domain/timeline';
   import type { StudioState } from '#lib/state/studio.svelte';
@@ -9,6 +10,8 @@
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
   let { studio }: { studio: StudioState } = $props();
+
+  let picker: AddPilotDialog;
 
   // The AGL column needs ground heights.
   useNeed(() => studio, 'ground');
@@ -89,6 +92,8 @@
       </li>
     {/each}
   </ul>
+  <button type="button" class="add" onclick={() => picker.open()}>{m.pilots_add()}</button>
+  <AddPilotDialog {studio} bind:this={picker} />
 </section>
 
 <style>
@@ -161,6 +166,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .add {
+    margin-top: 6px;
+    width: 100%;
   }
   .head {
     display: flex;

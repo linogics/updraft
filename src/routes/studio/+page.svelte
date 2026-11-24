@@ -18,6 +18,8 @@
   import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
   import type { Flight } from '#lib/domain/model';
+  import { trackFiles } from '#lib/ui/trackFiles';
+  import { importAndAdd } from '#lib/studio/addPilots';
   import { StudioState } from '#lib/state/studio.svelte';
   import { flightRepository } from '#lib/storage';
 
@@ -76,6 +78,43 @@
 
   onDestroy(() => studio.destroy());
 
+  // Dropping track files anywhere adds them as pilots. Counted because enter and leave fire for every child.
+  let dragDepth = $state(0);
+  let importing = $state(false);
+  let dropErrors = $state<string[]>([]);
+  const hasFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
+
+  function onDragEnter(e: DragEvent) {
+    if (!loaded || !hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth++;
+  }
+
+  function onDragOver(e: DragEvent) {
+    // Without this the browser does not offer a drop.
+    if (loaded && hasFiles(e)) e.preventDefault();
+  }
+
+  function onDragLeave(e: DragEvent) {
+    if (hasFiles(e)) dragDepth = Math.max(0, dragDepth - 1);
+  }
+
+  async function onDrop(e: DragEvent) {
+    if (!loaded || !hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    const files = trackFiles(e.dataTransfer?.files);
+    if (!files.length) return;
+    importing = true;
+    try {
+      dropErrors = await importAndAdd(studio, files);
+    } catch (err) {
+      dropErrors = [err instanceof Error ? err.message : String(err)];
+    } finally {
+      importing = false;
+    }
+  }
+
   // Keep the URL in sync so a reload (and later a share link) restores the view.
   $effect(() => {
     if (!loaded) return;
@@ -114,7 +153,13 @@
   <title>{m.studio_title()}</title>
 </svelte:head>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window
+  onkeydown={onKey}
+  ondragenter={onDragEnter}
+  ondragover={onDragOver}
+  ondragleave={onDragLeave}
+  ondrop={onDrop}
+/>
 
 {#if error}
   <main class="error">
@@ -224,6 +269,22 @@
     </footer>
 
     <p class="visually-hidden" role="status">{panelStatus.text}</p>
+
+    {#if dragDepth > 0}
+      <div class="drop-overlay" aria-hidden="true">{m.studio_drop_overlay()}</div>
+    {/if}
+
+    {#if importing || dropErrors.length}
+      <div class="notice" role={dropErrors.length ? 'alert' : 'status'}>
+        {#if importing}
+          <p>{m.drop_processing()}</p>
+        {/if}
+        {#each dropErrors as e (e)}<p class="err">{e}</p>{/each}
+        {#if dropErrors.length}
+          <button type="button" onclick={() => (dropErrors = [])}>{m.common_close()}</button>
+        {/if}
+      </div>
+    {/if}
   </div>
 {:else}
   <LoadScreen {steps} {step} />
@@ -292,6 +353,39 @@
   }
   footer {
     grid-area: footer;
+  }
+  /* Shown while files are dragged over the page. Clicks pass through, so the drag events keep their targets. */
+  .drop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    font-size: 22px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    border: 3px dashed var(--primary-hi);
+  }
+  .notice {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 40;
+    display: grid;
+    gap: 6px;
+    max-width: min(420px, calc(100vw - 32px));
+    padding: 10px 12px;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border-hi);
+    border-radius: 8px;
+  }
+  .notice p {
+    margin: 0;
+  }
+  .notice .err {
+    color: var(--danger);
   }
   /* Drop zones of empty docks, shown only while a panel is dragged. */
   .zone {

@@ -42,6 +42,8 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 
 - Click a pilot in the pilot list to select them. Stats, climbs and XC follow the selected pilot.
 - The checkbox shows or hides a pilot. Click the colour dot to pick a colour, the reset button restores the default.
+- "Add pilot" below the list opens your logbook. Filter by pilot, site or date, tick the flights and press Add. "Import files" in the picker stores new track files and ticks them for you. Flights already in the studio are ticked and locked.
+- Dropping track files anywhere on the studio page imports them and adds them as pilots. The URL then holds the new pilots, so a reload keeps them.
 - The list shows the current altitude and height above ground. Ground heights are only loaded while the pilot list is shown, the AGL altitude mode is on, or an export with the HUD needs them. AGL shows a dash while ground heights load or when offline.
 
 ### Several flights and the timeline

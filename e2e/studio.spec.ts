@@ -1,5 +1,6 @@
 import { expect, openDemoStudio, test } from './fixtures';
 import type { Page } from '@playwright/test';
+import { buildIgc } from '../src/lib/domain/testing/igc-builder';
 
 test('home page uses the Sora display font', async ({ page }) => {
   await page.goto('/');
@@ -172,4 +173,87 @@ test('hidden XC and Pilots panels cost nothing, showing XC starts scoring', asyn
   await expect(league).toBeVisible();
   // Showing the panel starts scoring.
   await expect.poll(() => workers.length, { timeout: 30_000 }).toBeGreaterThan(0);
+});
+
+/** A short synthetic flight of a pilot who is not in the demo. */
+const newFlight = () => ({
+  name: 'added.igc',
+  mimeType: 'text/plain',
+  buffer: Buffer.from(
+    buildIgc(
+      Array.from({ length: 120 }, (_, i) => ({
+        sec: 36_000 + i * 5,
+        lat: 46.5 + i * 1e-4,
+        lon: 8.1,
+        gpsAlt: 1500 + i
+      })),
+      { pilot: 'Added Pilot', date: '010826' }
+    )
+  )
+});
+
+const pilotRows = (page: Page) => page.getByRole('checkbox', { name: /^Show / });
+const flightIds = (page: Page) => new URL(page.url()).searchParams.getAll('f');
+
+test('the picker imports a flight and adds it to the studio', async ({ page }) => {
+  await openDemoStudio(page);
+  const before = await pilotRows(page).count();
+  const ids = flightIds(page).length;
+
+  await page.getByRole('button', { name: 'Add pilot' }).click();
+  const picker = page.getByRole('dialog', { name: 'Add pilots' });
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole('searchbox', { name: /Filter/ })).toBeFocused();
+  // Demo flights are already in the studio, so they are locked.
+  await expect(picker.getByRole('checkbox', { checked: true, disabled: true }).first()).toBeVisible();
+
+  await picker.locator('input[type=file]').setInputFiles(newFlight());
+  const added = picker.getByRole('checkbox', { name: /Added Pilot/ });
+  await expect(added).toBeChecked();
+
+  await picker.getByRole('searchbox').fill('nobody');
+  await expect(picker.getByText('No stored flights match.')).toBeVisible();
+  await picker.getByRole('searchbox').fill('added');
+  await picker.getByRole('button', { name: 'Add (1)' }).click();
+  await expect(picker).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Add pilot' })).toBeFocused();
+
+  await expect(pilotRows(page)).toHaveCount(before + 1);
+  await expect(page.getByRole('checkbox', { name: 'Show Added Pilot' })).toBeVisible();
+  await expect.poll(() => flightIds(page).length).toBe(ids + 1);
+});
+
+test('dropping a track file on the studio adds the pilot', async ({ page }) => {
+  await openDemoStudio(page);
+  const before = await pilotRows(page).count();
+  const file = newFlight();
+  const data = await page.evaluateHandle(
+    ({ name, text }) => {
+      const dt = new DataTransfer();
+      dt.items.add(new File([text], name, { type: 'text/plain' }));
+      return dt;
+    },
+    { name: file.name, text: file.buffer.toString() }
+  );
+
+  const body = page.locator('body');
+  await body.dispatchEvent('dragenter', { dataTransfer: data });
+  await body.dispatchEvent('dragover', { dataTransfer: data });
+  await expect(page.getByText('Drop to add pilots')).toBeVisible();
+
+  await body.dispatchEvent('drop', { dataTransfer: data });
+  await expect(page.getByText('Drop to add pilots')).toBeHidden();
+  await expect(page.getByRole('checkbox', { name: 'Show Added Pilot' })).toBeVisible();
+  await expect(pilotRows(page)).toHaveCount(before + 1);
+});
+
+test('a drag without files does not show the drop overlay', async ({ page }) => {
+  await openDemoStudio(page);
+  const data = await page.evaluateHandle(() => {
+    const dt = new DataTransfer();
+    dt.setData('text/plain', 'hello');
+    return dt;
+  });
+  await page.locator('body').dispatchEvent('dragenter', { dataTransfer: data });
+  await expect(page.getByText('Drop to add pilots')).toBeHidden();
 });

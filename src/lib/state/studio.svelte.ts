@@ -144,24 +144,57 @@ export class StudioState {
     this.thermalFilter = init.thermalFilter ?? DEFAULT_FILTER;
     this.colorOverrides = init.colors ?? {};
     const offsets = this.offsets(flights);
-    this.flights = flights.map((source, i) => {
-      const analysis = analyzeFlight(source);
-      return {
-        source,
-        flight: { ...source, fixes: shiftFixes(source.fixes, offsets[i]) },
-        timeOffset: offsets[i],
-        analysis,
-        climbs: this.climbsOf(source, analysis),
-        color: this.colorOverrides[source.id] ?? pilotColor(i),
-        visible: true,
-        altOffset: 0
-      };
-    });
+    this.flights = flights.map((source, i) => this.load(source, offsets[i], i));
     this.selectedId = flights[0]?.id ?? null;
     this.time = this.start;
     this.flightsGen++;
     this.restart('ground');
     this.restart('xc');
+  }
+
+  /**
+   * Adds flights that are not loaded yet. Time, selection, alignment mode, nudges, colours and the thermal
+   * filter stay. Ground heights and scores only start when a view needs them, finished ones are kept.
+   */
+  addFlights(flights: Flight[]) {
+    const ids = this.flights.map((f) => f.source.id);
+    const fresh: Flight[] = [];
+    for (const f of flights) {
+      if (ids.includes(f.id)) continue;
+      ids.push(f.id);
+      fresh.push(f);
+    }
+
+    if (!fresh.length) return;
+    const old = this.flights;
+    const sources = [...old.map((f) => f.source), ...fresh];
+    const offsets = this.offsets(sources);
+    this.flights = sources.map((source, i) => {
+      const prev = old[i];
+      if (!prev) return this.load(source, offsets[i], i);
+      if (prev.timeOffset === offsets[i]) return prev;
+      return { ...prev, flight: { ...source, fixes: shiftFixes(source.fixes, offsets[i]) }, timeOffset: offsets[i] };
+    });
+
+    this.seek(this.time);
+    this.restart('ground');
+    this.restart('xc');
+    // Camera tracks are stored per set of flights, so keep the current ones under the new set.
+    if (this.cameraTracks !== DEFAULT_TRACKS) this.saveCameraTracks();
+  }
+
+  private load(source: Flight, timeOffset: number, index: number): LoadedFlight {
+    const analysis = analyzeFlight(source);
+    return {
+      source,
+      flight: { ...source, fixes: shiftFixes(source.fixes, timeOffset) },
+      timeOffset,
+      analysis,
+      climbs: this.climbsOf(source, analysis),
+      color: this.colorOverrides[source.id] ?? pilotColor(index),
+      visible: true,
+      altOffset: 0
+    };
   }
 
   /** Number of views that currently need each kind of work. */
