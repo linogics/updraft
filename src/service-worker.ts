@@ -11,9 +11,10 @@ const CACHE = `updraft-${version}`;
 const PLUGIN_CACHE = 'plugins';
 const absolute = (path: string) => (path.startsWith('/') ? path : `/${path}`);
 // Cesium runtime is large and only needed online, so it stays out of the precache.
+// config.json is the self-hoster's deploy setting, a cached copy would hide a change.
 const PRECACHE = [...immutable, ...assets, ...prerendered]
   .map((file) => absolute(file.path))
-  .filter((path) => !path.startsWith('/cesium/') && path !== '/CNAME');
+  .filter((path) => !path.startsWith('/cesium/') && path !== '/CNAME' && path !== '/config.json');
 const PRECACHED = new Set(PRECACHE);
 const PAGES = new Set(prerendered.map((page) => absolute(page.path)));
 

@@ -6,11 +6,13 @@
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
   import { startServicePlugins } from '#lib/plugins/startup';
+  import { syncClient } from '#lib/sync/client.svelte';
 
   // The locale only changes on reload, so setting the lang attribute once is enough.
   onMount(() => {
     document.documentElement.lang = getLocale();
     void startServicePlugins();
+    void syncClient.init();
   });
 
   // Plain cross-fade between pages. Browsers without view transitions and users who prefer reduced motion navigate as before.

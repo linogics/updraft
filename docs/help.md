@@ -158,6 +158,23 @@ The Backup section is at the bottom of the logbook.
 
 Make a backup now and then. Clearing the browser data deletes all flights.
 
+## Sync
+
+Sync keeps your logbook the same on several devices. It needs a server you run yourself, see [self-hosting sync](self-hosting-sync.md). It is off until you connect.
+
+1. Open the logbook and find the **Sync** section above Backup.
+2. Enter the server address and click **Connect**. Use `https`. Plain `http` only works for `localhost`. If the site you use already has a server set up, it is filled in for you.
+3. Sign in with your email or username and password, or with one of the providers the server offers.
+4. The status line shows the last sync. Changes upload a few seconds after you make them. Click **Sync now** to sync at once.
+
+What syncs:
+
+- Flights, manual entries, camera keys and the settings for units, thermals, airspaces, XC league and altitude reference. Settings from another device apply after a reload.
+- Your Cesium ion and openAIP keys only when you tick **Sync API keys**. They are stored on your server as plain text.
+- The studio layout and the list of installed plugins stay on each device.
+
+**Sign out** keeps your data on this device. **Disconnect** forgets the server as well. Signing in with a different account uploads everything on this device to that account and downloads what it has. If two devices change the same record, the newer change wins.
+
 ## Settings
 
 ### Units and language

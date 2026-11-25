@@ -195,3 +195,25 @@ describe('applyRemote', () => {
     expect((await repo.getSyncState()).cursor).toBe('7');
   });
 });
+
+describe('markAllDirty', () => {
+  it('uploads pushed records and tombstones again and keeps updatedAt', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(1000);
+    const repo = repoOf();
+    await repo.save(flight('f'));
+    await repo.save(flight('gone'));
+    await repo.delete('gone');
+    await repo.markPushed(await repo.pendingChanges());
+    expect(await repo.pendingChanges()).toEqual([]);
+
+    vi.setSystemTime(9000);
+    await repo.markAllDirty();
+    const pending = await repo.pendingChanges();
+
+    expect(pending.map((c) => [c.id, c.updatedAt, c.deleted ?? false]).sort()).toEqual([
+      ['f', 1000, false],
+      ['gone', 1001, true]
+    ]);
+  });
+});

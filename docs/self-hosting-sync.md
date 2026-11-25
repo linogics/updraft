@@ -2,7 +2,7 @@
 
 updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/pocketbase` talks to [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
 
-The app settings for choosing a server come in a later release. Until then the backend is only used by code and tests.
+Users connect from the Sync section of the logbook, see [Point the app at the server](#point-the-app-at-the-server).
 
 ## Set up
 
@@ -28,7 +28,15 @@ Everything is in `pb_data`. Stop the server and copy the folder, or use Settings
 
 ## Point the app at the server
 
-A later release adds the settings dialog and an optional `/config.json` that fills in the server address for everyone who opens your hosted app.
+Users enter the address in the Sync section of the logbook. Use `https`. Plain `http` is only accepted for `localhost` and `127.0.0.1`.
+
+To fill it in for everyone who opens your hosted app, serve a `config.json` at the root of the site:
+
+```json
+{ "sync": { "backend": "updraft/pocketbase", "url": "https://sync.example.com" } }
+```
+
+When you build the app yourself, put the file at `static/config.json` before `npm run build`. Otherwise add it next to `index.html` on the web server. The app reads it on every start and the service worker never caches it, so edits apply on the next load. A missing or invalid file means no preset. An address a user typed in always wins over the file. The PocketBase server must allow the origin of your app, see the CORS section above.
 
 ## Development
 
