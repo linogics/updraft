@@ -1,8 +1,9 @@
+import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { PlanState } from '#lib/state/plan.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
-import type { PlanService } from '#lib/plugins/api';
+import type { PlanEvent, PlanService } from '#lib/plugins/api';
 
 export type { PlanService };
 
@@ -18,7 +19,14 @@ export function providePlanService(plan: Pick<PlanState, 'points' | 'total' | 's
       let unitsSrc: Units | undefined;
       let units: Readonly<Units>;
 
+      const on = eventsOf<PlanEvent>(PLAN_SERVICE, {
+        route: () => void plan.points,
+        speed: () => void plan.speed,
+        units: () => void unitPrefs.units
+      });
+
       return Object.freeze<PlanService>({
+        on,
         points() {
           if (src !== plan.points) {
             src = plan.points;

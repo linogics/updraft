@@ -28,4 +28,11 @@ describe('updraft/plan@1', () => {
     expect(s.distance()).toBe(plan.total);
     expect(s.speed()).toBe(40);
   });
+
+  it('has events and refuses unknown ones', () => {
+    providePlanService(new PlanState());
+    const s = services.use<PlanService>(PLAN_SERVICE);
+    for (const e of ['route', 'speed', 'units'] as const) s.on(e, () => {})();
+    expect(() => s.on('x' as 'route', () => {})).toThrow('Unknown event "x" of updraft/plan@1.');
+  });
 });

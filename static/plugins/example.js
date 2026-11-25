@@ -75,13 +75,13 @@ export default {
       label.style.background = r ? r.color : 'transparent';
     };
 
-    // subscribe does not fire for the current state, so draw once yourself.
-    const stop = ctx.subscribe(draw);
+    // Events do not fire for the current state, so draw once yourself.
+    const stops = [studio.on('time', draw), studio.on('selection', draw), studio.on('units', draw)];
     draw();
 
     // The returned function is the destroy function.
     return () => {
-      stop();
+      stops.forEach((stop) => stop());
       current = null;
     };
   },

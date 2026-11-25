@@ -69,7 +69,7 @@ test.describe('plugins', () => {
         marker.dataset.testid = 'plugin-marker';
         ctx.overlay.append(marker);
         const draw = () => { el.textContent = 'points=' + plan.points().length; };
-        const stop = ctx.subscribe(draw);
+        const stop = plan.on('route', draw);
         draw();
         return () => stop();
       }

@@ -308,9 +308,9 @@ test.describe('plugins', () => {
           const f = studio.flights().find((x) => x.id === studio.selectedId());
           el.textContent = 'pilot=' + f.pilot + ' time=' + studio.time();
         };
-        const stop = ctx.subscribe(draw);
+        const stops = [studio.on('time', draw), studio.on('selection', draw)];
         draw();
-        return () => stop();
+        return () => stops.forEach((s) => s());
       },
       ${over}
     };`;
