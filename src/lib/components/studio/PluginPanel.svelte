@@ -3,13 +3,16 @@
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { services } from '#lib/plugins/services';
-  import { createPluginContext } from '#lib/studio/pluginContext.svelte';
+  import { createPluginContext, studioHost, type PluginHostEnv } from '#lib/studio/pluginContext.svelte';
   import { mountedPlugins } from '#lib/studio/exportHooks.svelte';
   import type { StudioPlugin } from '#lib/studio/plugins';
   import PanelError from './PanelError.svelte';
 
-  /** Hosts one plugin. The plugin draws into `el`, the error box shows what went wrong without touching other panels. */
-  let { studio, plugin }: { studio: StudioState; plugin: StudioPlugin } = $props();
+  /**
+   * Hosts one plugin. The plugin draws into `el`, the error box shows what went wrong without touching other panels.
+   * The studio passes `studio`, the planner passes `host`.
+   */
+  let { studio, host, plugin }: { studio?: StudioState; host?: PluginHostEnv; plugin: StudioPlugin } = $props();
 
   let el: HTMLDivElement;
   let error = $state('');
@@ -27,7 +30,7 @@
     }
 
     mountedPlugins.add(plugin);
-    const { ctx, dispose } = createPluginContext(studio, plugin.id, plugin.requires ?? [], (err) =>
+    const { ctx, dispose } = createPluginContext(host ?? studioHost(studio!), plugin.id, plugin.requires ?? [], (err) =>
       fail('a subscriber failed', err)
     );
     let destroy: unknown;

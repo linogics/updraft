@@ -1,6 +1,7 @@
 import type { Component } from 'svelte';
 import { m } from '#lib/paraglide/messages';
 import type { StudioState } from '#lib/state/studio.svelte';
+import type { PluginHostEnv } from './pluginContext.svelte';
 
 export type Dock = 'left' | 'right' | 'bottom';
 
@@ -34,7 +35,7 @@ export interface PanelDef {
 }
 
 export interface PanelModule {
-  default: Component<{ studio: StudioState }>;
+  default: Component<{ studio?: StudioState; host?: PluginHostEnv }>;
   /** Extra props for the component, a plugin host gets its plugin here. */
   props?: Record<string, unknown>;
 }

@@ -115,7 +115,10 @@ Open "XC Planner" in the navigation.
 
 - Click the map to add points. Drag a point to move it, click a leg midpoint to insert one.
 - Undo and Clear fix mistakes.
-- Set a speed in km/h for a duration estimate. The score is shown for the chosen league.
+- Set a speed in km/h for a duration estimate.
+- Thermal overlay, XC score, Airspace and Legs are panels below the route controls. Drag them by the grip, fold them or open their actions menu to move them or reset the layout.
+- The XC score panel starts switched off. Turn on "Score flights" to see the score for the chosen league.
+- The Panels menu next to the title adds plugins and lists the ones you added.
 - **Copy link** copies a URL with the route, ready to share.
 - The planner map has the same base maps, thermal overlay and airspaces as the studio.
 - On a phone the controls are in a drawer. Tap the menu button or swipe it open.

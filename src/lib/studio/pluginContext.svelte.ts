@@ -17,12 +17,28 @@ export interface PluginContext {
   need(kind: NeedKind): () => void;
 }
 
+/** What a page offers a plugin. The studio and the planner each have one, see `studioHost`. */
+export interface PluginHostEnv {
+  /** The element the overlay is added to. */
+  overlayParent(): HTMLElement | null | undefined;
+  /** Reads the reactive values whose change fires subscribers. */
+  watch(): void;
+  /** Absent where there is no background work to ask for, `ctx.need` then throws. */
+  need?: StudioState['need'];
+}
+
+export const studioHost = (studio: StudioState): PluginHostEnv => ({
+  overlayParent: () => studio.viewsEl,
+  watch: () => void [studio.time, studio.flights, studio.selected, unitPrefs.units],
+  need: (kind) => studio.need(kind)
+});
+
 /**
  * Builds the context of one mounted plugin. `dispose` removes the overlay, stops every subscription and
  * releases every need. A subscriber that throws is reported to `onError`, the others keep running.
  */
 export function createPluginContext(
-  studio: StudioState,
+  host: PluginHostEnv,
   pluginId: string,
   requires: readonly string[],
   onError: (err: unknown) => void
@@ -53,7 +69,7 @@ export function createPluginContext(
       if (!overlay) {
         overlay = document.createElement('div');
         overlay.style.cssText = 'position:absolute;inset:0;z-index:10;overflow:hidden;pointer-events:none';
-        studio.viewsEl?.append(overlay);
+        host.overlayParent()?.append(overlay);
       }
 
       return overlay;
@@ -64,7 +80,7 @@ export function createPluginContext(
       const stopRoot = $effect.root(() => {
         $effect(() => {
           // Reading these is what makes the effect run again.
-          void [studio.time, studio.flights, studio.selected, unitPrefs.units];
+          host.watch();
           if (first) {
             first = false;
             return;
@@ -89,7 +105,8 @@ export function createPluginContext(
     },
     need(kind) {
       if (kind !== 'xc' && kind !== 'ground') throw new Error(`Unknown need "${String(kind)}".`);
-      return keep(studio.need(kind));
+      if (!host.need) throw new Error('need is not available in the planner.');
+      return keep(host.need(kind));
     }
   };
 

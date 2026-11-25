@@ -3,11 +3,14 @@ export interface PageLayoutValue {
   columns: Record<string, string[]>;
   /** Panels folded to their header. */
   collapsed: string[];
+  /** Removed panels, they stay out of the columns until shown again. */
+  hidden: string[];
 }
 
 /**
  * Validates stored layout field by field. `defaults` maps every column to its default panel ids.
  * Unknown and duplicate ids are dropped, known ids that are missing go to the end of their default column.
+ * Hidden ids are kept out of every column.
  * Without a stored `collapsed` list, `collapsed` (the ids that start folded) is used.
  */
 export function parsePageLayout(
@@ -18,7 +21,13 @@ export function parsePageLayout(
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const stored = (o.columns && typeof o.columns === 'object' ? o.columns : {}) as Record<string, unknown>;
   const known = Object.values(defaults).flat();
-  const seen = new Set<string>();
+  const strings = (v: unknown) =>
+    Array.isArray(v)
+      ? [...new Set(v.filter((id): id is string => typeof id === 'string' && known.includes(id)))]
+      : null;
+  const hidden = strings(o.hidden) ?? [];
+  // Hidden ids count as seen, so they are neither kept nor appended.
+  const seen = new Set<string>(hidden);
   const columns: Record<string, string[]> = {};
   for (const col of Object.keys(defaults)) {
     columns[col] = [];
@@ -34,12 +43,7 @@ export function parsePageLayout(
 
   for (const [col, ids] of Object.entries(defaults)) for (const id of ids) if (!seen.has(id)) columns[col].push(id);
 
-  return {
-    columns,
-    collapsed: Array.isArray(o.collapsed)
-      ? [...new Set(o.collapsed.filter((id): id is string => typeof id === 'string' && known.includes(id)))]
-      : collapsed.filter((id) => known.includes(id))
-  };
+  return { columns, collapsed: strings(o.collapsed) ?? collapsed.filter((id) => known.includes(id)), hidden };
 }
 
 /** Puts a panel at `index` of a column (clamped, so Infinity means the end). */

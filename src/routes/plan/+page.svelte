@@ -1,47 +1,62 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { replaceState } from '$app/navigation';
   import SideDrawer from '#lib/components/SideDrawer.svelte';
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
   import { m } from '#lib/paraglide/messages';
-  import { XC_TYPE_LABELS } from '#lib/xc/labels';
   import PlanMap from '#lib/components/PlanMap.svelte';
-  import AirspaceControls from '#lib/plugins/builtin/airspace/AirspaceControls.svelte';
-  import ThermalOverlayControls from '#lib/plugins/builtin/thermal-overlay/ThermalOverlayControls.svelte';
-  import { distance, type LatLon } from '#lib/domain/geo';
+  import PlanPanelsMenu from '#lib/components/plan/PlanPanelsMenu.svelte';
+  import PanelColumn from '#lib/components/panels/PanelColumn.svelte';
+  import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
+  import PanelHost from '#lib/components/studio/PanelHost.svelte';
+  import { panelStatus } from '#lib/components/studio/panelActions.svelte';
+  import type { LatLon } from '#lib/domain/geo';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
+  import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
+  import { planRegistry } from '#lib/plan/registry.svelte';
+  import { PlanState } from '#lib/state/plan.svelte';
+  import { LEGS_PANEL, planLayout } from '#lib/state/planLayout.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+  import type { PluginHostEnv } from '#lib/studio/pluginContext.svelte';
+  import { pluginEntry } from '#lib/studio/registry.svelte';
   import { formatDuration } from '#lib/ui/format';
   import { formatDistance } from '#lib/ui/units';
-  import { scoreFlight, type XcScore } from '#lib/xc/score';
+  import { scoreFlight } from '#lib/xc/score';
 
-  let points = $state<LatLon[]>([]);
-  let history = $state<LatLon[][]>([]);
-  let selected = $state<number | null>(null);
-  let speed = $state(DEFAULT_SPEED);
+  const plan = new PlanState();
   let basemap = $state<BasemapId>('topo');
   let mounted = $state(false);
   let copied = $state(false);
-  let score = $state<XcScore | null>(null);
-  let scoring = $state(false);
+  let mapEl: HTMLElement | undefined;
+  let addPlugin: AddPluginDialog;
+
+  // Plugins read the route through these services while the page is open.
+  const unprovide = providePlanService(plan);
+  const unprovideState = providePlanState(plan);
+  onDestroy(() => {
+    unprovide();
+    unprovideState();
+  });
+
+  const host: PluginHostEnv = {
+    overlayParent: () => mapEl,
+    watch: () => void [plan.points, unitPrefs.units]
+  };
 
   // The map reads its initial view once on mount, so the URL must be parsed before it renders.
   onMount(() => {
     const q = new URL(location.href).searchParams;
-    points = decodeRoute(q.get('r'));
+    plan.points = decodeRoute(q.get('r'));
     const v = Number(q.get('v'));
-    if (v > 0) speed = v;
+    if (v > 0) plan.speed = v;
     mounted = true;
   });
 
   function commit(next: LatLon[]) {
-    history.push(points);
-    points = next;
-    selected = null;
+    plan.commit(next);
     syncUrl();
   }
 
@@ -49,18 +64,18 @@
     // Local query builder, not reactive state.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const q = new URLSearchParams();
-    if (points.length) q.set('r', encodeRoute(points));
-    if (speed !== DEFAULT_SPEED) q.set('v', String(speed));
+    if (plan.points.length) q.set('r', encodeRoute(plan.points));
+    if (plan.speed !== DEFAULT_SPEED) q.set('v', String(plan.speed));
     void replaceState(q.size ? `?${q}` : location.pathname, {});
   }
 
-  const add = (p: LatLon) => points.length < MAX_ROUTE_POINTS && commit([...points, p]);
-  const move = (i: number, p: LatLon) => commit(points.map((x, j) => (j === i ? p : x)));
-  const insert = (i: number, p: LatLon) => points.length < MAX_ROUTE_POINTS && commit(points.toSpliced(i, 0, p));
-  const remove = () => selected !== null && commit(points.toSpliced(selected, 1));
+  const add = (p: LatLon) => plan.points.length < MAX_ROUTE_POINTS && commit([...plan.points, p]);
+  const move = (i: number, p: LatLon) => commit(plan.points.map((x, j) => (j === i ? p : x)));
+  const insert = (i: number, p: LatLon) =>
+    plan.points.length < MAX_ROUTE_POINTS && commit(plan.points.toSpliced(i, 0, p));
+  const remove = () => plan.selected !== null && commit(plan.points.toSpliced(plan.selected, 1));
   const undo = () => {
-    points = history.pop() ?? points;
-    selected = null;
+    plan.undo();
     syncUrl();
   };
 
@@ -84,24 +99,27 @@
     setTimeout(() => (copied = false), 1500);
   }
 
-  const legs = $derived(points.slice(1).map((p, i) => distance(points[i], p)));
-  const total = $derived(legs.reduce((a, b) => a + b, 0));
+  const panels = $derived([
+    ...planRegistry.list.map((p) => ({ id: p.id, title: p.title, removable: !!pluginEntry(p.id), body })),
+    ...(plan.legs.length ? [{ id: LEGS_PANEL, title: () => m.plan_legs(), body }] : [])
+  ]);
 
   let run = 0;
   $effect(() => {
-    const route = points;
+    const route = plan.points;
     const league = xcPrefs.league;
     const id = ++run;
-    score = null;
-    scoring = route.length > 1;
-    if (!scoring) return;
+    plan.score = null;
+    const active = xcPrefs.enabled && route.length > 1;
+    plan.scoring = active;
+    if (!active) return;
     const timer = setTimeout(async () => {
       // Fake one-second timestamps and no altitude, only the geometry matters.
       const fixes = densify(route).map((p, i) => ({ t: i * 1000, lat: p.lat, lon: p.lon, alt: 0 }));
       const result = await scoreFlight(fixes, league).catch(() => null);
       if (id !== run) return;
-      score = result;
-      scoring = false;
+      plan.score = result;
+      plan.scoring = false;
     }, 400);
     return () => clearTimeout(timer);
   });
@@ -115,15 +133,19 @@
 
 <div class="page">
   <SideDrawer label={m.plan_title()}>
-    {#snippet header()}<SidebarHeader title={m.home_planner_title()} />{/snippet}
+    {#snippet header()}
+      <SidebarHeader title={m.home_planner_title()}>
+        {#snippet actions()}<PlanPanelsMenu onadd={() => addPlugin.open()} />{/snippet}
+      </SidebarHeader>
+    {/snippet}
     <div class="side">
       <p class="hint">{m.plan_hint()}</p>
 
       <div class="row">
-        <button onclick={undo} disabled={!history.length}>{m.timeline_undo()}</button>
-        <button onclick={remove} disabled={selected === null}>{m.plan_remove_point()}</button>
-        <button onclick={() => commit([])} disabled={!points.length}>{m.common_clear()}</button>
-        <button onclick={copy} disabled={!points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
+        <button onclick={undo} disabled={!plan.history.length}>{m.timeline_undo()}</button>
+        <button onclick={remove} disabled={plan.selected === null}>{m.plan_remove_point()}</button>
+        <button onclick={() => commit([])} disabled={!plan.points.length}>{m.common_clear()}</button>
+        <button onclick={copy} disabled={!plan.points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
       </div>
 
       <label>
@@ -134,83 +156,66 @@
       </label>
 
       <div class="readout">
-        <span class="big">{formatDistance(total, unitPrefs.units)}</span>
+        <span class="big">{formatDistance(plan.total, unitPrefs.units)}</span>
         <span class="unit">{m.plan_total_distance()}</span>
       </div>
 
       <div class="row">
         <label>
           {m.plan_speed()}
-          <input type="number" min="1" max="300" bind:value={speed} onchange={syncUrl} />
+          <input type="number" min="1" max="300" bind:value={plan.speed} onchange={syncUrl} />
         </label>
         <div class="readout">
-          <span class="big">{speed > 0 && total ? formatDuration((total / 1000 / speed) * 3600) : '–'}</span>
+          <span class="big">
+            {plan.speed > 0 && plan.total ? formatDuration((plan.total / 1000 / plan.speed) * 3600) : '–'}
+          </span>
           <span class="unit">{m.plan_estimated_time()}</span>
         </div>
       </div>
 
-      <section>
-        <h2>{m.airspace_show()}</h2>
-        <AirspaceControls />
-      </section>
-
-      <section>
-        <h2>{m.plan_thermal_overlay()}</h2>
-        <ThermalOverlayControls />
-      </section>
-
-      <section>
-        <h2>{m.plan_xc_score()}</h2>
-        <label>
-          {m.plan_league()}
-          <select value={xcPrefs.league} onchange={(e) => xcPrefs.set(e.currentTarget.value as XcLeague)}>
-            {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
-          </select>
-        </label>
-        {#if scoring}
-          <p class="muted">{m.xc_scoring()}</p>
-        {:else if score}
-          <p>
-            <strong>{m.plan_points({ points: Math.round(score.points) })}</strong>
-            <span class="muted">
-              {XC_TYPE_LABELS[score.type]()}, {formatDistance(score.distance, unitPrefs.units)} x {score.multiplier}
-            </span>
-          </p>
-        {:else}
-          <p class="muted">–</p>
-        {/if}
-      </section>
-
-      {#if legs.length}
-        <section>
-          <h2>{m.plan_legs()}</h2>
-          <ol>
-            {#each legs as d, i (i)}
-              <li>
-                <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span>
-              </li>
-            {/each}
-          </ol>
-        </section>
-      {/if}
+      <PanelColumn
+        layout={planLayout}
+        column="main"
+        label={m.panels_menu()}
+        labels={{ main: m.panels_menu() }}
+        {panels}
+      />
+      <p class="sr" role="status">{panelStatus.text}</p>
     </div>
   </SideDrawer>
 
-  <main class="mapbox">
+  <main class="mapbox" bind:this={mapEl}>
     <h1 class="sr">{m.home_planner_title()}</h1>
     {#if mounted}
       <PlanMap
-        {points}
-        {selected}
+        points={plan.points}
+        selected={plan.selected}
         {basemap}
         onadd={add}
         onmove={move}
         oninsert={insert}
-        onselect={(i) => (selected = i)}
+        onselect={(i) => (plan.selected = i)}
       />
     {/if}
   </main>
 </div>
+
+<AddPluginDialog bind:this={addPlugin} />
+
+{#snippet body(id: string)}
+  {#if id === LEGS_PANEL}
+    <ol>
+      {#each plan.legs as d, i (i)}
+        <li>
+          <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span>
+        </li>
+      {/each}
+    </ol>
+  {:else}
+    {@const panel = planRegistry.byId.get(id)}
+    {#if panel}<PanelHost {panel} {host} />{/if}
+  {/if}
+{/snippet}
 
 <style>
   .page {
@@ -219,6 +224,7 @@
     height: 100dvh;
   }
   .mapbox {
+    position: relative;
     min-height: 0;
     min-width: 0;
   }
@@ -237,12 +243,7 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  h2 {
-    margin: 0 0 6px;
-    font: 600 18px/1 var(--display);
-  }
   .hint,
-  .muted,
   .unit {
     margin: 0;
     color: var(--muted);

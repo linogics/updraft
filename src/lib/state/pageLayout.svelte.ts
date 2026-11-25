@@ -1,15 +1,20 @@
 import { movePanelIn, parsePageLayout, type PageLayoutValue } from './pageLayout';
 
-/** Panel layout of one page, kept in this browser. */
+/**
+ * Panel layout of one page, kept in this browser. `extra` lists panel ids that come and go at runtime,
+ * they are appended to the first column and dropped again when they are no longer listed.
+ */
 export class PageLayout {
-  value: PageLayoutValue = $state(parsePageLayout(null, {}, []));
+  private stored = $state.raw<unknown>(null);
+  value = $derived(this.parse());
 
   constructor(
     private key: string,
     private defaults: Record<string, string[]>,
-    private collapsed: readonly string[]
+    private collapsed: readonly string[],
+    private extra: () => string[] = () => []
   ) {
-    this.value = this.load();
+    this.stored = this.load();
   }
 
   columnOf(id: string): string | undefined {
@@ -25,22 +30,53 @@ export class PageLayout {
     this.save({ ...this.value, collapsed: c.includes(id) ? c.filter((x) => x !== id) : [...c, id] });
   }
 
+  hide(id: string) {
+    if (!this.value.hidden.includes(id)) this.save({ ...this.without(id), hidden: [...this.value.hidden, id] });
+  }
+
+  /** Puts a hidden panel back at the end of its column. */
+  show(id: string) {
+    this.save({ ...this.value, hidden: this.value.hidden.filter((x) => x !== id) });
+  }
+
+  /** Drops every trace of a panel that is gone for good. */
+  forget(id: string) {
+    this.save({ ...this.without(id), hidden: this.value.hidden.filter((x) => x !== id) });
+  }
+
   reset() {
-    this.save(parsePageLayout(null, this.defaults, this.collapsed));
+    this.save(parsePageLayout(null, this.known(), this.collapsed));
+  }
+
+  private without(id: string) {
+    const v = this.value;
+    return {
+      ...v,
+      columns: Object.fromEntries(Object.entries(v.columns).map(([c, ids]) => [c, ids.filter((x) => x !== id)])),
+      collapsed: v.collapsed.filter((x) => x !== id)
+    };
+  }
+
+  private parse() {
+    return parsePageLayout(this.stored, this.known(), this.collapsed);
+  }
+
+  private known(): Record<string, string[]> {
+    const first = Object.keys(this.defaults)[0];
+    return first ? { ...this.defaults, [first]: [...this.defaults[first], ...this.extra()] } : this.defaults;
   }
 
   // Storage can throw (private mode, blocked site data). The layout then starts at its defaults.
-  private load(): PageLayoutValue {
+  private load(): unknown {
     try {
-      const raw = typeof localStorage === 'undefined' ? null : JSON.parse(localStorage.getItem(this.key) ?? 'null');
-      return parsePageLayout(raw, this.defaults, this.collapsed);
+      return typeof localStorage === 'undefined' ? null : JSON.parse(localStorage.getItem(this.key) ?? 'null');
     } catch {
-      return parsePageLayout(null, this.defaults, this.collapsed);
+      return null;
     }
   }
 
   private save(next: PageLayoutValue) {
-    this.value = next;
+    this.stored = next;
     try {
       localStorage.setItem(this.key, JSON.stringify(next));
     } catch {

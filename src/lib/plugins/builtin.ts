@@ -20,7 +20,7 @@ export interface BuiltinPlugin {
   load: () => Promise<{ default: unknown }>;
 }
 
-/** Every bundled studio panel. The array order is the default order inside each dock. */
+/** Every bundled panel. The array order is the default order inside each studio dock. */
 export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
   { id: 'updraft/pilots', title: () => m.pilots_heading(), dock: 'left', load: () => import('./builtin/pilots') },
   { id: 'updraft/climbs', title: () => m.climbs_heading(), dock: 'left', load: () => import('./builtin/climbs') },
@@ -42,6 +42,7 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     dock: 'right',
     collapsed: true,
     enable: (on) => airspacePrefs.set({ show: on }),
+    hosts: ['studio', 'plan'],
     load: () => import('./builtin/airspace')
   },
   {
@@ -50,7 +51,16 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     dock: 'right',
     collapsed: true,
     enable: (on) => thermalOverlayPrefs.set({ enabled: on }),
+    hosts: ['studio', 'plan'],
     load: () => import('./builtin/thermal-overlay')
+  },
+  {
+    id: 'updraft/plan-xc',
+    title: () => m.plan_xc_score(),
+    dock: 'right',
+    collapsed: true,
+    hosts: ['plan'],
+    load: () => import('./builtin/plan-xc')
   },
   {
     id: 'updraft/export',

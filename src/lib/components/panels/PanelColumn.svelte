@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import { tick, type Snippet } from 'svelte';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import { m } from '#lib/paraglide/messages';
@@ -11,7 +11,10 @@
   interface Panel {
     id: string;
     title: () => string;
-    body: Snippet;
+    /** Gets the panel id, so one snippet can render several panels. */
+    body: Snippet<[string]>;
+    /** Adds a Remove item to the actions menu. */
+    removable?: boolean;
   }
 
   /** One column of draggable, collapsible panels. `labels` names every column for the move menu. */
@@ -25,7 +28,8 @@
 
   const shown = $derived(layout.value.columns[column].flatMap((id) => panels.find((p) => p.id === id) ?? []));
   const marker = $derived(drag.dock === column ? drag.marker : null);
-  const viewName = (id: string) => `panel-page-${id}`;
+  // Plugin ids hold characters that are not valid in a CSS identifier.
+  const viewName = (id: string) => `panel-page-${id.replace(/[^\w-]/g, '-')}`;
 
   /** Panels that are not rendered (hidden charts) keep their slot, so a visible index maps to a layout index. */
   function layoutIndex(id: string, to: string, visible: string[], index: number) {
@@ -58,6 +62,16 @@
         void place(p.id, dock, ids, index);
       }
     });
+  }
+
+  /** The actions button disappears, so focus moves to a neighbour. */
+  async function remove(p: Panel) {
+    const ids = shown.map((s) => s.id);
+    const neighbour = ids[ids.indexOf(p.id) + 1] ?? ids[ids.indexOf(p.id) - 1];
+    layout.hide(p.id);
+    announce(m.panel_removed({ title: p.title() }));
+    await tick();
+    if (neighbour) document.getElementById(panelMenuId(neighbour))?.focus({ preventScroll: true });
   }
 
   function reset() {
@@ -121,11 +135,14 @@
               {m.panel_move_to_column({ column: labels[c] })}
             </button>
           {/each}
+          {#if p.removable}
+            <button type="button" onclick={() => remove(p)}>{m.panel_remove()}</button>
+          {/if}
           <hr />
           <button type="button" onclick={reset}>{m.panel_reset_layout()}</button>
         </Menu>
       </header>
-      {#if !collapsed}{@render p.body()}{/if}
+      {#if !collapsed}{@render p.body(p.id)}{/if}
     </section>
   {/each}
 </div>

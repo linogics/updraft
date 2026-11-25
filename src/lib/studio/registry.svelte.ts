@@ -22,7 +22,7 @@ async function hostProps(plugin: StudioPlugin) {
   return { default: host as unknown as PanelModule['default'], props: { plugin } };
 }
 
-const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
+export const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
   id: pluginPanelId(b.id),
   title: b.title,
   dock: b.dock,
@@ -40,7 +40,7 @@ const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
 
 const BUILTINS: PanelDef[] = BUILTIN_PLUGINS.filter((b) => b.hosts?.includes('studio') ?? true).map(builtinPanel);
 
-function pluginPanel(e: PluginEntry): PanelDef {
+export function pluginPanel(e: PluginEntry): PanelDef {
   const key = `${e.url}\n${e.id}\n${e.name}`;
   const hit = defs.get(key);
   if (hit) return hit;
