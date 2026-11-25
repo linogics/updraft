@@ -4,6 +4,7 @@ import { pluginPanelId } from '#lib/studio/registry.svelte';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, pluginUrl } from './core';
 import { pluginPrefs } from './pluginPrefs.svelte';
+import { assertNotReserved, registerProvides, services } from './services';
 
 /**
  * Loads and validates the plugin at `raw`, then stores it. A studio plugin also shows its panel in its start dock.
@@ -17,12 +18,18 @@ export async function addPlugin(raw: string) {
   // Ids are unique across all kinds. Built-in panel ids are refused too, to avoid confusion.
   const taken = [...BUILTIN_PANELS.map((p) => p.id), ...pluginPrefs.list.map((e) => e.id)];
   const plugin = await loadPlugin(url, taken);
+  assertNotReserved(plugin);
   const { id, kind } = plugin;
   const name = plugin.name.trim();
+  // Before anything is stored, a duplicate service name makes this throw.
+  registerProvides(plugin);
   switch (plugin.kind) {
     case 'studio':
       pluginPrefs.add({ url, id, name, kind, dock: plugin.dock });
       studioLayout.move(pluginPanelId(id), plugin.dock, Infinity);
+      break;
+    case 'service':
+      pluginPrefs.add({ url, id, name, kind });
       break;
   }
 
@@ -35,6 +42,7 @@ export function removePlugin(id: string) {
   if (!entry) return;
   if (entry.kind === 'studio') studioLayout.forget(pluginPanelId(id));
   pluginPrefs.remove(id);
+  services.unregisterOwner(id);
   forgetPluginModule(entry.url);
   void uncachePlugin(entry.url);
 }

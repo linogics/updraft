@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { validatePlugin } from './core';
 
-const ok = { id: 'wind', name: 'Wind', kind: 'studio', apiVersion: 1, dock: 'right', mount: () => {} };
+const ok = { id: 'acme/wind', name: 'Wind', kind: 'studio', apiVersion: 2, dock: 'right', mount: () => {} };
 
 describe('validatePlugin', () => {
   it('accepts a valid plugin, with or without drawExport', () => {
@@ -15,21 +15,51 @@ describe('validatePlugin', () => {
     ['not an object', 'x', /default export/],
     ['missing id', { ...ok, id: undefined }, /"id"/],
     ['bad id', { ...ok, id: 'Wind Speed' }, /"id"/],
+    ['id without vendor', { ...ok, id: 'wind' }, /"id"/],
+    ['id with two slashes', { ...ok, id: 'a/b/c' }, /"id"/],
+    ['uppercase vendor', { ...ok, id: 'Acme/wind' }, /"id"/],
     ['missing name', { ...ok, name: undefined }, /"name"/],
     ['blank name', { ...ok, name: ' ' }, /"name"/],
     ['missing kind', { ...ok, kind: undefined }, /"kind"/],
     ['unknown kind', { ...ok, kind: 'backend' }, /"kind"/],
-    ['apiVersion 2', { ...ok, apiVersion: 2 }, /Unsupported apiVersion 2/],
+    ['apiVersion 1', { ...ok, apiVersion: 1 }, /Unsupported apiVersion 1/],
     ['missing apiVersion', { ...ok, apiVersion: undefined }, /Unsupported apiVersion/],
     ['bad dock', { ...ok, dock: 'top' }, /"dock"/],
     ['mount not a function', { ...ok, mount: 'x' }, /"mount"/],
-    ['drawExport not a function', { ...ok, drawExport: 1 }, /"drawExport"/]
+    ['drawExport not a function', { ...ok, drawExport: 1 }, /"drawExport"/],
+    ['provides not an object', { ...ok, provides: 'x' }, /"provides"/],
+    ['bad service name', { ...ok, provides: { wind: () => ({}) } }, /service name/],
+    ['service major 0', { ...ok, provides: { 'acme/wind@0': () => ({}) } }, /service name/],
+    ['factory not a function', { ...ok, provides: { 'acme/wind@1': {} } }, /factory/],
+    ['requires not a list', { ...ok, requires: 'updraft/studio@1' }, /"requires"/],
+    ['bad required name', { ...ok, requires: ['studio'] }, /"requires"/]
   ])('rejects %s', (_, mod, message) => {
     expect(() => validatePlugin(mod)).toThrow(message);
   });
 
+  it('accepts provides and requires', () => {
+    const withServices = { ...ok, provides: { 'acme/wind@1': () => ({}) }, requires: ['updraft/studio@1'] };
+    expect(validatePlugin(withServices)).toBe(withServices);
+  });
+
+  describe('service kind', () => {
+    const svc = { id: 'acme/svc', name: 'Svc', kind: 'service', apiVersion: 1, provides: { 'acme/svc@1': () => ({}) } };
+
+    it('accepts a headless plugin that provides a service', () => {
+      expect(validatePlugin(svc)).toBe(svc);
+    });
+
+    it.each([
+      ['no provides', { ...svc, provides: undefined }, /at least one service/],
+      ['empty provides', { ...svc, provides: {} }, /at least one service/],
+      ['wrong apiVersion', { ...svc, apiVersion: 2 }, /Unsupported apiVersion 2/]
+    ])('rejects %s', (_, mod, message) => {
+      expect(() => validatePlugin(mod)).toThrow(message);
+    });
+  });
+
   it('rejects an id that is taken, whatever the kind of the other plugin', () => {
     // The taken list holds ids only, so a plugin of another kind clashes the same way.
-    expect(() => validatePlugin(ok, ['wind'])).toThrow(/already in use/);
+    expect(() => validatePlugin(ok, ['acme/wind'])).toThrow(/already in use/);
   });
 });

@@ -1,28 +1,11 @@
-import type { Viewer } from 'cesium';
+import { services } from '#lib/plugins/services';
 import type { StudioState, NeedKind } from '#lib/state/studio.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
-import type { Units } from '#lib/ui/units';
 
-export interface PluginFlight {
-  id: string;
-  pilot: string;
-  glider: string | null;
-  color: string;
-  visible: boolean;
-  /** Fixes on the studio clock, as the studio shows them. Do not modify. */
-  fixes: { t: number; lat: number; lon: number; alt: number }[];
-}
-
-/** What a version 1 plugin can use. Everything is read through functions, so it is always current. */
+/** What a version 2 studio plugin gets. Data comes from services, see `updraft/studio@1`. */
 export interface PluginContext {
-  flights(): PluginFlight[];
-  time(): number;
-  selectedId(): string | null;
-  units(): Units;
-  seek(ms: number): void;
-  select(id: string): void;
-  /** The Cesium viewer, null while the 3D view is not shown. */
-  viewer(): Viewer | null;
+  /** A service named in the plugin's `requires`. Throws for any other name. */
+  use<T = unknown>(name: string): T;
   /** A div over the 3D and 2D views, owned by the plugin. Clicks pass through unless it sets pointer-events. */
   overlay: HTMLDivElement;
   /** Calls `fn` after time, flights, selection or units changed, at most once per animation frame. */
@@ -35,7 +18,7 @@ export interface PluginContext {
  * Builds the context of one mounted plugin. `dispose` removes the overlay, stops every subscription and
  * releases every need. A subscriber that throws is reported to `onError`, the others keep running.
  */
-export function createPluginContext(studio: StudioState, onError: (err: unknown) => void) {
+export function createPluginContext(studio: StudioState, requires: readonly string[], onError: (err: unknown) => void) {
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:absolute;inset:0;z-index:10;overflow:hidden;pointer-events:none';
   studio.viewsEl?.append(overlay);
@@ -53,23 +36,10 @@ export function createPluginContext(studio: StudioState, onError: (err: unknown)
   };
 
   const ctx: PluginContext = {
-    flights: () =>
-      studio.flights.map((lf) => ({
-        id: lf.flight.id,
-        pilot: lf.flight.pilot,
-        glider: lf.flight.glider,
-        color: lf.color,
-        visible: lf.visible,
-        fixes: lf.flight.fixes
-      })),
-    time: () => studio.time,
-    selectedId: () => studio.selected?.flight.id ?? null,
-    units: () => ({ ...unitPrefs.units }),
-    seek: (ms) => studio.seek(Number(ms)),
-    select(id) {
-      if (studio.flights.some((lf) => lf.flight.id === id)) studio.selectedId = id;
+    use<T>(name: string) {
+      if (!requires.includes(name)) throw new Error(`Service "${name}" is not in requires.`);
+      return services.use<T>(name);
     },
-    viewer: () => (studio.viewer && !studio.viewer.isDestroyed() ? studio.viewer : null),
     overlay,
     subscribe(fn) {
       let frame = 0;

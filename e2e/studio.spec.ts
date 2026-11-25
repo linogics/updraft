@@ -264,14 +264,16 @@ test.describe('plugins', () => {
   const URL = 'https://plugins.example.test/hello.js';
   const plugin = (over = '') => `
     export default {
-      id: 'hello', name: 'Hello', kind: 'studio', apiVersion: 1, dock: 'right',
+      id: 'test/hello', name: 'Hello', kind: 'studio', apiVersion: 2, dock: 'right',
+      requires: ['updraft/studio@1'],
       mount(el, ctx) {
+        const studio = ctx.use('updraft/studio@1');
         const marker = document.createElement('i');
         marker.dataset.testid = 'plugin-marker';
         ctx.overlay.append(marker);
         const draw = () => {
-          const f = ctx.flights().find((x) => x.id === ctx.selectedId());
-          el.textContent = 'pilot=' + f.pilot + ' time=' + ctx.time();
+          const f = studio.flights().find((x) => x.id === studio.selectedId());
+          el.textContent = 'pilot=' + f.pilot + ' time=' + studio.time();
         };
         const stop = ctx.subscribe(draw);
         draw();
@@ -351,9 +353,9 @@ test.describe('plugins', () => {
 
   test('a plugin with an unsupported apiVersion is rejected inline', async ({ page }) => {
     await openDemoStudio(page);
-    await serve(page, plugin().replace('apiVersion: 1', 'apiVersion: 2'));
+    await serve(page, plugin().replace('apiVersion: 2', 'apiVersion: 3'));
     const dialog = await add(page);
-    await expect(dialog.getByRole('alert')).toContainText('Unsupported apiVersion 2');
+    await expect(dialog.getByRole('alert')).toContainText('Unsupported apiVersion 3');
     await expect(dialog).toBeVisible();
 
     await dialog.getByRole('button', { name: 'Cancel' }).click();

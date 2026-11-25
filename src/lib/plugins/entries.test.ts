@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { pluginUrl } from './core';
 import { parsePlugins } from './entries';
 
-const ok = { url: 'https://a.test/wind.js', id: 'wind', name: 'Wind', kind: 'studio', dock: 'right' };
+const ok = { url: 'https://a.test/wind.js', id: 'acme/wind', name: 'Wind', kind: 'studio', dock: 'right' };
 
 describe('parsePlugins', () => {
   it('keeps valid entries', () => {
@@ -20,6 +20,7 @@ describe('parsePlugins', () => {
       { ...ok, url: 'javascript:alert(1)' },
       { ...ok, url: 'nope' },
       { ...ok, id: 'Wind' },
+      { ...ok, id: 'wind' },
       { ...ok, id: '' },
       { ...ok, name: '  ' },
       { ...ok, dock: 'top' },
@@ -31,7 +32,7 @@ describe('parsePlugins', () => {
   });
 
   it('drops a repeated id or URL', () => {
-    const other = { ...ok, id: 'other', url: 'https://a.test/other.js' };
+    const other = { ...ok, id: 'acme/other', url: 'https://a.test/other.js' };
     expect(parsePlugins([ok, { ...ok, url: 'https://b.test/x.js' }, { ...other, url: ok.url }, other])).toEqual([
       ok,
       other

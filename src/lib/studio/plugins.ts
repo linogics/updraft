@@ -1,16 +1,17 @@
+import type { PluginBase } from '#lib/plugins/services';
 import type { PluginContext } from './pluginContext.svelte';
 
 export type PluginDock = 'left' | 'right' | 'bottom';
 export const PLUGIN_DOCKS: readonly PluginDock[] = ['left', 'right', 'bottom'];
 
 /** apiVersion of the studio kind. Other kinds version themselves. */
-export const STUDIO_API_VERSION = 1;
+export const STUDIO_API_VERSION = 2;
 
-export interface StudioPlugin {
+export interface StudioPlugin extends PluginBase {
   id: string;
   name: string;
   kind: 'studio';
-  apiVersion: 1;
+  apiVersion: 2;
   dock: PluginDock;
   /** Returns the function that tears the plugin down. */
   mount(el: HTMLElement, ctx: PluginContext): void | (() => void);

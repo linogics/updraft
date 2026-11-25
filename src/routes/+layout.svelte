@@ -5,9 +5,13 @@
   import { navigating, updated } from '$app/state';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
+  import { startServicePlugins } from '#lib/plugins/startup';
 
   // The locale only changes on reload, so setting the lang attribute once is enough.
-  onMount(() => (document.documentElement.lang = getLocale()));
+  onMount(() => {
+    document.documentElement.lang = getLocale();
+    void startServicePlugins();
+  });
 
   // Plain cross-fade between pages. Browsers without view transitions and users who prefer reduced motion navigate as before.
   // Query updates within a page (like the studio's scene URL) are not page changes and must not block input.

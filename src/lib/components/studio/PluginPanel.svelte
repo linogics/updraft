@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
+  import { services } from '#lib/plugins/services';
   import { createPluginContext } from '#lib/studio/pluginContext.svelte';
   import { mountedPlugins } from '#lib/studio/exportHooks.svelte';
   import type { StudioPlugin } from '#lib/studio/plugins';
@@ -19,8 +20,16 @@
   };
 
   onMount(() => {
+    const missing = services.missing(plugin.requires);
+    if (missing.length) {
+      error = m.plugin_missing_services({ name: plugin.name, services: missing.join(', ') });
+      return;
+    }
+
     mountedPlugins.add(plugin);
-    const { ctx, dispose } = createPluginContext(studio, (err) => fail('a subscriber failed', err));
+    const { ctx, dispose } = createPluginContext(studio, plugin.requires ?? [], (err) =>
+      fail('a subscriber failed', err)
+    );
     let destroy: unknown;
     try {
       destroy = plugin.mount(el, ctx);
