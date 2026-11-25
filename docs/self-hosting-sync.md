@@ -10,7 +10,7 @@ Users connect from the Sync section of the logbook, see [Point the app at the se
 2. Create the admin: `docker compose -f server/compose.yaml exec pocketbase pocketbase superuser upsert you@example.com 'a-long-password' --dir=/pb/pb_data`.
 3. Open `http://localhost:8090/_/`, sign in and add the pilots in the `users` collection (email and password). Public signup is off. To allow it, set the create rule of `users` to an empty string in the collection settings.
 
-The first start applies `server/pb_migrations`. It creates the `records` collection. Each pilot can only read and write their own rows. Without Docker, download PocketBase v0.40.6, then run `./pocketbase serve --migrationsDir server/pb_migrations`.
+The first start applies `server/pb_migrations`. It creates the `records` collection. Each pilot can only read and write their own rows. Without Docker, download PocketBase v0.40.6, then run `./pocketbase serve --migrationsDir server/pb_migrations --automigrate=false`. Automigrate is off so settings changed in the dashboard do not write new migration files into the repo.
 
 ## HTTPS and CORS
 
@@ -52,7 +52,7 @@ The integration test runs against a real server and is skipped without `PB_URL`:
 
 ```sh
 ./pocketbase superuser upsert admin@test.local adminpass123 --dir /tmp/pb
-./pocketbase serve --dir /tmp/pb --migrationsDir server/pb_migrations --http=127.0.0.1:8090
+./pocketbase serve --dir /tmp/pb --migrationsDir server/pb_migrations --http=127.0.0.1:8090 --automigrate=false
 PB_URL=http://127.0.0.1:8090 PB_ADMIN_EMAIL=admin@test.local PB_ADMIN_PASSWORD=adminpass123 \
   PB_DB=/tmp/pb/data.db npm test -- pocketbase.integration
 ```

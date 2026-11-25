@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 
+# Automigrate is off, so dashboard changes do not write migration files into the mounted repo folder.
 # PocketBase has no official image, so this one fetches the pinned release and checks it.
 FROM alpine:3.22 AS fetch
 ARG PB_VERSION=0.40.6
@@ -18,4 +19,4 @@ FROM alpine:3.22
 RUN apk add --no-cache ca-certificates
 COPY --from=fetch /tmp/pocketbase /usr/local/bin/pocketbase
 EXPOSE 8090
-CMD ["pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--migrationsDir=/pb/pb_migrations"]
+CMD ["pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--migrationsDir=/pb/pb_migrations", "--automigrate=false"]

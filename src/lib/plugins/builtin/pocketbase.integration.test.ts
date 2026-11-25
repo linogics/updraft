@@ -1,7 +1,7 @@
 // Runs against a REAL PocketBase and is skipped without PB_URL. To repeat it:
 //   1. Download pocketbase_0.40.6_linux_amd64.zip from the GitHub release and check it against checksums.txt.
 //   2. ./pocketbase --dir <dir> --migrationsDir server/pb_migrations superuser upsert admin@test.local adminpass123
-//   3. ./pocketbase serve --dir <dir> --migrationsDir server/pb_migrations --http=127.0.0.1:8090
+//   3. ./pocketbase serve --dir <dir> --migrationsDir server/pb_migrations --http=127.0.0.1:8090 --automigrate=false
 //   4. PB_URL=http://127.0.0.1:8090 PB_ADMIN_EMAIL=admin@test.local PB_ADMIN_PASSWORD=adminpass123 \
 //        npm test -- pocketbase.integration
 //      Add PB_DB=<dir>/data.db to also run the equal `updated` test.
