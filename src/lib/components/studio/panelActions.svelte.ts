@@ -31,13 +31,13 @@ export async function movePanel(id: string, dock: Dock, index: number) {
   announce(m.panel_moved({ title, dock: DOCK_LABELS[dock](), position }));
 }
 
-/** Hides a panel. Its actions button disappears, so focus moves to a neighbour in the same dock. */
-export async function hidePanel(id: string) {
+/** Removes a panel from its dock. Its actions button disappears, so focus moves to a neighbour in the same dock. */
+export async function removePanel(id: string) {
   const ids = Object.values(studioLayout.value.docks).find((d) => d.includes(id)) ?? [];
   const i = ids.indexOf(id);
   const neighbour = ids[i + 1] ?? ids[i - 1];
   studioLayout.hide(id);
-  announce(m.panel_hidden({ title: panelById(id)?.title() ?? id }));
+  announce(m.panel_removed({ title: panelById(id)?.title() ?? id }));
   await tick();
   if (neighbour) document.getElementById(panelMenuId(neighbour))?.focus({ preventScroll: true });
 }

@@ -33,13 +33,14 @@ test('smooth lines are on by default and stay out of the URL', async ({ page }) 
 
 test('airspaces start hidden, also after they were shown in an earlier session', async ({ page }) => {
   await openDemoStudio(page);
-  const show = page.getByRole('region', { name: 'Scene' }).getByRole('checkbox', { name: 'Airspaces' });
+  await page.getByRole('region', { name: 'Airspace' }).getByRole('button', { name: 'Airspace', exact: true }).click();
+  const show = page.getByRole('region', { name: 'Airspace' }).getByRole('checkbox', { name: 'Airspaces' });
   await expect(show).not.toBeChecked();
 
   await show.check();
   await page.reload();
   await expect(
-    page.getByRole('region', { name: 'Scene' }).getByRole('checkbox', { name: 'Airspaces' })
+    page.getByRole('region', { name: 'Airspace' }).getByRole('checkbox', { name: 'Airspaces' })
   ).not.toBeChecked();
 });
 
@@ -178,6 +179,9 @@ test('hidden XC and Pilots panels cost nothing, showing XC starts scoring', asyn
 
   await page.getByRole('button', { name: /^Panels/ }).click();
   await page.getByRole('checkbox', { name: 'XC' }).check();
+  // The panel starts collapsed. Close the menu so it does not cover the panel.
+  await page.keyboard.press('Escape');
+  await page.getByRole('region', { name: 'XC' }).getByRole('button', { name: 'XC', exact: true }).click();
   const league = page.getByRole('combobox', { name: 'XC league' });
   await expect(league).toBeVisible();
   // Showing the panel starts scoring.
@@ -308,7 +312,7 @@ test.describe('plugins', () => {
     return dialog;
   }
 
-  test('a plugin added by URL shows its panel, follows playback, unmounts when hidden and can be removed', async ({
+  test('a plugin added by URL shows its panel, follows playback, unmounts when hidden and can be uninstalled', async ({
     page
   }) => {
     // Two studio loads and a reload.
@@ -338,7 +342,7 @@ test.describe('plugins', () => {
     await expect(panel).toContainText('pilot=', { timeout: 30_000 });
 
     await page.getByRole('button', { name: /^Panels/ }).click();
-    await page.getByRole('button', { name: 'Remove plugin Hello' }).click();
+    await page.getByRole('button', { name: 'Uninstall plugin Hello' }).click();
     await expect(panel).toHaveCount(0);
     await expect(page.getByTestId('plugin-marker')).toHaveCount(0);
 
@@ -389,6 +393,7 @@ test.describe('plugins', () => {
     await expect(await add(page)).toBeHidden();
     await expect(page.getByRole('region', { name: 'Hello' })).toContainText('pilot=');
 
+    await page.getByRole('region', { name: 'Export' }).getByRole('button', { name: 'Export', exact: true }).click();
     const box = page.getByRole('region', { name: 'Export' }).getByRole('checkbox', { name: 'Hello' });
     await expect(box).toBeChecked();
 

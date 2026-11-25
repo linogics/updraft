@@ -32,13 +32,18 @@ export function clampSize(key: LayoutSize, v: number): number {
  * Validates stored layout field by field. `defaults` maps every known panel id to its default dock.
  * Unknown and duplicate ids are dropped, known ids that are missing go to their default dock,
  * or to `hidden` when the panel starts hidden.
+ * Without a stored `collapsed` list, the panels that start collapsed are used.
  * A pinned id stored outside its default dock goes back to the end of that dock.
  * Bad sizes fall back to the initial size, then get clamped.
  */
 export function parseStudioLayout(
   raw: unknown,
   defaults: Record<string, Dock>,
-  { pinned = [], hidden: startHidden = [] }: { pinned?: readonly string[]; hidden?: readonly string[] } = {}
+  {
+    pinned = [],
+    hidden: startHidden = [],
+    collapsed: startCollapsed = []
+  }: { pinned?: readonly string[]; hidden?: readonly string[]; collapsed?: readonly string[] } = {}
 ): StudioLayoutValue {
   const obj = (x: unknown) => (x && typeof x === 'object' ? x : {}) as Record<string, unknown>;
   const o = obj(raw);
@@ -71,7 +76,7 @@ export function parseStudioLayout(
 
   const collapsed = Array.isArray(o.collapsed)
     ? [...new Set(o.collapsed.filter((id): id is string => typeof id === 'string' && known.includes(id)))]
-    : [];
+    : startCollapsed.filter((id) => known.includes(id));
 
   for (const id of pinned)
     for (const d of Object.keys(docks) as Dock[])

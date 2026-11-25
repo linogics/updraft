@@ -7,6 +7,7 @@ export interface BuiltinPlugin {
   title: () => string;
   dock: PluginDock;
   hidden?: boolean;
+  collapsed?: boolean;
   pinned?: boolean;
   /** Built-in panel id this one follows in the default order. Appended when missing. */
   after?: string;
@@ -19,7 +20,7 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     id: 'updraft/stats',
     title: () => m.panel_stats(),
     dock: 'right',
-    after: 'xc',
+    after: 'thermals',
     load: () => import('./builtin/stats')
   }
 ];

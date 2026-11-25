@@ -8,7 +8,7 @@
   import { DOCK_LABELS, DOCKS, type Dock, type PanelDef } from '#lib/studio/panels';
   import { panelById } from '#lib/studio/registry.svelte';
   import Menu from '../Menu.svelte';
-  import { hidePanel, movePanel, panelMenuId } from './panelActions.svelte';
+  import { removePanel, movePanel, panelMenuId } from './panelActions.svelte';
   import PanelHost from './PanelHost.svelte';
   import { drag, liftStyle, startDrag } from './panelDrag.svelte';
 
@@ -47,7 +47,7 @@
       </button>
     {/each}
     <hr />
-    <button type="button" onclick={() => hidePanel(p.id)}>{m.panel_hide()}</button>
+    <button type="button" onclick={() => removePanel(p.id)}>{m.panel_remove()}</button>
   </Menu>
 {/snippet}
 
