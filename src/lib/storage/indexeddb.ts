@@ -323,6 +323,24 @@ export class IndexedDbFlightRepository implements FlightRepository {
     return { applied, invalid };
   }
 
+  async markAllDirty(): Promise<void> {
+    const tx = (await this.db).transaction(['flights', 'summaries', 'cameraPaths', 'sync'], 'readwrite');
+    const sync = tx.objectStore('sync');
+    for (const meta of await sync.getAll()) if (!meta.dirty) await sync.put({ ...meta, dirty: 1 });
+
+    // Records saved before sync existed have no metadata yet.
+    const records: [SyncType, string][] = [
+      ...(await tx.objectStore('flights').getAllKeys()).map((id): [SyncType, string] => ['flight', id]),
+      ...(await tx.objectStore('summaries').getAll())
+        .filter((s) => s.manual)
+        .map((s): [SyncType, string] => ['manual', s.id]),
+      ...(await tx.objectStore('cameraPaths').getAllKeys()).map((k): [SyncType, string] => ['cameraPath', k])
+    ];
+    for (const [type, id] of records) if (!(await sync.get(`${type}:${id}`))) await markDirty(sync, type, id);
+
+    await tx.done;
+  }
+
   async getSyncState(): Promise<SyncState> {
     return (await (await this.db).get('syncState', 'state')) ?? EMPTY_STATE;
   }

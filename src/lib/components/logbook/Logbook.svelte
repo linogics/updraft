@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import Backup from '#lib/components/logbook/Backup.svelte';
+  import Sync from '#lib/components/logbook/Sync.svelte';
   import BarChart from '#lib/components/logbook/BarChart.svelte';
   import Dropzone from '#lib/components/Dropzone.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
@@ -11,6 +12,7 @@
   import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { syncClient } from '#lib/sync/client.svelte';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, studioHref } from '#lib/storage/importFlights';
   import { m } from '#lib/paraglide/messages';
@@ -183,6 +185,8 @@
       void importFiles(await Promise.all(params.files.map((handle) => handle.getFile())));
     });
     void refresh();
+    // Records pulled from the server show up without a reload.
+    return syncClient.onApplied(() => void refresh());
   });
   onDestroy(() => xcRun++);
 </script>
@@ -393,6 +397,7 @@
   </section>
 
   <div class="deferred backup">
+    <Sync />
     <Backup ondone={refresh} />
   </div>
 </div>
@@ -410,7 +415,9 @@
     contain-intrinsic-size: auto none auto 300px;
   }
   .backup {
-    contain-intrinsic-size: auto none auto 220px;
+    display: grid;
+    gap: 24px;
+    contain-intrinsic-size: auto none auto 520px;
   }
   header {
     display: flex;

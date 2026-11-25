@@ -86,6 +86,13 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Export everything this browser keeps (flights, manual entries, camera keys, settings) to one JSON file. API keys only on request.
 - Restore by merging with or replacing the data in this browser.
 
+## Sync
+
+- Optional, local-first sync of flights, manual entries, camera keys and settings through a server you host (bundled PocketBase backend, or a backend plugin).
+- Password and OAuth sign in, automatic sync after changes and on focus, "Sync now", newest change wins per record.
+- API keys sync only on request. Layout and plugin list stay per device.
+- A hosted app can preset the server with `/config.json`.
+
 ## Settings and app
 
 - Units: metric, imperial or aviation preset, or each unit on its own (distance, altitude, vario, speed).
@@ -110,8 +117,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 ### Needs a backend
 
-- Accounts and cloud storage.
-- Logbook sync across devices.
+- Accounts and cloud storage run by the app itself.
 - XContest import.
 - Public shareable scenes, latest scenes and rankings.
 - Flight database search by area, takeoff, landing, period or glider class.

@@ -10,6 +10,8 @@ export interface SyncOptions {
   cooldownMs?: number;
   /** Wait after a local change before pushing. */
   debounceMs?: number;
+  /** Called after a pull applied at least one change. */
+  onApplied?: (count: number) => void;
 }
 
 const PAGE = 50;
@@ -26,6 +28,7 @@ export class SyncEngine {
   private unsubscribe: (() => void) | null = null;
   private readonly cooldownMs: number;
   private readonly debounceMs: number;
+  private readonly onApplied?: (count: number) => void;
 
   constructor(
     private repo: FlightRepository,
@@ -34,6 +37,7 @@ export class SyncEngine {
   ) {
     this.cooldownMs = opts.cooldownMs ?? 5000;
     this.debounceMs = opts.debounceMs ?? 3000;
+    this.onApplied = opts.onApplied;
   }
 
   /** Never throws, failures show up in `status` and `lastError`. */
@@ -124,9 +128,10 @@ export class SyncEngine {
 
   private async pull() {
     let cursor = (await this.repo.getSyncState()).cursor;
+    let applied = 0;
     for (;;) {
       const page = await this.transport.pull(cursor);
-      await this.repo.applyRemote(page.changes.filter((c) => c.type !== 'pref'));
+      applied += (await this.repo.applyRemote(page.changes.filter((c) => c.type !== 'pref'))).applied;
 
       const state = await this.repo.getSyncState();
       const prefs = applyRemotePrefs(
@@ -134,8 +139,10 @@ export class SyncEngine {
         state.prefs
       );
       cursor = page.cursor;
-      await this.repo.setSyncState({ cursor, prefs });
+      await this.repo.setSyncState({ ...state, cursor, prefs });
       if (!page.more) break;
     }
+
+    if (applied) this.onApplied?.(applied);
   }
 }

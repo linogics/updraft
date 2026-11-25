@@ -74,6 +74,8 @@ export interface FlightRepository {
   markPushed(changes: SyncChange[]): Promise<void>;
   /** Writes pulled changes without marking them dirty. Newer wins, invalid ones are counted and skipped. */
   applyRemote(changes: SyncChange[]): Promise<{ applied: number; invalid: number }>;
+  /** Marks every record dirty, tombstones included, so the next push uploads everything. Keeps updatedAt. */
+  markAllDirty(): Promise<void>;
   getSyncState(): Promise<SyncState>;
   setSyncState(state: SyncState): Promise<void>;
 }
