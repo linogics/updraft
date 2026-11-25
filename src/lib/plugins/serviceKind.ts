@@ -1,16 +1,9 @@
-import type { PluginBase } from './services';
+import type { ServicePlugin } from './api';
+
+export type { ServicePlugin };
 
 /** apiVersion of the service kind. */
 export const SERVICE_API_VERSION = 1;
-
-/** A headless plugin: no panel, it only provides services. */
-export interface ServicePlugin extends PluginBase {
-  id: string;
-  name: string;
-  kind: 'service';
-  apiVersion: 1;
-  provides: NonNullable<PluginBase['provides']>;
-}
 
 /** Checks the service specific fields. `provides` itself is already checked by the core. */
 export function validateServicePlugin(p: Record<string, unknown>): ServicePlugin {

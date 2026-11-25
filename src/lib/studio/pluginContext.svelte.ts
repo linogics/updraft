@@ -1,21 +1,12 @@
 import { RESERVED_NAMESPACE, services } from '#lib/plugins/services';
-import type { StudioState, NeedKind } from '#lib/state/studio.svelte';
+import type { PluginContext } from '#lib/plugins/api';
+import type { StudioState } from '#lib/state/studio.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
+
+export type { PluginContext };
 
 /** `updraft/*-state@major` hands out app state objects, for bundled plugins only. */
 const INTERNAL_SERVICE = /^updraft\/[a-z0-9-]+-state@\d+$/;
-
-/** What a version 2 studio plugin gets. Data comes from services, see `updraft/studio@1`. */
-export interface PluginContext {
-  /** A service named in the plugin's `requires`. Throws for any other name. */
-  use<T = unknown>(name: string): T;
-  /** A div over the 3D and 2D views, owned by the plugin. Clicks pass through unless it sets pointer-events. */
-  overlay: HTMLDivElement;
-  /** Calls `fn` after time, flights, selection or units changed, at most once per animation frame. */
-  subscribe(fn: () => void): () => void;
-  /** Asks the studio to run background work for as long as the plugin is mounted. */
-  need(kind: NeedKind): () => void;
-}
 
 /** What a page offers a plugin. The studio and the planner each have one, see `studioHost`. */
 export interface PluginHostEnv {

@@ -1,26 +1,11 @@
-import type { PluginBase } from '#lib/plugins/services';
-import type { PluginContext } from './pluginContext.svelte';
+import type { PluginDock, PluginHost, StudioPlugin } from '#lib/plugins/api';
 
-export type PluginDock = 'left' | 'right' | 'bottom';
-export type PluginHost = 'studio' | 'plan';
+export type { PluginDock, PluginHost, StudioPlugin };
 export const PLUGIN_HOSTS: readonly PluginHost[] = ['studio', 'plan'];
 export const PLUGIN_DOCKS: readonly PluginDock[] = ['left', 'right', 'bottom'];
 
 /** apiVersion of the studio kind. Other kinds version themselves. */
 export const STUDIO_API_VERSION = 2;
-
-export interface StudioPlugin extends PluginBase {
-  id: string;
-  name: string;
-  kind: 'studio';
-  apiVersion: 2;
-  dock: PluginDock;
-  /** Pages that show the panel, defaults to the studio only. */
-  hosts?: PluginHost[];
-  /** Returns the function that tears the plugin down. */
-  mount(el: HTMLElement, ctx: PluginContext): void | (() => void);
-  drawExport?(ctx2d: CanvasRenderingContext2D, time: number): void;
-}
 
 /** Checks the studio specific fields of a module whose id, name and kind are already valid. */
 export function validateStudioPlugin(p: Record<string, unknown>): StudioPlugin {

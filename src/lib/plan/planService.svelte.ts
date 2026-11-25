@@ -2,20 +2,11 @@ import { services } from '#lib/plugins/services';
 import type { PlanState } from '#lib/state/plan.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
+import type { PlanService } from '#lib/plugins/api';
+
+export type { PlanService };
 
 export const PLAN_SERVICE = 'updraft/plan@1';
-
-/** `updraft/plan@1`. Everything is read through functions, so it is always current. */
-export interface PlanService {
-  /** The route. The same frozen array until the route changes. */
-  points(): readonly Readonly<{ lat: number; lon: number }>[];
-  /** Route length in m. */
-  distance(): number;
-  /** Planned speed in km/h. */
-  speed(): number;
-  /** The same frozen object until the user changes units. */
-  units(): Readonly<Units>;
-}
 
 /** Provides `updraft/plan@1` for as long as the planner is open. Returns the unregister function. */
 export function providePlanService(plan: Pick<PlanState, 'points' | 'total' | 'speed'>) {

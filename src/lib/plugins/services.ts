@@ -1,21 +1,12 @@
+import type { PluginBase, ServiceContext, ServiceFactory } from './api';
+
+export type { PluginBase, ServiceContext, ServiceFactory };
+
 /** `vendor/service@major`, for example `updraft/studio@1`. */
 export const SERVICE_NAME = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}@[1-9][0-9]{0,3}$/;
 
 /** Only bundled code may provide names in this namespace. */
 export const RESERVED_NAMESPACE = 'updraft/';
-
-export interface ServiceContext {
-  /** Another service this one depends on. Built on first use. */
-  use<T = unknown>(name: string): T;
-}
-
-export type ServiceFactory = (ctx: ServiceContext) => object;
-
-/** Fields every plugin kind may have. */
-export interface PluginBase {
-  provides?: Record<string, ServiceFactory>;
-  requires?: string[];
-}
 
 /**
  * App wide registry of lazy services. A service is a plain object that is built on first use and shared by every
