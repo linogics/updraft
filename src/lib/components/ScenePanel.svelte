@@ -16,7 +16,9 @@
   <select id="scene-map" bind:value={studio.basemap}>
     {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
   </select>
-  <label for="scene-terrain" title={studio.ionAvailable ? undefined : m.toolbar_ion_hint()}>{m.toolbar_terrain()}</label>
+  <label for="scene-terrain" title={studio.ionAvailable ? undefined : m.toolbar_ion_hint()}>
+    {m.toolbar_terrain()}
+  </label>
   <select id="scene-terrain" bind:value={studio.terrain}>
     <option value="ion" disabled={!studio.ionAvailable}>
       {studio.ionAvailable ? m.toolbar_terrain_ion() : m.toolbar_terrain_ion_locked()}
