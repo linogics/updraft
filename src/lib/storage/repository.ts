@@ -1,6 +1,7 @@
 import type { CameraTracks } from '../domain/cameraPath';
 import { distance } from '../domain/geo';
 import type { Flight } from '../domain/model';
+import type { SyncChange, SyncState } from '../sync/types';
 import type { XcLeague } from '../state/xcPrefs';
 import type { XcScore } from '../xc/types';
 
@@ -67,6 +68,14 @@ export interface FlightRepository {
   /** Flights, manual entries and camera paths. Prefs and token are added by the backup layer. */
   exportAll(): Promise<Backup>;
   importAll(backup: Backup, mode: 'merge' | 'replace'): Promise<void>;
+  /** Local changes not yet pushed. Prefs are not included, the sync engine detects them itself. */
+  pendingChanges(): Promise<SyncChange[]>;
+  /** Clears the dirty flag, but not for records that were written again since. */
+  markPushed(changes: SyncChange[]): Promise<void>;
+  /** Writes pulled changes without marking them dirty. Newer wins, invalid ones are counted and skipped. */
+  applyRemote(changes: SyncChange[]): Promise<{ applied: number; invalid: number }>;
+  getSyncState(): Promise<SyncState>;
+  setSyncState(state: SyncState): Promise<void>;
 }
 
 export function summarize(flight: Flight): FlightSummary {
