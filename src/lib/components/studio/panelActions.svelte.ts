@@ -1,4 +1,5 @@
 import { tick } from 'svelte';
+import type { PageLayout } from '#lib/state/pageLayout.svelte';
 import { m } from '#lib/paraglide/messages';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { DOCK_LABELS, type Dock } from '#lib/studio/panels';
@@ -15,11 +16,10 @@ export function announce(text: string) {
 
 export const panelMenuId = (id: string) => `panel-menu-${id}`;
 
-/** Moves a panel, animated when the browser can and motion is allowed, and keeps focus on its actions button. */
-export async function movePanel(id: string, dock: Dock, index: number) {
-  const title = panelById(id)?.title() ?? id;
+/** Runs a layout change, animated when the browser can and motion is allowed, and keeps focus on the panel's actions button. */
+async function moveAnimated(id: string, change: () => void) {
   const apply = async () => {
-    studioLayout.move(id, dock, index);
+    change();
     await tick();
     document.getElementById(panelMenuId(id))?.focus({ preventScroll: true });
   };
@@ -27,6 +27,25 @@ export async function movePanel(id: string, dock: Dock, index: number) {
   const animate = !matchMedia('(prefers-reduced-motion: reduce)').matches && 'startViewTransition' in document;
   if (animate) await document.startViewTransition(apply).updateCallbackDone;
   else await apply();
+}
+
+/** Moves a panel of a page layout and announces where it went. */
+export async function movePagePanel(
+  layout: PageLayout,
+  id: string,
+  column: string,
+  index: number,
+  title: string,
+  columnLabel: string
+) {
+  await moveAnimated(id, () => layout.move(id, column, index));
+  announce(m.panel_moved({ title, dock: columnLabel, position: layout.value.columns[column].indexOf(id) + 1 }));
+}
+
+/** Moves a studio panel to a dock. */
+export async function movePanel(id: string, dock: Dock, index: number) {
+  const title = panelById(id)?.title() ?? id;
+  await moveAnimated(id, () => studioLayout.move(id, dock, index));
   const position = studioLayout.value.docks[dock].indexOf(id) + 1;
   announce(m.panel_moved({ title, dock: DOCK_LABELS[dock](), position }));
 }

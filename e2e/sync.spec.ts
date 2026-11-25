@@ -49,6 +49,7 @@ test('connect, sign in and sync a record to a PocketBase server', async ({ page 
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('cell', { name: 'Sync Pilot', exact: true })).toBeVisible();
 
+  await page.getByRole('button', { name: 'Sync', exact: true }).click();
   const sync = page.getByRole('region', { name: 'Sync' });
   await sync.getByLabel('Server address').fill(SERVER);
   await sync.getByRole('button', { name: 'Connect' }).click();
@@ -68,6 +69,7 @@ test('connect, sign in and sync a record to a PocketBase server', async ({ page 
 
 test('rejects a plain http server that is not local', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Sync', exact: true }).click();
   const sync = page.getByRole('region', { name: 'Sync' });
   await sync.getByLabel('Server address').fill('http://sync.example.com');
   await sync.getByRole('button', { name: 'Connect' }).click();

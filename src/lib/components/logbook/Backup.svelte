@@ -62,8 +62,7 @@
   }
 </script>
 
-<section class="card">
-  <h2>{m.backup_heading()}</h2>
+<div>
   <p class="muted">{m.backup_intro()}</p>
   <label class="check"><input type="checkbox" bind:checked={includeToken} /> {m.backup_include_keys()}</label>
   {#if includeToken}<p class="muted">{m.backup_keys_warning()}</p>{/if}
@@ -82,13 +81,9 @@
   {/if}
   {#if message}<p class:error={failed} role="status">{message}</p>{/if}
   {#if restored}<button onclick={() => location.reload()}>{m.backup_reload()}</button>{/if}
-</section>
+</div>
 
 <style>
-  h2 {
-    margin: 0 0 4px;
-    font: 600 20px/1 var(--display);
-  }
   .muted {
     color: var(--muted);
     margin: 4px 0;

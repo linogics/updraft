@@ -61,9 +61,7 @@
   }
 </script>
 
-<section class="card" aria-labelledby="sync-heading">
-  <h2 id="sync-heading">{m.sync_heading()}</h2>
-
+<div>
   {#if !client.ready}
     <p class="muted">{m.sync_connecting()}</p>
   {:else if !client.config}
@@ -157,13 +155,9 @@
   <div role="alert">
     {#if client.error}<p class="error">{client.error}</p>{/if}
   </div>
-</section>
+</div>
 
 <style>
-  h2 {
-    margin: 0 0 4px;
-    font: 600 20px/1 var(--display);
-  }
   .muted {
     color: var(--muted);
     margin: 4px 0;
