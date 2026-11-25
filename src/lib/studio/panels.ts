@@ -20,6 +20,8 @@ export interface PanelDef {
   dock: Dock;
   /** Stays in its default dock, it can be hidden and reordered there but not moved to another dock. */
   pinned?: boolean;
+  /** Starts hidden, the user turns it on from the Panels menu. */
+  hidden?: boolean;
   load: () => Promise<PanelModule>;
   /** Cache key of the loaded module, defaults to the id. A plugin that is removed and added again from another URL gets a new one. */
   key?: string;
@@ -44,7 +46,13 @@ export const BUILTIN_PANELS: PanelDef[] = [
     dock: 'left',
     load: () => import('#lib/components/ThermalList.svelte')
   },
-  { id: 'xc', title: () => m.panel_xc(), dock: 'right', load: () => import('#lib/components/XcPanel.svelte') },
+  {
+    id: 'xc',
+    hidden: true,
+    title: () => m.panel_xc(),
+    dock: 'right',
+    load: () => import('#lib/components/XcPanel.svelte')
+  },
   { id: 'stats', title: () => m.panel_stats(), dock: 'right', load: () => import('#lib/components/StatsPanel.svelte') },
   {
     id: 'altitude',
