@@ -2,6 +2,8 @@
 
 How to run the app is described in the [README](../README.md). This page covers the code structure and deployment details.
 
+Open the dev server as http://localhost:5173, not http://127.0.0.1:5173, because the kk7 thermal tiles reject 127.0.0.1.
+
 ## Architecture
 
 ```
