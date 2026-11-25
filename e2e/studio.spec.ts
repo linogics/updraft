@@ -338,6 +338,19 @@ test.describe('plugins', () => {
     await expect(page.getByRole('checkbox', { name: 'Hello' })).toHaveCount(0);
   });
 
+  test('the bundled example plugin shows the selected pilot', async ({ page }) => {
+    await openDemoStudio(page);
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    await page.getByRole('button', { name: 'Add plugin…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add plugin' });
+    await dialog.getByLabel(/^Plugin address/).fill(new globalThis.URL('/plugins/example.js', page.url()).href);
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(dialog).toBeHidden();
+
+    const pilot = await pilotRows(page).first().getAttribute('aria-label');
+    await expect(page.getByRole('region', { name: 'Example' })).toContainText(pilot!.replace(/^Show /, ''));
+  });
+
   test('a plugin with an unsupported apiVersion is rejected inline', async ({ page }) => {
     await openDemoStudio(page);
     await serve(page, plugin().replace('apiVersion: 1', 'apiVersion: 2'));
