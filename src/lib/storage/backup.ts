@@ -1,5 +1,6 @@
 import { flightRepository } from './index';
 import type { Backup } from './repository';
+import { isCameraPath, isFlight, isManual, isObj } from './validate';
 
 const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs', 'thermalOverlayPrefs'];
 const TOKEN_KEY = 'cesiumIonToken';
@@ -46,8 +47,6 @@ export async function buildBackup(includeToken: boolean): Promise<Backup> {
 
 import { m } from '../paraglide/messages';
 
-const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object';
-
 export async function restoreBackup(raw: unknown, mode: 'merge' | 'replace') {
   if (!isObj(raw) || raw.app !== 'updraft') throw new Error(m.backup_not_backup());
   if (raw.version !== 1) throw new Error(m.backup_version({ version: String(raw.version) }));
@@ -57,19 +56,15 @@ export async function restoreBackup(raw: unknown, mode: 'merge' | 'replace') {
   }
 
   for (const f of raw.flights) {
-    if (!isObj(f) || typeof f.id !== 'string' || !Array.isArray(f.fixes) || !f.fixes.length) {
-      throw new Error(m.backup_bad_flight());
-    }
+    if (!isFlight(f)) throw new Error(m.backup_bad_flight());
   }
 
   for (const entry of raw.manual) {
-    if (!isObj(entry) || typeof entry.id !== 'string' || typeof entry.date !== 'string' || entry.manual !== true) {
-      throw new Error(m.backup_bad_manual());
-    }
+    if (!isManual(entry)) throw new Error(m.backup_bad_manual());
   }
 
   for (const c of raw.cameraPaths) {
-    if (!isObj(c) || typeof c.key !== 'string') throw new Error(m.backup_bad_camera());
+    if (!isCameraPath(c)) throw new Error(m.backup_bad_camera());
   }
 
   const backup = raw as unknown as Backup;

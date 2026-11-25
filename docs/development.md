@@ -40,6 +40,18 @@ One-time setup: in the repository settings set Pages source to "GitHub Actions",
 - Runtime config is read by `loadRuntimeConfig` (`src/lib/config.ts`), so an API base URL can be added there.
 - To add server routes, switch the SvelteKit adapter from `adapter-static` to `adapter-node`.
 
+## Sync
+
+Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engine.svelte.ts`) mirrors it through a `SyncTransport`. No transport exists yet, so the engine is not wired into the app.
+
+- Every repository write marks its record dirty in the `sync` store (`type:id`, `updatedAt` in ms, tombstone on delete). XC scores are a cache and never sync.
+- `syncNow()` pushes `pendingChanges()` in pages of 50, then pulls until `more` is false and stores the cursor. `markPushed` leaves a record dirty when it was rewritten during the push.
+- Conflicts: the higher `updatedAt` wins per whole record. `applyRemote` validates every change (invalid ones are skipped and counted), ignores equal or older ones and does not mark anything dirty, so nothing echoes back.
+- Prefs in localStorage are detected at push time by comparing the raw value with the last pushed one. Remote prefs are written to localStorage and apply after a reload. `studioLayout` and the plugin list never sync, API keys only when `syncKeys` is `'1'`.
+- `start()` syncs on start, on `focus`, on `online` and 3 s after a local change. `stop()` removes the listeners.
+
+Transport contract (`src/lib/sync/types.ts`): `push(changes)` stores the changes. `pull(cursor)` returns the changes after the opaque `cursor`, the new cursor and `more`. A `SyncChange` is `{ type: 'flight' | 'manual' | 'cameraPath' | 'pref', id, updatedAt, deleted?, data? }`. Login is the transport's own business.
+
 ## Performance
 
 Two manual benchmark suites, not run in CI because runner timing is noisy:
