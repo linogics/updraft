@@ -1,6 +1,8 @@
 import type { Viewer } from 'cesium';
 import { services } from '#lib/plugins/services';
 import type { StudioState } from '#lib/state/studio.svelte';
+import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
+import type { AltRef } from '#lib/state/altRefPrefs';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
 
@@ -25,6 +27,8 @@ export interface StudioService {
   selectedId(): string | null;
   /** The same frozen object until the user changes units. */
   units(): Readonly<Units>;
+  /** The altitude reference the user chose. */
+  altRef(): AltRef;
   seek(ms: number): void;
   select(id: string): void;
   /** The Cesium viewer, null while the 3D view is not shown. */
@@ -75,6 +79,7 @@ export function provideStudioService(studio: Host) {
 
           return units;
         },
+        altRef: () => altRefPrefs.ref,
         seek: (ms) => studio.seek(Number(ms)),
         select(id) {
           if (studio.flights.some((lf) => lf.flight.id === id)) studio.selectedId = id;

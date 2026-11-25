@@ -3,7 +3,7 @@
   import { m } from '#lib/paraglide/messages';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
   import { removePlugin } from '#lib/plugins/actions';
-  import { PLUGIN_PREFIX, registry } from '#lib/studio/registry.svelte';
+  import { PLUGIN_PREFIX, pluginEntry, registry } from '#lib/studio/registry.svelte';
   import Popover from '../Popover.svelte';
   import AddPluginDialog from './AddPluginDialog.svelte';
 
@@ -25,7 +25,7 @@
           />
           {p.title()}
         </label>
-        {#if p.id.startsWith(PLUGIN_PREFIX)}
+        {#if pluginEntry(p.id)}
           <button
             type="button"
             aria-label={m.plugin_remove_label({ name: p.title() })}

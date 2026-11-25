@@ -53,7 +53,6 @@ export const BUILTIN_PANELS: PanelDef[] = [
     dock: 'right',
     load: () => import('#lib/components/XcPanel.svelte')
   },
-  { id: 'stats', title: () => m.panel_stats(), dock: 'right', load: () => import('#lib/components/StatsPanel.svelte') },
   {
     id: 'export',
     title: () => m.export_menu(),

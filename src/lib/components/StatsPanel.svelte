@@ -1,18 +1,24 @@
 <script lang="ts">
-  import type { StudioState } from '#lib/state/studio.svelte';
+  import { untrack } from 'svelte';
+  import type { AnalysisService } from '#lib/studio/analysisService.svelte';
+  import type { StudioService } from '#lib/studio/studioService.svelte';
+  import type { NeedKind } from '#lib/state/studio.svelte';
   import { phaseColor } from '#lib/ui/colors';
   import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
-  import { useNeed } from '#lib/state/useNeed.svelte';
   import { m } from '#lib/paraglide/messages';
-  import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
-  import { unitPrefs } from '#lib/state/units.svelte';
   import { formatDuration, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 
-  let { studio }: { studio: StudioState } = $props();
+  /** Data comes only from the services. `need` is `ctx.need` of the hosting plugin. */
+  let {
+    studio,
+    analysis,
+    need
+  }: { studio: StudioService; analysis: AnalysisService; need: (kind: NeedKind) => () => void } = $props();
 
-  const stats = $derived(studio.selected?.analysis.stats);
-  const u = $derived(unitPrefs.units);
+  const id = $derived(studio.selectedId() ?? '');
+  const stats = $derived(analysis.stats(id));
+  const u = $derived(studio.units());
   const items = $derived(
     stats
       ? [
@@ -28,13 +34,12 @@
         ]
       : []
   );
-  const agl = $derived(altRefPrefs.ref === 'agl');
-  useNeed(
-    () => studio,
-    'ground',
-    () => agl
-  );
-  const summary = $derived(studio.selected && studio.transitionSummary(studio.selected, agl));
+  const agl = $derived(studio.altRef() === 'agl');
+  $effect(() => {
+    // need() reads and writes studio state, keep that out of this effect's dependencies.
+    if (agl) return untrack(() => need('ground'));
+  });
+  const summary = $derived(analysis.transitions(id, studio.altRef()));
   const alt = (v: number | null) => (v == null ? '–' : formatAlt(v, u));
   const transitionItems = $derived(
     summary && summary.count
