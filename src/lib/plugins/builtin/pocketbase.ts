@@ -94,7 +94,16 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
         await users.authWithPassword(input.identity ?? '', input.password ?? '');
       } else if (method.kind === 'redirect') {
         // Opens a popup, so the browser only allows it inside a user gesture such as a click.
-        await users.authWithOAuth2({ provider: method.id });
+        await users.authWithOAuth2({ provider: method.id }).catch((err) => {
+          // Signup is off, so an unknown email makes PocketBase try to create an account, which only a superuser may.
+          if (err instanceof ClientResponseError && err.status === 403) {
+            throw new Error(
+              `No account matches your ${method.label} email. Ask the server admin to create one with that email.`
+            );
+          }
+
+          throw err;
+        });
       } else {
         throw new Error('This sign in method is not supported.');
       }

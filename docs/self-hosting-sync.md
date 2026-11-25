@@ -22,6 +22,8 @@ PocketBase allows every origin by default. To only allow the app, add `--origins
 
 Open the `users` collection settings in the dashboard, go to Options, enable OAuth2 and add a provider. In the provider's console use `https://<pocketbase-host>/api/oauth2-redirect` as the redirect URL. The app lists the enabled providers next to the password form. The sign in opens a popup, so it must be started by a click.
 
+Public signup is off, so an OAuth sign in only works for an existing account. PocketBase links the provider to the account whose email matches the provider's primary email. Create the account with exactly that email. Otherwise PocketBase tries to create a new account and refuses with "Only superusers can perform this action", which the app shows as a missing account.
+
 ## Club sharing
 
 Every account on the server is a club member. A pilot can share single flights with the club. A shared flight shows its summary (pilot, date, site, glider, duration, distance, altitude, thermals, XC score) and its full track to all signed in accounts, read only. Nothing else leaves the pilot's logbook.
