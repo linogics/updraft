@@ -19,3 +19,6 @@ export async function loadClubFlight(adapter: BackendAdapter, key: string): Prom
   if (!isFlight(data)) throw new Error('The shared flight is not valid.');
   return data as Flight;
 }
+
+/** Studio URL that opens one shared flight read-only. */
+export const clubStudioHref = (key: string) => `/studio?club=${encodeURIComponent(key)}`;

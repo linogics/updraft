@@ -4,6 +4,7 @@ import { loadPlugin, validatePlugin } from '#lib/plugins/core';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import { flightRepository } from '#lib/storage';
 import type { FlightRepository } from '#lib/storage/repository';
+import { loadClub, loadClubFlight } from '#lib/club';
 import { loadSyncConfig, parseSyncConfig, writeOverride, type SyncConfig } from './config';
 import { SyncEngine, type SyncOptions } from './engine.svelte';
 import type { AuthMethod, BackendAdapter, BackendSession } from './types';
@@ -124,6 +125,22 @@ export class SyncClient {
     } catch (e) {
       this.error = message(e);
     }
+  }
+
+  /** True when signed in to a server that has a club list. */
+  get hasClub(): boolean {
+    return !!this.session && !!this.adapter?.club;
+  }
+
+  /** Throws when not signed in. */
+  clubEntries() {
+    if (!this.adapter || !this.session) throw new Error('Sign in to a sync server first.');
+    return loadClub(this.adapter);
+  }
+
+  clubFlight(key: string) {
+    if (!this.adapter || !this.session) throw new Error('Sign in to a sync server first.');
+    return loadClubFlight(this.adapter, key);
   }
 
   syncNow(): Promise<void> {

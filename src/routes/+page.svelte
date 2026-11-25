@@ -5,6 +5,7 @@
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
   import type { FlightSummary } from '#lib/storage';
   import { studioHref } from '#lib/storage/importFlights';
+  import { syncClient } from '#lib/sync/client.svelte';
   import { m } from '#lib/paraglide/messages';
 
   const HELP_URL = 'https://github.com/linogics/updraft/blob/main/docs/help.md';
@@ -43,6 +44,20 @@
                 <strong>{m.home_studio_title()}</strong>
                 <span>{m.home_studio_desc()}</span>
                 {#if loaded}<em>{m.home_no_flight()}</em>{/if}
+              </span>
+            {/if}
+          </li>
+          <li>
+            {#if syncClient.hasClub}
+              <a class="entry" href="/club">
+                <strong>{m.home_club_title()}</strong>
+                <span>{m.home_club_desc()}</span>
+              </a>
+            {:else}
+              <span class="entry disabled" aria-disabled="true">
+                <strong>{m.home_club_title()}</strong>
+                <span>{m.home_club_desc()}</span>
+                <em>{m.home_club_signin()}</em>
               </span>
             {/if}
           </li>

@@ -175,6 +175,16 @@ What syncs:
 
 **Sign out** keeps your data on this device. **Disconnect** forgets the server as well. Signing in with a different account uploads everything on this device to that account and downloads what it has. If two devices change the same record, the newer change wins.
 
+## Club
+
+The club is everyone who signs in to the same sync server. It needs [Sync](#sync). Nothing is shared until you choose to.
+
+- In the logbook, click **Share** on a flight with a track. The button shows **Shared** and the flight goes to the server on the next sync. Click it again to unshare. Flights logged by hand cannot be shared.
+- Other pilots see the flight in the club list with your pilot name, date, site, glider and the figures computed from the track. They can also open the full track in the studio, read-only. Nothing from the club is saved in their logbook.
+- Open **Club** from the start page. **Rankings** show gold, silver and bronze for XC points in your league, free distance, XC speed, longest flight, total airtime, most flights, highest altitude, biggest gain above takeoff, highest above ground, strongest thermal and biggest thermal gain. **Flights** lists everything shared, newest first.
+- Rankings count all time. Per flight categories show each pilot once with their best flight. Your own entries are marked **You**.
+- Unsharing removes the flight from the club list and the rankings at once and nobody can open it any more. Deleting a flight does the same.
+
 ## Settings
 
 ### Units and language

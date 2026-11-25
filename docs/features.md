@@ -93,6 +93,12 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - API keys sync only on request. Layout and plugin list stay per device.
 - A hosted app can preset the server with `/config.json`.
 
+## Club
+
+- Opt-in sharing per flight with everyone on the same sync server, and unsharing again.
+- Club page with all-time rankings (gold, silver, bronze) in eleven categories and a list of shared flights.
+- Shared flights open read-only in the studio, nothing is saved locally.
+
 ## Settings and app
 
 - Units: metric, imperial or aviation preset, or each unit on its own (distance, altitude, vario, speed).

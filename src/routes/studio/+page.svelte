@@ -24,6 +24,7 @@
   import { provideStudioService } from '#lib/studio/studioService.svelte';
   import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
   import { flightRepository } from '#lib/storage';
+  import { syncClient } from '#lib/sync/client.svelte';
 
   const studio = new StudioState();
   let error = $state('');
@@ -34,6 +35,8 @@
   let viewsWidth = $state(1);
   const layout = $derived(studioLayout.value);
   const docked = (d: 'left' | 'right' | 'bottom') => layout.docks[d].length > 0;
+  // Set for a flight opened from the club. It is never saved and the URL keeps pointing at the server copy.
+  const clubKey = page.url.searchParams.get('club');
   const paint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
 
   onMount(async () => {
@@ -54,9 +57,27 @@
     studio.ionAvailable = !!cesiumIonToken;
     studio.terrain = resolveTerrain(scene.terrain, studio.ionAvailable);
 
-    const flights = (await Promise.all(scene.flightIds.map((id) => flightRepository.get(id)))).filter(
-      (f): f is Flight => !!f
-    );
+    let flights: Flight[];
+    if (clubKey) {
+      studio.readOnly = true;
+      await syncClient.init();
+      if (!syncClient.hasClub) {
+        error = m.club_studio_signin();
+        return;
+      }
+
+      try {
+        flights = [await syncClient.clubFlight(clubKey)];
+      } catch (err) {
+        console.error('Could not load club flight', err);
+        error = m.club_studio_not_found();
+        return;
+      }
+    } else {
+      flights = (await Promise.all(scene.flightIds.map((id) => flightRepository.get(id)))).filter(
+        (f): f is Flight => !!f
+      );
+    }
 
     if (!flights.length) {
       error = m.studio_none_found();
@@ -72,7 +93,7 @@
       colors: scene.colors
     });
     step = 2;
-    await studio.loadCameraTracks();
+    if (!clubKey) await studio.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
     if (studio.multiDay) studioLayout.setTab('timeline', false);
     loaded = true;
@@ -145,7 +166,11 @@
       lighting: studio.lighting,
       labels: studio.labels
     });
-    void goto(`?${query}`, { shallow: true, replace: true, reset: false });
+    void goto(`?${query}${clubKey ? `&club=${encodeURIComponent(clubKey)}` : ''}`, {
+      shallow: true,
+      replace: true,
+      reset: false
+    });
   });
 
   function onKey(e: KeyboardEvent) {
