@@ -5,11 +5,14 @@
   import Sync from '#lib/components/logbook/Sync.svelte';
   import BarChart from '#lib/components/logbook/BarChart.svelte';
   import Dropzone from '#lib/components/Dropzone.svelte';
+  import PanelColumn from '#lib/components/panels/PanelColumn.svelte';
+  import { panelStatus } from '#lib/components/studio/panelActions.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
   import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from '#lib/domain/logbook';
   import { scoreFlight } from '#lib/xc/score';
   import type { XcScore } from '#lib/xc/types';
   import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
+  import { logbookLayout } from '#lib/state/logbookLayout.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { syncClient } from '#lib/sync/client.svelte';
@@ -75,6 +78,16 @@
     site: () => m.logbook_by_site(),
     glider: () => m.logbook_by_glider()
   };
+
+  const COLUMN_LABELS = { main: m.logbook_column_main(), side: m.logbook_column_side() };
+  const panels = $derived([
+    ...(flights.length ? [{ id: 'charts', title: () => m.logbook_charts(), body: chartsBody }] : []),
+    { id: 'flights', title: () => m.logbook_col_flights(), body: flightsBody },
+    ...(flights.length ? [{ id: 'breakdown', title: () => m.logbook_breakdown(), body: breakdownBody }] : []),
+    { id: 'upload', title: () => m.logbook_upload(), body: uploadBody },
+    { id: 'sync', title: () => m.sync_heading(), body: syncBody },
+    { id: 'backup', title: () => m.backup_heading(), body: backupBody }
+  ]);
 
   const hours = (seconds: number) => formatNumber(seconds / 3600, seconds < 36_000 ? 1 : 0);
   const mins = (min: number) => formatAirtime(min * 60_000);
@@ -206,76 +219,49 @@
   onDestroy(() => xcRun++);
 </script>
 
-<div class="logbook">
-  <header>
-    <h1>{m.home_logbook_title()}</h1>
-    <dl class="readouts" aria-busy={!ready}>
-      <div>
-        <dt>{m.home_hours_flown()}</dt>
-        <dd>{ready ? hours(sum.seconds) : '–'}</dd>
-      </div>
-      <div>
-        <dt>{m.home_flights()}</dt>
-        <dd>{ready ? sum.flights : '–'}</dd>
-      </div>
-      <div>
-        <dt>{m.logbook_xc_points()}</dt>
-        <dd>{ready ? formatNumber(xcTotal, 2) : '–'}</dd>
-      </div>
-      <div>
-        <dt>{m.logbook_longest()}</dt>
-        <dd>{ready && longest ? formatAirtime(longest) : '–'}</dd>
-      </div>
-      <div>
-        <dt>{m.logbook_highest()}</dt>
-        <dd>{ready && highest ? formatAlt(highest, u) : '–'}</dd>
-      </div>
-    </dl>
-  </header>
+{#snippet chartsBody()}
+  <div class="charts">
+    <BarChart bars={months} label={m.home_bars_label()} />
+    <BarChart bars={years} label={m.logbook_hours_per_year()} />
+  </div>
+{/snippet}
 
-  {#if flights.length}
-    <section class="charts">
-      <BarChart bars={months} label={m.home_bars_label()} />
-      <BarChart bars={years} label={m.logbook_hours_per_year()} />
-    </section>
+{#snippet breakdownBody()}
+  <div class="head">
+    <div class="seg" role="group" aria-label={m.logbook_group_by()}>
+      {#each ['year', 'site', 'glider'] as const as k (k)}
+        <button class:on={by === k} aria-pressed={by === k} onclick={() => (by = k)}>{BY_LABELS[k]()}</button>
+      {/each}
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>{BY_LABELS[by]()}</th><th class="num">{m.logbook_col_flights()}</th><th class="num">
+          {m.logbook_col_hours()}
+        </th><th class="num">{m.logbook_col_points()}</th><th class="num hide">{m.logbook_col_longest()}</th><th
+          class="num hide"
+        >
+          {m.export_row_max_altitude()}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each rows as r (r.label)}
+        <tr>
+          <td>{r.label}</td>
+          <td class="num">{r.flights}</td>
+          <td class="num">{formatNumber(r.hours, 1)}</td>
+          <td class="num">{formatNumber(r.points, 2)}</td>
+          <td class="num hide">{mins(r.longestMin)}</td>
+          <td class="num hide">{r.maxAlt === undefined ? '–' : formatAlt(r.maxAlt, u)}</td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+{/snippet}
 
-    <section class="deferred breakdown card">
-      <div class="head">
-        <h2>{m.logbook_breakdown()}</h2>
-        <div class="seg" role="group" aria-label={m.logbook_group_by()}>
-          {#each ['year', 'site', 'glider'] as const as k (k)}
-            <button class:on={by === k} aria-pressed={by === k} onclick={() => (by = k)}>{BY_LABELS[k]()}</button>
-          {/each}
-        </div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>{BY_LABELS[by]()}</th><th class="num">{m.logbook_col_flights()}</th><th class="num">
-              {m.logbook_col_hours()}
-            </th><th class="num">{m.logbook_col_points()}</th><th class="num hide">{m.logbook_col_longest()}</th><th
-              class="num hide"
-            >
-              {m.export_row_max_altitude()}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each rows as r (r.label)}
-            <tr>
-              <td>{r.label}</td>
-              <td class="num">{r.flights}</td>
-              <td class="num">{formatNumber(r.hours, 1)}</td>
-              <td class="num">{formatNumber(r.points, 2)}</td>
-              <td class="num hide">{mins(r.longestMin)}</td>
-              <td class="num hide">{r.maxAlt === undefined ? '–' : formatAlt(r.maxAlt, u)}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </section>
-  {/if}
-
+{#snippet uploadBody()}
   <Dropzone onfiles={importFiles} {busy} />
   {#if errors.length}
     <ul class="errors">
@@ -285,48 +271,49 @@
   {#if ready && !flights.length}
     <p class="muted">{m.logbook_no_igc()} <button onclick={loadDemo}>{m.logbook_load_demo()}</button></p>
   {/if}
+{/snippet}
 
-  <section class="card">
-    <div class="head">
-      <h2>{m.logbook_col_flights()}</h2>
+{#snippet flightsBody()}
+  <div class="head">
+    <div class="actions">
+      <label class="league">
+        {m.xc_league()}
+        <select value={xcPrefs.league} onchange={(e) => setLeague(e.currentTarget.value as XcLeague)}>
+          {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+        </select>
+      </label>
+      {#if ready && scored < todo.length}<span class="muted">
+          {m.logbook_scoring({ scored, total: todo.length })}
+        </span>{/if}
+      <button onclick={() => (adding = !adding)} aria-expanded={adding}>{m.logbook_add_manual()}</button>
+      <button disabled={!selected.length} onclick={() => openStudio(selected)}>
+        {m.logbook_studio_selected({ count: selected.length })}
+      </button>
+    </div>
+  </div>
+
+  {#if adding}
+    <form class="form" onsubmit={addManual}>
+      <label>{m.export_row_date()} <input type="date" required bind:value={manual.date} /></label>
+      <label>
+        {m.logbook_duration_min()} <input type="number" min="1" required bind:value={manual.durationMin} />
+      </label>
+      <label>{m.export_row_pilot()} <input bind:value={manual.pilot} /></label>
+      <label>{m.export_row_site()} <input bind:value={manual.site} /></label>
+      <label>{m.export_row_glider()} <input bind:value={manual.glider} /></label>
+      <label class="wide">{m.logbook_col_notes()} <textarea rows="2" bind:value={manual.notes}></textarea></label>
       <div class="actions">
-        <label class="league">
-          {m.xc_league()}
-          <select value={xcPrefs.league} onchange={(e) => setLeague(e.currentTarget.value as XcLeague)}>
-            {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
-          </select>
-        </label>
-        {#if ready && scored < todo.length}<span class="muted">
-            {m.logbook_scoring({ scored, total: todo.length })}
-          </span>{/if}
-        <button onclick={() => (adding = !adding)} aria-expanded={adding}>{m.logbook_add_manual()}</button>
-        <button disabled={!selected.length} onclick={() => openStudio(selected)}>
-          {m.logbook_studio_selected({ count: selected.length })}
+        <button type="submit">{m.common_save()}</button><button type="button" onclick={() => (adding = false)}>
+          {m.common_cancel()}
         </button>
       </div>
-    </div>
+    </form>
+  {/if}
 
-    {#if adding}
-      <form class="form" onsubmit={addManual}>
-        <label>{m.export_row_date()} <input type="date" required bind:value={manual.date} /></label>
-        <label>
-          {m.logbook_duration_min()} <input type="number" min="1" required bind:value={manual.durationMin} />
-        </label>
-        <label>{m.export_row_pilot()} <input bind:value={manual.pilot} /></label>
-        <label>{m.export_row_site()} <input bind:value={manual.site} /></label>
-        <label>{m.export_row_glider()} <input bind:value={manual.glider} /></label>
-        <label class="wide">{m.logbook_col_notes()} <textarea rows="2" bind:value={manual.notes}></textarea></label>
-        <div class="actions">
-          <button type="submit">{m.common_save()}</button><button type="button" onclick={() => (adding = false)}>
-            {m.common_cancel()}
-          </button>
-        </div>
-      </form>
-    {/if}
+  <p class="errors" role="alert">{shareError}</p>
 
-    <p class="errors" role="alert">{shareError}</p>
-
-    {#if flights.length}
+  {#if flights.length}
+    <div class="scroll">
       <table>
         <thead>
           <tr>
@@ -420,13 +407,50 @@
           {/each}
         </tbody>
       </table>
-    {/if}
-  </section>
+    </div>
+  {/if}
+{/snippet}
 
-  <div class="deferred backup">
-    <Sync />
-    <Backup ondone={refresh} />
+{#snippet syncBody()}
+  <Sync />
+{/snippet}
+
+{#snippet backupBody()}
+  <Backup ondone={refresh} />
+{/snippet}
+
+<div class="logbook">
+  <header>
+    <h1>{m.home_logbook_title()}</h1>
+    <dl class="readouts" aria-busy={!ready}>
+      <div>
+        <dt>{m.home_hours_flown()}</dt>
+        <dd>{ready ? hours(sum.seconds) : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.home_flights()}</dt>
+        <dd>{ready ? sum.flights : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.logbook_xc_points()}</dt>
+        <dd>{ready ? formatNumber(xcTotal, 2) : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.logbook_longest()}</dt>
+        <dd>{ready && longest ? formatAirtime(longest) : '–'}</dd>
+      </div>
+      <div>
+        <dt>{m.logbook_highest()}</dt>
+        <dd>{ready && highest ? formatAlt(highest, u) : '–'}</dd>
+      </div>
+    </dl>
+  </header>
+
+  <div class="columns">
+    <PanelColumn layout={logbookLayout} column="main" label={COLUMN_LABELS.main} labels={COLUMN_LABELS} {panels} />
+    <PanelColumn layout={logbookLayout} column="side" label={COLUMN_LABELS.side} labels={COLUMN_LABELS} {panels} />
   </div>
+  <p class="sr" role="status">{panelStatus.text}</p>
 </div>
 
 <style>
@@ -434,17 +458,15 @@
     display: grid;
     gap: 24px;
   }
-  /* Below the fold: skip layout and paint until near the viewport. The size is remembered once rendered. */
-  .deferred {
-    content-visibility: auto;
+  /* The wide table scrolls inside its panel instead of running under the side column. */
+  .scroll {
+    overflow-x: auto;
   }
-  .breakdown {
-    contain-intrinsic-size: auto none auto 340px;
-  }
-  .backup {
+  .columns {
     display: grid;
-    gap: 24px;
-    contain-intrinsic-size: auto none auto 580px;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: 16px;
+    align-items: start;
   }
   header {
     display: flex;
@@ -456,10 +478,6 @@
   h1 {
     margin: 0;
     font: 600 32px/1.1 var(--display);
-  }
-  h2 {
-    margin: 0;
-    font: 600 20px/1 var(--display);
   }
   .readouts {
     display: flex;
@@ -601,6 +619,15 @@
     padding: 4px 8px;
     width: 100%;
     min-width: 0;
+  }
+  @media (max-width: 800px) {
+    /* Same breakpoint as the studio: one column, the side column first. */
+    .columns {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .columns > :global([data-dock='side']) {
+      order: -1;
+    }
   }
   @media (max-width: 700px) {
     .charts {

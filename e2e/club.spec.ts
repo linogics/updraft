@@ -89,6 +89,7 @@ async function mockServer(page: Page) {
 }
 
 async function signIn(page: Page) {
+  await page.getByRole('button', { name: 'Sync', exact: true }).click();
   const sync = page.getByRole('region', { name: 'Sync' });
   await sync.getByLabel('Server address').fill(SERVER);
   await sync.getByRole('button', { name: 'Connect' }).click();

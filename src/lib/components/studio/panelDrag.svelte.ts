@@ -22,7 +22,7 @@ interface Marker {
 export const drag = $state<{
   id: string | null;
   /** Dock under the pointer and the index the panel would take there. */
-  dock: Dock | null;
+  dock: string | null;
   index: number;
   marker: Marker | null;
   /** Where the lifted item was grabbed (viewport rect) and how far the pointer moved since. */
@@ -38,23 +38,46 @@ export function liftStyle(id: string): string | undefined {
   return `left:${left}px;top:${top}px;width:${width}px;height:${height}px;translate:${drag.dx}px ${drag.dy}px`;
 }
 
-/** Starts a pointer drag of panel `id` from its handle. Moves once on release through `movePanel`. */
-export function startDrag(e: PointerEvent, id: string) {
+/** What a drag needs to know about the panels it moves. The studio is the default, pages bring their own. */
+export interface DragTarget {
+  title: string;
+  /** A pinned panel only reorders inside its own dock. */
+  pinned?: boolean;
+  current(): { dock: string; index: number } | undefined;
+  drop(dock: string, index: number): void;
+  /** Items of this dock lie side by side. */
+  horizontal?(dock: string): boolean;
+}
+
+function studioTarget(id: string): DragTarget {
+  return {
+    title: panelById(id)?.title() ?? id,
+    pinned: registry.pinned.includes(id),
+    current() {
+      const dock = (['left', 'right', 'bottom'] as const).find((d) => studioLayout.value.docks[d].includes(id));
+      return dock && { dock, index: studioLayout.value.docks[dock].indexOf(id) };
+    },
+    drop: (dock, index) => void movePanel(id, dock as Dock, index),
+    horizontal: (dock) => dock === 'bottom'
+  };
+}
+
+/** Starts a pointer drag of panel `id` from its handle. Drops once on release through `target.drop`. */
+export function startDrag(e: PointerEvent, id: string, target: DragTarget = studioTarget(id)) {
   if (drag.id || !e.isPrimary || e.button !== 0) return;
   const handle = e.currentTarget as HTMLElement;
   const item = handle.closest<HTMLElement>('[data-panel]');
   if (!item) return;
   const { pointerId, clientX: startX, clientY: startY } = e;
   const box = item.getBoundingClientRect();
-  const title = panelById(id)?.title() ?? id;
+  const { title, pinned } = target;
   let x = startX;
   let y = startY;
   let active = false;
   let list: HTMLElement | null = null;
   let raf = 0;
   let last = 0;
-  const pinned = registry.pinned.includes(id);
-  const currentDock = (['left', 'right', 'bottom'] as const).find((d) => studioLayout.value.docks[d].includes(id));
+  const currentDock = target.current()?.dock;
 
   /** Finds the dock under the pointer, the slot inside it from layout midpoints, and the marker for it. */
   function update() {
@@ -63,7 +86,7 @@ export function startDrag(e: PointerEvent, id: string) {
     const hit = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-dock]');
     // A pinned panel only reorders inside its own dock.
     const dockEl = pinned && hit?.dataset.dock !== currentDock ? null : hit;
-    const dock = dockEl?.dataset.dock as Dock | undefined;
+    const dock = dockEl?.dataset.dock;
     list = dockEl
       ? dockEl.matches('[data-items]')
         ? dockEl
@@ -75,7 +98,7 @@ export function startDrag(e: PointerEvent, id: string) {
     const items = list
       ? [...list.querySelectorAll<HTMLElement>(':scope > [data-panel]')].filter((i) => i !== item)
       : [];
-    const horizontal = dock === 'bottom';
+    const horizontal = target.horizontal?.(dock) ?? false;
     const r = list?.getBoundingClientRect();
     const pos =
       list && r
@@ -87,7 +110,7 @@ export function startDrag(e: PointerEvent, id: string) {
       items.map((i) => (horizontal ? i.offsetLeft + i.offsetWidth / 2 : i.offsetTop + i.offsetHeight / 2)),
       pos
     );
-    if (!list || !r || (dock === currentDock && drag.index === studioLayout.value.docks[dock].indexOf(id))) return;
+    if (!list || !r || (dock === currentDock && drag.index === target.current()?.index)) return;
     const prev = items[drag.index - 1]?.getBoundingClientRect();
     const next = items[drag.index]?.getBoundingClientRect();
     if (horizontal) {
@@ -106,12 +129,16 @@ export function startDrag(e: PointerEvent, id: string) {
     const dt = Math.min(now - last, 50);
     last = now;
     if (list) {
-      const r = list.getBoundingClientRect();
+      // A list that does not scroll itself (a page column) hands over to the viewport.
+      const own = list.scrollHeight > list.clientHeight;
+      const r = own ? list.getBoundingClientRect() : { top: 0, bottom: innerHeight, height: innerHeight };
       const zone = Math.min(box.height, r.height / 3);
       const depth = y < r.top + zone ? y - (r.top + zone) : y > r.bottom - zone ? y - (r.bottom - zone) : 0;
-      const before = list.scrollTop;
-      if (depth) list.scrollTop += Math.sign(depth) * Math.min(1.5, Math.abs(depth) / zone) * SCROLL_SPEED * dt;
-      if (list.scrollTop !== before) update();
+      const step = Math.sign(depth) * Math.min(1.5, Math.abs(depth) / zone) * SCROLL_SPEED * dt;
+      const before = own ? list.scrollTop : scrollY;
+      if (depth && own) list.scrollTop += step;
+      else if (depth) scrollBy(0, step);
+      if ((own ? list.scrollTop : scrollY) !== before) update();
     }
 
     raf = requestAnimationFrame(frame);
@@ -151,7 +178,7 @@ export function startDrag(e: PointerEvent, id: string) {
     setTimeout(() => document.removeEventListener('click', swallow, true));
     if (!drop) announce(m.panel_drag_cancelled({ title }));
     // No marker in the own dock means the panel would stay in its slot. Clear the lift first, then move once.
-    else if (dock && (marker || dock !== currentDock)) void tick().then(() => movePanel(id, dock, index));
+    else if (dock && (marker || dock !== currentDock)) void tick().then(() => target.drop(dock, index));
   }
 
   const swallow = (c: Event) => c.stopPropagation();
