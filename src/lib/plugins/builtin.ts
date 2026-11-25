@@ -13,18 +13,32 @@ export interface BuiltinPlugin {
   enable?: (on: boolean) => void;
   startsOff?: boolean;
   hosts?: PluginHost[];
-  /** Built-in panel id this one follows in the default order. Appended when missing. */
-  after?: string;
+  /** Panel id this one follows in the default order, null puts it first. Appended when missing. */
+  after?: string | null;
   /** Module whose default export is a studio plugin. */
   load: () => Promise<{ default: unknown }>;
 }
 
 export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
   {
+    id: 'updraft/pilots',
+    title: () => m.pilots_heading(),
+    dock: 'left',
+    after: null,
+    load: () => import('./builtin/pilots')
+  },
+  {
+    id: 'updraft/climbs',
+    title: () => m.climbs_heading(),
+    dock: 'left',
+    after: 'plugin:updraft/pilots',
+    load: () => import('./builtin/climbs')
+  },
+  {
     id: 'updraft/stats',
     title: () => m.panel_stats(),
     dock: 'right',
-    after: 'thermals',
+    after: 'plugin:updraft/climbs',
     load: () => import('./builtin/stats')
   },
   {
@@ -34,6 +48,20 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     collapsed: true,
     after: 'export',
     load: () => import('./builtin/units')
+  },
+  {
+    id: 'updraft/altitude',
+    title: () => m.studio_tab_altitude(),
+    dock: 'bottom',
+    pinned: true,
+    load: () => import('./builtin/altitude')
+  },
+  {
+    id: 'updraft/timeline',
+    title: () => m.timeline_label(),
+    dock: 'bottom',
+    pinned: true,
+    load: () => import('./builtin/timeline')
   }
 ];
 

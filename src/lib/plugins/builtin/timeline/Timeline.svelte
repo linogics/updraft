@@ -6,8 +6,8 @@
   import type { LoadedFlight, StudioState } from '#lib/state/studio.svelte';
   import { SNAP_PX } from '#lib/ui/keyLanes';
   import { formatClock, formatDuration } from '#lib/ui/format';
-  import CameraLabels from './CameraLabels.svelte';
-  import CameraLanes from './CameraLanes.svelte';
+  import CameraLabels from '#lib/components/CameraLabels.svelte';
+  import CameraLanes from '#lib/components/CameraLanes.svelte';
 
   let { studio }: { studio: StudioState } = $props();
 

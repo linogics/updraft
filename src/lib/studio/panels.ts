@@ -44,18 +44,6 @@ export interface PanelModule {
 
 export const BUILTIN_PANELS: PanelDef[] = [
   {
-    id: 'pilots',
-    title: () => m.pilots_heading(),
-    dock: 'left',
-    load: () => import('#lib/components/PilotList.svelte')
-  },
-  {
-    id: 'thermals',
-    title: () => m.climbs_heading(),
-    dock: 'left',
-    load: () => import('#lib/components/ThermalList.svelte')
-  },
-  {
     id: 'track',
     title: () => m.track_menu(),
     dock: 'right',
@@ -105,19 +93,5 @@ export const BUILTIN_PANELS: PanelDef[] = [
     title: () => m.panel_ion(),
     dock: 'right',
     load: () => import('#lib/components/IonPanel.svelte')
-  },
-  {
-    id: 'altitude',
-    pinned: true,
-    title: () => m.studio_tab_altitude(),
-    dock: 'bottom',
-    load: () => import('#lib/components/AltitudeChart.svelte')
-  },
-  {
-    id: 'timeline',
-    pinned: true,
-    title: () => m.timeline_label(),
-    dock: 'bottom',
-    load: () => import('#lib/components/Timeline.svelte')
   }
 ];

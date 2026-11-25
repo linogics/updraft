@@ -42,7 +42,7 @@ const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
 const BUILTINS: PanelDef[] = [...BUILTIN_PANELS];
 for (const b of BUILTIN_PLUGINS.filter((b) => b.hosts?.includes('studio') ?? true)) {
   const at = BUILTINS.findIndex((p) => p.id === b.after);
-  BUILTINS.splice(at < 0 ? BUILTINS.length : at + 1, 0, builtinPanel(b));
+  BUILTINS.splice(b.after === null ? 0 : at < 0 ? BUILTINS.length : at + 1, 0, builtinPanel(b));
 }
 
 function pluginPanel(e: PluginEntry): PanelDef {

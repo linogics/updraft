@@ -186,7 +186,7 @@ test('hidden XC and Pilots panels cost nothing, showing XC starts scoring', asyn
   });
   await page.addInitScript(() => {
     if (!localStorage.getItem('studioLayout')) {
-      localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc', 'pilots'] }));
+      localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc', 'plugin:updraft/pilots'] }));
     }
   });
   await openDemoStudio(page);
