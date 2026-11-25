@@ -18,6 +18,8 @@ export interface PanelDef {
   title: () => string;
   /** Dock the panel starts in. */
   dock: Dock;
+  /** Stays in its default dock, it can be hidden and reordered there but not moved to another dock. */
+  pinned?: boolean;
   load: () => Promise<PanelModule>;
   /** Cache key of the loaded module, defaults to the id. A plugin that is removed and added again from another URL gets a new one. */
   key?: string;
@@ -46,12 +48,14 @@ export const BUILTIN_PANELS: PanelDef[] = [
   { id: 'stats', title: () => m.panel_stats(), dock: 'right', load: () => import('#lib/components/StatsPanel.svelte') },
   {
     id: 'altitude',
+    pinned: true,
     title: () => m.studio_tab_altitude(),
     dock: 'bottom',
     load: () => import('#lib/components/AltitudeChart.svelte')
   },
   {
     id: 'timeline',
+    pinned: true,
     title: () => m.timeline_label(),
     dock: 'bottom',
     load: () => import('#lib/components/Timeline.svelte')

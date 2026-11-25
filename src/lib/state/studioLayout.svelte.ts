@@ -16,16 +16,16 @@ const KEY = 'studioLayout';
 // Storage can throw (private mode, blocked site data). The layout then starts at its defaults.
 function load(): StudioLayoutValue {
   try {
-    return parseStudioLayout(JSON.parse(localStorage.getItem(KEY) ?? 'null'), registry.defaults);
+    return parseStudioLayout(JSON.parse(localStorage.getItem(KEY) ?? 'null'), registry.defaults, registry.pinned);
   } catch {
-    return parseStudioLayout(null, registry.defaults);
+    return parseStudioLayout(null, registry.defaults, registry.pinned);
   }
 }
 
 /** Studio dock layout, kept in this browser (not in the shareable scene URL). */
 class StudioLayout {
   value = $state<StudioLayoutValue>(
-    typeof localStorage === 'undefined' ? parseStudioLayout(null, registry.defaults) : load()
+    typeof localStorage === 'undefined' ? parseStudioLayout(null, registry.defaults, registry.pinned) : load()
   );
   /** Bottom tab picked for this session only, for example the timeline when flights span several days. */
   private sessionTab = $state<string | null>(null);
@@ -38,6 +38,8 @@ class StudioLayout {
   }
 
   move(id: string, dock: Dock, index: number) {
+    const from = (['left', 'right', 'bottom'] as const).find((d) => this.value.docks[d].includes(id));
+    if (from && from !== dock && registry.pinned.includes(id)) return;
     this.save(moveInLayout(this.value, id, dock, index));
   }
 
@@ -79,7 +81,7 @@ class StudioLayout {
   restoreDefaults() {
     this.sessionTab = null;
     this.lastDock.clear();
-    this.save(parseStudioLayout(null, registry.defaults));
+    this.save(parseStudioLayout(null, registry.defaults, registry.pinned));
   }
 
   private save(next: StudioLayoutValue) {

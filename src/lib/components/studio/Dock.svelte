@@ -43,7 +43,7 @@
     <button type="button" disabled={i === panels.length - 1} onclick={() => movePanel(p.id, dock, i + 1)}>
       {forward}
     </button>
-    {#each DOCKS.filter((d) => d !== dock) as d (d)}
+    {#each p.pinned ? [] : DOCKS.filter((d) => d !== dock) as d (d)}
       <button type="button" onclick={() => movePanel(p.id, d, Infinity)}>
         {m.panel_move_to_dock({ dock: DOCK_LABELS[d]() })}
       </button>

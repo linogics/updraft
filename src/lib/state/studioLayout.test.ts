@@ -34,6 +34,17 @@ describe('parseStudioLayout', () => {
     expect(v.hidden).toEqual(['b']);
     expect(v.tab).toBe('d');
   });
+
+  it('puts a pinned id stored in another dock back to the end of its default dock', () => {
+    const v = parseStudioLayout({ docks: { left: ['a', 'd'], right: ['c'], bottom: ['e'] } }, defaults, ['d']);
+    expect(v.docks).toEqual({ left: ['a', 'b'], right: ['c'], bottom: ['e', 'd'] });
+  });
+
+  it('keeps a hidden pinned id hidden', () => {
+    const v = parseStudioLayout({ docks: { left: ['a', 'b'] }, hidden: ['d'] }, defaults, ['d']);
+    expect(v.hidden).toEqual(['d']);
+    expect(v.docks.left).toEqual(['a', 'b']);
+  });
 });
 
 describe('layout moves', () => {
