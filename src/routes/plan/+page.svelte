@@ -6,8 +6,8 @@
   import { m } from '#lib/paraglide/messages';
   import { XC_TYPE_LABELS } from '#lib/xc/labels';
   import PlanMap from '#lib/components/PlanMap.svelte';
-  import AirspaceControls from '#lib/components/AirspaceControls.svelte';
-  import ThermalOverlayControls from '#lib/components/ThermalOverlayControls.svelte';
+  import AirspaceControls from '#lib/plugins/builtin/airspace/AirspaceControls.svelte';
+  import ThermalOverlayControls from '#lib/plugins/builtin/thermal-overlay/ThermalOverlayControls.svelte';
   import { distance, type LatLon } from '#lib/domain/geo';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';

@@ -1,8 +1,5 @@
 import type { Component } from 'svelte';
 import { m } from '#lib/paraglide/messages';
-import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 import type { StudioState } from '#lib/state/studio.svelte';
 
 export type Dock = 'left' | 'right' | 'bottom';
@@ -66,31 +63,6 @@ export const BUILTIN_PANELS: PanelDef[] = [
     title: () => m.panel_scene(),
     dock: 'right',
     load: () => import('#lib/components/ScenePanel.svelte')
-  },
-  {
-    id: 'xc',
-    enable: (on) => xcPrefs.setEnabled(on),
-    startsOff: true,
-    collapsed: true,
-    title: () => m.panel_xc(),
-    dock: 'right',
-    load: () => import('#lib/components/XcPanel.svelte')
-  },
-  {
-    id: 'airspace',
-    enable: (on) => airspacePrefs.set({ show: on }),
-    collapsed: true,
-    title: () => m.panel_airspace(),
-    dock: 'right',
-    load: () => import('#lib/components/AirspacePanel.svelte')
-  },
-  {
-    id: 'thermal-overlay',
-    enable: (on) => thermalOverlayPrefs.set({ enabled: on }),
-    collapsed: true,
-    title: () => m.panel_thermal_overlay(),
-    dock: 'right',
-    load: () => import('#lib/components/ThermalOverlayPanel.svelte')
   },
   {
     id: 'export',

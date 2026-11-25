@@ -1,4 +1,7 @@
 import { m } from '#lib/paraglide/messages';
+import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 import type { PluginDock, PluginHost } from '#lib/studio/plugins';
 
 /** A plugin that ships with the app. The metadata is here so a hidden one is never imported. */
@@ -26,6 +29,34 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     dock: 'right',
     after: 'thermals',
     load: () => import('./builtin/stats')
+  },
+  {
+    id: 'updraft/xc',
+    title: () => m.panel_xc(),
+    dock: 'right',
+    collapsed: true,
+    enable: (on) => xcPrefs.setEnabled(on),
+    startsOff: true,
+    after: 'scene',
+    load: () => import('./builtin/xc')
+  },
+  {
+    id: 'updraft/airspace',
+    title: () => m.panel_airspace(),
+    dock: 'right',
+    collapsed: true,
+    enable: (on) => airspacePrefs.set({ show: on }),
+    after: 'plugin:updraft/xc',
+    load: () => import('./builtin/airspace')
+  },
+  {
+    id: 'updraft/thermal-overlay',
+    title: () => m.panel_thermal_overlay(),
+    dock: 'right',
+    collapsed: true,
+    enable: (on) => thermalOverlayPrefs.set({ enabled: on }),
+    after: 'plugin:updraft/airspace',
+    load: () => import('./builtin/thermal-overlay')
   },
   {
     id: 'updraft/units',

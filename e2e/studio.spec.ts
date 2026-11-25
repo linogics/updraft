@@ -141,7 +141,7 @@ test('the Stats plugin follows the selected pilot', async ({ page }) => {
 
 /** Hides the XC panel, so scoring neither moves the panels nor competes for the CPU during a drag. */
 const withoutXc = (page: Page) =>
-  page.addInitScript(() => localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc'] })));
+  page.addInitScript(() => localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['plugin:updraft/xc'] })));
 
 test('dragging Stats by its handle into the left dock moves it there', async ({ page }) => {
   await withoutXc(page);
@@ -186,7 +186,7 @@ test('hidden XC and Pilots panels cost nothing, showing XC starts scoring', asyn
   });
   await page.addInitScript(() => {
     if (!localStorage.getItem('studioLayout')) {
-      localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc', 'pilots'] }));
+      localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['plugin:updraft/xc', 'pilots'] }));
     }
   });
   await openDemoStudio(page);
