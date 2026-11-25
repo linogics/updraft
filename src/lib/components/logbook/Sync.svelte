@@ -61,7 +61,7 @@
   }
 </script>
 
-<section aria-labelledby="sync-heading">
+<section class="card" aria-labelledby="sync-heading">
   <h2 id="sync-heading">{m.sync_heading()}</h2>
 
   {#if !client.ready}

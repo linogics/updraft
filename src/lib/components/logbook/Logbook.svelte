@@ -239,7 +239,7 @@
       <BarChart bars={years} label={m.logbook_hours_per_year()} />
     </section>
 
-    <section class="deferred breakdown">
+    <section class="deferred breakdown card">
       <div class="head">
         <h2>{m.logbook_breakdown()}</h2>
         <div class="seg" role="group" aria-label={m.logbook_group_by()}>
@@ -286,7 +286,7 @@
     <p class="muted">{m.logbook_no_igc()} <button onclick={loadDemo}>{m.logbook_load_demo()}</button></p>
   {/if}
 
-  <section>
+  <section class="card">
     <div class="head">
       <h2>{m.logbook_col_flights()}</h2>
       <div class="actions">
@@ -439,12 +439,12 @@
     content-visibility: auto;
   }
   .breakdown {
-    contain-intrinsic-size: auto none auto 300px;
+    contain-intrinsic-size: auto none auto 340px;
   }
   .backup {
     display: grid;
     gap: 24px;
-    contain-intrinsic-size: auto none auto 520px;
+    contain-intrinsic-size: auto none auto 580px;
   }
   header {
     display: flex;
@@ -536,6 +536,10 @@
   td {
     padding: 6px 8px;
     border-bottom: 1px solid var(--border);
+  }
+  /* The card edge already closes the table. */
+  tbody tr:last-child > * {
+    border-bottom: 0;
   }
   td a {
     color: var(--text);

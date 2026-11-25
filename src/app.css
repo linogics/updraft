@@ -87,6 +87,20 @@ h3 {
   }
 }
 
+/* Boxed page section, same look as the logbook charts. */
+.card {
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 10px;
+  }
+}
+
 /* Master on/off switch of a feature. Its other controls sit in a fieldset that greys out while it is off. */
 .switch {
   display: flex;
