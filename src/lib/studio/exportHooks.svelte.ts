@@ -1,19 +1,19 @@
 import { SvelteSet } from 'svelte/reactivity';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { pluginPanelId } from './registry.svelte';
-import type { Plugin } from './plugins';
+import type { StudioPlugin } from './plugins';
 
 /** Plugins whose panel is mounted right now. Hidden plugins are not loaded and do not take part in exports. */
-export const mountedPlugins = new SvelteSet<Plugin>();
+export const mountedPlugins = new SvelteSet<StudioPlugin>();
 
 /**
  * Mounted plugins that can draw into exports, in layout order (left, right, bottom dock, then position in the dock).
  * Reactive, so a dialog can list them.
  */
-export function exportPlugins(): Plugin[] {
+export function exportPlugins(): StudioPlugin[] {
   const { docks } = studioLayout.value;
   const order = [...docks.left, ...docks.right, ...docks.bottom];
-  const rank = (p: Plugin) => order.indexOf(pluginPanelId(p.id));
+  const rank = (p: StudioPlugin) => order.indexOf(pluginPanelId(p.id));
   return [...mountedPlugins].filter((p) => p.drawExport).sort((a, b) => rank(a) - rank(b));
 }
 
@@ -26,10 +26,10 @@ export function exportPlugins(): Plugin[] {
  */
 export function paintPlugins(
   ctx: CanvasRenderingContext2D,
-  plugins: readonly Plugin[],
+  plugins: readonly StudioPlugin[],
   time: number,
   failed: Set<string>,
-  onError: (plugin: Plugin, err: unknown) => void
+  onError: (plugin: StudioPlugin, err: unknown) => void
 ) {
   for (const plugin of plugins) {
     if (!plugin.drawExport || failed.has(plugin.id)) continue;

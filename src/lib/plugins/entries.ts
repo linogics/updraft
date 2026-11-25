@@ -1,26 +1,14 @@
-export type PluginDock = 'left' | 'right' | 'bottom';
+import { PLUGIN_ID, PLUGIN_KINDS, pluginUrl, type PluginKind } from './core';
+import { PLUGIN_DOCKS, type PluginDock } from '#lib/studio/plugins';
 
-/** What the studio knows about a plugin without importing it, so a hidden plugin costs nothing. */
+/** What the app knows about a plugin without importing it, so a hidden plugin costs nothing. */
 export interface PluginEntry {
   url: string;
   id: string;
   name: string;
-  dock: PluginDock;
-}
-
-export const PLUGIN_ID = /^[a-z0-9-]{1,40}$/;
-export const PLUGIN_DOCKS: readonly PluginDock[] = ['left', 'right', 'bottom'];
-
-/** Only http(s) pages can be imported. Returns the normalised URL or null. */
-export function pluginUrl(raw: unknown): string | null {
-  if (typeof raw !== 'string') return null;
-
-  try {
-    const url = new URL(raw.trim());
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
-  } catch {
-    return null;
-  }
+  kind: PluginKind;
+  /** Required for the studio kind. */
+  dock?: PluginDock;
 }
 
 /** Validates the stored plugin list entry by entry. Bad entries and repeated ids or URLs are dropped. */
@@ -38,14 +26,17 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       typeof o.id !== 'string' ||
       !PLUGIN_ID.test(o.id) ||
       !name ||
-      !PLUGIN_DOCKS.includes(o.dock as PluginDock) ||
+      !PLUGIN_KINDS.includes(o.kind as PluginKind) ||
+      (o.kind === 'studio' && !PLUGIN_DOCKS.includes(o.dock as PluginDock)) ||
       ids.has(o.id) ||
       urls.has(url)
     )
       continue;
     ids.add(o.id);
     urls.add(url);
-    out.push({ url, id: o.id, name, dock: o.dock as PluginDock });
+    const entry: PluginEntry = { url, id: o.id, name, kind: o.kind as PluginKind };
+    if (o.kind === 'studio') entry.dock = o.dock as PluginDock;
+    out.push(entry);
   }
 
   return out;

@@ -4,11 +4,11 @@
   import type { StudioState } from '#lib/state/studio.svelte';
   import { createPluginContext } from '#lib/studio/pluginContext.svelte';
   import { mountedPlugins } from '#lib/studio/exportHooks.svelte';
-  import type { Plugin } from '#lib/studio/plugins';
+  import type { StudioPlugin } from '#lib/studio/plugins';
   import PanelError from './PanelError.svelte';
 
   /** Hosts one plugin. The plugin draws into `el`, the error box shows what went wrong without touching other panels. */
-  let { studio, plugin }: { studio: StudioState; plugin: Plugin } = $props();
+  let { studio, plugin }: { studio: StudioState; plugin: StudioPlugin } = $props();
 
   let el: HTMLDivElement;
   let error = $state('');

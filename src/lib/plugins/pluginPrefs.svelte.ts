@@ -1,6 +1,6 @@
-import { parsePlugins, type PluginEntry } from './pluginPrefs';
+import { parsePlugins, type PluginEntry } from './entries';
 
-const KEY = 'studioPlugins';
+const KEY = 'plugins';
 
 // Storage can throw (private mode, blocked site data). The list then starts empty.
 function load(): PluginEntry[] {

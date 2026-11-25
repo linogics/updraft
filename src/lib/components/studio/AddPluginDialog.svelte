@@ -1,6 +1,6 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
-  import { addPlugin } from '#lib/studio/pluginActions';
+  import { addPlugin } from '#lib/plugins/actions';
 
   let dialog: HTMLDialogElement;
   let url = $state('');

@@ -2,7 +2,7 @@
   import PanelsTop from '@lucide/svelte/icons/panels-top-left';
   import { m } from '#lib/paraglide/messages';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
-  import { removePlugin } from '#lib/studio/pluginActions';
+  import { removePlugin } from '#lib/plugins/actions';
   import { PLUGIN_PREFIX, registry } from '#lib/studio/registry.svelte';
   import Popover from '../Popover.svelte';
   import AddPluginDialog from './AddPluginDialog.svelte';

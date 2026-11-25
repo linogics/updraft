@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { paintPlugins } from './exportHooks.svelte';
-import type { Plugin } from './plugins';
+import type { StudioPlugin } from './plugins';
 
 // Minimal 2D context with a save/restore stack for fillStyle.
 function fakeCtx() {
@@ -14,8 +14,8 @@ function fakeCtx() {
   return ctx as unknown as CanvasRenderingContext2D;
 }
 
-const plug = (id: string, drawExport?: Plugin['drawExport']) =>
-  ({ id, name: id, apiVersion: 1, dock: 'right', mount: () => {}, drawExport }) as Plugin;
+const plug = (id: string, drawExport?: StudioPlugin['drawExport']) =>
+  ({ id, name: id, kind: 'studio', apiVersion: 1, dock: 'right', mount: () => {}, drawExport }) as StudioPlugin;
 
 describe('paintPlugins', () => {
   it('calls each plugin with the time, in order, and skips plugins without drawExport', () => {

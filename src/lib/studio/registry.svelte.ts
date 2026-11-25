@@ -1,7 +1,7 @@
-import { pluginPrefs } from '#lib/state/pluginPrefs.svelte';
-import type { PluginEntry } from '#lib/state/pluginPrefs';
+import { loadPlugin } from '#lib/plugins/core';
+import type { PluginEntry } from '#lib/plugins/entries';
+import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import { BUILTIN_PANELS, type PanelDef, type PanelModule } from './panels';
-import { loadPlugin } from './plugins';
 
 /** Plugin panel ids carry this prefix, so they never clash with a built-in id now or later. */
 export const PLUGIN_PREFIX = 'plugin:';
@@ -21,9 +21,11 @@ function pluginPanel(e: PluginEntry): PanelDef {
     id: pluginPanelId(e.id),
     key,
     title: () => e.name,
-    dock: e.dock,
+    dock: e.dock ?? 'right',
     load: async () => {
       const plugin = await loadPlugin(e.url);
+      if (plugin.kind !== e.kind)
+        throw new Error(`The plugin now has the kind "${plugin.kind}" instead of "${e.kind}".`);
       if (plugin.id !== e.id) throw new Error(`The plugin now has the id "${plugin.id}" instead of "${e.id}".`);
       const { default: host } = await import('#lib/components/studio/PluginPanel.svelte');
       // The host takes the plugin as a prop on top of the studio, which PanelHost passes from `props`.
@@ -36,7 +38,10 @@ function pluginPanel(e: PluginEntry): PanelDef {
 
 /** Built-in panels followed by the plugins the user added. Follows the plugin list. */
 class Registry {
-  list = $derived<PanelDef[]>([...BUILTIN_PANELS, ...pluginPrefs.list.map(pluginPanel)]);
+  list = $derived<PanelDef[]>([
+    ...BUILTIN_PANELS,
+    ...pluginPrefs.list.filter((e) => e.kind === 'studio').map(pluginPanel)
+  ]);
   byId = $derived(new Map(this.list.map((p) => [p.id, p])));
   /** Ids that may not leave their default dock. */
   pinned = $derived(this.list.filter((p) => p.pinned).map((p) => p.id));
