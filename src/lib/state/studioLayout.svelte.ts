@@ -1,5 +1,5 @@
 import type { Dock } from '#lib/studio/panels';
-import { registry } from '#lib/studio/registry.svelte';
+import { panelById, registry } from '#lib/studio/registry.svelte';
 import {
   clampSize,
   forgetInLayout,
@@ -49,6 +49,7 @@ class StudioLayout {
     const dock = (['left', 'right', 'bottom'] as const).find((d) => this.value.docks[d].includes(id));
     if (!dock) return;
     this.lastDock.set(id, dock);
+    panelById(id)?.enable?.(false);
     this.save(hideInLayout(this.value, id));
   }
 
@@ -58,6 +59,7 @@ class StudioLayout {
   }
 
   show(id: string) {
+    panelById(id)?.enable?.(true);
     this.move(id, this.lastDock.get(id) ?? registry.defaults[id], Infinity);
   }
 
@@ -88,6 +90,7 @@ class StudioLayout {
   restoreDefaults() {
     this.sessionTab = null;
     this.lastDock.clear();
+    for (const p of registry.list) p.enable?.(!p.startsOff);
     this.save(parseStudioLayout(null, registry.defaults, options()));
   }
 

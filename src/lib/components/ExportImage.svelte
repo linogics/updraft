@@ -32,7 +32,7 @@
   const w = $derived(clamp(width));
   const h = $derived(clamp(height));
   const credits = $derived(
-    mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
+    mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.showHotspots || thermalOverlayPrefs.showSkyways)
   );
   const plugins = $derived(exportPlugins());
   const canExport = $derived(!!studio.capture && !!studio.selected && !busy);

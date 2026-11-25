@@ -1,18 +1,18 @@
 import type * as maplibregl from 'maplibre-gl';
 import { FILL as AIRSPACE_FILL } from '#lib/airspace/layers';
-import type { ThermalOverlayPrefsValue } from './prefs';
+import type { ThermalOverlayDraw } from './prefs';
 import { THERMAL_ATTRIBUTION, THERMAL_MAX_ZOOM, THERMAL_TILES } from './tiles';
 
 const LAYERS = [
-  { id: 'thermal-hotspots', url: THERMAL_TILES.hotspots, on: (p: ThermalOverlayPrefsValue) => p.hotspots },
-  { id: 'thermal-skyways', url: THERMAL_TILES.skyways, on: (p: ThermalOverlayPrefsValue) => p.skyways }
+  { id: 'thermal-hotspots', url: THERMAL_TILES.hotspots, on: (p: ThermalOverlayDraw) => p.hotspots },
+  { id: 'thermal-skyways', url: THERMAL_TILES.skyways, on: (p: ThermalOverlayDraw) => p.skyways }
 ] as const;
 
 /**
  * Adds, updates or removes the thermal raster layers to match the prefs. Safe to call on every change.
  * `before` keeps the flight layers above the overlay. Airspaces stay above it too.
  */
-export function syncThermals(map: maplibregl.Map, p: ThermalOverlayPrefsValue, before: string) {
+export function syncThermals(map: maplibregl.Map, p: ThermalOverlayDraw, before: string) {
   // Airspaces may already be drawn, so insert under them to keep the order whatever the toggle order.
   const under = map.getLayer(AIRSPACE_FILL) ? AIRSPACE_FILL : before;
   for (const { id, url, on } of LAYERS) {

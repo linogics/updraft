@@ -1,5 +1,8 @@
 import type { Component } from 'svelte';
 import { m } from '#lib/paraglide/messages';
+import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 import type { StudioState } from '#lib/state/studio.svelte';
 
 export type Dock = 'left' | 'right' | 'bottom';
@@ -24,6 +27,10 @@ export interface PanelDef {
   hidden?: boolean;
   /** Starts folded to its header. */
   collapsed?: boolean;
+  /** Turns the feature of the panel on or off. Removing the panel turns it off, adding it turns it on. */
+  enable?: (on: boolean) => void;
+  /** The feature is off on a fresh start and after restoring the defaults. */
+  startsOff?: boolean;
   load: () => Promise<PanelModule>;
   /** Cache key of the loaded module, defaults to the id. A plugin that is removed and added again from another URL gets a new one. */
   key?: string;
@@ -62,6 +69,8 @@ export const BUILTIN_PANELS: PanelDef[] = [
   },
   {
     id: 'xc',
+    enable: (on) => xcPrefs.setEnabled(on),
+    startsOff: true,
     collapsed: true,
     title: () => m.panel_xc(),
     dock: 'right',
@@ -69,6 +78,7 @@ export const BUILTIN_PANELS: PanelDef[] = [
   },
   {
     id: 'airspace',
+    enable: (on) => airspacePrefs.set({ show: on }),
     collapsed: true,
     title: () => m.panel_airspace(),
     dock: 'right',
@@ -76,6 +86,7 @@ export const BUILTIN_PANELS: PanelDef[] = [
   },
   {
     id: 'thermal-overlay',
+    enable: (on) => thermalOverlayPrefs.set({ enabled: on }),
     collapsed: true,
     title: () => m.panel_thermal_overlay(),
     dock: 'right',

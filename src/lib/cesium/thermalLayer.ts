@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import type { ThermalOverlayPrefsValue } from '#lib/thermals/prefs';
+import type { ThermalOverlayDraw } from '#lib/thermals/prefs';
 import { THERMAL_ATTRIBUTION, THERMAL_MAX_ZOOM, THERMAL_TILES } from '#lib/thermals/tiles';
 
 /**
@@ -12,7 +12,7 @@ export class ThermalLayer {
 
   constructor(private viewer: Cesium.Viewer) {}
 
-  set(p: ThermalOverlayPrefsValue) {
+  set(p: ThermalOverlayDraw) {
     for (const [kind, on] of [
       ['hotspots', p.hotspots],
       ['skyways', p.skyways]

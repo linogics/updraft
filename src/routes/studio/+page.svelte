@@ -21,12 +21,20 @@
   import { trackFiles } from '#lib/ui/trackFiles';
   import { importAndAdd } from '#lib/studio/addPilots';
   import { StudioState } from '#lib/state/studio.svelte';
+  import { useNeed } from '#lib/state/useNeed.svelte';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { provideStudioService } from '#lib/studio/studioService.svelte';
   import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
   import { flightRepository } from '#lib/storage';
   import { syncClient } from '#lib/sync/client.svelte';
 
   const studio = new StudioState();
+  // Scoring follows the XC switch, not whether the panel is open.
+  useNeed(
+    () => studio,
+    'xc',
+    () => xcPrefs.enabled
+  );
   let error = $state('');
   let loaded = $state(false);
   let steps = $state<string[]>([m.studio_step_read_flights(), m.studio_step_thermals(), m.studio_step_camera()]);

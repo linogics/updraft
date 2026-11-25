@@ -5,7 +5,6 @@
   import { encodeRoute } from '#lib/domain/route';
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
-  import { useNeed } from '#lib/state/useNeed.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
@@ -14,9 +13,6 @@
   import { XC_TYPE_LABELS } from '#lib/xc/labels';
 
   let { studio }: { studio: StudioState } = $props();
-
-  // Scoring only runs while this panel is open.
-  useNeed(() => studio, 'xc');
 
   let turnpoints = $state(3);
   const makeRoute = () => {
@@ -40,8 +36,17 @@
   );
 </script>
 
+<label class="switch">
+  <input
+    type="checkbox"
+    {...{ switch: true }}
+    checked={xcPrefs.enabled}
+    onchange={(e) => xcPrefs.setEnabled(e.currentTarget.checked)}
+  />
+  {m.xc_enabled()}
+</label>
 {#if studio.selected}
-  <section>
+  <fieldset class="feature" disabled={!xcPrefs.enabled}>
     <select
       value={xcPrefs.league}
       onchange={(e) => studio.setLeague(e.currentTarget.value as XcLeague)}
@@ -49,7 +54,8 @@
     >
       {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
     </select>
-    {#if xc}
+    <!-- Nothing is scored while XC is off. -->
+    {#if !xcPrefs.enabled}{:else if xc}
       <dl>
         {#each xcItems as [label, value] (label)}
           <dt>{label}</dt>
@@ -66,7 +72,7 @@
       <input type="number" min="1" max="30" bind:value={turnpoints} />
     </label>
     <button type="button" onclick={makeRoute}>{m.xc_open_planner()}</button>
-    {#if studio.flights.length > 1}
+    {#if xcPrefs.enabled && studio.flights.length > 1}
       <ul class="xc-list">
         {#each studio.flights as f (f.flight.id)}
           <li>
@@ -77,7 +83,7 @@
         {/each}
       </ul>
     {/if}
-  </section>
+  </fieldset>
 {/if}
 
 <style>
