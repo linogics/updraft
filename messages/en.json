@@ -326,6 +326,7 @@
   "plugin_add_submit": "Add",
   "plugin_add_title": "Add plugin",
   "plugin_adding": "Adding…",
+  "plugin_missing_services": "Plugin {name} needs services that nobody provides: {services}. Add a plugin that provides them.",
   "plugin_failed": "Plugin {name} failed: {message}",
   "plugin_remove": "Remove",
   "plugin_remove_label": "Remove plugin {name}",

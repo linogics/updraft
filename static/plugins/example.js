@@ -2,13 +2,13 @@
 // Shows the altitude of the selected pilot and the climb over the last 10 s.
 // Plain JavaScript, no build step. The default export is the whole contract.
 
-/** @import { PluginContext, PluginFlight } from '../../src/lib/studio/pluginContext.svelte' */
+/** @import { PluginFlight, StudioService } from '../../src/lib/studio/studioService.svelte' */
 
 const WINDOW = 10_000;
 const M_TO_FT = 3.28084;
 
-// The studio calls drawExport(ctx2d, time) without a context, so mount() keeps the current one here.
-/** @type {PluginContext | null} */
+// The studio calls drawExport(ctx2d, time) without a context, so mount() keeps the studio service here.
+/** @type {StudioService | null} */
 let current = null;
 
 /**
@@ -20,18 +20,18 @@ const fixAt = (fixes, time) => fixes.findLast((f) => f.t <= time);
 
 /**
  * Altitude and climb of the selected pilot at `time`, or null when there is no data at that time.
- * @param {PluginContext} ctx
+ * @param {StudioService} studio
  * @param {number} time
  */
-function read(ctx, time) {
-  const flight = ctx.flights().find((f) => f.id === ctx.selectedId());
+function read(studio, time) {
+  const flight = studio.flights().find((f) => f.id === studio.selectedId());
   const now = flight && fixAt(flight.fixes, time);
   if (!now) return null;
 
   const before = fixAt(flight.fixes, time - WINDOW);
   // Metres per second over the window, 0 until the flight is 10 s old.
   const climb = before ? (now.alt - before.alt) / ((now.t - before.t) / 1000 || 1) : 0;
-  const { alt, vario } = ctx.units();
+  const { alt, vario } = studio.units();
   const feet = alt === 'ft';
 
   return {
@@ -45,14 +45,18 @@ function read(ctx, time) {
 
 /** @type {import('../../src/lib/studio/plugins').StudioPlugin} */
 export default {
-  id: 'example',
+  id: 'example/altitude',
   name: 'Example',
   kind: 'studio',
-  apiVersion: 1,
+  apiVersion: 2,
   dock: 'right',
+  // Plugins depend on services, not on other plugins. ctx.use only hands out what is listed here.
+  requires: ['updraft/studio@1'],
 
   mount(el, ctx) {
-    current = ctx;
+    /** @type {StudioService} */
+    const studio = ctx.use('updraft/studio@1');
+    current = studio;
 
     // Everything the plugin creates goes into el or ctx.overlay, the studio removes the overlay on unmount.
     const box = document.createElement('div');
@@ -64,7 +68,7 @@ export default {
     ctx.overlay.append(label);
 
     const draw = () => {
-      const r = read(ctx, ctx.time());
+      const r = read(studio, studio.time());
       // textContent, never innerHTML: names come from flight files.
       box.textContent = r ? `${r.pilot}: ${r.altitude}, ${r.climb}` : 'No pilot selected.';
       label.textContent = r ? r.altitude : '';

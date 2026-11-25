@@ -1,17 +1,20 @@
 import { validateStudioPlugin, type StudioPlugin } from '#lib/studio/plugins';
+import { validateServicePlugin, type ServicePlugin } from './serviceKind';
+import { validateServiceFields } from './services';
 
 /** Grows with every new kind of plugin. Add its validator to `validators` below. */
-export type PluginKind = 'studio';
-export const PLUGIN_KINDS: readonly PluginKind[] = ['studio'];
+export type PluginKind = 'studio' | 'service';
+export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service'];
 
 /** A validated plugin module of any kind. */
-export type AnyPlugin = StudioPlugin;
+export type AnyPlugin = StudioPlugin | ServicePlugin;
 
-export const PLUGIN_ID = /^[a-z0-9-]{1,40}$/;
+export const PLUGIN_ID = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}$/;
 
 /** Each kind checks its own fields and its own apiVersion. */
 const validators: Record<PluginKind, (mod: Record<string, unknown>) => AnyPlugin> = {
-  studio: validateStudioPlugin
+  studio: validateStudioPlugin,
+  service: validateServicePlugin
 };
 
 /** Only http(s) pages can be imported. Returns the normalised URL or null. */
@@ -34,11 +37,12 @@ export function validatePlugin(mod: unknown, taken: readonly string[] = []): Any
   if (!mod || typeof mod !== 'object') throw new Error('The module has no default export object.');
   const p = mod as Record<string, unknown>;
   if (typeof p.id !== 'string' || !PLUGIN_ID.test(p.id))
-    throw new Error('"id" must be 1 to 40 characters from a-z, 0-9 and "-".');
+    throw new Error('"id" must look like "vendor/name", each part 1 to 40 characters from a-z, 0-9 and "-".');
   if (typeof p.name !== 'string' || !p.name.trim()) throw new Error('"name" must be a non-empty string.');
   if (!PLUGIN_KINDS.includes(p.kind as PluginKind))
     throw new Error(`"kind" must be one of ${PLUGIN_KINDS.map((k) => `"${k}"`).join(', ')}.`);
   if (taken.includes(p.id)) throw new Error(`The id "${p.id}" is already in use.`);
+  validateServiceFields(p);
   return validators[p.kind as PluginKind](p);
 }
 

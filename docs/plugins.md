@@ -14,14 +14,16 @@ Save this as `hello.js`:
 
 ```js
 export default {
-  id: 'hello',
+  id: 'me/hello',
   name: 'Hello',
   kind: 'studio',
-  apiVersion: 1,
+  apiVersion: 2,
   dock: 'right',
+  requires: ['updraft/studio@1'],
   mount(el, ctx) {
+    const studio = ctx.use('updraft/studio@1');
     const draw = () => {
-      el.textContent = `Time ${ctx.time()} ms, ${ctx.flights().length} flights`;
+      el.textContent = `Time ${studio.time()} ms, ${studio.flights().length} flights`;
     };
 
     const stop = ctx.subscribe(draw);
@@ -45,17 +47,28 @@ A larger, commented example is in [static/plugins/example.js](../static/plugins/
 
 ## Module contract
 
-The default export is an object with these fields. The studio checks them when you add the plugin and shows the message of the first problem in the dialog.
+The default export is an object. The studio checks it when you add the plugin and shows the message of the first problem in the dialog.
 
-| Field          | Type                                                  | Rule                                                                                                                                   |
-| -------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`           | `string`                                              | Matches `/^[a-z0-9-]{1,40}$/`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout.          |
-| `name`         | `string`                                              | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                     |
-| `kind`         | `'studio'`                                            | What the plugin extends. Must be `'studio'`, the only kind so far. Each kind has its own fields and its own `apiVersion`.              |
-| `apiVersion`   | `1`                                                   | Must be the number `1` for the studio kind. See [Versioning](#versioning).                                                                                 |
-| `dock`         | `'left' \| 'right' \| 'bottom'`                       | The dock the panel starts in. The user can move it afterwards.                                                                         |
-| `mount`        | `(el: HTMLElement, ctx: PluginContext) => void \| fn` | Called when the panel is shown. Draw into `el`. May return a destroy function.                                                         |
-| `drawExport`   | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).                                                            |
+Fields of every kind:
+
+| Field      | Type                                      | Rule                                                                                                                              |
+| ---------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `id`       | `string`                                  | `vendor/name`, each part matches `[a-z0-9-]{1,40}`, for example `acme/wind-panel`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout. The vendor `updraft` is reserved for bundled plugins, added plugins cannot use it. |
+| `name`     | `string`                                  | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                |
+| `kind`     | `'studio' \| 'service'`                   | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
+| `provides` | `Record<string, (ctx) => object>`         | Optional. Services this plugin offers, see [Services](#services).                                                                 |
+| `requires` | `string[]`                                | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                              |
+
+Kind `studio`, `apiVersion: 2`, a panel in a dock:
+
+| Field        | Type                                                      | Rule                                                                                 |
+| ------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `apiVersion` | `2`                                                       | See [Versioning](#versioning).                                                       |
+| `dock`       | `'left' \| 'right' \| 'bottom'`                           | The dock the panel starts in. The user can move it afterwards.                       |
+| `mount`      | `(el: HTMLElement, ctx: PluginContext) => void \| fn`     | Called when the panel is shown. Draw into `el`. May return a destroy function.       |
+| `drawExport` | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).              |
+
+Kind `service`, `apiVersion: 1`, headless: no panel, `provides` must not be empty.
 
 `mount(el, ctx)`:
 
@@ -66,20 +79,56 @@ The default export is an object with these fields. The studio checks them when y
 
 ## ctx reference
 
-Every value is read through a function, so it is always current. Call the function again instead of keeping its result.
+| Member          | Type                               | Behavior                                                                                                                                                                                        |
+| --------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `use(name)`     | `<T>(string) => T`                 | The service `name`. Only names in your `requires` work, any other name throws `Service "x" is not in requires.`. A missing provider throws too, but the panel is not mounted at all in that case, the user sees which services are missing. |
+| `overlay`       | `HTMLDivElement`                   | A `div` over the 3D and 2D views, owned by the plugin. It has `position: absolute`, fills the views and has `pointer-events: none`, so clicks pass through. Set `pointer-events: auto` on your own children that need clicks. The studio removes it on unmount. |
+| `subscribe(fn)` | `(() => void) => () => void`       | Calls `fn` after time, flights, selection or units changed, at most once per animation frame. It does not fire for the state at the time you subscribe, so call your draw once yourself. Returns a function that stops it. |
+| `need(kind)`    | `('xc' \| 'ground') => () => void` | Asks the studio to run background work for as long as the plugin is mounted: `'xc'` scores the flights, `'ground'` loads ground heights. Returns a release function. Every need is released on unmount. Any other `kind` throws. |
 
-| Member                | Type                          | Behavior                                                                                                                                                                                        |
-| --------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `flights()`           | `PluginFlight[]`              | All pilots in the studio, in list order. A new array of new objects on every call.                                                                                                              |
-| `time()`              | `number`                      | Playback time in ms on the studio clock.                                                                                                                                                        |
-| `selectedId()`        | `string \| null`              | Id of the selected pilot, or null.                                                                                                                                                              |
-| `units()`             | `Units`                       | The display units the user chose, a copy. See below.                                                                                                                                            |
-| `seek(ms)`            | `(number) => void`            | Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.                                                                                                         |
-| `select(id)`          | `(string) => void`            | Selects the pilot with that flight id. An unknown id is ignored.                                                                                                                                |
-| `viewer()`            | `Viewer \| null`              | The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time.                                                                                           |
-| `overlay`             | `HTMLDivElement`              | A `div` over the 3D and 2D views, owned by the plugin. It has `position: absolute`, fills the views and has `pointer-events: none`, so clicks pass through. Set `pointer-events: auto` on your own children that need clicks. The studio removes it on unmount. |
-| `subscribe(fn)`       | `(() => void) => () => void`  | Calls `fn` after time, flights, selection or units changed, at most once per animation frame. It does not fire for the state at the time you subscribe, so call your draw once yourself. Returns a function that stops it. |
-| `need(kind)`          | `('xc' \| 'ground') => () => void` | Asks the studio to run background work for as long as the plugin is mounted: `'xc'` scores the flights, `'ground'` loads ground heights. Returns a release function. Every need is released on unmount. Any other `kind` throws. |
+## Services
+
+A service is a named, versioned object. Plugins depend on services, never on other plugins, so any plugin that provides a service can stand in for another.
+
+- Name: `vendor/service@major`, for example `updraft/studio@1`. The major version changes only when the contract breaks.
+- `provides` maps a name to a factory `(ctx) => object`. `ctx.use(name)` inside a factory gets another service. A cycle throws a clear error.
+- A factory runs on the first `use`, the result is cached and every caller gets the same object.
+- The first provider of a name wins, a second one is refused. Added plugins cannot provide `updraft/` names.
+- A studio plugin registers its services when its panel is loaded, a service plugin is imported when the app starts. Removing the plugin removes its services.
+
+A headless service plugin:
+
+```js
+export default {
+  id: 'me/wind',
+  name: 'Wind data',
+  kind: 'service',
+  apiVersion: 1,
+  provides: {
+    'me/wind@1': () => ({ at: (lat, lon, alt) => ({ speed: 4, from: 270 }) })
+  }
+};
+```
+
+Another plugin lists `'me/wind@1'` in `requires` and calls `ctx.use('me/wind@1').at(...)`.
+
+Performance: a service call is a plain function call in the page. Services are built on first use and return shared data without copying, so treat everything a service returns as read only and never modify it.
+
+### updraft/studio@1
+
+Provided by the studio while it is open. Every value is read through a function, so it is always current. Call the function again instead of keeping its result. `flights()` and `units()` return the same frozen value until something changes, so it is cheap to call in every frame.
+
+| Member         | Type                 | Behavior                                                                                                    |
+| -------------- | -------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `flights()`    | `readonly PluginFlight[]` | All pilots in the studio, in list order. The same frozen array until flights, colors or visibility change. |
+| `time()`       | `number`             | Playback time in ms on the studio clock.                                                                    |
+| `selectedId()` | `string \| null`     | Id of the selected pilot, or null.                                                                          |
+| `units()`      | `Readonly<Units>`    | The display units the user chose. The same frozen object until the user changes them. See below.            |
+| `seek(ms)`     | `(number) => void`   | Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.                    |
+| `select(id)`   | `(string) => void`   | Selects the pilot with that flight id. An unknown id is ignored.                                            |
+| `viewer()`     | `Viewer \| null`     | The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time.      |
+
+The TypeScript types `StudioService` and `PluginFlight` are in `src/lib/studio/studioService.svelte.ts`, JavaScript plugins can import them in JSDoc as the example does.
 
 `PluginFlight`:
 
@@ -103,7 +152,7 @@ Every value is read through a function, so it is always current. Call the functi
 
 ## Lifecycle
 
-- A plugin is known by its URL, id, name and dock only. The module is not imported until its panel is shown, so a hidden plugin costs nothing.
+- A studio plugin is known by its URL, id, name and dock only. The module is not imported until its panel is shown, so a hidden plugin costs nothing. A service plugin has no panel, so it is imported when the app starts.
 - Showing the panel (also after a reload, if it was shown before) imports the module and calls `mount`. Hiding the panel from the Panels menu, or removing the plugin, calls your destroy function and removes the overlay, the subscriptions and the needs.
 - Showing the panel again calls `mount` again with a fresh `el` and `ctx`. The module itself is not evaluated again, so module level variables survive. Keep per-mount state inside `mount`.
 - The module is imported once per page load. After you change the file, reload the studio to pick up the new version.
@@ -118,7 +167,7 @@ If the plugin has `drawExport`, it is listed with its own checkbox in the image 
 - Plugins are painted on top of the studio frame, in layout order: left dock, then right dock, then bottom dock, each from top to bottom.
 - Only plugins whose panel is shown take part.
 - The canvas state is saved before and restored after each plugin, so you can change fonts, styles and transforms freely.
-- `drawExport` has no `ctx`. If you need flight data, keep the `ctx` from `mount` in a module variable and clear it in your destroy function, as the example does.
+- `drawExport` has no `ctx`. If you need flight data, keep the studio service from `mount` in a module variable and clear it in your destroy function, as the example does.
 - A plugin that throws is left out of the rest of that export and the export continues. The user sees a message that the plugin failed while drawing.
 
 ## Errors
@@ -132,6 +181,8 @@ The studio never lets a plugin break other panels.
 | Import error (network, CORS, syntax error) | In the dialog: "Could not load the plugin." followed by the browser message. Nothing is added.                         |
 | Contract error (missing or bad field)      | In the dialog, the message of the first problem, for example `"dock" must be "left", "right" or "bottom".`. Nothing is added. |
 | Id already used                            | In the dialog: `The id "..." is already in use.`                                                                       |
+| Reserved `updraft/` id or service          | In the dialog: `The id "..." is reserved, "updraft/" is for bundled plugins.`                                          |
+| A required service has no provider         | An error box in the plugin's panel naming the missing services. The plugin is not mounted.                            |
 | Error in `mount`                           | An error box in the plugin's own panel: "Plugin NAME failed: MESSAGE".                                                 |
 | Error in a `subscribe` callback            | The same error box. Other subscribers keep running.                                                                    |
 | Error in the destroy function              | Nothing visible. It is written to the browser console and cleanup continues.                                          |
@@ -151,7 +202,7 @@ A plugin that was added earlier but fails to load later, for example because the
 
 ## Versioning
 
-Every kind of plugin has its own `apiVersion`. For the studio kind it is `1`. The studio supports exactly this value. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 1." It is not mounted. Keep `apiVersion` at `1` until this document says a newer one exists.
+Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service kind at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
 
 ## Security
 

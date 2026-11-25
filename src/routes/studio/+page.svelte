@@ -21,6 +21,7 @@
   import { trackFiles } from '#lib/ui/trackFiles';
   import { importAndAdd } from '#lib/studio/addPilots';
   import { StudioState } from '#lib/state/studio.svelte';
+  import { provideStudioService } from '#lib/studio/studioService.svelte';
   import { flightRepository } from '#lib/storage';
 
   const studio = new StudioState();
@@ -76,7 +77,12 @@
     loaded = true;
   });
 
-  onDestroy(() => studio.destroy());
+  // Plugins read the studio through this service while the page is open.
+  const unprovide = provideStudioService(studio);
+  onDestroy(() => {
+    unprovide();
+    studio.destroy();
+  });
 
   // Dropping track files anywhere adds them as pilots. Counted because enter and leave fire for every child.
   let dragDepth = $state(0);

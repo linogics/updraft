@@ -15,7 +15,7 @@ function fakeCtx() {
 }
 
 const plug = (id: string, drawExport?: StudioPlugin['drawExport']) =>
-  ({ id, name: id, kind: 'studio', apiVersion: 1, dock: 'right', mount: () => {}, drawExport }) as StudioPlugin;
+  ({ id, name: id, kind: 'studio', apiVersion: 2, dock: 'right', mount: () => {}, drawExport }) as StudioPlugin;
 
 describe('paintPlugins', () => {
   it('calls each plugin with the time, in order, and skips plugins without drawExport', () => {

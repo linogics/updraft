@@ -1,5 +1,7 @@
 import { loadPlugin } from '#lib/plugins/core';
 import type { PluginEntry } from '#lib/plugins/entries';
+import { startServicePlugins } from '#lib/plugins/startup';
+import { registerProvides } from '#lib/plugins/services';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import { BUILTIN_PANELS, type PanelDef, type PanelModule } from './panels';
 
@@ -23,10 +25,13 @@ function pluginPanel(e: PluginEntry): PanelDef {
     title: () => e.name,
     dock: e.dock ?? 'right',
     load: async () => {
+      // Service plugins may provide what this one requires.
+      await startServicePlugins();
       const plugin = await loadPlugin(e.url);
       if (plugin.kind !== e.kind)
         throw new Error(`The plugin now has the kind "${plugin.kind}" instead of "${e.kind}".`);
       if (plugin.id !== e.id) throw new Error(`The plugin now has the id "${plugin.id}" instead of "${e.id}".`);
+      registerProvides(plugin);
       const { default: host } = await import('#lib/components/studio/PluginPanel.svelte');
       // The host takes the plugin as a prop on top of the studio, which PanelHost passes from `props`.
       return { default: host as unknown as PanelModule['default'], props: { plugin } };
