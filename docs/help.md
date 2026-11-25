@@ -32,6 +32,7 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 - **Panels**, **Add plugin...** adds a panel from the URL of a JavaScript module (http or https). A plugin runs with full access to the page and your flights, so only add plugins you trust. The studio checks the module and shows what is wrong in the dialog if it cannot use it.
 - A plugin appears in the Panels menu like any panel, with a **Remove** button. It is only loaded while its panel is shown. If it fails, only its own panel shows an error and the rest of the studio keeps working.
 - To work offline, the plugin should be one bundled file served with CORS (the `Access-Control-Allow-Origin` header), because only that file is stored and the browser needs CORS to import it from another site. The stored copy is used only when the network is not reachable.
+- To write your own plugin, see [plugins.md](plugins.md).
 - The layout is kept in this browser. It is not part of the share link.
 
 ### Player
