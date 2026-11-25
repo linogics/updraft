@@ -59,8 +59,20 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     collapsed: true,
     load: () => import('./builtin/export')
   },
-  { id: 'updraft/units', title: () => m.units_menu(), dock: 'right', collapsed: true, load: () => import('./builtin/units') },
-  { id: 'updraft/ion', title: () => m.panel_ion(), dock: 'right', collapsed: true, load: () => import('./builtin/ion') },
+  {
+    id: 'updraft/units',
+    title: () => m.units_menu(),
+    dock: 'right',
+    collapsed: true,
+    load: () => import('./builtin/units')
+  },
+  {
+    id: 'updraft/ion',
+    title: () => m.panel_ion(),
+    dock: 'right',
+    collapsed: true,
+    load: () => import('./builtin/ion')
+  },
   {
     id: 'updraft/altitude',
     title: () => m.studio_tab_altitude(),

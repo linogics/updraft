@@ -1,5 +1,4 @@
 import { studioLayout } from '#lib/state/studioLayout.svelte';
-import { BUILTIN_PANELS } from '#lib/studio/panels';
 import { BUILTIN_BACKENDS, BUILTIN_PLUGINS } from './builtin';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 import { cachePlugin, uncachePlugin } from './cache';
@@ -16,9 +15,8 @@ export async function addPlugin(raw: string) {
   if (!url) throw new Error('The address must be a valid http or https URL.');
   if (pluginPrefs.list.some((e) => e.url === url)) throw new Error('This plugin is already added.');
 
-  // Ids are unique across all kinds. Built-in panel ids are refused too, to avoid confusion.
+  // Ids are unique across all kinds. Bundled plugin ids are refused too.
   const taken = [
-    ...BUILTIN_PANELS.map((p) => p.id),
     ...BUILTIN_PLUGINS.map((p) => p.id),
     ...BUILTIN_BACKENDS.map((p) => p.id),
     ...pluginPrefs.list.map((e) => e.id)
