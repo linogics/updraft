@@ -22,6 +22,12 @@ PocketBase allows every origin by default. To only allow the app, add `--origins
 
 Open the `users` collection settings in the dashboard, go to Options, enable OAuth2 and add a provider. In the provider's console use `https://<pocketbase-host>/api/oauth2-redirect` as the redirect URL. The app lists the enabled providers next to the password form. The sign in opens a popup, so it must be started by a click.
 
+## Club sharing
+
+Every account on the server is a club member. A pilot can share single flights with the club. A shared flight shows its summary (pilot, date, site, glider, duration, distance, altitude, thermals, XC score) and its full track to all signed in accounts, read only. Nothing else leaves the pilot's logbook.
+
+This is done by the migration `1795700000_updraft_club.js`, which adds the `shared` and `summary` fields to `records`. The list and view rule is `@request.auth.id != "" && (owner = @request.auth.id || shared = true)`. Create, update and delete stay owner only. Apply the migration by restarting the server. If you do not want a club, do not give accounts to people outside it.
+
 ## Backups
 
 Everything is in `pb_data`. Stop the server and copy the folder, or use Settings, Backups in the dashboard. Restoring means putting the folder back.

@@ -1,3 +1,4 @@
+import { isObj } from '#lib/storage/validate';
 import PocketBase, { ClientResponseError, LocalAuthStore } from 'pocketbase';
 import type { BackendPlugin } from '../backendKind';
 import type { AuthMethod, BackendAdapter, BackendSession, SyncChange, SyncType } from '#lib/sync/types';
@@ -18,6 +19,9 @@ interface Row {
   updatedAt: number;
   deleted: boolean;
   data: unknown;
+  owner: string;
+  shared: boolean;
+  summary: unknown;
   updated: string;
 }
 
@@ -53,7 +57,21 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
         if (err instanceof ClientResponseError && err.status === 404) return null;
         throw err;
       });
-    const body = { updatedAt: c.updatedAt, deleted: c.deleted === true, data: c.deleted ? null : (c.data ?? null) };
+    const body: Record<string, unknown> = {
+      updatedAt: c.updatedAt,
+      deleted: c.deleted === true,
+      data: c.deleted ? null : (c.data ?? null),
+      shared: false,
+      summary: null
+    };
+
+    // Only a live flight can be shared. The summary lets the club list skip the heavy `data` column.
+    const flight = c.type === 'flight' && !c.deleted && isObj(c.data) ? c.data : null;
+    if (flight?.shared === true) {
+      body.shared = true;
+      body.summary = flight.club ?? null;
+    }
+
     if (!existing) {
       await pb.collection(COLLECTION).create({ owner: ownerId, type: c.type, rid: c.id, ...body });
     } else if (c.updatedAt > existing.updatedAt) {
@@ -98,13 +116,14 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
     },
 
     async pull(cursor) {
-      owner();
-      let filter = '';
+      const me = owner();
+      // Shared flights of other pilots are readable too, but they are not part of this logbook.
+      let filter = pb.filter('owner = {:me}', { me });
       const at = cursor?.indexOf('|') ?? -1;
       // shortcut: a record written in the same millisecond as the cursor but with a smaller id is missed until it
       // changes again. Rare enough for a club server, use a server side sequence number if it shows up.
       if (cursor && at > 0) {
-        filter = pb.filter('updated > {:u} || (updated = {:u} && id > {:id})', {
+        filter += pb.filter(' && (updated > {:u} || (updated = {:u} && id > {:id}))', {
           u: cursor.slice(0, at),
           id: cursor.slice(at + 1)
         });
@@ -129,6 +148,28 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
         cursor: last ? `${last.updated}|${last.id}` : cursor,
         more: page.items.length === pageSize
       };
+    },
+
+    club: {
+      async list() {
+        const me = owner();
+        // `fields` leaves out `data`, the track is only fetched when a flight is opened.
+        const rows = await pb.collection(COLLECTION).getFullList<Row>({
+          batch: 200,
+          filter: 'shared = true && type = "flight" && deleted = false',
+          fields: 'id,owner,summary',
+          sort: 'created,id'
+        });
+        return rows.map((r) => ({ key: r.id, owner: r.owner, mine: r.owner === me, stats: r.summary }));
+      },
+
+      async flight(key) {
+        owner();
+        const row = await pb.collection(COLLECTION).getOne<Row>(key, { fields: 'id,shared,data' });
+        // The view rule also shows own records, but this call is only for shared ones.
+        if (!row.shared) throw new Error('This flight is not shared.');
+        return row.data;
+      }
     }
   };
 }

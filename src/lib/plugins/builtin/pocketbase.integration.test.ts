@@ -193,4 +193,77 @@ run('PocketBase backend', () => {
     await a.engine.syncNow();
     expect(await a.repo.get('f1')).toBeUndefined();
   });
+
+  describe('club sharing', () => {
+    const club = {
+      v: 1,
+      pilot: 'A',
+      date: '2026-07-15',
+      site: null,
+      glider: null,
+      durationS: 60,
+      freeDistanceKm: 1,
+      maxAltMsl: 1000,
+      maxGain: 10,
+      bestClimb: 1,
+      bestThermalGain: 5
+    };
+    const shared = (id: string, updatedAt: number, on = true): SyncChange => ({
+      type: 'flight',
+      id,
+      updatedAt,
+      data: { ...flight(id), shared: on, ...(on ? { club } : {}) }
+    });
+
+    // The server is shared by all tests, so a list is narrowed to the pilots of the test.
+    const idOf = (email: string) => users.find((u) => u.email === email)!.id;
+    const listOf = async (who: BackendAdapter, ...emails: string[]) =>
+      (await who.club!.list()).filter((e) => emails.map(idOf).includes(e.owner));
+
+    it('shows a shared flight to others without its track and keeps pull private', async () => {
+      const ea = await newUser();
+      const a = await signedIn(ea);
+      const b = await signedIn(await newUser());
+      await a.push([shared('s', 1), change('private', 1)]);
+
+      const list = await listOf(b, ea);
+      expect(list).toHaveLength(1);
+      expect(list[0]).toMatchObject({ mine: false, owner: idOf(ea), stats: club });
+      expect(Object.keys(list[0]).sort()).toEqual(['key', 'mine', 'owner', 'stats']);
+      expect((await listOf(a, ea))[0]).toMatchObject({ mine: true, key: list[0].key });
+
+      const full = (await b.club!.flight(list[0].key)) as Flight;
+      expect(full.fixes).toHaveLength(1);
+
+      // A's records must not land in B's logbook.
+      expect((await pullAll(b)).changes).toEqual([]);
+      expect((await pullAll(a)).changes.map((c) => c.id).sort()).toEqual(['private', 's']);
+    });
+
+    it('does not let another pilot change or delete a shared record', async () => {
+      const ea = await newUser();
+      const a = await signedIn(ea);
+      await a.push([shared('s', 1)]);
+      const key = (await listOf(a, ea))[0].key;
+
+      const raw = new PocketBase(PB_URL);
+      await raw.collection('users').authWithPassword(await newUser(), PASSWORD);
+      await expect(raw.collection('records').update(key, { deleted: true })).rejects.toThrow();
+      await expect(raw.collection('records').delete(key)).rejects.toThrow();
+      expect(await listOf(a, ea)).toHaveLength(1);
+    });
+
+    it('hides a flight again after unshare or delete', async () => {
+      const ea = await newUser();
+      const a = await signedIn(ea);
+      const b = await signedIn(await newUser());
+      await a.push([shared('s', 1), shared('d', 1)]);
+      expect(await listOf(b, ea)).toHaveLength(2);
+      const key = (await listOf(b, ea))[0].key;
+
+      await a.push([shared('s', 2, false), { type: 'flight', id: 'd', updatedAt: 2, deleted: true }]);
+      expect(await listOf(b, ea)).toEqual([]);
+      await expect(b.club!.flight(key)).rejects.toThrow();
+    });
+  });
 });

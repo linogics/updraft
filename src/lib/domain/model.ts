@@ -1,6 +1,8 @@
 // Framework-free domain types. Everything here is plain JSON so it can be stored
 // in IndexedDB now and sent to / computed on a server later.
 
+import type { ClubStats } from '../club/stats';
+
 export interface Fix {
   /** Unix epoch milliseconds (UTC). */
   t: number;
@@ -20,6 +22,10 @@ export interface Flight {
   date: string;
   /** Free text, edited in the logbook. */
   notes?: string;
+  /** Opted in to the club list of the sync server. */
+  shared?: boolean;
+  /** Figures the club shows without the track. Present while `shared` is true. */
+  club?: ClubStats;
   fixes: Fix[];
 }
 
