@@ -38,6 +38,24 @@ export interface BackendSession {
   user: string;
 }
 
+/** One shared flight in the club list. `stats` comes from the server and must be validated before use. */
+export interface ClubEntry {
+  /** Server row id, pass it to `club.flight`. */
+  key: string;
+  /** Opaque account id. All flights of one pilot share it. */
+  owner: string;
+  mine: boolean;
+  stats: unknown;
+}
+
+/** Optional: lists flights that pilots shared with everyone on the server. */
+export interface ClubAccess {
+  /** Every shared flight of every pilot, without the tracks. */
+  list(): Promise<ClubEntry[]>;
+  /** The full record of one shared flight. Untrusted, validate it. */
+  flight(key: string): Promise<unknown>;
+}
+
 /** A transport that also owns login. The adapter keeps its own token, the app never sees one. */
 export interface BackendAdapter extends SyncTransport {
   authMethods(): Promise<AuthMethod[]>;
@@ -46,4 +64,5 @@ export interface BackendAdapter extends SyncTransport {
   signOut(): Promise<void>;
   /** The stored session, survives a reload. */
   session(): BackendSession | null;
+  club?: ClubAccess;
 }

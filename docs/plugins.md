@@ -241,6 +241,8 @@ export default {
 - The adapter owns the token. It keeps it in its own storage, so `session()` still answers after a reload, and the app never sees it. Use a storage key that includes `url`.
 - `push` must apply last write wins per record: a change only replaces the stored one when its `updatedAt` is higher. `pull` returns changes in a stable order after an opaque `cursor`, and `more: true` while there are further pages.
 - A deleted record is a change with `deleted: true` and no `data`.
+- `pull` returns only the signed in account's own records, even when the server lets the account read other records. Shared flights of other pilots must not land in this logbook.
+- Optional `club`: `list()` returns `{ key, owner, mine, stats }` for every flight that pilots shared, without the tracks. `key` is a server id, `owner` is an opaque account id that groups the flights of one pilot, and `stats` is the `club` summary of the flight record. `flight(key)` returns the full record of one shared flight. A flight record is shared when its `data.shared` is `true`, so a backend that supports the club copies `data.club` to a place it can list cheaply. Both calls return untrusted data, the app validates it.
 - The app sends validated records. It treats everything from `pull` as untrusted and validates it again, so the adapter does not have to, but it must not run or render it.
 
 ## Versioning
