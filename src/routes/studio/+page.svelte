@@ -22,6 +22,7 @@
   import { importAndAdd } from '#lib/studio/addPilots';
   import { StudioState } from '#lib/state/studio.svelte';
   import { provideStudioService } from '#lib/studio/studioService.svelte';
+  import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
   import { flightRepository } from '#lib/storage';
 
   const studio = new StudioState();
@@ -79,8 +80,10 @@
 
   // Plugins read the studio through this service while the page is open.
   const unprovide = provideStudioService(studio);
+  const unprovideAnalysis = provideAnalysisService(studio);
   onDestroy(() => {
     unprovide();
+    unprovideAnalysis();
     studio.destroy();
   });
 

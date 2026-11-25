@@ -124,9 +124,23 @@ Provided by the studio while it is open. Every value is read through a function,
 | `time()`       | `number`             | Playback time in ms on the studio clock.                                                                    |
 | `selectedId()` | `string \| null`     | Id of the selected pilot, or null.                                                                          |
 | `units()`      | `Readonly<Units>`    | The display units the user chose. The same frozen object until the user changes them. See below.            |
+| `altRef()`     | `'msl' \| 'agl'`     | The altitude reference the user chose for transition altitudes.                                             |
 | `seek(ms)`     | `(number) => void`   | Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.                    |
 | `select(id)`   | `(string) => void`   | Selects the pilot with that flight id. An unknown id is ignored.                                            |
 | `viewer()`     | `Viewer \| null`     | The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time.      |
+
+### updraft/flight-analysis@1
+
+Provided by the studio while it is open. Lookups are by flight id (see `PluginFlight.id`) and return null for an unknown id. Results are the studio's own objects, read only.
+
+| Member                  | Type                                       | Behavior                                                                                                                                     |
+| ----------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stats(id)`             | `FlightStats \| null`                      | Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight.                                              |
+| `transitions(id, ref)`  | `TransitionSummary \| null`                | Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values need ground heights, so hold `ctx.need('ground')` first. |
+
+The types are in `src/lib/studio/analysisService.svelte.ts`. Like every service it is read through functions, so call it again instead of keeping results.
+
+The built-in Stats panel is itself a plugin (`updraft/stats`) built only on `updraft/studio@1` and `updraft/flight-analysis@1`. See `src/lib/plugins/builtin/stats.ts` as a reference example. Bundled plugins cannot be removed, but can be hidden and moved like any panel.
 
 The TypeScript types `StudioService` and `PluginFlight` are in `src/lib/studio/studioService.svelte.ts`, JavaScript plugins can import them in JSDoc as the example does.
 

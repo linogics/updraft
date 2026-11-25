@@ -109,6 +109,16 @@ test('the actions menu moves Stats to the left dock and keeps focus on it', asyn
   await expect(page.getByText('Stats moved to left dock, position 3')).toBeAttached();
 });
 
+test('the Stats plugin follows the selected pilot', async ({ page }) => {
+  await openDemoStudio(page);
+  const stats = page.locator('aside').getByRole('region', { name: 'Stats' });
+  await expect(stats).toContainText('Duration');
+  const before = await stats.innerText();
+  await page.locator('button.name').nth(1).click();
+
+  await expect(stats).not.toHaveText(before);
+});
+
 /** Hides the XC panel, so scoring neither moves the panels nor competes for the CPU during a drag. */
 const withoutXc = (page: Page) =>
   page.addInitScript(() => localStorage.setItem('studioLayout', JSON.stringify({ hidden: ['xc'] })));

@@ -1,5 +1,6 @@
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { BUILTIN_PANELS } from '#lib/studio/panels';
+import { BUILTIN_PLUGINS } from './builtin';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, pluginUrl } from './core';
@@ -16,7 +17,11 @@ export async function addPlugin(raw: string) {
   if (pluginPrefs.list.some((e) => e.url === url)) throw new Error('This plugin is already added.');
 
   // Ids are unique across all kinds. Built-in panel ids are refused too, to avoid confusion.
-  const taken = [...BUILTIN_PANELS.map((p) => p.id), ...pluginPrefs.list.map((e) => e.id)];
+  const taken = [
+    ...BUILTIN_PANELS.map((p) => p.id),
+    ...BUILTIN_PLUGINS.map((p) => p.id),
+    ...pluginPrefs.list.map((e) => e.id)
+  ];
   const plugin = await loadPlugin(url, taken);
   assertNotReserved(plugin);
   const { id, kind } = plugin;

@@ -1,8 +1,10 @@
-import { loadPlugin } from '#lib/plugins/core';
+import { loadPlugin, validatePlugin } from '#lib/plugins/core';
 import type { PluginEntry } from '#lib/plugins/entries';
 import { startServicePlugins } from '#lib/plugins/startup';
 import { registerProvides } from '#lib/plugins/services';
+import { BUILTIN_PLUGINS, type BuiltinPlugin } from '#lib/plugins/builtin';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
+import type { StudioPlugin } from './plugins';
 import { BUILTIN_PANELS, type PanelDef, type PanelModule } from './panels';
 
 /** Plugin panel ids carry this prefix, so they never clash with a built-in id now or later. */
@@ -13,6 +15,32 @@ export const pluginPanelId = (id: string) => PLUGIN_PREFIX + id;
 // Plain cache, nothing renders from it.
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const defs = new Map<string, PanelDef>();
+
+async function hostProps(plugin: StudioPlugin) {
+  const { default: host } = await import('#lib/components/studio/PluginPanel.svelte');
+  // The host takes the plugin as a prop on top of the studio, which PanelHost passes from `props`.
+  return { default: host as unknown as PanelModule['default'], props: { plugin } };
+}
+
+const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
+  id: pluginPanelId(b.id),
+  title: b.title,
+  dock: b.dock,
+  hidden: b.hidden,
+  pinned: b.pinned,
+  load: async () => {
+    const plugin = validatePlugin((await b.load()).default);
+    if (plugin.kind !== 'studio' || plugin.id !== b.id) throw new Error(`"${b.id}" is not the expected studio plugin.`);
+    return hostProps(plugin);
+  }
+});
+
+// Bundled plugins keep the place in the default order that their panel had before it became a plugin.
+const BUILTINS: PanelDef[] = [...BUILTIN_PANELS];
+for (const b of BUILTIN_PLUGINS) {
+  const at = BUILTINS.findIndex((p) => p.id === b.after);
+  BUILTINS.splice(at < 0 ? BUILTINS.length : at + 1, 0, builtinPanel(b));
+}
 
 function pluginPanel(e: PluginEntry): PanelDef {
   const key = `${e.url}\n${e.id}\n${e.name}`;
@@ -32,21 +60,18 @@ function pluginPanel(e: PluginEntry): PanelDef {
         throw new Error(`The plugin now has the kind "${plugin.kind}" instead of "${e.kind}".`);
       if (plugin.id !== e.id) throw new Error(`The plugin now has the id "${plugin.id}" instead of "${e.id}".`);
       registerProvides(plugin);
-      const { default: host } = await import('#lib/components/studio/PluginPanel.svelte');
-      // The host takes the plugin as a prop on top of the studio, which PanelHost passes from `props`.
-      return { default: host as unknown as PanelModule['default'], props: { plugin } };
+      if (plugin.kind !== 'studio') throw new Error(`"${e.id}" is not a studio plugin.`);
+
+      return hostProps(plugin);
     }
   };
   defs.set(key, def);
   return def;
 }
 
-/** Built-in panels followed by the plugins the user added. Follows the plugin list. */
+/** Built-in panels and bundled plugins followed by the plugins the user added. Follows the plugin list. */
 class Registry {
-  list = $derived<PanelDef[]>([
-    ...BUILTIN_PANELS,
-    ...pluginPrefs.list.filter((e) => e.kind === 'studio').map(pluginPanel)
-  ]);
+  list = $derived<PanelDef[]>([...BUILTINS, ...pluginPrefs.list.filter((e) => e.kind === 'studio').map(pluginPanel)]);
   byId = $derived(new Map(this.list.map((p) => [p.id, p])));
   /** Ids that may not leave their default dock. */
   pinned = $derived(this.list.filter((p) => p.pinned).map((p) => p.id));
