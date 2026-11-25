@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  let { label, children }: { label: string; children: Snippet } = $props();
+  let { label, icon, children }: { label: string; icon?: Snippet; children: Snippet } = $props();
 
   const id = `popover-${Math.random().toString(36).slice(2, 9)}`;
   let button: HTMLButtonElement;
@@ -17,7 +17,15 @@
   }
 </script>
 
-<button bind:this={button} popovertarget={id} class="trigger">{label} ▾</button>
+<button
+  bind:this={button}
+  popovertarget={id}
+  class="trigger"
+  aria-label={icon ? label : undefined}
+  title={icon ? label : undefined}
+>
+  {#if icon}{@render icon()}{:else}{label} ▾{/if}
+</button>
 <div bind:this={panel} {id} popover="auto" class="panel" ontoggle={place}>
   {@render children()}
 </div>

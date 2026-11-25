@@ -19,7 +19,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 ## Studio
 
 - 3D view on CesiumJS, 2D map (MapLibre) or a split view of both. Panels are resizable and collapsible, sizes are kept per browser.
-- Dockable panels: pilots, climbs, XC, stats, altitude chart and timeline live in a left, right or bottom dock. Drag a panel by its grip into any dock, also an empty one, or move it from its actions menu (the keyboard alternative), hide it, or bring it back from the toolbar Panels menu. The altitude chart and timeline stay in the bottom dock. Hidden panels are not even loaded, and they do not run their work either: XC scoring and ground heights only run while a panel or an export needs them. Click a side panel's title to collapse it to its header. XC starts hidden, turn it on from the Panels menu. The layout is kept per browser.
+- Dockable panels: pilots, climbs, XC, stats, export, scene, track, settings, altitude chart and timeline live in a left, right or bottom dock. Drag a panel by its grip into any dock, also an empty one, or move it from its actions menu (the keyboard alternative), hide it, or bring it back from the toolbar Panels button. The altitude chart and timeline stay in the bottom dock. Hidden panels are not even loaded, and they do not run their work either: XC scoring and ground heights only run while a panel or an export needs them. Click a side panel's title to collapse it to its header. XC and Settings start hidden, turn them on from the Panels menu. The layout is kept per browser.
 - Plugin panels: add your own panel from the Panels menu with the URL of a plain JavaScript module. A plugin is loaded only while its panel is shown, gets read access to the flights, the playback time and the 3D viewer, and can draw an overlay over the views. Plugins run with full access to the page, so only add ones you trust. They are kept per browser and work offline once added, if the file is served with CORS and was reachable when you added it. A plugin can also draw into image and video exports, each one gets its own checkbox in the export dialogs. Authors find the details in [plugins.md](plugins.md).
 - Several pilots on one shared clock, with live markers, trail and pilot names.
 - Player: play and pause, 1× to 200× speed, scrubbing, jump to the next thermal, keyboard control.
@@ -29,7 +29,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Add pilots without leaving the studio: the "Add pilot" button opens a picker over the logbook (filter, multi-select, import files), or drop track files anywhere on the page.
 - Track colour by vario, flight phase, climb and transition, or pilot. Any pilot colour can be picked.
 - Track style: solid, outline, dashed, curtain (3D wall down to the ground) or glow, width 1 to 10 px, smoothing (on by default).
-- View toggles: full screen, pilot names, height exaggeration 1× to 3×, sun lighting at the recorded time, thermal columns and labels.
+- Scene panel with the view toggles: pilot names, height exaggeration 1× to 3×, sun lighting at the recorded time, thermal columns and labels. A full screen button sits in the toolbar.
 - Terrain: free AWS Terrain Tiles, Cesium World Terrain with your own ion token, or flat. Each track is shifted so takeoff sits on the ground (at most ±150 m).
 - Base maps: satellite (Esri), topo (OpenTopoMap) or OSM with hillshade, in 3D and 2D.
 - Thermal hotspots and skyways from thermal.kk7.ch, in 2D, 3D and the planner.

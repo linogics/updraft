@@ -1,0 +1,95 @@
+<script lang="ts">
+  import { COLOR_MODES, TRACK_STYLES, TRACK_WIDTH } from '#lib/domain/scene';
+  import { m } from '#lib/paraglide/messages';
+  import type { StudioState } from '#lib/state/studio.svelte';
+
+  let { studio }: { studio: StudioState } = $props();
+
+  const COLOR_LABELS = {
+    vario: () => m.track_color_vario(),
+    phase: () => m.track_color_phase(),
+    climb: () => m.track_color_climb(),
+    pilot: () => m.track_color_pilot()
+  } as const;
+  const STYLE_LABELS = {
+    solid: () => m.track_style_solid(),
+    outline: () => m.track_style_outline(),
+    dashed: () => m.track_style_dashed(),
+    curtain: () => m.track_style_curtain(),
+    glow: () => m.track_style_glow()
+  } as const;
+</script>
+
+<div class="fields">
+  <label for="track-color">{m.track_colour()}</label>
+  <select id="track-color" bind:value={studio.colorBy}>
+    {#each COLOR_MODES as mode (mode)}<option value={mode}>{COLOR_LABELS[mode]()}</option>{/each}
+  </select>
+
+  <label for="track-style">{m.track_style()}</label>
+  <select id="track-style" bind:value={studio.trackStyle}>
+    {#each TRACK_STYLES as s (s)}<option value={s}>{STYLE_LABELS[s]()}</option>{/each}
+  </select>
+
+  <label for="track-width">{m.track_width()}</label>
+  <span class="width">
+    <input
+      id="track-width"
+      type="range"
+      min={TRACK_WIDTH.min}
+      max={TRACK_WIDTH.max}
+      step="1"
+      bind:value={studio.trackWidth}
+    />
+    <output for="track-width">{studio.trackWidth} px</output>
+  </span>
+
+  <span></span>
+  <label class="check"><input type="checkbox" bind:checked={studio.smoothTrack} /> {m.track_smooth()}</label>
+</div>
+{#if studio.trackStyle === 'glow' && studio.colorBy !== 'pilot'}
+  <p class="hint">{m.track_hint_glow()}</p>
+{:else if studio.trackStyle === 'curtain'}
+  <p class="hint">{m.track_hint_curtain()}</p>
+{/if}
+<p class="hint">{m.track_hint_dot()}</p>
+
+<style>
+  .fields {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px 10px;
+  }
+  label {
+    color: var(--muted);
+  }
+  select {
+    width: 100%;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
+  }
+  .width {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .width input {
+    flex: 1;
+    min-width: 0;
+  }
+  output {
+    width: 36px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .hint {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>

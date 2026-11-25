@@ -22,27 +22,25 @@ test('demo opens the editor layout: outliner, viewport, inspector and timeline',
 test('smooth lines are on by default and stay out of the URL', async ({ page }) => {
   await openDemoStudio(page);
   expect(new URL(page.url()).searchParams.has('smooth')).toBe(false);
-  await page.getByRole('button', { name: /^Track/ }).click();
-  const smooth = page.getByRole('checkbox', { name: 'Smooth' });
+  const smooth = page.getByRole('region', { name: 'Track' }).getByRole('checkbox', { name: 'Smooth' });
   await expect(smooth).toBeChecked();
 
   await smooth.uncheck();
   await expect(page).toHaveURL(/[?&]smooth=0/);
   await page.reload();
-  await page.getByRole('button', { name: /^Track/ }).click();
-  await expect(page.getByRole('checkbox', { name: 'Smooth' })).not.toBeChecked();
+  await expect(page.getByRole('region', { name: 'Track' }).getByRole('checkbox', { name: 'Smooth' })).not.toBeChecked();
 });
 
 test('airspaces start hidden, also after they were shown in an earlier session', async ({ page }) => {
   await openDemoStudio(page);
-  await page.getByRole('button', { name: /^View/ }).click();
-  const show = page.getByRole('checkbox', { name: 'Airspaces' });
+  const show = page.getByRole('region', { name: 'Scene' }).getByRole('checkbox', { name: 'Airspaces' });
   await expect(show).not.toBeChecked();
 
   await show.check();
   await page.reload();
-  await page.getByRole('button', { name: /^View/ }).click();
-  await expect(page.getByRole('checkbox', { name: 'Airspaces' })).not.toBeChecked();
+  await expect(
+    page.getByRole('region', { name: 'Scene' }).getByRole('checkbox', { name: 'Airspaces' })
+  ).not.toBeChecked();
 });
 
 test('a collapsed outliner stays collapsed after reload', async ({ page }) => {
@@ -379,8 +377,7 @@ test.describe('plugins', () => {
     await expect(await add(page)).toBeHidden();
     await expect(page.getByRole('region', { name: 'Hello' })).toContainText('pilot=');
 
-    await page.getByRole('button', { name: /^Export/ }).click();
-    const box = page.getByRole('checkbox', { name: 'Hello' });
+    const box = page.getByRole('region', { name: 'Export' }).getByRole('checkbox', { name: 'Hello' });
     await expect(box).toBeChecked();
 
     const corner = async () => {

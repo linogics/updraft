@@ -1,18 +1,14 @@
 <script lang="ts">
-  import { loadRuntimeConfig, saveIonToken } from '#lib/config';
-  import { BASEMAP_IDS, CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
+  import Languages from '@lucide/svelte/icons/languages';
+  import Maximize from '@lucide/svelte/icons/maximize';
+  import Minimize from '@lucide/svelte/icons/minimize';
+  import { CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
-  import { BASEMAPS } from '#lib/map/basemaps';
+  import { getLocale, setLocale, type Locale } from '#lib/paraglide/runtime';
   import type { StudioState } from '#lib/state/studio.svelte';
   import Logo from './Logo.svelte';
-  import ExportImage from './ExportImage.svelte';
-  import ExportVideo from './ExportVideo.svelte';
   import Popover from './Popover.svelte';
   import PanelsMenu from './studio/PanelsMenu.svelte';
-  import TrackMenu from './TrackMenu.svelte';
-  import LanguageSelect from './LanguageSelect.svelte';
-  import UnitsMenu from './UnitsMenu.svelte';
-  import ViewMenu from './ViewMenu.svelte';
 
   let { studio }: { studio: StudioState } = $props();
 
@@ -24,23 +20,18 @@
     free: () => m.camera_free(),
     keys: () => m.camera_keys()
   } as const;
-
-  let ionToken = $state('');
-  let ionError = $state('');
-  void loadRuntimeConfig().then((c) => (ionToken = c.cesiumIonToken));
+  // Each language is named in itself.
+  const LOCALES: { id: Locale; name: string }[] = [
+    { id: 'en', name: 'English' },
+    { id: 'de', name: 'Deutsch' },
+    { id: 'fr', name: 'Français' }
+  ];
 
   const canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
   let fullscreen = $state(false);
   function toggleFullscreen() {
     if (document.fullscreenElement) void document.exitFullscreen();
     else document.documentElement.requestFullscreen().catch(() => {});
-  }
-
-  // The viewer reads the token once at start, so reload to apply it.
-  function applyIonToken(e: SubmitEvent) {
-    e.preventDefault();
-    if (saveIonToken(ionToken.trim())) location.reload();
-    else ionError = m.toolbar_ion_storage_blocked();
   }
 </script>
 
@@ -49,81 +40,83 @@
 <div class="toolbar">
   <Logo compact />
 
-  <div class="group" role="group" aria-label={m.toolbar_layout()}>
-    {#each LAYOUTS as l (l)}
-      <button class:active={studio.layout === l} onclick={() => (studio.layout = l)}>{LAYOUT_LABELS[l]()}</button>
-    {/each}
+  <div class="center">
+    <div class="group" role="group" aria-label={m.toolbar_layout()}>
+      {#each LAYOUTS as l (l)}
+        <button class:active={studio.layout === l} onclick={() => (studio.layout = l)}>{LAYOUT_LABELS[l]()}</button>
+      {/each}
+    </div>
+
+    <div class="group" role="group" aria-label={m.toolbar_camera()}>
+      {#each CAMERA_MODES as c (c)}
+        <button class:active={studio.camera === c} onclick={() => (studio.camera = c)}>{CAMERA_LABELS[c]()}</button>
+      {/each}
+    </div>
   </div>
 
-  <div class="group" role="group" aria-label={m.toolbar_camera()}>
-    {#each CAMERA_MODES as c (c)}
-      <button class:active={studio.camera === c} onclick={() => (studio.camera = c)}>{CAMERA_LABELS[c]()}</button>
-    {/each}
+  <div class="end">
+    <PanelsMenu />
+
+    <Popover label={m.lang_label()}>
+      {#snippet icon()}<Languages size={16} aria-hidden="true" />{/snippet}
+      <ul class="locales">
+        {#each LOCALES as l (l.id)}
+          <li>
+            <!-- setLocale saves the choice and reloads. -->
+            <button type="button" aria-current={getLocale() === l.id} onclick={() => setLocale(l.id)}>{l.name}</button>
+          </li>
+        {/each}
+      </ul>
+    </Popover>
+
+    {#if canFullscreen}
+      <button
+        onclick={toggleFullscreen}
+        aria-pressed={fullscreen}
+        aria-label={fullscreen ? m.toolbar_exit_fullscreen() : m.toolbar_fullscreen()}
+        title={fullscreen ? m.toolbar_exit_fullscreen() : m.toolbar_fullscreen()}
+      >
+        {#if fullscreen}<Minimize size={16} aria-hidden="true" />{:else}<Maximize size={16} aria-hidden="true" />{/if}
+      </button>
+    {/if}
   </div>
-
-  <TrackMenu {studio} />
-  <ViewMenu {studio} />
-  <PanelsMenu />
-
-  <Popover label={m.export_menu()}>
-    <ExportImage {studio} />
-    <ExportVideo {studio} />
-  </Popover>
-
-  <label>
-    {m.toolbar_map()}
-    <select bind:value={studio.basemap}>
-      {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
-    </select>
-  </label>
-
-  <label title={studio.ionAvailable ? undefined : m.toolbar_ion_hint()}>
-    {m.toolbar_terrain()}
-    <select bind:value={studio.terrain}>
-      <option value="ion" disabled={!studio.ionAvailable}>
-        {studio.ionAvailable ? m.toolbar_terrain_ion() : m.toolbar_terrain_ion_locked()}
-      </option>
-      <option value="terrarium">{m.toolbar_terrain_aws()}</option>
-      <option value="none">{m.toolbar_terrain_flat()}</option>
-    </select>
-  </label>
-
-  <Popover label="Ion">
-    <form class="ion" onsubmit={applyIonToken}>
-      <label for="ion-token">{m.toolbar_ion_token()}</label>
-      <input id="ion-token" type="password" autocomplete="off" bind:value={ionToken} placeholder="eyJhbGciOi…" />
-      <p>
-        <!-- Static i18n message with a fixed link, no user input. -->
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html m.toolbar_ion_help({
-          link: '<a href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">ion.cesium.com</a>'
-        })}
-      </p>
-      {#if ionError}<p class="error" role="alert">{ionError}</p>{/if}
-      <button type="submit">{m.toolbar_ion_save()}</button>
-    </form>
-  </Popover>
-
-  <LanguageSelect />
-  <UnitsMenu />
-
-  {#if canFullscreen}
-    <button onclick={toggleFullscreen} aria-pressed={fullscreen}>
-      {fullscreen ? m.toolbar_exit_fullscreen() : m.toolbar_fullscreen()}
-    </button>
-  {/if}
 </div>
 
 <style>
   .toolbar {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 12px;
     padding: 8px 12px;
   }
   .toolbar > :global(.logo) {
-    margin-right: auto;
+    justify-self: start;
+  }
+  .center {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  .end {
+    display: flex;
+    justify-self: end;
+    gap: 8px;
+  }
+  .end > :global(button) {
+    display: inline-flex;
+    align-items: center;
+  }
+  /* Narrow screens stack the three parts. */
+  @media (max-width: 1099px) {
+    .toolbar {
+      grid-template-columns: 1fr auto;
+    }
+    .center {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
   }
   .group {
     display: flex;
@@ -143,24 +136,20 @@
     border-color: var(--primary);
     color: var(--bg);
   }
-  .ion {
+  .locales {
     display: grid;
-    gap: 6px;
-    width: 260px;
-  }
-  .ion p {
+    gap: 4px;
     margin: 0;
-    color: var(--muted);
-    font-size: 12px;
+    padding: 0;
+    list-style: none;
   }
-  .ion .error {
-    color: var(--danger);
+  .locales button {
+    width: 100%;
+    text-align: left;
   }
-  label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--muted);
-    font-size: 13px;
+  .locales button[aria-current='true'] {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg);
   }
 </style>
