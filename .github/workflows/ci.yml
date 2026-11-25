@@ -24,6 +24,7 @@ jobs:
       - run: npx prettier --check .
       - run: npx eslint .
       - run: npm run check
+      - run: npm run docs:services && test -z "$(git status --porcelain docs/services)"
 
   unit:
     runs-on: ubuntu-latest

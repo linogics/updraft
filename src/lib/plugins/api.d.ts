@@ -111,9 +111,13 @@ export interface ServicePlugin extends PluginBase {
 
 /** The four display units. Values from the studio are always SI, convert them for display. */
 export interface Units {
+  /** Distances: kilometres, miles or nautical miles. */
   distance: 'km' | 'mi' | 'nm';
+  /** Altitudes: metres or feet. */
   alt: 'm' | 'ft';
+  /** Climb and sink rates: m/s, feet per minute or knots. */
   vario: 'ms' | 'fpm' | 'kt';
+  /** Speeds: km/h, mph or knots. */
   speed: 'kmh' | 'mph' | 'kt';
 }
 

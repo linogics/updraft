@@ -16,7 +16,8 @@
     "test": "svelte-kit sync && vitest run",
     "test:ui": "playwright test",
     "bench": "svelte-kit sync && vitest bench --run --silent=false",
-    "bench:ui": "PERF=1 playwright test perf --reporter=line"
+    "bench:ui": "PERF=1 playwright test perf --reporter=line",
+    "docs:services": "node scripts/gen-service-docs.mjs src/lib/plugins/api.d.ts docs/services"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

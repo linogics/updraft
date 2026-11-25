@@ -118,61 +118,59 @@ Performance: a service call is a plain function call in the page. Services are b
 
 ### Events
 
-Services with state that changes have `on(event, fn)`. It calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the current values through the service functions. It does not fire for the state at the time you subscribe, so call your draw once yourself. It returns a function that stops it. Every subscription made through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws `Unknown event "x" of updraft/studio@1.`. A handler that throws is shown in the panel's error box.
+Services with state that changes have `on(event, fn)`. It calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the current values through the service functions. It does not fire for the state at the time you subscribe, so call your draw once yourself. It returns a function that stops it. Every subscription made through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws `Unknown event "x" of updraft/studio@1.`. A handler that throws is shown in the panel's error box. The events of each service are listed on its [reference page](#service-reference).
 
-### updraft/studio@1
+### Service reference
 
-Provided by the studio while it is open. Every value is read through a function, so it is always current. Call the function again instead of keeping its result. `flights()` and `units()` return the same frozen value until something changes, so it is cheap to call in every frame.
+Each service has a generated reference page with its events, members and types. The pages come from the TSDoc in `src/lib/plugins/api.d.ts`, so they cannot drift from the contract.
 
-| Member         | Type                 | Behavior                                                                                                    |
-| -------------- | -------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `flights()`    | `readonly PluginFlight[]` | All pilots in the studio, in list order. The same frozen array until flights, colors or visibility change. |
-| `time()`       | `number`             | Playback time in ms on the studio clock.                                                                    |
-| `selectedId()` | `string \| null`     | Id of the selected pilot, or null.                                                                          |
-| `units()`      | `Readonly<Units>`    | The display units the user chose. The same frozen object until the user changes them. See below.            |
-| `altRef()`     | `'msl' \| 'agl'`     | The altitude reference the user chose for transition altitudes.                                             |
-| `seek(ms)`     | `(number) => void`   | Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.                    |
-| `select(id)`   | `(string) => void`   | Selects the pilot with that flight id. An unknown id is ignored.                                            |
-| `viewer()`     | `Viewer \| null`     | The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time.      |
-| `on(event, fn)` | `(StudioEvent, () => void) => () => void` | Events: `'time'` playback time, `'flights'` pilot list, color, visibility or time shift, `'selection'` selected pilot, `'units'` display units, `'altRef'` altitude reference. |
-
-### updraft/flight-analysis@1
-
-Provided by the studio while it is open. Lookups are by flight id (see `PluginFlight.id`) and return null for an unknown id. Results are the studio's own objects, read only.
-
-| Member                  | Type                                       | Behavior                                                                                                                                     |
-| ----------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stats(id)`             | `FlightStats \| null`                      | Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight.                                              |
-| `transitions(id, ref)`  | `TransitionSummary \| null`                | Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values need ground heights, so hold `ctx.need('ground')` first. |
-| `on(event, fn)`         | `('changed', () => void) => () => void`    | `'changed'` fires when flights changed or ground heights arrived.                                                                            |
-
-Like every service it is read through functions, so call it again instead of keeping results.
-
-The built-in Stats panel is itself a plugin (`updraft/stats`) built only on `updraft/studio@1` and `updraft/flight-analysis@1`. See `src/lib/plugins/builtin/stats/index.ts` as a reference example. Bundled plugins cannot be removed, but can be hidden and moved like any panel.
+- [updraft/studio@1](services/updraft-studio-1.md), provided by the studio. Flights, playback time, selection, display units, altitude reference and the Cesium viewer.
+- [updraft/flight-analysis@1](services/updraft-flight-analysis-1.md), provided by the studio. Statistics and transition summaries by flight id.
+- [updraft/plan@1](services/updraft-plan-1.md), provided by the planner. See [XC planner](#xc-planner).
 
 The full typed contract is `/updraft-plugin.d.ts` on the deployed app (source `src/lib/plugins/api.d.ts`). JavaScript plugins can use it in JSDoc, for example `/** @param {import('./updraft-plugin.d.ts').PluginContext} ctx */`.
 
-`PluginFlight`:
-
-| Field     | Type             | Meaning                                                                                                                         |
-| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `id`      | `string`         | Flight id, the value for `selectedId()` and `select()`.                                                                         |
-| `pilot`   | `string`         | Pilot name.                                                                                                                     |
-| `glider`  | `string \| null` | Glider, if the file has one.                                                                                                    |
-| `color`   | `string`         | The pilot colour as a CSS colour.                                                                                               |
-| `visible` | `boolean`        | Whether the pilot is shown.                                                                                                     |
-| `fixes`   | `{ t, lat, lon, alt }[]` | Track points sorted by time. `t` is in ms on the studio clock, so time shifts of the pilot are already applied. `lat` and `lon` are degrees, `alt` is metres. The array is shared with the studio, do not modify it or its objects. |
-
-`Units` has the four display units. Values you get from the studio are always SI, convert them for display:
-
-| Field      | Values                    |
-| ---------- | ------------------------- |
-| `distance` | `'km'`, `'mi'`, `'nm'`    |
-| `alt`      | `'m'`, `'ft'`             |
-| `vario`    | `'ms'`, `'fpm'`, `'kt'`   |
-| `speed`    | `'kmh'`, `'mph'`, `'kt'`  |
+The built-in Stats panel is itself a plugin (`updraft/stats`) built only on `updraft/studio@1` and `updraft/flight-analysis@1`. See `src/lib/plugins/builtin/stats/index.ts` as a reference example. Bundled plugins cannot be removed, but can be hidden and moved like any panel.
 
 Services named `updraft/*-state` hand out app internals and are internal to bundled plugins.
+
+### Document your own services
+
+Generate the same kind of reference pages for services you provide, so authors who require your service can find them.
+
+1. Put the service interfaces in a `.d.ts` file, for example `wind.d.ts`. Start the TSDoc of each service interface with a line ``Service `me/wind@1`.`` followed by what it is and where it is provided. Give every member a TSDoc comment.
+2. For events, declare a string-literal union and give each member its own comment. Use it as the first parameter of `on`:
+
+   ```ts
+   /** Events of `WindService.on`. */
+   export type WindEvent =
+     /** New wind data arrived. */
+     | 'data'
+     /** The user picked another altitude. */
+     | 'altitude';
+
+   /**
+    * Service `me/wind@1`. Provided by the wind plugin.
+    * Wind speed and direction at a point.
+    */
+   export interface WindService {
+     /** Calls `fn` after the named event fired. Returns a function that stops it. */
+     on(event: WindEvent, fn: () => void): () => void;
+     /** Wind in m/s and the direction it blows from, in degrees. */
+     at(lat: number, lon: number, alt: number): { speed: number; from: number };
+   }
+   ```
+
+3. Download the generator and run it. It only needs the `typescript` package, version 6 (version 7 has no JavaScript compiler API):
+
+   ```sh
+   npm i -D typescript@6
+   curl -O https://raw.githubusercontent.com/linogics/updraft/main/scripts/gen-service-docs.mjs
+   node gen-service-docs.mjs wind.d.ts docs
+   ```
+
+   This writes `docs/me-wind-1.md` and `docs/README.md`. Interfaces and type aliases from the same file that the members use are listed on the page as well.
+4. Commit the pages and link them from your plugin README, for example `Services: [me/wind@1](docs/me-wind-1.md)`.
 
 ## Bundled plugins
 
@@ -195,15 +193,7 @@ A plugin with `'plan'` in `hosts` shows up in the XC planner (`/plan`) after the
 - `need(kind)` throws `need is not available in the planner.`.
 - The studio services (`updraft/studio@1`, `updraft/flight-analysis@1`) are not provided. A plugin that lists both hosts must not require them, or must check the host first.
 
-Service `updraft/plan@1`, provided while the planner is open:
-
-| Member       | Returns                                    | Behavior                                                         |
-| ------------ | ------------------------------------------ | ---------------------------------------------------------------- |
-| `points()`   | `readonly { lat: number; lon: number }[]`  | The route. The same frozen array until the route changes.        |
-| `distance()` | `number`                                   | Route length in m.                                               |
-| `speed()`    | `number`                                   | The planned speed in km/h.                                       |
-| `units()`    | `Readonly<Units>`                          | The same frozen object until the user changes units, see above.  |
-| `on(event, fn)` | `(PlanEvent, () => void) => () => void` | Events: `'route'` the route changed, `'speed'` the planned speed changed, `'units'` display units. |
+Service `updraft/plan@1`, provided while the planner is open: see [updraft/plan@1](services/updraft-plan-1.md).
 
 ## Lifecycle
 
