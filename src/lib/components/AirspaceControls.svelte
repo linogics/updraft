@@ -10,52 +10,6 @@
 </script>
 
 <div class="fields">
-  <label for="as-show">{m.airspace_show()}</label>
-  <input
-    id="as-show"
-    type="checkbox"
-    checked={prefs.show}
-    onchange={(e) => prefs.set({ show: e.currentTarget.checked })}
-  />
-  <span>{m.airspace_classes()}</span>
-  <span class="classes">
-    {#each AIRSPACE_CLASSES as c (c)}
-      <label>
-        <input
-          type="checkbox"
-          checked={prefs.classes.includes(c)}
-          onchange={(e) =>
-            prefs.set({
-              classes: AIRSPACE_CLASSES.filter((x) => (x === c ? e.currentTarget.checked : prefs.classes.includes(x)))
-            })}
-        />
-        {c === 'other' ? m.airspace_class_other() : c}
-      </label>
-    {/each}
-  </span>
-  <label for="as-floor">{m.airspace_floor()}</label>
-  <span class="range">
-    <input
-      id="as-floor"
-      type="range"
-      min="0"
-      max={Math.round(toAlt(MAX_FLOOR_LIMIT, alt))}
-      step={alt === 'ft' ? 100 : 50}
-      value={Math.round(toAlt(prefs.maxFloor, alt))}
-      oninput={(e) => prefs.set({ maxFloor: fromAlt(e.currentTarget.valueAsNumber, alt) })}
-    />
-    <output for="as-floor">{Math.round(toAlt(prefs.maxFloor, alt))} {UNIT_LABELS.alt[alt]}</output>
-  </span>
-  <label for="as-opacity">{m.common_opacity()}</label>
-  <input
-    id="as-opacity"
-    type="range"
-    min="0.1"
-    max="0.6"
-    step="0.05"
-    value={prefs.opacity}
-    oninput={(e) => prefs.set({ opacity: e.currentTarget.valueAsNumber })}
-  />
   <label for="as-key">{m.airspace_key()}</label>
   <input
     id="as-key"
@@ -74,8 +28,64 @@
     })}
   </p>
 {/if}
+<label class="switch">
+  <input
+    type="checkbox"
+    {...{ switch: true }}
+    disabled={!prefs.key}
+    checked={prefs.show}
+    onchange={(e) => prefs.set({ show: e.currentTarget.checked })}
+  />
+  {m.airspace_show()}
+</label>
+<fieldset class="feature" disabled={!prefs.key || !prefs.show}>
+  <div class="fields">
+    <span>{m.airspace_classes()}</span>
+    <span class="classes">
+      {#each AIRSPACE_CLASSES as c (c)}
+        <label>
+          <input
+            type="checkbox"
+            checked={prefs.classes.includes(c)}
+            onchange={(e) =>
+              prefs.set({
+                classes: AIRSPACE_CLASSES.filter((x) => (x === c ? e.currentTarget.checked : prefs.classes.includes(x)))
+              })}
+          />
+          {c === 'other' ? m.airspace_class_other() : c}
+        </label>
+      {/each}
+    </span>
+    <label for="as-floor">{m.airspace_floor()}</label>
+    <span class="range">
+      <input
+        id="as-floor"
+        type="range"
+        min="0"
+        max={Math.round(toAlt(MAX_FLOOR_LIMIT, alt))}
+        step={alt === 'ft' ? 100 : 50}
+        value={Math.round(toAlt(prefs.maxFloor, alt))}
+        oninput={(e) => prefs.set({ maxFloor: fromAlt(e.currentTarget.valueAsNumber, alt) })}
+      />
+      <output for="as-floor">{Math.round(toAlt(prefs.maxFloor, alt))} {UNIT_LABELS.alt[alt]}</output>
+    </span>
+    <label for="as-opacity">{m.common_opacity()}</label>
+    <input
+      id="as-opacity"
+      type="range"
+      min="0.1"
+      max="0.6"
+      step="0.05"
+      value={prefs.opacity}
+      oninput={(e) => prefs.set({ opacity: e.currentTarget.valueAsNumber })}
+    />
+  </div>
+</fieldset>
 
 <style>
+  .switch {
+    margin-top: 8px;
+  }
   .fields {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);

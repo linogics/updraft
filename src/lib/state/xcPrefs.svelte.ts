@@ -11,9 +11,31 @@ function load(): XcLeague {
   }
 }
 
+const ENABLED_KEY = 'xcEnabled';
+
+function loadEnabled(): boolean {
+  try {
+    return JSON.parse(localStorage.getItem(ENABLED_KEY) ?? 'false') === true;
+  } catch {
+    return false;
+  }
+}
+
 /** League used for XC scoring, kept in this browser. */
 class XcPrefs {
   league = $state<XcLeague>(typeof localStorage === 'undefined' ? parseXcLeague(null) : load());
+
+  /** Master switch for XC scoring, off on a fresh start. */
+  enabled = $state(typeof localStorage === 'undefined' ? false : loadEnabled());
+
+  setEnabled(on: boolean) {
+    this.enabled = on;
+    try {
+      localStorage.setItem(ENABLED_KEY, JSON.stringify(on));
+    } catch {
+      // Not persisted, the choice still applies for this session.
+    }
+  }
 
   set(league: XcLeague) {
     this.league = league;

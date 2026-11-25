@@ -31,17 +31,36 @@ test('smooth lines are on by default and stay out of the URL', async ({ page }) 
   await expect(page.getByRole('region', { name: 'Track' }).getByRole('checkbox', { name: 'Smooth' })).not.toBeChecked();
 });
 
-test('airspaces start hidden, also after they were shown in an earlier session', async ({ page }) => {
+test('airspaces need a key, are on by default with one and stay on after reload', async ({ page }) => {
   await openDemoStudio(page);
-  await page.getByRole('region', { name: 'Airspace' }).getByRole('button', { name: 'Airspace', exact: true }).click();
-  const show = page.getByRole('region', { name: 'Airspace' }).getByRole('checkbox', { name: 'Airspaces' });
-  await expect(show).not.toBeChecked();
+  const region = page.getByRole('region', { name: 'Airspace' });
+  await region.getByRole('button', { name: 'Airspace', exact: true }).click();
+  await expect(region.getByRole('checkbox', { name: 'Airspaces' })).toBeDisabled();
 
-  await show.check();
+  await region.getByLabel('openAIP key').fill('test-key');
+  await page.keyboard.press('Tab');
+  await expect(region.getByRole('checkbox', { name: 'Airspaces' })).toBeEnabled();
+  await expect(region.getByRole('checkbox', { name: 'Airspaces' })).toBeChecked();
+
   await page.reload();
   await expect(
     page.getByRole('region', { name: 'Airspace' }).getByRole('checkbox', { name: 'Airspaces' })
-  ).not.toBeChecked();
+  ).toBeChecked();
+});
+
+test('removing the thermal overlay panel turns it off, adding it turns it on', async ({ page }) => {
+  await openDemoStudio(page);
+  await page.getByRole('button', { name: /^Panels/ }).click();
+  const panelSwitch = page.getByRole('checkbox', { name: 'Thermal overlay' });
+  await panelSwitch.uncheck();
+  const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('thermalOverlayPrefs') ?? 'null'));
+  expect((await stored()).enabled).toBe(false);
+
+  await panelSwitch.check();
+  await page.keyboard.press('Escape');
+  const region = page.getByRole('region', { name: 'Thermal overlay' });
+  await region.getByRole('button', { name: 'Thermal overlay', exact: true }).click();
+  await expect(region.getByRole('checkbox', { name: 'Show thermal overlay' })).toBeChecked();
 });
 
 test('a collapsed outliner stays collapsed after reload', async ({ page }) => {

@@ -4,7 +4,15 @@ import type { SyncChange, SyncState } from './types';
  * The studio layout is per device and never syncs. The plugin list stays per device too, a plugin runs with full
  * trust, so whoever can write to the server must not be able to install code on every device.
  */
-export const SYNC_PREF_KEYS = ['units', 'thermalPrefs', 'airspacePrefs', 'thermalOverlayPrefs', 'xcLeague', 'altRef'];
+export const SYNC_PREF_KEYS = [
+  'units',
+  'thermalPrefs',
+  'airspacePrefs',
+  'thermalOverlayPrefs',
+  'xcLeague',
+  'xcEnabled',
+  'altRef'
+];
 /** Raw strings, synced only when the user opted in. */
 export const SYNC_SECRET_KEYS = ['cesiumIonToken', 'openaipKey'];
 

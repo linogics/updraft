@@ -8,6 +8,7 @@
   import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
   import { airspacePrefs } from '#lib/airspace/prefs.svelte';
   import { ThermalLayer } from '#lib/cesium/thermalLayer';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
@@ -180,7 +181,7 @@
 
   $effect(() => {
     if (!ready || !thermalLayer) return;
-    const { hotspots, skyways, opacity } = thermalOverlayPrefs;
+    const { showHotspots: hotspots, showSkyways: skyways, opacity } = thermalOverlayPrefs;
     thermalLayer.set({ hotspots, skyways, opacity });
   });
 
@@ -241,7 +242,7 @@
   });
 
   $effect(() => {
-    xcRoute?.set(studio.selected?.xc);
+    xcRoute?.set(xcPrefs.enabled ? studio.selected?.xc : undefined);
   });
 </script>
 

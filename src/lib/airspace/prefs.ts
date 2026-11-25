@@ -16,8 +16,7 @@ export function parseAirspacePrefs(raw: unknown): AirspacePrefsValue {
   const num = (v: unknown, lo: number, hi: number, fallback: number) =>
     typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
   return {
-    // Not restored: airspaces start hidden every session.
-    show: false,
+    show: typeof o.show === 'boolean' ? o.show : true,
     classes: Array.isArray(o.classes)
       ? AIRSPACE_CLASSES.filter((c) => (o.classes as unknown[]).includes(c))
       : [...AIRSPACE_CLASSES],

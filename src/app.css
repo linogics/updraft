@@ -86,3 +86,28 @@ h3 {
     animation-duration: 0s !important;
   }
 }
+
+/* Master on/off switch of a feature. Its other controls sit in a fieldset that greys out while it is off. */
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.switch input {
+  accent-color: var(--primary);
+  margin: 0;
+  cursor: pointer;
+}
+
+fieldset.feature {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+fieldset.feature:disabled {
+  opacity: 0.5;
+}

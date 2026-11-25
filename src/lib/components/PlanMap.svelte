@@ -178,7 +178,7 @@
   });
 
   $effect(() => {
-    const { hotspots, skyways, opacity } = thermalOverlayPrefs;
+    const { showHotspots: hotspots, showSkyways: skyways, opacity } = thermalOverlayPrefs;
     if (!ready || !map) return;
     syncThermals(map, { hotspots, skyways, opacity }, 'route-casing');
   });

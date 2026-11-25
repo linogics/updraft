@@ -99,7 +99,7 @@
     }
   });
   const credits = $derived(
-    mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
+    mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.showHotspots || thermalOverlayPrefs.showSkyways)
   );
   const otherValue = $derived.by(() => {
     const t = plan.timing;

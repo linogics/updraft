@@ -15,6 +15,7 @@
   import { bindAirspacePopup, syncAirspaces } from '#lib/airspace/layers';
   import { airspacePrefs } from '#lib/airspace/prefs.svelte';
   import { syncThermals } from '#lib/thermals/layers';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { distance } from '#lib/domain/geo';
@@ -115,7 +116,7 @@
   }
 
   function xcData(): FeatureCollection {
-    const xc = studio.selected?.xc;
+    const xc = xcPrefs.enabled ? studio.selected?.xc : undefined;
     const coords = (pts: { lat: number; lon: number }[]) => pts.map((p) => [p.lon, p.lat]);
     const lines = xc ? [xc.turnpoints, ...(xc.closing ? [ring(xc.closing.center, xc.closing.radius)] : [])] : [];
     return {
@@ -291,7 +292,7 @@
   });
 
   $effect(() => {
-    const { hotspots, skyways, opacity } = thermalOverlayPrefs;
+    const { showHotspots: hotspots, showSkyways: skyways, opacity } = thermalOverlayPrefs;
     if (!ready || !map) return;
     syncThermals(map, { hotspots, skyways, opacity }, 'tracks-casing');
   });
@@ -315,6 +316,7 @@
 
   $effect(() => {
     void studio.selected?.xc;
+    void xcPrefs.enabled;
     if (!ready || !map) return;
     void (map.getSource('xc') as GeoJSONSource).setData(xcData());
   });

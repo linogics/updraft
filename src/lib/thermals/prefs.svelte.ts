@@ -15,16 +15,29 @@ const initial = typeof localStorage === 'undefined' ? parseThermalOverlayPrefs(n
 
 /** Thermal hotspot and skyway overlay prefs, kept in this browser (not in the shareable URL). */
 class ThermalOverlayPrefs {
+  enabled = $state(initial.enabled);
   hotspots = $state(initial.hotspots);
   skyways = $state(initial.skyways);
   opacity = $state(initial.opacity);
+
+  get showHotspots() {
+    return this.enabled && this.hotspots;
+  }
+  get showSkyways() {
+    return this.enabled && this.skyways;
+  }
 
   set(patch: Partial<ThermalOverlayPrefsValue>) {
     Object.assign(this, patch);
     try {
       localStorage.setItem(
         KEY,
-        JSON.stringify({ hotspots: this.hotspots, skyways: this.skyways, opacity: this.opacity })
+        JSON.stringify({
+          enabled: this.enabled,
+          hotspots: this.hotspots,
+          skyways: this.skyways,
+          opacity: this.opacity
+        })
       );
     } catch {
       // Not persisted, the choice still applies for this session.

@@ -2,7 +2,7 @@ import { flightRepository } from './index';
 import type { Backup } from './repository';
 import { isCameraPath, isFlight, isManual, isObj } from './validate';
 
-const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs', 'thermalOverlayPrefs'];
+const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs', 'thermalOverlayPrefs', 'xcEnabled'];
 const TOKEN_KEY = 'cesiumIonToken';
 const OPENAIP_KEY = 'openaipKey';
 
