@@ -13,7 +13,7 @@ import {
 
 const KEY = 'studioLayout';
 
-const options = () => ({ pinned: registry.pinned, hidden: registry.hidden });
+const options = () => ({ pinned: registry.pinned, hidden: registry.hidden, collapsed: registry.collapsed });
 
 // Storage can throw (private mode, blocked site data). The layout then starts at its defaults.
 function load(): StudioLayoutValue {

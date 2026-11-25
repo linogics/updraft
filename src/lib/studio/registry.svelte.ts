@@ -27,6 +27,7 @@ const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
   title: b.title,
   dock: b.dock,
   hidden: b.hidden,
+  collapsed: b.collapsed,
   pinned: b.pinned,
   load: async () => {
     const plugin = validatePlugin((await b.load()).default);
@@ -77,6 +78,8 @@ class Registry {
   pinned = $derived(this.list.filter((p) => p.pinned).map((p) => p.id));
   /** Ids that start hidden, the user turns them on from the Panels menu. */
   hidden = $derived(this.list.filter((p) => p.hidden).map((p) => p.id));
+  /** Ids that start folded to their header. */
+  collapsed = $derived(this.list.filter((p) => p.collapsed).map((p) => p.id));
   /** Default dock per panel id, the shape the layout state validates against. */
   defaults = $derived<Record<string, PanelDef['dock']>>(Object.fromEntries(this.list.map((p) => [p.id, p.dock])));
 }

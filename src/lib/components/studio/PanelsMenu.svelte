@@ -28,10 +28,10 @@
         {#if pluginEntry(p.id)}
           <button
             type="button"
-            aria-label={m.plugin_remove_label({ name: p.title() })}
+            aria-label={m.plugin_uninstall_label({ name: p.title() })}
             onclick={() => removePlugin(p.id.slice(PLUGIN_PREFIX.length))}
           >
-            {m.plugin_remove()}
+            {m.plugin_uninstall()}
           </button>
         {/if}
       </li>

@@ -5,8 +5,6 @@
   import { formatNumber } from '#lib/ui/format';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
-  import AirspaceControls from './AirspaceControls.svelte';
-  import ThermalOverlayControls from './ThermalOverlayControls.svelte';
 
   let { studio }: { studio: StudioState } = $props();
 </script>
@@ -61,10 +59,6 @@
   />
 </div>
 <p class="hint">{m.view_hint_3d()}</p>
-<h4>{m.view_airspaces_2d()}</h4>
-<AirspaceControls />
-<h4>{m.view_thermal_overlay()}</h4>
-<ThermalOverlayControls />
 
 <style>
   .fields {
@@ -97,10 +91,6 @@
     width: 36px;
     text-align: right;
     font-variant-numeric: tabular-nums;
-  }
-  h4 {
-    margin: 12px 0 6px;
-    font-size: 13px;
   }
   .hint {
     margin: 8px 0 0;

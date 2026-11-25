@@ -41,6 +41,14 @@ describe('parseStudioLayout', () => {
     expect(parseStudioLayout({ collapsed: 'a' }, defaults).collapsed).toEqual([]);
   });
 
+  it('starts with the default collapsed ids, a stored list wins', () => {
+    const start = { collapsed: ['a', 'x'] };
+    expect(parseStudioLayout(null, defaults, start).collapsed).toEqual(['a']);
+    expect(parseStudioLayout({ docks: {} }, defaults, start).collapsed).toEqual(['a']);
+    expect(parseStudioLayout({ collapsed: ['b'] }, defaults, start).collapsed).toEqual(['b']);
+    expect(parseStudioLayout({ collapsed: [] }, defaults, start).collapsed).toEqual([]);
+  });
+
   it('hides a missing default-hidden id, but keeps it where it is stored', () => {
     const missing = parseStudioLayout({ docks: { left: ['a', 'b'] } }, defaults, { hidden: ['c'] });
     expect(missing.docks.right).toEqual([]);

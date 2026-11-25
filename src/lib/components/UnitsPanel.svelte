@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { loadRuntimeConfig, saveIonToken } from '#lib/config';
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
@@ -15,7 +14,7 @@
     type Units
   } from '#lib/ui/units';
 
-  // The dock passes the studio to every panel, settings do not need it.
+  // The dock passes the studio to every panel, units do not need it.
   // eslint-disable-next-line no-empty-pattern
   let {}: { studio: StudioState } = $props();
 
@@ -36,20 +35,8 @@
   function setField(key: keyof Units, value: string) {
     unitPrefs.set({ ...unitPrefs.units, [key]: value });
   }
-
-  let ionToken = $state('');
-  let ionError = $state('');
-  void loadRuntimeConfig().then((c) => (ionToken = c.cesiumIonToken));
-
-  // The viewer reads the token once at start, so reload to apply it.
-  function applyIonToken(e: SubmitEvent) {
-    e.preventDefault();
-    if (saveIonToken(ionToken.trim())) location.reload();
-    else ionError = m.toolbar_ion_storage_blocked();
-  }
 </script>
 
-<h4>{m.units_menu()}</h4>
 <div class="presets" role="group" aria-label={m.units_preset_group()}>
   {#each Object.keys(UNIT_PRESETS) as UnitPreset[] as p (p)}
     <button class:active={preset === p} onclick={() => unitPrefs.set({ ...UNIT_PRESETS[p] })}>
@@ -68,21 +55,6 @@
     </select>
   {/each}
 </div>
-
-<h4>Cesium ion</h4>
-<form class="ion" onsubmit={applyIonToken}>
-  <label for="ion-token">{m.toolbar_ion_token()}</label>
-  <input id="ion-token" type="password" autocomplete="off" bind:value={ionToken} placeholder="eyJhbGciOi…" />
-  <p>
-    <!-- Static i18n message with a fixed link, no user input. -->
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html m.toolbar_ion_help({
-      link: '<a href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">ion.cesium.com</a>'
-    })}
-  </p>
-  {#if ionError}<p class="error" role="alert">{ionError}</p>{/if}
-  <button type="submit">{m.toolbar_ion_save()}</button>
-</form>
 
 <style>
   .presets {
@@ -120,24 +92,5 @@
   }
   select {
     width: 100%;
-  }
-  h4 {
-    margin: 12px 0 6px;
-    font-size: 13px;
-  }
-  h4:first-child {
-    margin-top: 0;
-  }
-  .ion {
-    display: grid;
-    gap: 6px;
-  }
-  .ion p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-  }
-  .ion .error {
-    color: var(--danger);
   }
 </style>

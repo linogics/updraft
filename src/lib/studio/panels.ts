@@ -22,6 +22,8 @@ export interface PanelDef {
   pinned?: boolean;
   /** Starts hidden, the user turns it on from the Panels menu. */
   hidden?: boolean;
+  /** Starts folded to its header. */
+  collapsed?: boolean;
   load: () => Promise<PanelModule>;
   /** Cache key of the loaded module, defaults to the id. A plugin that is removed and added again from another URL gets a new one. */
   key?: string;
@@ -47,17 +49,10 @@ export const BUILTIN_PANELS: PanelDef[] = [
     load: () => import('#lib/components/ThermalList.svelte')
   },
   {
-    id: 'xc',
-    hidden: true,
-    title: () => m.panel_xc(),
+    id: 'track',
+    title: () => m.track_menu(),
     dock: 'right',
-    load: () => import('#lib/components/XcPanel.svelte')
-  },
-  {
-    id: 'export',
-    title: () => m.export_menu(),
-    dock: 'right',
-    load: () => import('#lib/components/ExportPanel.svelte')
+    load: () => import('#lib/components/TrackPanel.svelte')
   },
   {
     id: 'scene',
@@ -66,17 +61,46 @@ export const BUILTIN_PANELS: PanelDef[] = [
     load: () => import('#lib/components/ScenePanel.svelte')
   },
   {
-    id: 'track',
-    title: () => m.track_menu(),
+    id: 'xc',
+    collapsed: true,
+    title: () => m.panel_xc(),
     dock: 'right',
-    load: () => import('#lib/components/TrackPanel.svelte')
+    load: () => import('#lib/components/XcPanel.svelte')
   },
   {
-    id: 'settings',
-    hidden: true,
-    title: () => m.panel_settings(),
+    id: 'airspace',
+    collapsed: true,
+    title: () => m.panel_airspace(),
     dock: 'right',
-    load: () => import('#lib/components/SettingsPanel.svelte')
+    load: () => import('#lib/components/AirspacePanel.svelte')
+  },
+  {
+    id: 'thermal-overlay',
+    collapsed: true,
+    title: () => m.panel_thermal_overlay(),
+    dock: 'right',
+    load: () => import('#lib/components/ThermalOverlayPanel.svelte')
+  },
+  {
+    id: 'export',
+    collapsed: true,
+    title: () => m.export_menu(),
+    dock: 'right',
+    load: () => import('#lib/components/ExportPanel.svelte')
+  },
+  {
+    id: 'units',
+    collapsed: true,
+    title: () => m.units_menu(),
+    dock: 'right',
+    load: () => import('#lib/components/UnitsPanel.svelte')
+  },
+  {
+    id: 'ion',
+    collapsed: true,
+    title: () => m.panel_ion(),
+    dock: 'right',
+    load: () => import('#lib/components/IonPanel.svelte')
   },
   {
     id: 'altitude',
