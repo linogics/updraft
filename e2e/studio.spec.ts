@@ -264,7 +264,7 @@ test.describe('plugins', () => {
   const URL = 'https://plugins.example.test/hello.js';
   const plugin = (over = '') => `
     export default {
-      id: 'hello', name: 'Hello', apiVersion: 1, dock: 'right',
+      id: 'hello', name: 'Hello', kind: 'studio', apiVersion: 1, dock: 'right',
       mount(el, ctx) {
         const marker = document.createElement('i');
         marker.dataset.testid = 'plugin-marker';

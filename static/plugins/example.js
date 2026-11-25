@@ -43,10 +43,11 @@ function read(ctx, time) {
   };
 }
 
-/** @type {import('../../src/lib/studio/plugins').Plugin} */
+/** @type {import('../../src/lib/studio/plugins').StudioPlugin} */
 export default {
   id: 'example',
   name: 'Example',
+  kind: 'studio',
   apiVersion: 1,
   dock: 'right',
 

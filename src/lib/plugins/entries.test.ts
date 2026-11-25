@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parsePlugins, pluginUrl } from './pluginPrefs';
+import { pluginUrl } from './core';
+import { parsePlugins } from './entries';
 
-const ok = { url: 'https://a.test/wind.js', id: 'wind', name: 'Wind', dock: 'right' };
+const ok = { url: 'https://a.test/wind.js', id: 'wind', name: 'Wind', kind: 'studio', dock: 'right' };
 
 describe('parsePlugins', () => {
   it('keeps valid entries', () => {
@@ -21,7 +22,10 @@ describe('parsePlugins', () => {
       { ...ok, id: 'Wind' },
       { ...ok, id: '' },
       { ...ok, name: '  ' },
-      { ...ok, dock: 'top' }
+      { ...ok, dock: 'top' },
+      { ...ok, dock: undefined },
+      { ...ok, kind: undefined },
+      { ...ok, kind: 'backend' }
     ];
     expect(parsePlugins([...bad, ok])).toEqual([ok]);
   });

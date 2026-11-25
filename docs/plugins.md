@@ -16,6 +16,7 @@ Save this as `hello.js`:
 export default {
   id: 'hello',
   name: 'Hello',
+  kind: 'studio',
   apiVersion: 1,
   dock: 'right',
   mount(el, ctx) {
@@ -50,7 +51,8 @@ The default export is an object with these fields. The studio checks them when y
 | -------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`           | `string`                                              | Matches `/^[a-z0-9-]{1,40}$/`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout.          |
 | `name`         | `string`                                              | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                     |
-| `apiVersion`   | `1`                                                   | Must be the number `1`. See [Versioning](#versioning).                                                                                 |
+| `kind`         | `'studio'`                                            | What the plugin extends. Must be `'studio'`, the only kind so far. Each kind has its own fields and its own `apiVersion`.              |
+| `apiVersion`   | `1`                                                   | Must be the number `1` for the studio kind. See [Versioning](#versioning).                                                                                 |
 | `dock`         | `'left' \| 'right' \| 'bottom'`                       | The dock the panel starts in. The user can move it afterwards.                                                                         |
 | `mount`        | `(el: HTMLElement, ctx: PluginContext) => void \| fn` | Called when the panel is shown. Draw into `el`. May return a destroy function.                                                         |
 | `drawExport`   | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).                                                            |
@@ -149,7 +151,7 @@ A plugin that was added earlier but fails to load later, for example because the
 
 ## Versioning
 
-`apiVersion` is `1`. The studio supports exactly this value. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 1." It is not mounted. Keep `apiVersion` at `1` until this document says a newer one exists.
+Every kind of plugin has its own `apiVersion`. For the studio kind it is `1`. The studio supports exactly this value. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 1." It is not mounted. Keep `apiVersion` at `1` until this document says a newer one exists.
 
 ## Security
 
