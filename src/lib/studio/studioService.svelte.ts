@@ -1,39 +1,13 @@
-import type { Viewer } from 'cesium';
 import { services } from '#lib/plugins/services';
 import type { StudioState } from '#lib/state/studio.svelte';
 import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
-import type { AltRef } from '#lib/state/altRefPrefs';
+import type { PluginFlight, StudioService } from '#lib/plugins/api';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
 
+export type { PluginFlight, StudioService };
+
 export const STUDIO_SERVICE = 'updraft/studio@1';
-
-export interface PluginFlight {
-  readonly id: string;
-  readonly pilot: string;
-  readonly glider: string | null;
-  readonly color: string;
-  readonly visible: boolean;
-  /** Fixes on the studio clock, as the studio shows them. Shared with the studio, do not modify. */
-  readonly fixes: readonly { t: number; lat: number; lon: number; alt: number }[];
-}
-
-/** `updraft/studio@1`. Everything is read through functions, so it is always current. */
-export interface StudioService {
-  /** The same frozen array until flights, colors or visibility change. */
-  flights(): readonly PluginFlight[];
-  /** Studio playback time in ms. */
-  time(): number;
-  selectedId(): string | null;
-  /** The same frozen object until the user changes units. */
-  units(): Readonly<Units>;
-  /** The altitude reference the user chose. */
-  altRef(): AltRef;
-  seek(ms: number): void;
-  select(id: string): void;
-  /** The Cesium viewer, null while the 3D view is not shown. */
-  viewer(): Viewer | null;
-}
 
 type Host = Pick<StudioState, 'flights' | 'time' | 'selected' | 'selectedId' | 'viewer' | 'seek'>;
 

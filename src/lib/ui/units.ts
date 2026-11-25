@@ -1,6 +1,9 @@
 // Display units. Domain values stay SI (m, m/s); conversion happens only at the edge.
 
+import type { Units } from '#lib/plugins/api';
 import { formatNumber } from './format';
+
+export type { Units };
 
 export const DISTANCE_UNITS = ['km', 'mi', 'nm'] as const;
 export const ALT_UNITS = ['m', 'ft'] as const;
@@ -11,13 +14,6 @@ export type DistanceUnit = (typeof DISTANCE_UNITS)[number];
 export type AltUnit = (typeof ALT_UNITS)[number];
 export type VarioUnit = (typeof VARIO_UNITS)[number];
 export type SpeedUnit = (typeof SPEED_UNITS)[number];
-
-export interface Units {
-  distance: DistanceUnit;
-  alt: AltUnit;
-  vario: VarioUnit;
-  speed: SpeedUnit;
-}
 
 export const UNIT_PRESETS = {
   metric: { distance: 'km', alt: 'm', vario: 'ms', speed: 'kmh' },

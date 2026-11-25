@@ -141,11 +141,11 @@ Provided by the studio while it is open. Lookups are by flight id (see `PluginFl
 | `stats(id)`             | `FlightStats \| null`                      | Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight.                                              |
 | `transitions(id, ref)`  | `TransitionSummary \| null`                | Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values need ground heights, so hold `ctx.need('ground')` first. |
 
-The types are in `src/lib/studio/analysisService.svelte.ts`. Like every service it is read through functions, so call it again instead of keeping results.
+Like every service it is read through functions, so call it again instead of keeping results.
 
 The built-in Stats panel is itself a plugin (`updraft/stats`) built only on `updraft/studio@1` and `updraft/flight-analysis@1`. See `src/lib/plugins/builtin/stats/index.ts` as a reference example. Bundled plugins cannot be removed, but can be hidden and moved like any panel.
 
-The TypeScript types `StudioService` and `PluginFlight` are in `src/lib/studio/studioService.svelte.ts`, JavaScript plugins can import them in JSDoc as the example does.
+The full typed contract is `/updraft-plugin.d.ts` on the deployed app (source `src/lib/plugins/api.d.ts`). JavaScript plugins can use it in JSDoc, for example `/** @param {import('./updraft-plugin.d.ts').PluginContext} ctx */`.
 
 `PluginFlight`:
 

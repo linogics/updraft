@@ -1,6 +1,7 @@
 import type { Viewer } from 'cesium';
 import type { BeginCapture } from '#lib/cesium/capture';
 import { DEFAULT_TRACKS, type CameraTracks, type CameraView } from '#lib/domain/cameraPath';
+import type { NeedKind } from '#lib/plugins/api';
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
 import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
 import {
@@ -30,7 +31,7 @@ import { scoreFlight, type XcScore } from '#lib/xc/score';
 import { yieldToMain } from '#lib/ui/yield';
 
 /** Work that only runs while a view asks for it, see StudioState.need. */
-export type NeedKind = 'xc' | 'ground';
+export type { NeedKind };
 
 /** Camera edits wait this long after the last change before they are stored, ms. */
 const CAMERA_SAVE_DELAY = 300;
