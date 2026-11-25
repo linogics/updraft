@@ -1,5 +1,8 @@
 import { m } from '#lib/paraglide/messages';
+import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { PluginDock, PluginHost } from '#lib/studio/plugins';
+import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 
 /** A plugin that ships with the app. The metadata is here so a hidden one is never imported. */
 export interface BuiltinPlugin {
@@ -13,42 +16,51 @@ export interface BuiltinPlugin {
   enable?: (on: boolean) => void;
   startsOff?: boolean;
   hosts?: PluginHost[];
-  /** Panel id this one follows in the default order, null puts it first. Appended when missing. */
-  after?: string | null;
   /** Module whose default export is a studio plugin. */
   load: () => Promise<{ default: unknown }>;
 }
 
+/** Every bundled studio panel. The array order is the default order inside each dock. */
 export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
+  { id: 'updraft/pilots', title: () => m.pilots_heading(), dock: 'left', load: () => import('./builtin/pilots') },
+  { id: 'updraft/climbs', title: () => m.climbs_heading(), dock: 'left', load: () => import('./builtin/climbs') },
+  { id: 'updraft/stats', title: () => m.panel_stats(), dock: 'right', load: () => import('./builtin/stats') },
+  { id: 'updraft/track', title: () => m.track_menu(), dock: 'right', load: () => import('./builtin/track') },
+  { id: 'updraft/scene', title: () => m.panel_scene(), dock: 'right', load: () => import('./builtin/scene') },
   {
-    id: 'updraft/pilots',
-    title: () => m.pilots_heading(),
-    dock: 'left',
-    after: null,
-    load: () => import('./builtin/pilots')
-  },
-  {
-    id: 'updraft/climbs',
-    title: () => m.climbs_heading(),
-    dock: 'left',
-    after: 'plugin:updraft/pilots',
-    load: () => import('./builtin/climbs')
-  },
-  {
-    id: 'updraft/stats',
-    title: () => m.panel_stats(),
-    dock: 'right',
-    after: 'plugin:updraft/climbs',
-    load: () => import('./builtin/stats')
-  },
-  {
-    id: 'updraft/units',
-    title: () => m.units_menu(),
+    id: 'updraft/xc',
+    title: () => m.panel_xc(),
     dock: 'right',
     collapsed: true,
-    after: 'export',
-    load: () => import('./builtin/units')
+    enable: (on) => xcPrefs.setEnabled(on),
+    startsOff: true,
+    load: () => import('./builtin/xc')
   },
+  {
+    id: 'updraft/airspace',
+    title: () => m.panel_airspace(),
+    dock: 'right',
+    collapsed: true,
+    enable: (on) => airspacePrefs.set({ show: on }),
+    load: () => import('./builtin/airspace')
+  },
+  {
+    id: 'updraft/thermal-overlay',
+    title: () => m.panel_thermal_overlay(),
+    dock: 'right',
+    collapsed: true,
+    enable: (on) => thermalOverlayPrefs.set({ enabled: on }),
+    load: () => import('./builtin/thermal-overlay')
+  },
+  {
+    id: 'updraft/export',
+    title: () => m.export_menu(),
+    dock: 'right',
+    collapsed: true,
+    load: () => import('./builtin/export')
+  },
+  { id: 'updraft/units', title: () => m.units_menu(), dock: 'right', collapsed: true, load: () => import('./builtin/units') },
+  { id: 'updraft/ion', title: () => m.panel_ion(), dock: 'right', collapsed: true, load: () => import('./builtin/ion') },
   {
     id: 'updraft/altitude',
     title: () => m.studio_tab_altitude(),
