@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { services } from '#lib/plugins/services';
 import { createPluginContext, type PluginHostEnv } from './pluginContext.svelte';
 
-const host: PluginHostEnv = { overlayParent: () => null, watch: () => {} };
+const host: PluginHostEnv = { overlayParent: () => null };
 
 describe('plugin context use()', () => {
   beforeEach(() => {
@@ -52,5 +52,30 @@ describe('plugin context use()', () => {
     const { ctx } = createPluginContext({ ...host, overlayParent: () => parent as never }, 't/p', [], () => {});
     expect(ctx.overlay).toBe(el);
     expect(parent.append).toHaveBeenCalledWith(el);
+  });
+
+  it('stops service event subscriptions on dispose, sends handler errors to onError, reuses the wrapper', () => {
+    const stop = vi.fn();
+    let handler: () => void = () => {};
+
+    const on = vi.fn((_e: string, fn: () => void) => {
+      handler = fn;
+      return stop;
+    });
+    services.provide('t/ev@1', () => ({ on, value: 1 }), 't/owner');
+    const onError = vi.fn();
+    const { ctx, dispose } = createPluginContext(host, 't/p', ['t/ev@1'], onError);
+    const svc = ctx.use<{ on(e: string, fn: () => void): () => void; value: number }>('t/ev@1');
+    expect(ctx.use('t/ev@1')).toBe(svc);
+    expect(svc.value).toBe(1);
+
+    svc.on('x', () => {
+      throw new Error('boom');
+    });
+    handler();
+    expect(onError).toHaveBeenCalledOnce();
+
+    dispose();
+    expect(stop).toHaveBeenCalledOnce();
   });
 });

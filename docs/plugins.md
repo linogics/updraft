@@ -26,7 +26,7 @@ export default {
       el.textContent = `Time ${studio.time()} ms, ${studio.flights().length} flights`;
     };
 
-    const stop = ctx.subscribe(draw);
+    const stop = studio.on('time', draw);
     draw();
     return stop;
   }
@@ -77,7 +77,7 @@ Kind `backend`, `apiVersion: 1`, headless: a sync server. It needs `create(confi
 
 - `el` is an empty `div` that fills the panel body. Build your UI inside it.
 - `ctx` is described in the next section. It is frozen, so you cannot add members to it.
-- The function you return is called once when the panel is hidden or the plugin is removed. Stop timers, listeners and anything else you started. Subscriptions, needs and the overlay are cleaned up by the studio anyway.
+- The function you return is called once when the panel is hidden or the plugin is removed. Stop timers, listeners and anything else you started. Event subscriptions, needs and the overlay are cleaned up by the studio anyway.
 - Write to `el` with `textContent` or DOM calls, not `innerHTML`, when the text comes from flight files.
 
 ## ctx reference
@@ -86,7 +86,6 @@ Kind `backend`, `apiVersion: 1`, headless: a sync server. It needs `create(confi
 | --------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `use(name)`     | `<T>(string) => T`                 | The service `name`. Only names in your `requires` work, any other name throws `Service "x" is not in requires.`. A missing provider throws too, but the panel is not mounted at all in that case, the user sees which services are missing. |
 | `overlay`       | `HTMLDivElement`                   | A `div` over the 3D and 2D views, owned by the plugin. It has `position: absolute`, fills the views and has `pointer-events: none`, so clicks pass through. Set `pointer-events: auto` on your own children that need clicks. The studio removes it on unmount. |
-| `subscribe(fn)` | `(() => void) => () => void`       | Calls `fn` after time, flights, selection or units changed, at most once per animation frame. It does not fire for the state at the time you subscribe, so call your draw once yourself. Returns a function that stops it. |
 | `need(kind)`    | `('xc' \| 'ground') => () => void` | Asks the studio to run background work for as long as the plugin is mounted: `'xc'` scores the flights, `'ground'` loads ground heights. Returns a release function. Every need is released on unmount. Any other `kind` throws. |
 
 ## Services
@@ -117,6 +116,10 @@ Another plugin lists `'me/wind@1'` in `requires` and calls `ctx.use('me/wind@1')
 
 Performance: a service call is a plain function call in the page. Services are built on first use and return shared data without copying, so treat everything a service returns as read only and never modify it.
 
+### Events
+
+Services with state that changes have `on(event, fn)`. It calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the current values through the service functions. It does not fire for the state at the time you subscribe, so call your draw once yourself. It returns a function that stops it. Every subscription made through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws `Unknown event "x" of updraft/studio@1.`. A handler that throws is shown in the panel's error box.
+
 ### updraft/studio@1
 
 Provided by the studio while it is open. Every value is read through a function, so it is always current. Call the function again instead of keeping its result. `flights()` and `units()` return the same frozen value until something changes, so it is cheap to call in every frame.
@@ -131,6 +134,7 @@ Provided by the studio while it is open. Every value is read through a function,
 | `seek(ms)`     | `(number) => void`   | Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.                    |
 | `select(id)`   | `(string) => void`   | Selects the pilot with that flight id. An unknown id is ignored.                                            |
 | `viewer()`     | `Viewer \| null`     | The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time.      |
+| `on(event, fn)` | `(StudioEvent, () => void) => () => void` | Events: `'time'` playback time, `'flights'` pilot list, color, visibility or time shift, `'selection'` selected pilot, `'units'` display units, `'altRef'` altitude reference. |
 
 ### updraft/flight-analysis@1
 
@@ -140,6 +144,7 @@ Provided by the studio while it is open. Lookups are by flight id (see `PluginFl
 | ----------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `stats(id)`             | `FlightStats \| null`                      | Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight.                                              |
 | `transitions(id, ref)`  | `TransitionSummary \| null`                | Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values need ground heights, so hold `ctx.need('ground')` first. |
+| `on(event, fn)`         | `('changed', () => void) => () => void`    | `'changed'` fires when flights changed or ground heights arrived.                                                                            |
 
 Like every service it is read through functions, so call it again instead of keeping results.
 
@@ -185,7 +190,7 @@ A plugin with `'plan'` in `hosts` shows up in the XC planner (`/plan`) after the
 
 `ctx` has the same shape, with these differences:
 
-- `subscribe(fn)` fires after the route or the units changed, at most once per animation frame.
+- Events come from the planner service, see below.
 - `overlay` covers the map.
 - `need(kind)` throws `need is not available in the planner.`.
 - The studio services (`updraft/studio@1`, `updraft/flight-analysis@1`) are not provided. A plugin that lists both hosts must not require them, or must check the host first.
@@ -198,6 +203,7 @@ Service `updraft/plan@1`, provided while the planner is open:
 | `distance()` | `number`                                   | Route length in m.                                               |
 | `speed()`    | `number`                                   | The planned speed in km/h.                                       |
 | `units()`    | `Readonly<Units>`                          | The same frozen object until the user changes units, see above.  |
+| `on(event, fn)` | `(PlanEvent, () => void) => () => void` | Events: `'route'` the route changed, `'speed'` the planned speed changed, `'units'` display units. |
 
 ## Lifecycle
 
@@ -233,7 +239,7 @@ The studio never lets a plugin break other panels.
 | Reserved `updraft/` id or service          | In the dialog: `The id "..." is reserved, "updraft/" is for bundled plugins.`                                          |
 | A required service has no provider         | An error box in the plugin's panel naming the missing services. The plugin is not mounted.                            |
 | Error in `mount`                           | An error box in the plugin's own panel: "Plugin NAME failed: MESSAGE".                                                 |
-| Error in a `subscribe` callback            | The same error box. Other subscribers keep running.                                                                    |
+| Error in an `on` handler                   | The same error box. Other handlers keep running.                                                                       |
 | Error in the destroy function              | Nothing visible. It is written to the browser console and cleanup continues.                                          |
 | Error in `drawExport`                      | A message that the plugin failed while drawing and was left out of that export.                                       |
 

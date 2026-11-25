@@ -1,7 +1,6 @@
 import { RESERVED_NAMESPACE, services } from '#lib/plugins/services';
 import type { PluginContext } from '#lib/plugins/api';
 import type { StudioState } from '#lib/state/studio.svelte';
-import { unitPrefs } from '#lib/state/units.svelte';
 
 export type { PluginContext };
 
@@ -12,21 +11,18 @@ const INTERNAL_SERVICE = /^updraft\/[a-z0-9-]+-state@\d+$/;
 export interface PluginHostEnv {
   /** The element the overlay is added to. */
   overlayParent(): HTMLElement | null | undefined;
-  /** Reads the reactive values whose change fires subscribers. */
-  watch(): void;
   /** Absent where there is no background work to ask for, `ctx.need` then throws. */
   need?: StudioState['need'];
 }
 
 export const studioHost = (studio: StudioState): PluginHostEnv => ({
   overlayParent: () => studio.viewsEl,
-  watch: () => void [studio.time, studio.flights, studio.selected, unitPrefs.units],
   need: (kind) => studio.need(kind)
 });
 
 /**
- * Builds the context of one mounted plugin. `dispose` removes the overlay, stops every subscription and
- * releases every need. A subscriber that throws is reported to `onError`, the others keep running.
+ * Builds the context of one mounted plugin. `dispose` removes the overlay, stops every service event
+ * subscription and releases every need. A handler that throws is reported to `onError`, the others keep running.
  */
 export function createPluginContext(
   host: PluginHostEnv,
@@ -49,12 +45,37 @@ export function createPluginContext(
     return once;
   };
 
+  // Keyed by instance, the registry rebuilds services when providers change.
+  const wrappers = new WeakMap<object, object>();
+
   const ctx: PluginContext = {
     use<T>(name: string) {
       if (!requires.includes(name)) throw new Error(`Service "${name}" is not in requires.`);
       if (INTERNAL_SERVICE.test(name) && !pluginId.startsWith(RESERVED_NAMESPACE))
         throw new Error(`Service "${name}" is internal to bundled plugins.`);
-      return services.use<T>(name);
+      const service = services.use<T>(name) as T & { on?: (event: string, fn: () => void) => () => void };
+      const on = service.on;
+      if (typeof on !== 'function') return service;
+      let wrapped = wrappers.get(service);
+      if (!wrapped) {
+        const guarded = (fn: () => void) => () => {
+          try {
+            fn();
+          } catch (err) {
+            onError(err);
+          }
+        };
+
+        // Same service with its own `on`, so the subscriptions stop with this context.
+        wrapped = Object.freeze(
+          Object.create(service, {
+            on: { value: (event: string, fn: () => void) => keep(on.call(service, event, guarded(fn))) }
+          })
+        ) as object;
+        wrappers.set(service, wrapped);
+      }
+
+      return wrapped as T;
     },
     get overlay() {
       if (!overlay) {
@@ -64,35 +85,6 @@ export function createPluginContext(
       }
 
       return overlay;
-    },
-    subscribe(fn) {
-      let frame = 0;
-      let first = true;
-      const stopRoot = $effect.root(() => {
-        $effect(() => {
-          // Reading these is what makes the effect run again.
-          host.watch();
-          if (first) {
-            first = false;
-            return;
-          }
-
-          if (frame) return;
-          frame = requestAnimationFrame(() => {
-            frame = 0;
-            try {
-              fn();
-            } catch (err) {
-              onError(err);
-            }
-          });
-        });
-      });
-
-      return keep(() => {
-        stopRoot();
-        cancelAnimationFrame(frame);
-      });
     },
     need(kind) {
       if (kind !== 'xc' && kind !== 'ground') throw new Error(`Unknown need "${String(kind)}".`);

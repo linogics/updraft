@@ -25,4 +25,11 @@ describe('updraft/studio@1', () => {
     expect(s.flights()).not.toBe(first);
     expect(s.flights()[0].color).toBe('#222');
   });
+
+  it('has events and refuses unknown ones', () => {
+    provideStudioService({ flights: [], time: 0, selected: undefined } as never);
+    const s = services.use<StudioService>(STUDIO_SERVICE);
+    for (const e of ['time', 'flights', 'selection', 'units', 'altRef'] as const) s.on(e, () => {})();
+    expect(() => s.on('x' as 'time', () => {})).toThrow('Unknown event "x" of updraft/studio@1.');
+  });
 });

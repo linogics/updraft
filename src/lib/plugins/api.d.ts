@@ -57,12 +57,6 @@ export interface PluginContext {
    */
   overlay: HTMLDivElement;
   /**
-   * Calls `fn` after time, flights, selection or units changed, at most once per animation frame.
-   * It does not fire for the state at the time you subscribe, so call your draw once yourself.
-   * In the planner it fires after the route or the units changed. Returns a function that stops it.
-   */
-  subscribe(fn: () => void): () => void;
-  /**
    * Asks the studio to run background work for as long as the plugin is mounted. Returns a release function.
    * Every need is released on unmount. Any other `kind` throws. In the planner it throws `need is not available in the planner.`.
    */
@@ -142,11 +136,32 @@ export interface PluginFlight {
   readonly fixes: readonly { t: number; lat: number; lon: number; alt: number }[];
 }
 
+/** Events of `StudioService.on`. */
+export type StudioEvent =
+  /** The playback time changed. */
+  | 'time'
+  /** The pilot list changed: a flight was added or removed, or a color, visibility or time shift changed. */
+  | 'flights'
+  /** The selected pilot changed. */
+  | 'selection'
+  /** The user changed the display units. */
+  | 'units'
+  /** The user changed the altitude reference. */
+  | 'altRef';
+
 /**
  * Service `updraft/studio@1`. Provided by the studio while it is open, not by the planner.
  * Every value is read through a function, so it is always current. Call the function again instead of keeping its result.
  */
 export interface StudioService {
+  /**
+   * Calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the
+   * current values through the functions of this service. It does not fire for the state at the time you subscribe,
+   * so call your draw once yourself. Returns a function that stops it. Inside a plugin, every subscription made
+   * through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws
+   * `Unknown event "x" of updraft/studio@1.`.
+   */
+  on(event: StudioEvent, fn: () => void): () => void;
   /** All pilots in the studio, in list order. The same frozen array until flights, colors or visibility change. */
   flights(): readonly PluginFlight[];
   /** Playback time in ms on the studio clock. */
@@ -198,11 +213,24 @@ export interface TransitionSummary {
   avgSpeed: number | null;
 }
 
+/** Events of `AnalysisService.on`. */
+export type AnalysisEvent =
+  /** Flights changed or ground heights arrived, so stats and transitions may differ. */
+  'changed';
+
 /**
  * Service `updraft/flight-analysis@1`. Provided by the studio while it is open, not by the planner.
  * Lookups are by flight id and return null for an unknown id. Results are the studio's own objects, read only.
  */
 export interface AnalysisService {
+  /**
+   * Calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the
+   * current values through the functions of this service. It does not fire for the state at the time you subscribe,
+   * so call your draw once yourself. Returns a function that stops it. Inside a plugin, every subscription made
+   * through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws
+   * `Unknown event "x" of updraft/flight-analysis@1.`.
+   */
+  on(event: AnalysisEvent, fn: () => void): () => void;
   /** Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight. */
   stats(id: string): FlightStats | null;
   /**
@@ -212,11 +240,28 @@ export interface AnalysisService {
   transitions(id: string, ref: AltRef): TransitionSummary | null;
 }
 
+/** Events of `PlanService.on`. */
+export type PlanEvent =
+  /** The route changed. */
+  | 'route'
+  /** The planned speed changed. */
+  | 'speed'
+  /** The user changed the display units. */
+  | 'units';
+
 /**
  * Service `updraft/plan@1`. Provided by the planner while it is open, not by the studio.
  * Everything is read through functions, so it is always current.
  */
 export interface PlanService {
+  /**
+   * Calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the
+   * current values through the functions of this service. It does not fire for the state at the time you subscribe,
+   * so call your draw once yourself. Returns a function that stops it. Inside a plugin, every subscription made
+   * through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws
+   * `Unknown event "x" of updraft/plan@1.`.
+   */
+  on(event: PlanEvent, fn: () => void): () => void;
   /** The route. The same frozen array until the route changes. */
   points(): readonly Readonly<{ lat: number; lon: number }>[];
   /** Route length in m. */

@@ -20,4 +20,11 @@ describe('updraft/flight-analysis@1', () => {
     expect(s.transitions('a', 'agl')).toEqual({ count: 2 });
     expect(s.transitions('x', 'msl')).toBeNull();
   });
+
+  it('has the changed event and refuses unknown ones', () => {
+    provideAnalysisService({ flights: [] } as never);
+    const s = services.use<AnalysisService>(ANALYSIS_SERVICE);
+    s.on('changed', () => {})();
+    expect(() => s.on('x' as 'changed', () => {})).toThrow('Unknown event "x" of updraft/flight-analysis@1.');
+  });
 });

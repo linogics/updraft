@@ -1,7 +1,8 @@
+import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { StudioState } from '#lib/state/studio.svelte';
 import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
-import type { PluginFlight, StudioService } from '#lib/plugins/api';
+import type { PluginFlight, StudioEvent, StudioService } from '#lib/plugins/api';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
 
@@ -23,7 +24,16 @@ export function provideStudioService(studio: Host) {
       let unitsSrc: Units | undefined;
       let units: Readonly<Units>;
 
+      const on = eventsOf<StudioEvent>(STUDIO_SERVICE, {
+        time: () => void studio.time,
+        flights: () => void studio.flights,
+        selection: () => void studio.selected,
+        units: () => void unitPrefs.units,
+        altRef: () => void altRefPrefs.ref
+      });
+
       return Object.freeze<StudioService>({
+        on,
         flights() {
           if (src !== studio.flights) {
             src = studio.flights;

@@ -43,8 +43,7 @@
   });
 
   const host: PluginHostEnv = {
-    overlayParent: () => mapEl,
-    watch: () => void [plan.points, unitPrefs.units]
+    overlayParent: () => mapEl
   };
 
   // The map reads its initial view once on mount, so the URL must be parsed before it renders.
