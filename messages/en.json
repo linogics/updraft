@@ -348,6 +348,8 @@
   "plan_base_map": "Base map",
   "plan_copied": "Copied",
   "plan_copy_link": "Copy link",
+  "plan_export_xctsk": "XCTrack task",
+  "plan_export_gpx": "GPX route",
   "plan_estimated_time": "estimated time",
   "plan_hint": "Click the map to add points. Drag a point to move it, click a leg midpoint to insert one.",
   "plan_insert_point": "Insert point before {n}",

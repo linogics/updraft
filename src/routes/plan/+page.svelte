@@ -16,6 +16,7 @@
   import { BASEMAPS } from '#lib/map/basemaps';
   import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
   import { planRegistry } from '#lib/plan/registry.svelte';
+  import { writeRouteGpx, writeXctsk } from '#lib/domain/task';
   import { PlanState } from '#lib/state/plan.svelte';
   import { LEGS_PANEL, planLayout } from '#lib/state/planLayout.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
@@ -99,6 +100,16 @@
     setTimeout(() => (copied = false), 1500);
   }
 
+  function download(text: string, ext: string, type: string) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `updraft-route-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    a.click();
+    // Revoking at once can cancel the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   const panels = $derived([
     ...planRegistry.list.map((p) => ({ id: p.id, title: p.title, removable: !!pluginEntry(p.id), body })),
     ...(plan.legs.length ? [{ id: LEGS_PANEL, title: () => m.plan_legs(), body }] : [])
@@ -146,6 +157,21 @@
         <button onclick={remove} disabled={plan.selected === null}>{m.plan_remove_point()}</button>
         <button onclick={() => commit([])} disabled={!plan.points.length}>{m.common_clear()}</button>
         <button onclick={copy} disabled={!plan.points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
+      </div>
+
+      <div class="row">
+        <button
+          onclick={() => download(writeXctsk(plan.points), 'xctsk', 'application/json')}
+          disabled={plan.points.length < 2}
+        >
+          {m.plan_export_xctsk()}
+        </button>
+        <button
+          onclick={() => download(writeRouteGpx(plan.points, m.home_planner_title()), 'gpx', 'application/gpx+xml')}
+          disabled={plan.points.length < 2}
+        >
+          {m.plan_export_gpx()}
+        </button>
       </div>
 
       <label>

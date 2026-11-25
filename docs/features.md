@@ -57,7 +57,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 ## XC scoring
 
 - Own XC panel in the studio: league, type (free distance, flat triangle, FAI triangle, out and return), distance, multiplier and points.
-- Leagues: XContest, FFVL, FAI and UK XC League.
+- Leagues: XContest, FFVL, FAI (also with cylinders and two out-and-return variants) and UK XC League.
 - Points list when several pilots are loaded. The scored route is drawn in 2D and 3D, with the closing circle for triangles.
 - "Make route" turns a flight into 1 to 30 turnpoints and opens them in the planner.
 
@@ -66,6 +66,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - `/plan`: click the map to add points, drag to move, click a leg midpoint to insert, undo and clear.
 - Total and per-leg distance, XC score per league and a duration estimate from a speed in km/h.
 - Route and speed live in the URL, "Copy link" shares it.
+- Download the route as an XCTrack task (`.xctsk`, 400 m cylinders) or a GPX route for other instruments.
 - Thermal overlay and airspaces on the planner map.
 - Below the route controls the sidebar holds panels in one column: Thermal overlay, XC score, Airspace and Legs (only while the route has legs). Drag them by the grip, fold them or use the actions menu (Move up, Move down, Reset layout). They start folded except Legs. The layout is kept in this browser.
 - XC score has its own on/off switch, shared with the studio. While it is off nothing is scored.
