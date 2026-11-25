@@ -3,6 +3,7 @@
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { createPluginContext } from '#lib/studio/pluginContext.svelte';
+  import { mountedPlugins } from '#lib/studio/exportHooks.svelte';
   import type { Plugin } from '#lib/studio/plugins';
   import PanelError from './PanelError.svelte';
 
@@ -18,6 +19,7 @@
   };
 
   onMount(() => {
+    mountedPlugins.add(plugin);
     const { ctx, dispose } = createPluginContext(studio, (err) => fail('a subscriber failed', err));
     let destroy: unknown;
     try {
@@ -27,6 +29,7 @@
     }
 
     return () => {
+      mountedPlugins.delete(plugin);
       try {
         if (typeof destroy === 'function') destroy();
       } catch (err) {

@@ -2,6 +2,8 @@
   import { onMount, tick } from 'svelte';
   import type { CaptureSession } from '#lib/cesium/capture';
   import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
+  import { exportPlugins, paintPlugins } from '#lib/studio/exportHooks.svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import { mapCredits } from '#lib/export/credits';
   import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { mp4Filename } from '#lib/export/filename';
@@ -64,9 +66,13 @@
   let started = $state(0);
   let now = $state(0);
   let error = $state('');
+  let pluginNotice = $state('');
+  // Plugins the user switched off for this export.
+  const off = new SvelteSet<string>();
   let abort: AbortController | null = null;
   let dialog: HTMLDialogElement;
 
+  const plugins = $derived(exportPlugins());
   const aspect = $derived(ASPECTS.find((a) => a.id === aspectId)!);
   const size = $derived(
     resolution === 'custom'
@@ -182,12 +188,15 @@
     const enc = encoder;
     const savedTime = studio.time;
     const overlay = { ...parts };
+    const drawn = plugins.filter((p) => !off.has(p.id));
+    const failed = new Set<string>();
     const units = unitPrefs.units;
     const controller = new AbortController();
     const clock = setInterval(() => (now = Date.now()), 500);
     let session: CaptureSession | undefined;
 
     error = '';
+    pluginNotice = '';
     busy = true;
     abort = controller;
     done = 0;
@@ -214,14 +223,16 @@
         music: audio,
         session,
         seek,
-        paint: (ctx, t) =>
+        paint: (ctx, t) => {
           paintOverlay(
             ctx,
             width,
             height,
             { selected: sel, flights: studio.flights.filter((f) => f.visible), studioTime: t, units, credits },
             overlay
-          ),
+          );
+          paintPlugins(ctx, drawn, t, failed, (p) => (pluginNotice = m.export_plugin_failed({ name: p.name })));
+        },
         onProgress: (n) => (done = n),
         signal: controller.signal
       });
@@ -412,6 +423,18 @@
         <label for="video-part-{key}">{label()}</label>
       </div>
     {/each}
+    {#each plugins as p (p.id)}
+      <div class="check">
+        <input
+          id="video-plugin-{p.id}"
+          type="checkbox"
+          checked={!off.has(p.id)}
+          disabled={busy}
+          onchange={(e) => (e.currentTarget.checked ? off.delete(p.id) : off.add(p.id))}
+        />
+        <label for="video-plugin-{p.id}">{p.name}</label>
+      </div>
+    {/each}
     {#if !parts.credits}
       <p class="warn" role="note">{m.export_video_credits_warn()}</p>
     {/if}
@@ -425,6 +448,7 @@
   {/if}
   {#if !studio.beginCapture}<p class="hint">{m.export_menu_hint_switch()}</p>{/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}
+  {#if pluginNotice}<p class="warn" role="status">{pluginNotice}</p>{/if}
 
   <div class="row end">
     {#if busy}

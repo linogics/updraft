@@ -6,6 +6,8 @@
   import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { exportPlugins, paintPlugins } from '#lib/studio/exportHooks.svelte';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let { studio }: { studio: StudioState } = $props();
 
@@ -23,12 +25,16 @@
   let parts = $state<OverlayParts>({ ...ALL_PARTS });
   let busy = $state(false);
   let error = $state('');
+  let pluginNotice = $state('');
+  // Plugins the user switched off for this export.
+  const off = new SvelteSet<string>();
 
   const w = $derived(clamp(width));
   const h = $derived(clamp(height));
   const credits = $derived(
     mapCredits(studio.basemap, studio.terrain, thermalOverlayPrefs.hotspots || thermalOverlayPrefs.skyways)
   );
+  const plugins = $derived(exportPlugins());
   const canExport = $derived(!!studio.capture && !!studio.selected && !busy);
 
   function pick(p: { width: number; height: number }) {
@@ -42,6 +48,7 @@
     if (!sel || !capture) return;
     busy = true;
     error = '';
+    pluginNotice = '';
     // The HUD shows AGL, so wait for the ground heights.
     const release = parts.hud ? studio.need('ground') : undefined;
     try {
@@ -61,6 +68,14 @@
           credits
         },
         parts
+      );
+      const failed = new Set<string>();
+      paintPlugins(
+        ctx,
+        plugins.filter((p) => !off.has(p.id)),
+        studio.time,
+        failed,
+        (p) => (pluginNotice = m.export_plugin_failed({ name: p.name }))
       );
       const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error(m.export_png_error());
@@ -104,6 +119,17 @@
         <label for="export-part-{key}">{label()}</label>
       </div>
     {/each}
+    {#each plugins as p (p.id)}
+      <div class="check">
+        <input
+          id="export-plugin-{p.id}"
+          type="checkbox"
+          checked={!off.has(p.id)}
+          onchange={(e) => (e.currentTarget.checked ? off.delete(p.id) : off.add(p.id))}
+        />
+        <label for="export-plugin-{p.id}">{p.name}</label>
+      </div>
+    {/each}
     {#if !parts.credits}
       <p class="warn" role="note">{m.export_image_credits_warn()}</p>
     {/if}
@@ -116,6 +142,7 @@
     <p class="hint">{m.export_menu_hint_switch()}</p>
   {/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}
+  {#if pluginNotice}<p class="warn" role="status">{pluginNotice}</p>{/if}
 </div>
 
 <style>

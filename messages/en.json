@@ -154,6 +154,7 @@
   "export_part_hud": "Flight data",
   "export_part_minimap": "Minimap",
   "export_part_stats": "Stats",
+  "export_plugin_failed": "Plugin {name} failed while drawing and was left out.",
   "export_png_error": "The browser could not encode the PNG.",
   "export_progress": "Frame {done} of {total} · {elapsed} elapsed · about {left} left",
   "export_quality": "Quality",

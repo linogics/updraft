@@ -154,6 +154,7 @@
   "export_part_hud": "Flugdaten",
   "export_part_minimap": "Minikarte",
   "export_part_stats": "Statistik",
+  "export_plugin_failed": "Plugin {name} ist beim Zeichnen fehlgeschlagen und wurde ausgelassen.",
   "export_png_error": "Der Browser konnte das PNG nicht kodieren.",
   "export_progress": "Bild {done} von {total} · {elapsed} vergangen · noch etwa {left}",
   "export_quality": "Qualität",
