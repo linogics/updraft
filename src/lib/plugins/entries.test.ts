@@ -26,7 +26,7 @@ describe('parsePlugins', () => {
       { ...ok, dock: 'top' },
       { ...ok, dock: undefined },
       { ...ok, kind: undefined },
-      { ...ok, kind: 'backend' }
+      { ...ok, kind: 'widget' }
     ];
     expect(parsePlugins([...bad, ok])).toEqual([ok]);
   });

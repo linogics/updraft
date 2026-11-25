@@ -55,7 +55,7 @@ Fields of every kind:
 | ---------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `id`       | `string`                                  | `vendor/name`, each part matches `[a-z0-9-]{1,40}`, for example `acme/wind-panel`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout. The vendor `updraft` is reserved for bundled plugins, added plugins cannot use it. |
 | `name`     | `string`                                  | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                |
-| `kind`     | `'studio' \| 'service'`                   | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
+| `kind`     | `'studio' \| 'service' \| 'backend'`                 | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
 | `provides` | `Record<string, (ctx) => object>`         | Optional. Services this plugin offers, see [Services](#services).                                                                 |
 | `requires` | `string[]`                                | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                              |
 
@@ -69,6 +69,8 @@ Kind `studio`, `apiVersion: 2`, a panel in a dock:
 | `drawExport` | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).              |
 
 Kind `service`, `apiVersion: 1`, headless: no panel, `provides` must not be empty.
+
+Kind `backend`, `apiVersion: 1`, headless: a sync server. It needs `create(config: { url: string }): BackendAdapter`. See [Backends](#backends).
 
 `mount(el, ctx)`:
 
@@ -214,9 +216,36 @@ A plugin that was added earlier but fails to load later, for example because the
 - The copy is made on a best effort basis. If it fails, the plugin still works online and a warning goes to the console.
 - Files in the app's own `static/plugins/` folder are part of the app and are available offline with it.
 
+## Backends
+
+A backend plugin connects the sync engine to a server. `create({ url })` returns a `BackendAdapter`, which is a `SyncTransport` (`push(changes)` and `pull(cursor)`, see Sync in `docs/development.md`) plus login. The types are in `src/lib/sync/types.ts`.
+
+```ts
+export default {
+  id: 'acme/mybackend',
+  name: 'My backend',
+  kind: 'backend',
+  apiVersion: 1,
+  create: ({ url }) => ({
+    authMethods: async () => [{ kind: 'password' }],
+    signIn: async (method, input) => ({ user: 'pilot@example.com' }),
+    signOut: async () => {},
+    session: () => null,
+    push: async (changes) => {},
+    pull: async (cursor) => ({ changes: [], cursor, more: false })
+  })
+};
+```
+
+- `authMethods()` lists what the server offers. `{ kind: 'password' }` makes the app show an identity and password form and pass `{ identity, password }` as `input`. `{ kind: 'redirect', id, label }` is OAuth or SSO, the adapter runs the popup or redirect itself, so `signIn` is called from a click. `{ kind: 'code', label }` is reserved for one time codes and not used yet.
+- The adapter owns the token. It keeps it in its own storage, so `session()` still answers after a reload, and the app never sees it. Use a storage key that includes `url`.
+- `push` must apply last write wins per record: a change only replaces the stored one when its `updatedAt` is higher. `pull` returns changes in a stable order after an opaque `cursor`, and `more: true` while there are further pages.
+- A deleted record is a change with `deleted: true` and no `data`.
+- The app sends validated records. It treats everything from `pull` as untrusted and validates it again, so the adapter does not have to, but it must not run or render it.
+
 ## Versioning
 
-Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service kind at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
+Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service and backend kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
 
 ## Security
 

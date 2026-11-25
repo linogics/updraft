@@ -55,6 +55,7 @@
     "maplibre-gl": "^6.19.0",
     "mediabunny": "1.66.2",
     "pbf": "^5.2.0",
+    "pocketbase": "0.29.0",
     "uplot": "^1.6.32"
   }
 }
