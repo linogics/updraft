@@ -21,7 +21,7 @@ Live at https://updraft.linogics.io
 | **Logbook and backup**             | The logbook is the start page, next to the navigation. Totals and breakdowns, flights without a track, one-file backup of everything.                                                                                                                                                |
 | **Local-first, no account**        | Runs fully in your browser. Flights and settings never leave your device, no tracking or analytics. Map tiles load from public tile servers, see [Privacy](docs/help.md#privacy). Imports IGC, GPX, KML, FIT, TRK and GeoJSON. Installable as an app, in English, German and French. |
 
-All features are listed in [docs/features.md](docs/features.md). How to use the app is described in [docs/help.md](docs/help.md). Plugin authors start at [docs/plugins.md](docs/plugins.md).
+All features are listed in [docs/features.md](docs/features.md). How to use the app is described in [docs/help.md](docs/help.md). Plugin authors start at [docs/plugins.md](docs/plugins.md). To sync between devices with your own server, see [docs/self-hosting-sync.md](docs/self-hosting-sync.md).
 
 ## Local development
 

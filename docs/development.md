@@ -50,7 +50,7 @@ Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engin
 - Prefs in localStorage are detected at push time by comparing the raw value with the last pushed one. Remote prefs are written to localStorage and apply after a reload. `studioLayout` and the plugin list never sync, API keys only when `syncKeys` is `'1'`.
 - `start()` syncs on start, on `focus`, on `online` and 3 s after a local change. `stop()` removes the listeners.
 
-Transport contract (`src/lib/sync/types.ts`): `push(changes)` stores the changes. `pull(cursor)` returns the changes after the opaque `cursor`, the new cursor and `more`. A `SyncChange` is `{ type: 'flight' | 'manual' | 'cameraPath' | 'pref', id, updatedAt, deleted?, data? }`. Login is the transport's own business.
+Transport contract (`src/lib/sync/types.ts`): `push(changes)` stores the changes. `pull(cursor)` returns the changes after the opaque `cursor`, the new cursor and `more`. A `SyncChange` is `{ type: 'flight' | 'manual' | 'cameraPath' | 'pref', id, updatedAt, deleted?, data? }`. Login is the transport's own business, see the backend kind in [plugins.md](plugins.md#backends). The bundled PocketBase backend is `src/lib/plugins/builtin/pocketbase.ts`, its server is in `server/` and described in [self-hosting-sync.md](self-hosting-sync.md).
 
 ## Performance
 

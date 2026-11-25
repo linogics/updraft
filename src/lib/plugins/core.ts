@@ -1,20 +1,22 @@
 import { validateStudioPlugin, type StudioPlugin } from '#lib/studio/plugins';
+import { validateBackendPlugin, type BackendPlugin } from './backendKind';
 import { validateServicePlugin, type ServicePlugin } from './serviceKind';
 import { validateServiceFields } from './services';
 
 /** Grows with every new kind of plugin. Add its validator to `validators` below. */
-export type PluginKind = 'studio' | 'service';
-export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service'];
+export type PluginKind = 'studio' | 'service' | 'backend';
+export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service', 'backend'];
 
 /** A validated plugin module of any kind. */
-export type AnyPlugin = StudioPlugin | ServicePlugin;
+export type AnyPlugin = StudioPlugin | ServicePlugin | BackendPlugin;
 
 export const PLUGIN_ID = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}$/;
 
 /** Each kind checks its own fields and its own apiVersion. */
 const validators: Record<PluginKind, (mod: Record<string, unknown>) => AnyPlugin> = {
   studio: validateStudioPlugin,
-  service: validateServicePlugin
+  service: validateServicePlugin,
+  backend: validateBackendPlugin
 };
 
 /** Only http(s) pages can be imported. Returns the normalised URL or null. */

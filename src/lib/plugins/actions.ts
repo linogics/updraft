@@ -1,6 +1,6 @@
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { BUILTIN_PANELS } from '#lib/studio/panels';
-import { BUILTIN_PLUGINS } from './builtin';
+import { BUILTIN_BACKENDS, BUILTIN_PLUGINS } from './builtin';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, pluginUrl } from './core';
@@ -20,6 +20,7 @@ export async function addPlugin(raw: string) {
   const taken = [
     ...BUILTIN_PANELS.map((p) => p.id),
     ...BUILTIN_PLUGINS.map((p) => p.id),
+    ...BUILTIN_BACKENDS.map((p) => p.id),
     ...pluginPrefs.list.map((e) => e.id)
   ];
   const plugin = await loadPlugin(url, taken);
@@ -34,6 +35,7 @@ export async function addPlugin(raw: string) {
       studioLayout.move(pluginPanelId(id), plugin.dock, Infinity);
       break;
     case 'service':
+    case 'backend':
       pluginPrefs.add({ url, id, name, kind });
       break;
   }

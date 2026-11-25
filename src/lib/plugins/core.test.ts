@@ -21,7 +21,7 @@ describe('validatePlugin', () => {
     ['missing name', { ...ok, name: undefined }, /"name"/],
     ['blank name', { ...ok, name: ' ' }, /"name"/],
     ['missing kind', { ...ok, kind: undefined }, /"kind"/],
-    ['unknown kind', { ...ok, kind: 'backend' }, /"kind"/],
+    ['unknown kind', { ...ok, kind: 'widget' }, /"kind"/],
     ['apiVersion 1', { ...ok, apiVersion: 1 }, /Unsupported apiVersion 1/],
     ['missing apiVersion', { ...ok, apiVersion: undefined }, /Unsupported apiVersion/],
     ['bad dock', { ...ok, dock: 'top' }, /"dock"/],
@@ -53,6 +53,22 @@ describe('validatePlugin', () => {
       ['no provides', { ...svc, provides: undefined }, /at least one service/],
       ['empty provides', { ...svc, provides: {} }, /at least one service/],
       ['wrong apiVersion', { ...svc, apiVersion: 2 }, /Unsupported apiVersion 2/]
+    ])('rejects %s', (_, mod, message) => {
+      expect(() => validatePlugin(mod)).toThrow(message);
+    });
+  });
+
+  describe('backend kind', () => {
+    const be = { id: 'acme/be', name: 'Be', kind: 'backend', apiVersion: 1, create: () => ({}) };
+
+    it('accepts a backend with a create function', () => {
+      expect(validatePlugin(be)).toBe(be);
+    });
+
+    it.each([
+      ['no create', { ...be, create: undefined }, /"create"/],
+      ['create not a function', { ...be, create: {} }, /"create"/],
+      ['wrong apiVersion', { ...be, apiVersion: 2 }, /Unsupported apiVersion 2/]
     ])('rejects %s', (_, mod, message) => {
       expect(() => validatePlugin(mod)).toThrow(message);
     });

@@ -1,0 +1,15 @@
+# Sync server for updraft. Start it with: docker compose -f server/compose.yaml up -d --build
+# This serves plain HTTP on port 8090. Put a reverse proxy with HTTPS in front of it, the app needs HTTPS in production.
+services:
+  pocketbase:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - '8090:8090'
+    volumes:
+      - pb_data:/pb/pb_data
+      - ./pb_migrations:/pb/pb_migrations
+
+volumes:
+  pb_data:

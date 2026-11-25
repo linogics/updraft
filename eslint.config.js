@@ -18,7 +18,8 @@ export default ts.config(
       'test-results',
       'playwright-report',
       '.codegraph',
-      'docs'
+      'docs',
+      'server/pb_migrations'
     ]
   },
   js.configs.recommended,
