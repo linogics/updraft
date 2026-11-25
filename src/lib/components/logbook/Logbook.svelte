@@ -21,8 +21,6 @@
   import { formatAirtime, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance } from '#lib/ui/units';
 
-  let { onchange }: { onchange?: (flights: FlightSummary[]) => void } = $props();
-
   let flights = $state<FlightSummary[]>([]);
   let selected = $state<string[]>([]);
   let errors = $state<string[]>([]);
@@ -86,7 +84,6 @@
     flights = await flightRepository.list();
     selected = selected.filter((id) => flights.some((f) => f.id === id));
     ready = true;
-    onchange?.(flights);
     void scoreMissing();
   }
 
