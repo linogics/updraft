@@ -6,6 +6,8 @@ const MAX_GAP_MS = 60_000;
 const MAX_GAP_M = 500;
 /** Centripetal parametrisation, avoids loops and overshoot at sharp turns. */
 const ALPHA = 0.5;
+/** Knot step of about 1 mm of distance. Shorter steps blow the spline up, see smoothPath. */
+const MIN_KNOT = 1e-4;
 
 type Vec = [number, number, number];
 
@@ -19,7 +21,7 @@ const mix = (a: Vec, b: Vec, wa: number, wb: number): Vec => [
 function knots(p: [Vec, Vec, Vec, Vec]): [number, number, number, number] {
   const k: [number, number, number, number] = [0, 0, 0, 0];
   for (let i = 1; i < 4; i++) {
-    k[i] = k[i - 1] + Math.max(Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) ** ALPHA, 1e-9);
+    k[i] = k[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) ** ALPHA;
   }
 
   return k;
@@ -73,8 +75,11 @@ export function smoothPath(fixes: Fix[], perSegment = 3): SmoothPath {
       ctrl(i + 2, fixes.length - 1, fixes.length - 2)
     ];
     const k = knots(seg);
+    // A repeated position (pilot standing, alt still changing) gives a zero knot interval and the spline divides by it.
+    const linear = k[1] - k[0] < MIN_KNOT || k[2] - k[1] < MIN_KNOT || k[3] - k[2] < MIN_KNOT;
     for (let j = 1; j <= perSegment; j++) {
-      const [lat, lon, alt] = catmullRom(seg, k, j / (perSegment + 1));
+      const u = j / (perSegment + 1);
+      const [lat, lon, alt] = linear ? mix(seg[1], seg[2], 1 - u, u) : catmullRom(seg, k, u);
       points.push({ lat, lon, alt });
       source.push(i);
     }
