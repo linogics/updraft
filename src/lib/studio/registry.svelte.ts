@@ -29,6 +29,8 @@ const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
   hidden: b.hidden,
   collapsed: b.collapsed,
   pinned: b.pinned,
+  enable: b.enable,
+  startsOff: b.startsOff,
   load: async () => {
     const plugin = validatePlugin((await b.load()).default);
     if (plugin.kind !== 'studio' || plugin.id !== b.id) throw new Error(`"${b.id}" is not the expected studio plugin.`);
@@ -38,7 +40,7 @@ const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
 
 // Bundled plugins keep the place in the default order that their panel had before it became a plugin.
 const BUILTINS: PanelDef[] = [...BUILTIN_PANELS];
-for (const b of BUILTIN_PLUGINS) {
+for (const b of BUILTIN_PLUGINS.filter((b) => b.hosts?.includes('studio') ?? true)) {
   const at = BUILTINS.findIndex((p) => p.id === b.after);
   BUILTINS.splice(at < 0 ? BUILTINS.length : at + 1, 0, builtinPanel(b));
 }
@@ -72,7 +74,12 @@ function pluginPanel(e: PluginEntry): PanelDef {
 
 /** Built-in panels and bundled plugins followed by the plugins the user added. Follows the plugin list. */
 class Registry {
-  list = $derived<PanelDef[]>([...BUILTINS, ...pluginPrefs.list.filter((e) => e.kind === 'studio').map(pluginPanel)]);
+  list = $derived<PanelDef[]>([
+    ...BUILTINS,
+    ...pluginPrefs.list
+      .filter((e) => e.kind === 'studio' && (e.hosts ?? ['studio']).includes('studio'))
+      .map(pluginPanel)
+  ]);
   byId = $derived(new Map(this.list.map((p) => [p.id, p])));
   /** Ids that may not leave their default dock. */
   pinned = $derived(this.list.filter((p) => p.pinned).map((p) => p.id));

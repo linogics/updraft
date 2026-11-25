@@ -31,7 +31,7 @@ export async function addPlugin(raw: string) {
   registerProvides(plugin);
   switch (plugin.kind) {
     case 'studio':
-      pluginPrefs.add({ url, id, name, kind, dock: plugin.dock });
+      pluginPrefs.add({ url, id, name, kind, dock: plugin.dock, hosts: plugin.hosts });
       studioLayout.move(pluginPanelId(id), plugin.dock, Infinity);
       break;
     case 'service':

@@ -1,5 +1,5 @@
 import { mount, unmount } from 'svelte';
-import StatsPanel from '#lib/components/StatsPanel.svelte';
+import StatsPanel from './StatsPanel.svelte';
 import { m } from '#lib/paraglide/messages';
 import type { AnalysisService } from '#lib/studio/analysisService.svelte';
 import type { StudioPlugin } from '#lib/studio/plugins';

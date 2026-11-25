@@ -1,5 +1,5 @@
 import { PLUGIN_ID, PLUGIN_KINDS, pluginUrl, type PluginKind } from './core';
-import { PLUGIN_DOCKS, type PluginDock } from '#lib/studio/plugins';
+import { PLUGIN_DOCKS, PLUGIN_HOSTS, type PluginDock, type PluginHost } from '#lib/studio/plugins';
 
 /** What the app knows about a plugin without importing it, so a hidden plugin costs nothing. */
 export interface PluginEntry {
@@ -9,6 +9,8 @@ export interface PluginEntry {
   kind: PluginKind;
   /** Required for the studio kind. */
   dock?: PluginDock;
+  /** Pages that show a studio plugin, missing means the studio only. */
+  hosts?: PluginHost[];
 }
 
 /** Validates the stored plugin list entry by entry. Bad entries and repeated ids or URLs are dropped. */
@@ -36,6 +38,8 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
     urls.add(url);
     const entry: PluginEntry = { url, id: o.id, name, kind: o.kind as PluginKind };
     if (o.kind === 'studio') entry.dock = o.dock as PluginDock;
+    if (Array.isArray(o.hosts) && o.hosts.every((h) => PLUGIN_HOSTS.includes(h as PluginHost)))
+      entry.hosts = o.hosts as PluginHost[];
     out.push(entry);
   }
 

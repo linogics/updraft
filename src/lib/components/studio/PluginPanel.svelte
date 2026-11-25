@@ -27,7 +27,7 @@
     }
 
     mountedPlugins.add(plugin);
-    const { ctx, dispose } = createPluginContext(studio, plugin.requires ?? [], (err) =>
+    const { ctx, dispose } = createPluginContext(studio, plugin.id, plugin.requires ?? [], (err) =>
       fail('a subscriber failed', err)
     );
     let destroy: unknown;

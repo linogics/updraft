@@ -1,6 +1,9 @@
-import { services } from '#lib/plugins/services';
+import { RESERVED_NAMESPACE, services } from '#lib/plugins/services';
 import type { StudioState, NeedKind } from '#lib/state/studio.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
+
+/** `updraft/*-state@major` hands out app state objects, for bundled plugins only. */
+const INTERNAL_SERVICE = /^updraft\/[a-z0-9-]+-state@\d+$/;
 
 /** What a version 2 studio plugin gets. Data comes from services, see `updraft/studio@1`. */
 export interface PluginContext {
@@ -18,10 +21,14 @@ export interface PluginContext {
  * Builds the context of one mounted plugin. `dispose` removes the overlay, stops every subscription and
  * releases every need. A subscriber that throws is reported to `onError`, the others keep running.
  */
-export function createPluginContext(studio: StudioState, requires: readonly string[], onError: (err: unknown) => void) {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:absolute;inset:0;z-index:10;overflow:hidden;pointer-events:none';
-  studio.viewsEl?.append(overlay);
+export function createPluginContext(
+  studio: StudioState,
+  pluginId: string,
+  requires: readonly string[],
+  onError: (err: unknown) => void
+) {
+  // Created on first access, most plugins never draw over the views.
+  let overlay: HTMLDivElement | undefined;
 
   // Plain bookkeeping, nothing renders from it.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -38,9 +45,19 @@ export function createPluginContext(studio: StudioState, requires: readonly stri
   const ctx: PluginContext = {
     use<T>(name: string) {
       if (!requires.includes(name)) throw new Error(`Service "${name}" is not in requires.`);
+      if (INTERNAL_SERVICE.test(name) && !pluginId.startsWith(RESERVED_NAMESPACE))
+        throw new Error(`Service "${name}" is internal to bundled plugins.`);
       return services.use<T>(name);
     },
-    overlay,
+    get overlay() {
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.style.cssText = 'position:absolute;inset:0;z-index:10;overflow:hidden;pointer-events:none';
+        studio.viewsEl?.append(overlay);
+      }
+
+      return overlay;
+    },
     subscribe(fn) {
       let frame = 0;
       let first = true;
@@ -80,7 +97,7 @@ export function createPluginContext(studio: StudioState, requires: readonly stri
     ctx: Object.freeze(ctx),
     dispose() {
       for (const stop of [...stops]) stop();
-      overlay.remove();
+      overlay?.remove();
     }
   };
 }

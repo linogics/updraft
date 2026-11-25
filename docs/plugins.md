@@ -67,6 +67,7 @@ Kind `studio`, `apiVersion: 2`, a panel in a dock:
 | `dock`       | `'left' \| 'right' \| 'bottom'`                           | The dock the panel starts in. The user can move it afterwards.                       |
 | `mount`      | `(el: HTMLElement, ctx: PluginContext) => void \| fn`     | Called when the panel is shown. Draw into `el`. May return a destroy function.       |
 | `drawExport` | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).              |
+| `hosts`      | `('studio' \| 'plan')[]`                                  | Optional, defaults to `['studio']`. A non-empty list without duplicates. `'plan'` is accepted, the XC planner shows such panels in a later release. |
 
 Kind `service`, `apiVersion: 1`, headless: no panel, `provides` must not be empty.
 
@@ -142,7 +143,7 @@ Provided by the studio while it is open. Lookups are by flight id (see `PluginFl
 
 The types are in `src/lib/studio/analysisService.svelte.ts`. Like every service it is read through functions, so call it again instead of keeping results.
 
-The built-in Stats panel is itself a plugin (`updraft/stats`) built only on `updraft/studio@1` and `updraft/flight-analysis@1`. See `src/lib/plugins/builtin/stats.ts` as a reference example. Bundled plugins cannot be removed, but can be hidden and moved like any panel.
+The built-in Stats panel is itself a plugin (`updraft/stats`) built only on `updraft/studio@1` and `updraft/flight-analysis@1`. See `src/lib/plugins/builtin/stats/index.ts` as a reference example. Bundled plugins cannot be removed, but can be hidden and moved like any panel.
 
 The TypeScript types `StudioService` and `PluginFlight` are in `src/lib/studio/studioService.svelte.ts`, JavaScript plugins can import them in JSDoc as the example does.
 
@@ -165,6 +166,18 @@ The TypeScript types `StudioService` and `PluginFlight` are in `src/lib/studio/s
 | `alt`      | `'m'`, `'ft'`             |
 | `vario`    | `'ms'`, `'fpm'`, `'kt'`   |
 | `speed`    | `'kmh'`, `'mph'`, `'kt'`  |
+
+Services named `updraft/*-state` hand out app internals and are internal to bundled plugins.
+
+## Bundled plugins
+
+Contributors add a panel that ships with the app as a plugin:
+
+1. Create the folder `src/lib/plugins/builtin/<name>/` with the panel component and an `index.ts` whose default export is the plugin.
+2. For a component that takes `{ studio }`, use `componentPlugin({ id, name, dock, requires?, hosts?, drawExport? }, Component)` from `src/lib/plugins/builtin/componentPlugin.ts`. It mounts the component and reads the studio from `updraft/studio-state@1`, which only plugins with an `updraft/` id may use.
+3. Add an entry to `BUILTIN_PLUGINS` in `src/lib/plugins/builtin.ts` with the title, dock, default flags and `load: () => import('./builtin/<name>')`. `after` sets the place in the default order. The panel id is `plugin:<id>`.
+
+Bundled plugins may import app code directly. `src/lib/plugins/builtin/units/` is the template, `stats/` shows the service only variant.
 
 ## Lifecycle
 

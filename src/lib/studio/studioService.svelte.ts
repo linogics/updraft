@@ -90,3 +90,10 @@ export function provideStudioService(studio: Host) {
     'updraft'
   );
 }
+
+export const STUDIO_STATE_SERVICE = 'updraft/studio-state@1';
+
+/** Provides the live `StudioState` to bundled plugins. `ctx.use` refuses it for any other plugin. */
+export function provideStudioState(studio: StudioState) {
+  return services.provide(STUDIO_STATE_SERVICE, () => studio, 'updraft');
+}
