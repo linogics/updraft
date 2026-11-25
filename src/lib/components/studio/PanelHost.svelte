@@ -26,8 +26,9 @@
   import PanelError from './PanelError.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
+  import type { PluginHostEnv } from '#lib/studio/pluginContext.svelte';
 
-  let { panel, studio }: { panel: PanelDef; studio: StudioState } = $props();
+  let { panel, studio, host }: { panel: PanelDef; studio?: StudioState; host?: PluginHostEnv } = $props();
 
   const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 </script>
@@ -37,7 +38,7 @@
     <Spinner label={m.panel_loading({ title: panel.title() })} />
   {:then mod}
     {@const Panel = mod.default}
-    <Panel {studio} {...mod.props} />
+    <Panel {studio} {host} {...mod.props} />
   {:catch e}
     <PanelError message={m.panel_failed({ title: panel.title(), message: message(e) })} />
   {/await}

@@ -67,6 +67,9 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Total and per-leg distance, XC score per league and a duration estimate from a speed in km/h.
 - Route and speed live in the URL, "Copy link" shares it.
 - Thermal overlay and airspaces on the planner map.
+- Below the route controls the sidebar holds panels in one column: Thermal overlay, XC score, Airspace and Legs (only while the route has legs). Drag them by the grip, fold them or use the actions menu (Move up, Move down, Reset layout). They start folded except Legs. The layout is kept in this browser.
+- XC score has its own on/off switch, shared with the studio. While it is off nothing is scored.
+- Plugins whose `hosts` include `plan` appear after the bundled panels. They can be removed, shown again and uninstalled from the Panels menu next to the title, where plugins are also added.
 - The controls sit in a sidebar on the left. On phones the map fills the screen and the controls open from the menu button as a swipeable drawer.
 
 ## Logbook

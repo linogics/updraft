@@ -67,7 +67,7 @@ Kind `studio`, `apiVersion: 2`, a panel in a dock:
 | `dock`       | `'left' \| 'right' \| 'bottom'`                           | The dock the panel starts in. The user can move it afterwards.                       |
 | `mount`      | `(el: HTMLElement, ctx: PluginContext) => void \| fn`     | Called when the panel is shown. Draw into `el`. May return a destroy function.       |
 | `drawExport` | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).              |
-| `hosts`      | `('studio' \| 'plan')[]`                                  | Optional, defaults to `['studio']`. A non-empty list without duplicates. `'plan'` is accepted, the XC planner shows such panels in a later release. |
+| `hosts`      | `('studio' \| 'plan')[]`                                  | Optional, defaults to `['studio']`. A non-empty list without duplicates. `'plan'` also shows the panel in the XC planner, see [XC planner](#xc-planner). |
 
 Kind `service`, `apiVersion: 1`, headless: no panel, `provides` must not be empty.
 
@@ -174,10 +174,30 @@ Services named `updraft/*-state` hand out app internals and are internal to bund
 Contributors add a panel that ships with the app as a plugin:
 
 1. Create the folder `src/lib/plugins/builtin/<name>/` with the panel component and an `index.ts` whose default export is the plugin.
-2. For a component that takes `{ studio }`, use `componentPlugin({ id, name, dock, requires?, hosts?, drawExport? }, Component)` from `src/lib/plugins/builtin/componentPlugin.ts`. It mounts the component and reads the studio from `updraft/studio-state@1`, which only plugins with an `updraft/` id may use.
-3. Add an entry to `BUILTIN_PLUGINS` in `src/lib/plugins/builtin.ts` with the title, dock, default flags and `load: () => import('./builtin/<name>')`. The array order is the default order inside each dock. The panel id is `plugin:<id>`.
+2. For a component that takes `{ studio }`, use `componentPlugin({ id, name, dock, requires?, hosts?, drawExport?, state? }, Component)` from `src/lib/plugins/builtin/componentPlugin.ts`. It mounts the component and reads the studio from `updraft/studio-state@1`, which only plugins with an `updraft/` id may use. Pass `state: null` for a component without props, so it needs no state and mounts in every host. Planner components use `state: { service: 'updraft/plan-state@1', prop: 'plan' }`.
+3. Add an entry to `BUILTIN_PLUGINS` in `src/lib/plugins/builtin.ts` with the title, dock, default flags and `load: () => import('./builtin/<name>')`. The array order is the default order inside each dock. Add `hosts: ['studio', 'plan']` to show it in the planner too, or `['plan']` for a planner only panel. The panel id is `plugin:<id>`. Bundled planner panels cannot be removed.
 
 Bundled plugins may import app code directly. `src/lib/plugins/builtin/units/` is the template, `stats/` shows the service only variant.
+
+## XC planner
+
+A plugin with `'plan'` in `hosts` shows up in the XC planner (`/plan`) after the bundled panels, in one column. The user can drag, fold and remove it there. The planner has its own Panels menu in the sidebar header, with the same switches, Uninstall and Add plugin as the studio. The layout is kept per browser, separate from the studio.
+
+`ctx` has the same shape, with these differences:
+
+- `subscribe(fn)` fires after the route or the units changed, at most once per animation frame.
+- `overlay` covers the map.
+- `need(kind)` throws `need is not available in the planner.`.
+- The studio services (`updraft/studio@1`, `updraft/flight-analysis@1`) are not provided. A plugin that lists both hosts must not require them, or must check the host first.
+
+Service `updraft/plan@1`, provided while the planner is open:
+
+| Member       | Returns                                    | Behavior                                                         |
+| ------------ | ------------------------------------------ | ---------------------------------------------------------------- |
+| `points()`   | `readonly { lat: number; lon: number }[]`  | The route. The same frozen array until the route changes.        |
+| `distance()` | `number`                                   | Route length in m.                                               |
+| `speed()`    | `number`                                   | The planned speed in km/h.                                       |
+| `units()`    | `Readonly<Units>`                          | The same frozen object until the user changes units, see above.  |
 
 ## Lifecycle
 

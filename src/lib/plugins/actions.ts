@@ -1,3 +1,4 @@
+import { planLayout } from '#lib/state/planLayout.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { BUILTIN_BACKENDS, BUILTIN_PLUGINS } from './builtin';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
@@ -30,7 +31,8 @@ export async function addPlugin(raw: string) {
   switch (plugin.kind) {
     case 'studio':
       pluginPrefs.add({ url, id, name, kind, dock: plugin.dock, hosts: plugin.hosts });
-      studioLayout.move(pluginPanelId(id), plugin.dock, Infinity);
+      // A planner only plugin has no studio panel.
+      if (!plugin.hosts || plugin.hosts.includes('studio')) studioLayout.move(pluginPanelId(id), plugin.dock, Infinity);
       break;
     case 'service':
     case 'backend':
@@ -45,7 +47,12 @@ export async function addPlugin(raw: string) {
 export function removePlugin(id: string) {
   const entry = pluginPrefs.list.find((e) => e.id === id);
   if (!entry) return;
-  if (entry.kind === 'studio') studioLayout.forget(pluginPanelId(id));
+
+  if (entry.kind === 'studio') {
+    studioLayout.forget(pluginPanelId(id));
+    if (entry.hosts?.includes('plan')) planLayout.forget(pluginPanelId(id));
+  }
+
   pluginPrefs.remove(id);
   services.unregisterOwner(id);
   forgetPluginModule(entry.url);
