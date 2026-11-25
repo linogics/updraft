@@ -62,7 +62,7 @@
   }
 </script>
 
-<section>
+<section class="card">
   <h2>{m.backup_heading()}</h2>
   <p class="muted">{m.backup_intro()}</p>
   <label class="check"><input type="checkbox" bind:checked={includeToken} /> {m.backup_include_keys()}</label>

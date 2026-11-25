@@ -42,7 +42,7 @@ One-time setup: in the repository settings set Pages source to "GitHub Actions",
 
 ## Sync
 
-Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engine.svelte.ts`) mirrors it through a `SyncTransport`. No transport exists yet, so the engine is not wired into the app.
+Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engine.svelte.ts`) mirrors it through a `SyncTransport`. The app-wide `syncClient` (`src/lib/sync/client.svelte.ts`) loads the configured backend, signs in and runs the engine.
 
 - Every repository write marks its record dirty in the `sync` store (`type:id`, `updatedAt` in ms, tombstone on delete). XC scores are a cache and never sync.
 - `syncNow()` pushes `pendingChanges()` in pages of 50, then pulls until `more` is false and stores the cursor. `markPushed` leaves a record dirty when it was rewritten during the push.
@@ -51,6 +51,29 @@ Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engin
 - `start()` syncs on start, on `focus`, on `online` and 3 s after a local change. `stop()` removes the listeners.
 
 Transport contract (`src/lib/sync/types.ts`): `push(changes)` stores the changes. `pull(cursor)` returns the changes after the opaque `cursor`, the new cursor and `more`. A `SyncChange` is `{ type: 'flight' | 'manual' | 'cameraPath' | 'pref', id, updatedAt, deleted?, data? }`. Login is the transport's own business, see the backend kind in [plugins.md](plugins.md#backends). The bundled PocketBase backend is `src/lib/plugins/builtin/pocketbase.ts`, its server is in `server/` and described in [self-hosting-sync.md](self-hosting-sync.md).
+
+### Known limits
+
+Each one is fine for a club-sized server and marked with a `shortcut:` comment in the code.
+
+- Last write wins compares `updatedAt` from each device's own clock. A device with a wrong clock can win or lose against newer changes.
+- The PocketBase backend checks last write wins on the client. Two devices pushing the same record at the same moment can race, and the later request wins.
+- The pull cursor is the server's `updated` time plus the row id. A record written in the same millisecond as the cursor but with a smaller id is missed until it changes again.
+- Synced prefs are written to localStorage and apply only after a reload.
+- Signing in with another account on the same device uploads all local records to that account, the device's data is not split per account.
+- Club free distance uses the XC route only when the best scored route is a free route. When a triangle scores best, the furthest point from takeoff is used, so the free distance can be too short.
+- The club pilot filter is page state and is lost on reload.
+
+Not yet tested end to end: sharing and the club page against a real server (the adapter calls are covered by the integration tests, the UI only against a mocked server), a second pilot opening a shared flight, the side menu at phone width, and the Docker image in `server/`.
+
+### Possible next steps
+
+- Move the last write wins check into a PocketBase hook so concurrent pushes cannot race.
+- Use a server side sequence number as the pull cursor instead of `updated` plus id.
+- Apply synced prefs live instead of after a reload.
+- Warn before uploading local data to a different account, or offer to clear the device first.
+- Score free distance separately for the club rankings.
+- Keep the club tab and pilot filter in the URL.
 
 ## Performance
 

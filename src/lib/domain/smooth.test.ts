@@ -42,6 +42,19 @@ describe('smoothPath', () => {
     }
   });
 
+  it('stays between the fixes when the position repeats with a changing altitude', () => {
+    const still = [
+      fix(0, 47, 8, 1946),
+      fix(1, 47, 8, 1945),
+      fix(2, 47.0001, 8.0001, 1945),
+      fix(3, 47.0001, 8.0002, 1945)
+    ];
+
+    const alts = smoothPath(still).points.map((p) => p.alt);
+    expect(Math.min(...alts)).toBeGreaterThanOrEqual(1944);
+    expect(Math.max(...alts)).toBeLessThanOrEqual(1947);
+  });
+
   it('returns fewer than 3 fixes unchanged', () => {
     const { points, source } = smoothPath(bend.slice(0, 2));
 
