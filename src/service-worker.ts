@@ -19,10 +19,11 @@ const PRECACHED = new Set(PRECACHE);
 const PAGES = new Set(prerendered.map((page) => absolute(page.path)));
 
 sw.addEventListener('install', (event) => {
+  // Bypass the HTTP cache so a new version never stores a stale page.
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
+      .then((cache) => cache.addAll(PRECACHE.map((path) => new Request(path, { cache: 'reload' }))))
       .then(() => sw.skipWaiting())
   );
 });
@@ -64,7 +65,8 @@ sw.addEventListener('fetch', (event) => {
 
 async function navigate(request: Request, path: string): Promise<Response> {
   try {
-    return await fetch(request);
+    // Revalidate past the browser's HTTP cache, GitHub Pages lets it keep HTML for 10 minutes.
+    return await fetch(request, { cache: 'no-cache' });
   } catch {
     const cache = await caches.open(CACHE);
     const page = (PAGES.has(path) && (await cache.match(path))) || (await cache.match('/'));

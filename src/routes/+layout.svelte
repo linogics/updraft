@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { onMount } from 'svelte';
-  import { onNavigate } from '$app/navigation';
+  import { beforeNavigate, onNavigate } from '$app/navigation';
   import { navigating, updated } from '$app/state';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
@@ -13,6 +13,11 @@
     document.documentElement.lang = getLocale();
     void startServicePlugins();
     void syncClient.init();
+  });
+
+  // After a new deploy, the next page change loads the new version instead of the old code in memory.
+  beforeNavigate(({ willUnload, to }) => {
+    if (updated.current && !willUnload && to?.url) location.href = to.url.href;
   });
 
   // Plain cross-fade between pages. Browsers without view transitions and users who prefer reduced motion navigate as before.
