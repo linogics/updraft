@@ -105,7 +105,7 @@ The stats switch transition altitudes between MSL and AGL. With AGL the altitude
 
 ## XC score
 
-The XC panel scores the selected pilot's flight. Scoring only runs while the panel is shown, so hide it if you do not need XC. A spinner shows while flights are scored. Pick a league (XContest, FFVL, FAI, UK XC League), the choice is kept for the whole app. The scored route is drawn on the maps once the XC panel has scored the flight.
+The XC panel scores the selected pilot's flight. Scoring only runs while the panel is shown, so hide it if you do not need XC. A spinner shows while flights are scored. Pick a league (XContest, FFVL, FAI, FAI with cylinders, FAI out-and-return, UK XC League), the choice is kept for the whole app. The scored route is drawn on the maps once the XC panel has scored the flight.
 
 **Open in planner** turns the flight into a route with the chosen number of turnpoints and opens it in the planner.
 

@@ -57,7 +57,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 ## XC scoring
 
 - Own XC panel in the studio: league, type (free distance, flat triangle, FAI triangle, out and return), distance, multiplier and points.
-- Leagues: XContest, FFVL, FAI and UK XC League.
+- Leagues: XContest, FFVL, FAI (also with cylinders and two out-and-return variants) and UK XC League.
 - Points list when several pilots are loaded. The scored route is drawn in 2D and 3D, with the closing circle for triangles.
 - "Make route" turns a flight into 1 to 30 turnpoints and opens them in the planner.
 
