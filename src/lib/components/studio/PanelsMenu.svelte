@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PanelsTop from '@lucide/svelte/icons/panels-top-left';
   import { m } from '#lib/paraglide/messages';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
   import { removePlugin } from '#lib/studio/pluginActions';
@@ -10,6 +11,7 @@
 </script>
 
 <Popover label={m.panels_menu()}>
+  {#snippet icon()}<PanelsTop size={16} aria-hidden="true" />{/snippet}
   <ul>
     {#each registry.list as p (p.id)}
       <li>

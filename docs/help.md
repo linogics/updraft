@@ -26,7 +26,7 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 - Drag a panel by its grip (in the panel header, or on its tab in the bottom dock) and drop it anywhere in any dock (the altitude chart and timeline only move inside the bottom dock). A marker shows where it will land, and a dock without panels shows a drop strip at its edge while you drag. The dock under the pointer scrolls when you hold the panel near its top or bottom edge. Escape cancels the drag.
 - Every panel has an actions menu (the "..." button in its header or tab). Use it to move the panel up, down, left or right inside its dock, to move it to another dock (not the altitude chart and timeline), or to hide it. Moves are announced to screen readers and the focus stays on the menu button.
 - Click the title of a panel in the left or right dock to collapse it to its header, click again to expand it. A collapsed panel does no work.
-- The toolbar **Panels** menu has a switch per panel to show or hide it (XC starts hidden), and **Restore default layout** puts everything back.
+- The toolbar **Panels** button (icon only) opens a menu with a switch per panel to show or hide it (XC and Settings start hidden), and **Restore default layout** puts everything back.
 
 ### Plugins
 
@@ -62,10 +62,9 @@ Open the studio from the navigation ("Studio" opens the last flight) or from the
 
 ### Track and view
 
-- **Track** menu: colour by vario, phase, climb / transition or pilot, style (solid, outline, dashed, curtain, glow), width and smoothing.
-- **View** menu: pilot names, height exaggeration, sun lighting, thermal columns and labels, thermal overlay (hotspots, skyways, opacity) and airspaces.
-- **Map** and **Terrain** pick the base map and the 3D terrain.
-- The full screen button hides the browser UI.
+- **Track** panel: colour by vario, phase, climb / transition or pilot, style (solid, outline, dashed, curtain, glow), width and smoothing.
+- **Scene** panel: the base map and terrain, pilot names, height exaggeration, sun lighting, thermal columns and labels, thermal overlay (hotspots, skyways, opacity) and airspaces.
+- The full screen button at the right end of the toolbar hides the browser UI.
 
 The studio URL holds the flights and most view settings. Bookmark it to come back to the same view in this browser.
 
@@ -137,7 +136,7 @@ Open "Convert" in the navigation. Drop files, pick an output format (IGC, GPX, K
 
 ## Export images and videos
 
-Export works in 3D and Split layout. Open the **Export** menu in the studio toolbar.
+Export works in 3D and Split layout. Open the **Export** panel in the studio right dock.
 
 - **Download PNG** saves the current 3D frame. Pick the aspect (16:9, 9:16, 1:1), the size and the overlays.
 - **Export video…** renders an MP4.
@@ -163,7 +162,7 @@ Make a backup now and then. Clearing the browser data deletes all flights.
 
 ### Units and language
 
-The **Units** menu picks a preset (metric, imperial, aviation) or each unit on its own. The language selector is next to it. Both are kept per browser.
+The **Units** section of the **Settings** panel picks a preset (metric, imperial, aviation) or each unit on its own. Turn Settings on from the Panels menu. The globe button in the toolbar picks the language. Both are kept per browser.
 
 ### Terrain and the Cesium ion token
 
@@ -173,11 +172,11 @@ The **Units** menu picks a preset (metric, imperial, aviation) or each unit on i
 | Cesium World Terrain | a free [Cesium ion](https://ion.cesium.com) token | Higher resolution. Default once a token is set. Falls back to AWS Terrain Tiles if ion fails |
 | Flat | nothing | No relief |
 
-To add a token, open the **Ion** menu in the studio toolbar, paste the token and click "Save and reload". Leave the field empty to remove it. The token is kept only in this browser.
+To add a token, open the **Settings** panel, paste the token and click "Save and reload". Leave the field empty to remove it. The token is kept only in this browser.
 
 ### Airspaces and the openAIP key
 
-Airspaces need a free key from [openaip.net](https://www.openaip.net). Enter it under Airspaces in the View menu or in the planner. Then pick the classes, hide airspaces with high floors and set the opacity. Airspaces start hidden in every new session, the other settings are kept.
+Airspaces need a free key from [openaip.net](https://www.openaip.net). Enter it under Airspaces in the Scene panel or in the planner. Then pick the classes, hide airspaces with high floors and set the opacity. Airspaces start hidden in every new session, the other settings are kept.
 
 Airspace limits are approximate. Flight levels and AGL ceilings are treated as MSL, GND floors start at 0 m, FIR and UIR are not shown. Always check the official charts.
 

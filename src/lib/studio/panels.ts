@@ -55,6 +55,31 @@ export const BUILTIN_PANELS: PanelDef[] = [
   },
   { id: 'stats', title: () => m.panel_stats(), dock: 'right', load: () => import('#lib/components/StatsPanel.svelte') },
   {
+    id: 'export',
+    title: () => m.export_menu(),
+    dock: 'right',
+    load: () => import('#lib/components/ExportPanel.svelte')
+  },
+  {
+    id: 'scene',
+    title: () => m.panel_scene(),
+    dock: 'right',
+    load: () => import('#lib/components/ScenePanel.svelte')
+  },
+  {
+    id: 'track',
+    title: () => m.track_menu(),
+    dock: 'right',
+    load: () => import('#lib/components/TrackPanel.svelte')
+  },
+  {
+    id: 'settings',
+    hidden: true,
+    title: () => m.panel_settings(),
+    dock: 'right',
+    load: () => import('#lib/components/SettingsPanel.svelte')
+  },
+  {
     id: 'altitude',
     pinned: true,
     title: () => m.studio_tab_altitude(),
