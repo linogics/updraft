@@ -100,13 +100,6 @@ export const BUILTIN_PANELS: PanelDef[] = [
     load: () => import('#lib/components/ExportPanel.svelte')
   },
   {
-    id: 'units',
-    collapsed: true,
-    title: () => m.units_menu(),
-    dock: 'right',
-    load: () => import('#lib/components/UnitsPanel.svelte')
-  },
-  {
     id: 'ion',
     collapsed: true,
     title: () => m.panel_ion(),

@@ -16,9 +16,26 @@ describe('plugin context use()', () => {
   });
 
   it('hands out required services only', () => {
-    const { ctx, dispose } = createPluginContext({ viewsEl: null } as StudioState, ['t/a@1'], () => {});
+    const { ctx, dispose } = createPluginContext({ viewsEl: null } as StudioState, 't/p', ['t/a@1'], () => {});
     expect(ctx.use('t/a@1')).toEqual({ ok: true });
     expect(() => ctx.use('t/b@1')).toThrow('Service "t/b@1" is not in requires.');
     dispose();
+  });
+
+  it('keeps updraft/*-state services for bundled plugins', () => {
+    services.provide('updraft/x-state@1', () => ({}), 't/owner');
+    const user = createPluginContext({ viewsEl: null } as StudioState, 't/p', ['updraft/x-state@1'], () => {});
+    expect(() => user.ctx.use('updraft/x-state@1')).toThrow('internal to bundled plugins');
+    const own = createPluginContext({ viewsEl: null } as StudioState, 'updraft/p', ['updraft/x-state@1'], () => {});
+    expect(own.ctx.use('updraft/x-state@1')).toEqual({});
+  });
+
+  it('creates the overlay on first access only', () => {
+    const create = vi.fn(() => ({ style: {}, remove() {} }));
+    vi.stubGlobal('document', { createElement: create });
+    const { ctx } = createPluginContext({ viewsEl: null } as StudioState, 't/p', [], () => {});
+    expect(create).not.toHaveBeenCalled();
+    expect(ctx.overlay).toBe(ctx.overlay);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });

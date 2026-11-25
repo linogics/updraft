@@ -8,6 +8,8 @@ describe('validatePlugin', () => {
     expect(validatePlugin(ok)).toBe(ok);
     const withExport = { ...ok, drawExport: () => {} };
     expect(validatePlugin(withExport)).toBe(withExport);
+    const withHosts = { ...ok, hosts: ['studio', 'plan'] };
+    expect(validatePlugin(withHosts)).toBe(withHosts);
   });
 
   it.each([
@@ -25,6 +27,10 @@ describe('validatePlugin', () => {
     ['apiVersion 1', { ...ok, apiVersion: 1 }, /Unsupported apiVersion 1/],
     ['missing apiVersion', { ...ok, apiVersion: undefined }, /Unsupported apiVersion/],
     ['bad dock', { ...ok, dock: 'top' }, /"dock"/],
+    ['empty hosts', { ...ok, hosts: [] }, /"hosts"/],
+    ['unknown host', { ...ok, hosts: ['tv'] }, /"hosts"/],
+    ['duplicate host', { ...ok, hosts: ['studio', 'studio'] }, /"hosts"/],
+    ['hosts not a list', { ...ok, hosts: 'studio' }, /"hosts"/],
     ['mount not a function', { ...ok, mount: 'x' }, /"mount"/],
     ['drawExport not a function', { ...ok, drawExport: 1 }, /"drawExport"/],
     ['provides not an object', { ...ok, provides: 'x' }, /"provides"/],

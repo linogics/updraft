@@ -23,7 +23,7 @@
   import { StudioState } from '#lib/state/studio.svelte';
   import { useNeed } from '#lib/state/useNeed.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { provideStudioService } from '#lib/studio/studioService.svelte';
+  import { provideStudioService, provideStudioState } from '#lib/studio/studioService.svelte';
   import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
   import { flightRepository } from '#lib/storage';
   import { syncClient } from '#lib/sync/client.svelte';
@@ -109,10 +109,12 @@
 
   // Plugins read the studio through this service while the page is open.
   const unprovide = provideStudioService(studio);
+  const unprovideState = provideStudioState(studio);
   const unprovideAnalysis = provideAnalysisService(studio);
   onDestroy(() => {
     unprovide();
     unprovideAnalysis();
+    unprovideState();
     studio.destroy();
   });
 
