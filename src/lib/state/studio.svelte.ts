@@ -95,6 +95,8 @@ export class StudioState {
   terrain = $state<TerrainSource>('terrarium');
   /** Whether a Cesium ion token is configured (ion terrain selectable). */
   ionAvailable = $state(false);
+  /** A flight from the club is shown. Nothing about it is written to this browser. */
+  readOnly = false;
   syncMode = $state<SyncMode>('real');
   /** Manual time shift per flight id on top of the sync mode, ms. */
   nudges = $state.raw<Record<string, number>>({});
@@ -284,6 +286,8 @@ export class StudioState {
 
   /** Debounced so dragging a number field does not write on every keystroke. */
   private saveCameraTracks() {
+    if (this.readOnly) return;
+
     clearTimeout(this.cameraSaveTimer);
     // Bind ids and tracks now: the flights may change before the timer fires.
     const ids = this.flights.map((f) => f.flight.id);
@@ -348,10 +352,10 @@ export class StudioState {
         if (done !== undefined) continue;
         let xc: XcScore | null | undefined;
         try {
-          xc = await flightRepository.getXcScore(source.id, league);
+          xc = this.readOnly ? undefined : await flightRepository.getXcScore(source.id, league);
           if (xc === undefined) {
             xc = await scoreFlight(source.fixes, league);
-            await flightRepository.putXcScore(source.id, league, xc);
+            if (!this.readOnly) await flightRepository.putXcScore(source.id, league, xc);
           }
         } catch (err) {
           console.error('Could not score flight', err);

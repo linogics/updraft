@@ -15,6 +15,7 @@
   import { syncClient } from '#lib/sync/client.svelte';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, studioHref } from '#lib/storage/importFlights';
+  import { shareFlight } from '#lib/club/share';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
@@ -31,6 +32,10 @@
   let xc = $state<Record<string, XcScore | null>>({});
   let xcRun = 0;
   let by = $state<'year' | 'site' | 'glider'>('year');
+
+  // Id of the flight whose sharing changes. Computing the XC figures can take a few seconds.
+  let sharing = $state<string | null>(null);
+  let shareError = $state('');
 
   let editing = $state<string | null>(null);
   let draft = $state({ pilot: '', site: '', glider: '', notes: '' });
@@ -146,6 +151,19 @@
     if (!confirm(m.logbook_confirm_delete({ pilot: f.pilot, date: f.date }))) return;
     await flightRepository.delete(f.id);
     await refresh();
+  }
+
+  async function toggleShare(f: FlightSummary) {
+    sharing = f.id;
+    shareError = '';
+    try {
+      await shareFlight(f.id, !f.shared);
+      await refresh();
+    } catch (err) {
+      shareError = m.club_share_error({ error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      sharing = null;
+    }
   }
 
   function edit(f: FlightSummary) {
@@ -309,6 +327,8 @@
       </form>
     {/if}
 
+    <p class="errors" role="alert">{shareError}</p>
+
     {#if flights.length}
       <table>
         <thead>
@@ -354,6 +374,16 @@
                 {#if f.notes}<span aria-label={m.logbook_has_notes()}>✎</span>{/if}
               </td>
               <td class="actions">
+                {#if syncClient.hasClub && !f.manual}
+                  <button
+                    aria-pressed={!!f.shared}
+                    disabled={sharing !== null}
+                    onclick={() => toggleShare(f)}
+                    aria-label={m.club_share_aria({ pilot: f.pilot, date: f.date })}
+                  >
+                    {sharing === f.id ? m.club_sharing() : f.shared ? m.club_shared() : m.club_share()}
+                  </button>
+                {/if}
                 <button onclick={() => edit(f)} aria-label={m.logbook_edit_aria({ pilot: f.pilot, date: f.date })}>
                   {m.common_edit()}
                 </button>
@@ -528,6 +558,10 @@
   .errors {
     margin: 0;
     color: var(--danger);
+  }
+  td.actions button[aria-pressed='true'] {
+    border-color: var(--primary-hi);
+    color: var(--primary-hi);
   }
   .sr {
     position: absolute;

@@ -25,6 +25,7 @@ class Fake {
   methods: AuthMethod[] = [{ kind: 'password' }];
   pullCursors: (string | null)[] = [];
   signInCalls = 0;
+  withClub = false;
 
   adapter(): BackendAdapter {
     return {
@@ -36,6 +37,7 @@ class Fake {
       },
       signOut: async () => void (this.user = null),
       session: () => (this.user ? { user: this.user } : null),
+      club: this.withClub ? { list: async () => [], flight: async () => ({}) } : undefined,
       push: async (changes) => void this.log.push(...changes),
       pull: async (cursor) => {
         this.pullCursors.push(cursor);
@@ -86,6 +88,27 @@ describe('SyncClient', () => {
     expect(b.client.engine).not.toBeNull();
     expect(b.client.session).toEqual({ user: 'pilot' });
     await b.client.disconnect();
+  });
+
+  it('offers the club only when signed in to a server that has one', async () => {
+    const fake = new Fake();
+    fake.withClub = true;
+    const { client } = setup(fake);
+    configure();
+    await client.init();
+
+    expect(client.hasClub).toBe(false);
+    expect(() => client.clubEntries()).toThrow('Sign in');
+
+    await client.signIn({ kind: 'password' }, { identity: 'pilot', password: 'x' });
+
+    expect(client.hasClub).toBe(true);
+    expect(await client.clubEntries()).toEqual([]);
+    await client.disconnect();
+
+    const plain = setup(new Fake());
+    plain.client.session = { user: 'x' };
+    expect(plain.client.hasClub).toBe(false);
   });
 
   it('does nothing without a config', async () => {

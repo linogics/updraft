@@ -22,6 +22,8 @@ export interface FlightSummary {
   trackKm?: number;
   /** Logged by hand, no track stored. */
   manual?: true;
+  /** Opted in to the club list. */
+  shared?: boolean;
 }
 
 export interface ManualEntry {
