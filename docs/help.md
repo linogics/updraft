@@ -120,6 +120,7 @@ Open "XC Planner" in the navigation.
 - The XC score panel starts switched off. Turn on "Score flights" to see the score for the chosen league.
 - The Panels menu next to the title adds plugins and lists the ones you added.
 - **Copy link** copies a URL with the route, ready to share.
+- **XCTrack task** and **GPX route** download the route for your flight instrument. XCTrack gets a 400 m cylinder around each point.
 - The planner map has the same base maps, thermal overlay and airspaces as the studio.
 - On a phone the controls are in a drawer. Tap the menu button or swipe it open.
 

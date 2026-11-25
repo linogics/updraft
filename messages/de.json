@@ -348,6 +348,8 @@
   "plan_base_map": "Basiskarte",
   "plan_copied": "Kopiert",
   "plan_copy_link": "Link kopieren",
+  "plan_export_xctsk": "XCTrack-Aufgabe",
+  "plan_export_gpx": "GPX-Route",
   "plan_estimated_time": "geschätzte Zeit",
   "plan_hint": "Klicke auf die Karte, um Punkte hinzuzufügen. Ziehe einen Punkt, um ihn zu verschieben, und klicke auf die Mitte eines Schenkels, um einen einzufügen.",
   "plan_insert_point": "Punkt vor {n} einfügen",

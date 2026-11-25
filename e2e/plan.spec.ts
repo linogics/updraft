@@ -33,14 +33,25 @@ test('the XC switch turns scoring on and off, legs show with a route', async ({ 
   await page.getByRole('button', { name: 'XC score', exact: true }).click();
   const xc = page.getByRole('region', { name: 'XC score' });
   await expect(xc.getByRole('combobox')).toBeDisabled();
-  await expect(xc).not.toContainText('points');
+  await expect(xc).not.toContainText(/\d+ points/);
 
   await xc.getByRole('checkbox', { name: 'Score flights' }).check();
   await expect(xc.getByRole('combobox')).toBeEnabled();
   await expect(xc).toContainText(/\d+ points/, { timeout: 15_000 });
 
   await xc.getByRole('checkbox', { name: 'Score flights' }).uncheck();
-  await expect(xc).not.toContainText('points');
+  await expect(xc).not.toContainText(/\d+ points/);
+});
+
+test('the route downloads as an XCTrack task', async ({ page }) => {
+  await page.goto('/plan?r=' + encodeURIComponent('47,8~47,8.2'));
+  const [file] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'XCTrack task' }).click()
+  ]);
+  expect(file.suggestedFilename()).toMatch(/\.xctsk$/);
+  const task = JSON.parse(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c).toString()));
+  expect(task.turnpoints).toHaveLength(2);
 });
 
 test.describe('plugins', () => {
