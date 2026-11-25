@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount, type Snippet } from 'svelte';
+  import MenuIcon from '@lucide/svelte/icons/menu';
+  import X from '@lucide/svelte/icons/x';
   import { m } from '#lib/paraglide/messages';
 
   let {
@@ -116,9 +118,7 @@
     aria-controls="{id}-drawer"
     onclick={openDrawer}
   >
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-      <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-    </svg>
+    <MenuIcon size={22} aria-hidden="true" />
   </button>
   {@render header()}
 </div>
@@ -141,9 +141,7 @@
         {@render header()}
         <!-- svelte-ignore a11y_autofocus -->
         <button bind:this={closeBtn} class="close" aria-label={m.drawer_close()} autofocus onclick={closeDrawer}>
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
+          <X size={20} aria-hidden="true" />
         </button>
       </div>
       <!-- Following a link navigates away, so close the drawer on the way. Keyboard users trigger the same click. -->

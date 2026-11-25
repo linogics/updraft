@@ -9,6 +9,7 @@ describe('parseStudioLayout', () => {
     expect(parseStudioLayout(null, defaults)).toEqual({
       docks: { left: ['a', 'b'], right: ['c'], bottom: ['d', 'e'] },
       hidden: [],
+      collapsed: [],
       sizes: { left: 280, right: 300, bottom: 200, split: 0.5 },
       open: { left: true, right: true, bottom: true },
       tab: null
@@ -35,13 +36,29 @@ describe('parseStudioLayout', () => {
     expect(v.tab).toBe('d');
   });
 
+  it('drops unknown and duplicate collapsed ids', () => {
+    expect(parseStudioLayout({ collapsed: ['a', 'a', 'x', 3] }, defaults).collapsed).toEqual(['a']);
+    expect(parseStudioLayout({ collapsed: 'a' }, defaults).collapsed).toEqual([]);
+  });
+
+  it('hides a missing default-hidden id, but keeps it where it is stored', () => {
+    const missing = parseStudioLayout({ docks: { left: ['a', 'b'] } }, defaults, { hidden: ['c'] });
+    expect(missing.docks.right).toEqual([]);
+    expect(missing.hidden).toEqual(['c']);
+    const stored = parseStudioLayout({ docks: { right: ['c'] } }, defaults, { hidden: ['c'] });
+    expect(stored.docks.right).toEqual(['c']);
+    expect(stored.hidden).toEqual([]);
+  });
+
   it('puts a pinned id stored in another dock back to the end of its default dock', () => {
-    const v = parseStudioLayout({ docks: { left: ['a', 'd'], right: ['c'], bottom: ['e'] } }, defaults, ['d']);
+    const v = parseStudioLayout({ docks: { left: ['a', 'd'], right: ['c'], bottom: ['e'] } }, defaults, {
+      pinned: ['d']
+    });
     expect(v.docks).toEqual({ left: ['a', 'b'], right: ['c'], bottom: ['e', 'd'] });
   });
 
   it('keeps a hidden pinned id hidden', () => {
-    const v = parseStudioLayout({ docks: { left: ['a', 'b'] }, hidden: ['d'] }, defaults, ['d']);
+    const v = parseStudioLayout({ docks: { left: ['a', 'b'] }, hidden: ['d'] }, defaults, { pinned: ['d'] });
     expect(v.hidden).toEqual(['d']);
     expect(v.docks.left).toEqual(['a', 'b']);
   });
@@ -75,6 +92,11 @@ describe('layout moves', () => {
 });
 
 describe('forgetInLayout', () => {
+  it('drops a panel from collapsed', () => {
+    const v = parseStudioLayout({ collapsed: ['a', 'b'] }, defaults);
+    expect(forgetInLayout(v, 'a').collapsed).toEqual(['b']);
+  });
+
   it('drops a panel from docks, hidden and the bottom tab', () => {
     const v = hideInLayout(parseStudioLayout({ tab: 'e' }, defaults), 'c');
     const next = forgetInLayout(forgetInLayout(v, 'c'), 'e');

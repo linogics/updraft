@@ -5,6 +5,8 @@ export interface StudioLayoutValue {
   docks: Record<Dock, string[]>;
   /** Panels the user switched off. */
   hidden: string[];
+  /** Side panels folded to their header. */
+  collapsed: string[];
   /** Left and right dock width, bottom dock height (px), share of the 3D view in split layout (0..1). */
   sizes: { left: number; right: number; bottom: number; split: number };
   open: Record<Dock, boolean>;
@@ -28,14 +30,15 @@ export function clampSize(key: LayoutSize, v: number): number {
 
 /**
  * Validates stored layout field by field. `defaults` maps every known panel id to its default dock.
- * Unknown and duplicate ids are dropped, known ids that are missing go to their default dock.
+ * Unknown and duplicate ids are dropped, known ids that are missing go to their default dock,
+ * or to `hidden` when the panel starts hidden.
  * A pinned id stored outside its default dock goes back to the end of that dock.
  * Bad sizes fall back to the initial size, then get clamped.
  */
 export function parseStudioLayout(
   raw: unknown,
   defaults: Record<string, Dock>,
-  pinned: readonly string[] = []
+  { pinned = [], hidden: startHidden = [] }: { pinned?: readonly string[]; hidden?: readonly string[] } = {}
 ): StudioLayoutValue {
   const obj = (x: unknown) => (x && typeof x === 'object' ? x : {}) as Record<string, unknown>;
   const o = obj(raw);
@@ -60,7 +63,15 @@ export function parseStudioLayout(
     bottom: take(stored.bottom)
   };
   const hidden = take(o.hidden);
-  for (const id of known) if (!seen.has(id)) docks[defaults[id]].push(id);
+  for (const id of known)
+    if (!seen.has(id)) {
+      if (startHidden.includes(id)) hidden.push(id);
+      else docks[defaults[id]].push(id);
+    }
+
+  const collapsed = Array.isArray(o.collapsed)
+    ? [...new Set(o.collapsed.filter((id): id is string => typeof id === 'string' && known.includes(id)))]
+    : [];
 
   for (const id of pinned)
     for (const d of Object.keys(docks) as Dock[])
@@ -82,6 +93,7 @@ export function parseStudioLayout(
   return {
     docks,
     hidden,
+    collapsed,
     sizes: { left: size('left'), right: size('right'), bottom: size('bottom'), split: size('split') },
     open: { left: isOpen('left'), right: isOpen('right'), bottom: isOpen('bottom') },
     tab: typeof o.tab === 'string' && docks.bottom.includes(o.tab) ? o.tab : null
@@ -118,6 +130,7 @@ export function forgetInLayout(v: StudioLayoutValue, id: string): StudioLayoutVa
     ...v,
     docks: { left: without(v.docks.left), right: without(v.docks.right), bottom: without(v.docks.bottom) },
     hidden: without(v.hidden),
+    collapsed: without(v.collapsed),
     tab: v.tab === id ? null : v.tab
   };
 }

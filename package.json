@@ -45,6 +45,7 @@
     "vitest": "^5.1.1"
   },
   "dependencies": {
+    "@lucide/svelte": "^1.80.0",
     "@mapbox/vector-tile": "^3.0.0",
     "cesium": "^1.147.0",
     "fit-file-parser": "^6.2.10",

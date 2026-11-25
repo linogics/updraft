@@ -40,6 +40,8 @@ class Registry {
   byId = $derived(new Map(this.list.map((p) => [p.id, p])));
   /** Ids that may not leave their default dock. */
   pinned = $derived(this.list.filter((p) => p.pinned).map((p) => p.id));
+  /** Ids that start hidden, the user turns them on from the Panels menu. */
+  hidden = $derived(this.list.filter((p) => p.hidden).map((p) => p.id));
   /** Default dock per panel id, the shape the layout state validates against. */
   defaults = $derived<Record<string, PanelDef['dock']>>(Object.fromEntries(this.list.map((p) => [p.id, p.dock])));
 }

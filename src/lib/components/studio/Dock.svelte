@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
@@ -23,11 +25,7 @@
 </script>
 
 {#snippet grip()}
-  <svg viewBox="0 0 8 12" width="8" height="12" aria-hidden="true" fill="currentColor">
-    <circle cx="2" cy="2" r="1.1" /><circle cx="6" cy="2" r="1.1" />
-    <circle cx="2" cy="6" r="1.1" /><circle cx="6" cy="6" r="1.1" />
-    <circle cx="2" cy="10" r="1.1" /><circle cx="6" cy="10" r="1.1" />
-  </svg>
+  <GripVertical size={14} aria-hidden="true" />
 {/snippet}
 
 <!-- Keeps the lifted panel's place, so nothing jumps while it is dragged. -->
@@ -112,6 +110,7 @@
     style:grid-area={dock === 'left' ? 'outliner' : 'aside'}
   >
     {#each panels as p, i (p.id)}
+      {@const collapsed = studioLayout.value.collapsed.includes(p.id)}
       {#if drag.id === p.id}{@render slot()}{/if}
       <section
         aria-labelledby="panel-title-{p.id}"
@@ -130,10 +129,19 @@
           >
             {@render grip()}
           </button>
-          <h3 id="panel-title-{p.id}">{p.title()}</h3>
+          <h3 id="panel-title-{p.id}">
+            <button
+              type="button"
+              class="fold"
+              aria-expanded={!collapsed}
+              onclick={() => studioLayout.toggleCollapsed(p.id)}
+            >
+              <ChevronDown size={14} aria-hidden="true" />{p.title()}
+            </button>
+          </h3>
           {@render actions(p, i)}
         </header>
-        <PanelHost panel={p} {studio} />
+        {#if !collapsed}<PanelHost panel={p} {studio} />{/if}
       </section>
     {/each}
   </svelte:element>
@@ -169,6 +177,31 @@
     flex: 1;
     min-width: 0;
     margin: 0;
+  }
+  .fold {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    border: 0;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .fold :global(svg) {
+    flex: none;
+    rotate: 0deg;
+  }
+  .fold[aria-expanded='false'] :global(svg) {
+    rotate: -90deg;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .fold :global(svg) {
+      transition: rotate 0.15s;
+    }
   }
   /* Only the grip starts a drag, so text stays selectable and touch scrolling still works elsewhere. */
   .grip,
