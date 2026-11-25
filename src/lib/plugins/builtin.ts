@@ -28,12 +28,42 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     load: () => import('./builtin/stats')
   },
   {
+    id: 'updraft/track',
+    title: () => m.track_menu(),
+    dock: 'right',
+    after: 'plugin:updraft/stats',
+    load: () => import('./builtin/track')
+  },
+  {
+    id: 'updraft/scene',
+    title: () => m.panel_scene(),
+    dock: 'right',
+    after: 'plugin:updraft/track',
+    load: () => import('./builtin/scene')
+  },
+  {
+    id: 'updraft/export',
+    title: () => m.export_menu(),
+    dock: 'right',
+    collapsed: true,
+    after: 'thermal-overlay',
+    load: () => import('./builtin/export')
+  },
+  {
     id: 'updraft/units',
     title: () => m.units_menu(),
     dock: 'right',
     collapsed: true,
-    after: 'export',
+    after: 'plugin:updraft/export',
     load: () => import('./builtin/units')
+  },
+  {
+    id: 'updraft/ion',
+    title: () => m.panel_ion(),
+    dock: 'right',
+    collapsed: true,
+    after: 'plugin:updraft/units',
+    load: () => import('./builtin/ion')
   }
 ];
 

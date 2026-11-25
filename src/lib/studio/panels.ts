@@ -56,18 +56,6 @@ export const BUILTIN_PANELS: PanelDef[] = [
     load: () => import('#lib/components/ThermalList.svelte')
   },
   {
-    id: 'track',
-    title: () => m.track_menu(),
-    dock: 'right',
-    load: () => import('#lib/components/TrackPanel.svelte')
-  },
-  {
-    id: 'scene',
-    title: () => m.panel_scene(),
-    dock: 'right',
-    load: () => import('#lib/components/ScenePanel.svelte')
-  },
-  {
     id: 'xc',
     enable: (on) => xcPrefs.setEnabled(on),
     startsOff: true,
@@ -91,20 +79,6 @@ export const BUILTIN_PANELS: PanelDef[] = [
     title: () => m.panel_thermal_overlay(),
     dock: 'right',
     load: () => import('#lib/components/ThermalOverlayPanel.svelte')
-  },
-  {
-    id: 'export',
-    collapsed: true,
-    title: () => m.export_menu(),
-    dock: 'right',
-    load: () => import('#lib/components/ExportPanel.svelte')
-  },
-  {
-    id: 'ion',
-    collapsed: true,
-    title: () => m.panel_ion(),
-    dock: 'right',
-    load: () => import('#lib/components/IonPanel.svelte')
   },
   {
     id: 'altitude',
