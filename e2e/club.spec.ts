@@ -113,10 +113,12 @@ test('shows the club rankings and opens a shared flight read-only', async ({ pag
   await expect(row).toContainText('55.50');
 
   await page.getByRole('button', { name: 'Flights' }).click();
-  const cell = page.getByRole('cell', { name: 'Ranked Pilot', exact: true });
-  await expect(cell).toBeVisible();
+  await expect(page.getByRole('cell', { name: /^Ranked Pilot/ })).toBeVisible();
 
-  await page.getByRole('link', { name: /^Open the flight of Ranked Pilot/ }).click();
+  await page
+    .getByRole('cell', { name: /^Ranked Pilot/ })
+    .getByRole('link')
+    .click();
   await page.waitForURL(/\/studio\?.*club=club1/);
   await expect(page.getByRole('navigation', { name: 'Outliner' })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText('not available')).toHaveCount(0);
@@ -125,6 +127,36 @@ test('shows the club rankings and opens a shared flight read-only', async ({ pag
   expect(writes).toEqual([]);
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'load demo flights' })).toBeVisible();
+});
+
+test('a totals pilot filters the flights and the menu marks the current page', async ({ page }) => {
+  await mockServer(page);
+  await page.goto('/');
+  await signIn(page);
+
+  const menu = page.getByRole('navigation', { name: 'Tools' });
+  await expect(menu.getByRole('link', { name: /^Logbook/ })).toHaveAttribute('aria-current', 'page');
+  await menu.getByRole('link', { name: /^Club/ }).click();
+  await expect(menu.getByRole('link', { name: /^Club/ })).toHaveAttribute('aria-current', 'page');
+  await expect(menu.getByRole('link', { name: /^Logbook/ })).not.toHaveAttribute('aria-current', 'page');
+
+  await page.getByRole('region', { name: 'Total airtime' }).getByRole('button', { name: 'Ranked Pilot' }).click();
+  await expect(page.getByText('Flights of Ranked Pilot')).toBeVisible();
+  await expect(page.getByRole('cell', { name: /^Ranked Pilot/ })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Show all' }).click();
+  await expect(page.getByText('Flights of Ranked Pilot')).toHaveCount(0);
+
+  await menu.getByRole('link', { name: /^Logbook/ }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(menu.getByRole('link', { name: /^Logbook/ })).toHaveAttribute('aria-current', 'page');
+});
+
+test('the menu is shown on the converter', async ({ page }) => {
+  await page.goto('/convert');
+  const menu = page.getByRole('navigation', { name: 'Tools' });
+  await expect(menu.getByRole('link', { name: /^Convert/ })).toHaveAttribute('aria-current', 'page');
+  await expect(menu.getByRole('link', { name: /^Logbook/ })).toBeVisible();
 });
 
 test('sharing a flight from the logbook uploads it as shared', async ({ page }) => {

@@ -1,12 +1,16 @@
 <script lang="ts">
+  import { onMount, type Snippet } from 'svelte';
+  import { page } from '$app/state';
   import LanguageSelect from '#lib/components/LanguageSelect.svelte';
-  import Logbook from '#lib/components/logbook/Logbook.svelte';
   import SideDrawer from '#lib/components/SideDrawer.svelte';
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
-  import type { FlightSummary } from '#lib/storage';
+  import { flightRepository, type FlightSummary } from '#lib/storage';
   import { studioHref } from '#lib/storage/importFlights';
+  import { onLocalChange } from '#lib/storage/localChange';
   import { syncClient } from '#lib/sync/client.svelte';
   import { m } from '#lib/paraglide/messages';
+
+  let { children }: { children: Snippet } = $props();
 
   const HELP_URL = 'https://github.com/linogics/updraft/blob/main/docs/help.md';
 
@@ -14,15 +18,25 @@
   // Manual logbook entries have no track to play back.
   let last = $state<FlightSummary>();
 
-  function onchange(flights: FlightSummary[]) {
-    last = flights.find((f) => !f.manual);
+  async function refresh() {
+    last = (await flightRepository.list()).find((f) => !f.manual);
     loaded = true;
   }
-</script>
 
-<svelte:head>
-  <title>updraft</title>
-</svelte:head>
+  // Prerendered files may be served with or without a trailing slash.
+  const current = (href: string) => (page.url.pathname.replace(/\/$/, '') || '/') === href;
+
+  onMount(() => {
+    void refresh();
+    const offLocal = onLocalChange(() => void refresh());
+    const offApplied = syncClient.onApplied(() => void refresh());
+
+    return () => {
+      offLocal();
+      offApplied();
+    };
+  });
+</script>
 
 <div class="page">
   <SideDrawer label={m.home_tools()}>
@@ -33,6 +47,32 @@
     <div class="side">
       <nav aria-label={m.home_tools()}>
         <ul>
+          <li>
+            <a class="entry" href="/" aria-current={current('/') ? 'page' : undefined}>
+              <strong>{m.home_logbook_title()}</strong>
+              <span>{m.home_logbook_desc()}</span>
+            </a>
+          </li>
+          <li>
+            {#if syncClient.hasClub}
+              <a class="entry" href="/club" aria-current={current('/club') ? 'page' : undefined}>
+                <strong>{m.home_club_title()}</strong>
+                <span>{m.home_club_desc()}</span>
+              </a>
+            {:else}
+              <span class="entry disabled" aria-disabled="true">
+                <strong>{m.home_club_title()}</strong>
+                <span>{m.home_club_desc()}</span>
+                <em>{m.home_club_signin()}</em>
+              </span>
+            {/if}
+          </li>
+          <li>
+            <a class="entry" href="/convert" aria-current={current('/convert') ? 'page' : undefined}>
+              <strong>{m.home_convert_title()}</strong>
+              <span>{m.home_convert_desc()}</span>
+            </a>
+          </li>
           <li>
             {#if last}
               <a class="entry" href={studioHref([last.id])}>
@@ -46,26 +86,6 @@
                 {#if loaded}<em>{m.home_no_flight()}</em>{/if}
               </span>
             {/if}
-          </li>
-          <li>
-            {#if syncClient.hasClub}
-              <a class="entry" href="/club">
-                <strong>{m.home_club_title()}</strong>
-                <span>{m.home_club_desc()}</span>
-              </a>
-            {:else}
-              <span class="entry disabled" aria-disabled="true">
-                <strong>{m.home_club_title()}</strong>
-                <span>{m.home_club_desc()}</span>
-                <em>{m.home_club_signin()}</em>
-              </span>
-            {/if}
-          </li>
-          <li>
-            <a class="entry" href="/convert">
-              <strong>{m.home_convert_title()}</strong>
-              <span>{m.home_convert_desc()}</span>
-            </a>
           </li>
           <li>
             <a class="entry" href="/plan">
@@ -93,7 +113,7 @@
   </SideDrawer>
 
   <main>
-    <Logbook {onchange} />
+    {@render children()}
   </main>
 </div>
 
@@ -156,6 +176,13 @@
   }
   a.entry:hover strong,
   a.entry:focus-visible strong {
+    color: var(--primary-hi);
+  }
+  /* A bar, not only color, marks the current page. */
+  a.entry[aria-current='page'] {
+    border-left: 6px solid var(--primary-hi);
+  }
+  a.entry[aria-current='page'] strong {
     color: var(--primary-hi);
   }
   .disabled {

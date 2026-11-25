@@ -15,6 +15,8 @@
   let loading = $state(true);
   let error = $state('');
   let view = $state<'rankings' | 'flights'>('rankings');
+  // Owner id the Flights tab is limited to, empty for all pilots.
+  let owner = $state('');
 
   const u = $derived(unitPrefs.units);
   const league = $derived(XC_LEAGUES.find((l) => l.id === xcPrefs.league)?.label ?? xcPrefs.league);
@@ -22,7 +24,13 @@
   const byKey = $derived(new Map(entries.map((e) => [e.key, e])));
   const mine = $derived(new Set(entries.filter((e) => e.mine).map((e) => e.owner)));
   // Newest flight first, the date alone is not unique, so the server order breaks ties.
-  const newest = $derived([...entries].reverse().sort((a, b) => b.stats.date.localeCompare(a.stats.date)));
+  const newest = $derived(
+    [...entries]
+      .filter((e) => !owner || e.owner === owner)
+      .reverse()
+      .sort((a, b) => b.stats.date.localeCompare(a.stats.date))
+  );
+  const ownerName = $derived(entries.find((e) => e.owner === owner)?.stats.pilot ?? '');
 
   const TITLES: Record<Category, () => string> = {
     xcPoints: () => m.club_cat_xc_points({ league }),
@@ -60,6 +68,11 @@
     }
   }
 
+  function showFlightsOf(o: string) {
+    owner = o;
+    view = 'flights';
+  }
+
   onMount(() => void load());
 </script>
 
@@ -67,12 +80,9 @@
   <title>{m.club_title()}</title>
 </svelte:head>
 
-<main>
+<div class="club">
   <header>
-    <div>
-      <a href="/">{m.home_open_logbook()}</a>
-      <h1>{m.club_title()}</h1>
-    </div>
+    <h1>{m.club_title()}</h1>
     {#if syncClient.hasClub}
       <div class="bar">
         <div class="seg" role="group" aria-label={m.club_views()}>
@@ -106,16 +116,16 @@
                 <span class="medal {r.medal}" role="img" aria-label={MEDALS[r.medal]()} title={MEDALS[r.medal]()}
                 ></span>
                 <span class="who">
-                  {r.pilot}{#if mine.has(r.owner)}<em>{m.club_you()}</em>{/if}
+                  <span>
+                    {#if e}
+                      <a href={clubStudioHref(e.key)}>{r.pilot}<span class="sr"> {e.stats.date}</span></a>
+                    {:else}
+                      <button class="link" onclick={() => showFlightsOf(r.owner)}>{r.pilot}</button>
+                    {/if}{#if mine.has(r.owner)}<em>{m.club_you()}</em>{/if}
+                  </span>
                   {#if e}<span class="muted">{e.stats.date}</span>{/if}
                 </span>
                 <strong>{formatCategory(cat, r.value, u)}</strong>
-                {#if e}<a
-                    href={clubStudioHref(e.key)}
-                    aria-label={m.club_open_aria({ pilot: r.pilot, date: e.stats.date })}
-                  >
-                    {m.club_open()}
-                  </a>{/if}
               </li>
             {/each}
           </ol>
@@ -123,19 +133,27 @@
       {/each}
     </div>
   {:else}
+    {#if owner}
+      <p class="filter">
+        <span>{m.club_filter_pilot({ pilot: ownerName })}</span>
+        <button onclick={() => (owner = '')}>{m.club_filter_clear()}</button>
+      </p>
+    {/if}
     <table>
       <thead>
         <tr>
           <th>{m.export_row_pilot()}</th><th>{m.export_row_date()}</th><th class="hide">{m.export_row_site()}</th>
           <th class="num">{m.export_row_duration()}</th><th class="num hide">{m.logbook_col_distance()}</th>
-          <th class="num hide">{m.logbook_col_points()}</th><th><span class="sr">{m.club_open()}</span></th>
+          <th class="num hide">{m.logbook_col_points()}</th>
         </tr>
       </thead>
       <tbody>
         {#each newest as e (e.key)}
           <tr>
             <td>
-              {e.stats.pilot}{#if e.mine}<em>{m.club_you()}</em>{/if}
+              <a href={clubStudioHref(e.key)}>{e.stats.pilot}<span class="sr"> {e.stats.date}</span></a>{#if e.mine}<em>
+                  {m.club_you()}
+                </em>{/if}
             </td>
             <td>{e.stats.date}</td>
             <td class="muted hide">{e.stats.site ?? '–'}</td>
@@ -144,29 +162,17 @@
             <td class="num hide">
               {e.stats.xc?.league === xcPrefs.league ? formatNumber(e.stats.xc.points, 2) : '–'}
             </td>
-            <td class="num">
-              <a
-                href={clubStudioHref(e.key)}
-                aria-label={m.club_open_aria({ pilot: e.stats.pilot, date: e.stats.date })}
-              >
-                {m.club_open()}
-              </a>
-            </td>
           </tr>
         {/each}
       </tbody>
     </table>
   {/if}
-</main>
+</div>
 
 <style>
-  main {
+  .club {
     display: grid;
     gap: 16px;
-    width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 28px 24px 48px;
   }
   header {
     display: flex;
@@ -175,13 +181,27 @@
     flex-wrap: wrap;
     gap: 12px;
   }
-  header a,
   td a,
   li a {
     color: var(--text);
   }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+  }
   h1 {
-    margin: 4px 0 0;
+    margin: 0;
     font: 600 32px/1.1 var(--display);
   }
   h2 {
@@ -316,9 +336,6 @@
     }
   }
   @media (max-width: 700px) {
-    main {
-      padding: 20px 16px 40px;
-    }
     .hide {
       display: none;
     }

@@ -1,7 +1,6 @@
 <script lang="ts">
   import Dropzone from '#lib/components/Dropzone.svelte';
   import { m } from '#lib/paraglide/messages';
-  import Logo from '#lib/components/Logo.svelte';
   import { WRITERS, formatOf, readTrack, type WriterKey } from '#lib/domain/formats';
   import type { Flight } from '#lib/domain/model';
   import { zipStore } from '#lib/export/zip';
@@ -73,9 +72,8 @@
   <title>{m.convert_title()}</title>
 </svelte:head>
 
-<main>
+<div class="convert">
   <header>
-    <Logo />
     <h1>{m.home_convert_title()}</h1>
     <p>{m.convert_intro()}</p>
   </header>
@@ -122,13 +120,10 @@
       </tbody>
     </table>
   {/if}
-</main>
+</div>
 
 <style>
-  main {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 32px 16px;
+  .convert {
     display: grid;
     gap: 20px;
   }

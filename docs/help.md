@@ -6,7 +6,7 @@ updraft runs fully in your browser. There is no account. Your flights and settin
 
 ## Getting started
 
-1. Open https://updraft.linogics.io. The start page shows the navigation on the left and your logbook on the right.
+1. Open https://updraft.linogics.io. The start page shows the navigation on the left and your logbook on the right. The same navigation stays on the left in Club and Convert.
 2. Drop one or more flight files on the drop zone (IGC, GPX, KML, FIT, TRK or GeoJSON). No file at hand? Click "load demo flights".
 3. The flights are saved in the logbook. Files from the same day open together in the studio.
 
@@ -181,7 +181,7 @@ The club is everyone who signs in to the same sync server. It needs [Sync](#sync
 
 - In the logbook, click **Share** on a flight with a track. The button shows **Shared** and the flight goes to the server on the next sync. Click it again to unshare. Flights logged by hand cannot be shared.
 - Other pilots see the flight in the club list with your pilot name, date, site, glider and the figures computed from the track. They can also open the full track in the studio, read-only. Nothing from the club is saved in their logbook.
-- Open **Club** from the start page. **Rankings** show gold, silver and bronze for XC points in your league, free distance, XC speed, longest flight, total airtime, most flights, highest altitude, biggest gain above takeoff, highest above ground, strongest thermal and biggest thermal gain. **Flights** lists everything shared, newest first.
+- Open **Club** from the start page. **Rankings** show gold, silver and bronze for XC points in your league, free distance, XC speed, longest flight, total airtime, most flights, highest altitude, biggest gain above takeoff, highest above ground, strongest thermal and biggest thermal gain. **Flights** lists everything shared, newest first. Click a pilot name in a flight to open it in the studio. In total airtime and most flights, click the pilot name to see only that pilot's flights, and "Show all" to clear it.
 - Rankings count all time. Per flight categories show each pilot once with their best flight. Your own entries are marked **You**.
 - Unsharing removes the flight from the club list and the rankings at once and nobody can open it any more. Deleting a flight does the same.
 
