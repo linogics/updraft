@@ -2,7 +2,7 @@ import { tick } from 'svelte';
 import { m } from '#lib/paraglide/messages';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import type { Dock } from '#lib/studio/panels';
-import { panelById } from '#lib/studio/registry.svelte';
+import { panelById, registry } from '#lib/studio/registry.svelte';
 import { dropIndex } from './dropIndex';
 import { announce, movePanel } from './panelActions.svelte';
 
@@ -53,13 +53,16 @@ export function startDrag(e: PointerEvent, id: string) {
   let list: HTMLElement | null = null;
   let raf = 0;
   let last = 0;
+  const pinned = registry.pinned.includes(id);
   const currentDock = (['left', 'right', 'bottom'] as const).find((d) => studioLayout.value.docks[d].includes(id));
 
   /** Finds the dock under the pointer, the slot inside it from layout midpoints, and the marker for it. */
   function update() {
     drag.dx = x - startX;
     drag.dy = y - startY;
-    const dockEl = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-dock]');
+    const hit = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-dock]');
+    // A pinned panel only reorders inside its own dock.
+    const dockEl = pinned && hit?.dataset.dock !== currentDock ? null : hit;
     const dock = dockEl?.dataset.dock as Dock | undefined;
     list = dockEl
       ? dockEl.matches('[data-items]')
