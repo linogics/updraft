@@ -29,6 +29,7 @@ Docker only, no Node on the host.
 
 ```sh
 # Development with hot reload on http://localhost:5173
+# Use localhost, not 127.0.0.1, because the kk7 thermal tiles reject 127.0.0.1
 docker compose up dev
 
 # Tests and type check
