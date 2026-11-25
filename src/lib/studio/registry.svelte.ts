@@ -5,7 +5,7 @@ import { registerProvides } from '#lib/plugins/services';
 import { BUILTIN_PLUGINS, type BuiltinPlugin } from '#lib/plugins/builtin';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import type { StudioPlugin } from './plugins';
-import { BUILTIN_PANELS, type PanelDef, type PanelModule } from './panels';
+import type { PanelDef, PanelModule } from './panels';
 
 /** Plugin panel ids carry this prefix, so they never clash with a built-in id now or later. */
 export const PLUGIN_PREFIX = 'plugin:';
@@ -38,12 +38,7 @@ const builtinPanel = (b: BuiltinPlugin): PanelDef => ({
   }
 });
 
-// Bundled plugins keep the place in the default order that their panel had before it became a plugin.
-const BUILTINS: PanelDef[] = [...BUILTIN_PANELS];
-for (const b of BUILTIN_PLUGINS.filter((b) => b.hosts?.includes('studio') ?? true)) {
-  const at = BUILTINS.findIndex((p) => p.id === b.after);
-  BUILTINS.splice(at < 0 ? BUILTINS.length : at + 1, 0, builtinPanel(b));
-}
+const BUILTINS: PanelDef[] = BUILTIN_PLUGINS.filter((b) => b.hosts?.includes('studio') ?? true).map(builtinPanel);
 
 function pluginPanel(e: PluginEntry): PanelDef {
   const key = `${e.url}\n${e.id}\n${e.name}`;

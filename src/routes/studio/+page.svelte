@@ -9,6 +9,7 @@
   import { panelStatus } from '#lib/components/studio/panelActions.svelte';
   import { drag } from '#lib/components/studio/panelDrag.svelte';
   import { DOCK_LABELS, DOCKS } from '#lib/studio/panels';
+  import { pluginPanelId } from '#lib/studio/registry.svelte';
   import { LAYOUT_LIMITS as L } from '#lib/state/studioLayout';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
   import MiniMap from '#lib/components/MiniMap.svelte';
@@ -103,7 +104,7 @@
     step = 2;
     if (!clubKey) await studio.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
-    if (studio.multiDay) studioLayout.setTab('timeline', false);
+    if (studio.multiDay) studioLayout.setTab(pluginPanelId('updraft/timeline'), false);
     loaded = true;
   });
 

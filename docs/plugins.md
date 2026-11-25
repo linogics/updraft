@@ -175,7 +175,7 @@ Contributors add a panel that ships with the app as a plugin:
 
 1. Create the folder `src/lib/plugins/builtin/<name>/` with the panel component and an `index.ts` whose default export is the plugin.
 2. For a component that takes `{ studio }`, use `componentPlugin({ id, name, dock, requires?, hosts?, drawExport? }, Component)` from `src/lib/plugins/builtin/componentPlugin.ts`. It mounts the component and reads the studio from `updraft/studio-state@1`, which only plugins with an `updraft/` id may use.
-3. Add an entry to `BUILTIN_PLUGINS` in `src/lib/plugins/builtin.ts` with the title, dock, default flags and `load: () => import('./builtin/<name>')`. `after` sets the place in the default order. The panel id is `plugin:<id>`.
+3. Add an entry to `BUILTIN_PLUGINS` in `src/lib/plugins/builtin.ts` with the title, dock, default flags and `load: () => import('./builtin/<name>')`. The array order is the default order inside each dock. The panel id is `plugin:<id>`.
 
 Bundled plugins may import app code directly. `src/lib/plugins/builtin/units/` is the template, `stats/` shows the service only variant.
 
