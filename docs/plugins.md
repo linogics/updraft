@@ -55,7 +55,7 @@ Fields of every kind:
 | ---------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `id`       | `string`                                  | `vendor/name`, each part matches `[a-z0-9-]{1,40}`, for example `acme/wind-panel`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout. The vendor `updraft` is reserved for bundled plugins, added plugins cannot use it. |
 | `name`     | `string`                                  | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                |
-| `kind`     | `'studio' \| 'service' \| 'backend'`                 | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
+| `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter'` | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
 | `provides` | `Record<string, (ctx) => object>`         | Optional. Services this plugin offers, see [Services](#services).                                                                 |
 | `requires` | `string[]`                                | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                              |
 
@@ -274,9 +274,42 @@ export default {
 - Optional `club`: `list()` returns `{ key, owner, mine, stats }` for every flight that pilots shared, without the tracks. `key` is a server id, `owner` is an opaque account id that groups the flights of one pilot, and `stats` is the `club` summary of the flight record. `flight(key)` returns the full record of one shared flight. A flight record is shared when its `data.shared` is `true`, so a backend that supports the club copies `data.club` to a place it can list cheaply. Both calls return untrusted data, the app validates it.
 - The app sends validated records. It treats everything from `pull` as untrusted and validates it again, so the adapter does not have to, but it must not run or render it.
 
+## Converters
+
+A converter plugin teaches the app one track file format. It can read files (`read`), write them (`write`), or both. The app converts through its own flight model, so a plugin never talks to another format directly. Anything `PluginTrack` has no field for is lost. The types are in `src/lib/plugins/api.d.ts`.
+
+```js
+export default {
+  id: 'acme/csv',
+  name: 'CSV tracks',
+  kind: 'converter',
+  apiVersion: 1,
+  label: 'CSV',
+  extensions: ['csv'],
+  mime: 'text/csv',
+  async read(file) {
+    const rows = (await file.text()).trim().split('\n').map((l) => l.split(',').map(Number)); // t, lat, lon, alt
+    return {
+      pilot: file.name.replace(/\.[^.]*$/, ''),
+      glider: null,
+      site: null,
+      date: new Date(rows[0][0]).toISOString().slice(0, 10),
+      fixes: rows.map(([t, lat, lon, alt]) => ({ t, lat, lon, alt }))
+    };
+  },
+  write: (track) => track.fixes.map((f) => [f.t, f.lat, f.lon, f.alt].join(',')).join('\n')
+};
+```
+
+- Readers run wherever the app opens track files, the converter page and the logbook and studio import. Writers appear in the converter page's target list and write with the first extension.
+- `extensions` are lower case, without the dot. An extension that another converter already handles, bundled or added earlier, is refused with the name of that converter.
+- The app checks every reader result: `date` is `YYYY-MM-DD`, there is at least one fix, all numbers are finite, `lat` and `lon` are in range and `t` never decreases. It copies the fields it knows and assigns `id` and the file name itself. A bad result becomes an error for that file.
+- `write` returns a string (stored as UTF-8) or a `Uint8Array`.
+- The bundled formats (IGC, GPX, KML, GeoJSON, TRK, FIT) are converters too and cannot be removed.
+
 ## Versioning
 
-Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service and backend kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
+Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend and converter kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
 
 ## Security
 

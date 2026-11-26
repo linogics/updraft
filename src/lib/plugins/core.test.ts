@@ -49,6 +49,41 @@ describe('validatePlugin', () => {
     expect(validatePlugin(withServices)).toBe(withServices);
   });
 
+  describe('converter kind', () => {
+    const conv = {
+      id: 'acme/csv',
+      name: 'CSV',
+      kind: 'converter',
+      apiVersion: 1,
+      label: 'CSV',
+      extensions: ['csv'],
+      read: () => ({})
+    };
+
+    it('accepts a reader, a writer or both', () => {
+      expect(validatePlugin(conv)).toBe(conv);
+      const w = { ...conv, read: undefined, write: () => '', mime: 'text/csv' };
+      expect(validatePlugin(w)).toBe(w);
+    });
+
+    it.each([
+      ['apiVersion 2', { ...conv, apiVersion: 2 }, /Unsupported apiVersion 2/],
+      ['blank label', { ...conv, label: ' ' }, /"label"/],
+      ['no extensions', { ...conv, extensions: [] }, /"extensions"/],
+      ['extensions not a list', { ...conv, extensions: 'csv' }, /"extensions"/],
+      ['upper case extension', { ...conv, extensions: ['CSV'] }, /"extensions"/],
+      ['dotted extension', { ...conv, extensions: ['.csv'] }, /"extensions"/],
+      ['long extension', { ...conv, extensions: ['abcdefghijk'] }, /"extensions"/],
+      ['duplicate extension', { ...conv, extensions: ['csv', 'csv'] }, /"extensions"/],
+      ['blank mime', { ...conv, mime: ' ' }, /"mime"/],
+      ['read not a function', { ...conv, read: 'x' }, /"read"/],
+      ['write not a function', { ...conv, write: 1 }, /"write"/],
+      ['neither read nor write', { ...conv, read: undefined }, /"read" or "write"/]
+    ])('rejects %s', (_, mod, message) => {
+      expect(() => validatePlugin(mod)).toThrow(message);
+    });
+  });
+
   describe('service kind', () => {
     const svc = { id: 'acme/svc', name: 'Svc', kind: 'service', apiVersion: 1, provides: { 'acme/svc@1': () => ({}) } };
 

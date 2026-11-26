@@ -110,6 +110,46 @@ export interface ServicePlugin extends PluginBase {
   provides: Record<string, ServiceFactory>;
 }
 
+// Converter kind
+
+/** A track as plugins see it. Times in Unix ms, altitude in m, positions in degrees. */
+export interface PluginTrack {
+  pilot: string;
+  glider: string | null;
+  site: string | null;
+  /** Flight date, `YYYY-MM-DD`. */
+  date: string;
+  /** At least one fix, `t` never decreasing. */
+  fixes: readonly Readonly<{ t: number; lat: number; lon: number; alt: number }>[];
+}
+
+/**
+ * One track file format, apiVersion 1. A plugin reads and/or writes its format, the app converts through its own
+ * flight model. Data that `PluginTrack` has no field for is lost.
+ */
+export interface ConverterPlugin extends PluginBase {
+  /** Same rules as `StudioPlugin.id`. */
+  id: string;
+  /** Not blank. */
+  name: string;
+  kind: 'converter';
+  /** Must be `1`. */
+  apiVersion: 1;
+  /** Format name shown to the user, for example `IGC`. Not blank. */
+  label: string;
+  /**
+   * Lower case file extensions without the dot, 1 to 10 characters from `[a-z0-9]`, no duplicates.
+   * The first one is used for written files. An extension already handled by another converter is refused.
+   */
+  extensions: string[];
+  /** Media type of written files. Defaults to `application/octet-stream`. */
+  mime?: string;
+  /** Parses a file. Throw an Error with a message for the user when it is not valid. The app validates the result. */
+  read?(file: File): PluginTrack | Promise<PluginTrack>;
+  /** Builds the file content. Text is stored as UTF-8. */
+  write?(track: PluginTrack): string | Uint8Array;
+}
+
 // Backend kind
 
 /** A sync backend, apiVersion 1: headless, the app picks one and syncs through the adapter it creates. */

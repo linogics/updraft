@@ -1,6 +1,6 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
-  import { TRACK_ACCEPT, trackFiles } from '#lib/ui/trackFiles';
+  import { trackAccept, trackFiles } from '#lib/ui/trackFiles';
 
   let {
     onfiles,
@@ -32,7 +32,7 @@
     accept(e.dataTransfer?.files);
   }}
 >
-  <input type="file" accept={TRACK_ACCEPT} multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
+  <input type="file" accept={trackAccept()} multiple disabled={busy} onchange={(e) => accept(e.currentTarget.files)} />
   <strong>{busy ? m.drop_processing() : m.drop_here()}</strong>
   <span>{hint}</span>
   <small>{m.drop_privacy()}</small>

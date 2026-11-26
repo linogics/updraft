@@ -41,6 +41,37 @@ describe('parsePlugins', () => {
   });
 });
 
+describe('parsePlugins converter entries', () => {
+  const conv = {
+    url: 'https://a.test/csv.js',
+    id: 'acme/csv',
+    name: 'CSV',
+    kind: 'converter',
+    label: 'CSV',
+    extensions: ['csv'],
+    canRead: true,
+    canWrite: false,
+    mime: 'text/csv'
+  };
+
+  it('keeps a valid entry and drops stray fields', () => {
+    expect(parsePlugins([{ ...conv, dock: 'left', junk: 1 }])).toEqual([conv]);
+  });
+
+  it.each([
+    { label: ' ' },
+    { extensions: [] },
+    { extensions: ['CSV'] },
+    { extensions: ['csv', 'csv'] },
+    { extensions: undefined },
+    { canRead: 'yes' },
+    { canRead: false, canWrite: false },
+    { mime: ' ' }
+  ])('drops an entry with %j', (bad) => {
+    expect(parsePlugins([{ ...conv, ...bad }])).toEqual([]);
+  });
+});
+
 describe('pluginUrl', () => {
   it('accepts http and https only', () => {
     expect(pluginUrl(' https://a.test/x.js ')).toBe('https://a.test/x.js');

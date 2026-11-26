@@ -1,6 +1,6 @@
 <script lang="ts">
   import Dropzone from '#lib/components/Dropzone.svelte';
-  import { formatOf, readTrack, type WriterKey, WRITERS } from '#lib/domain/formats';
+  import { formatOf, readTrack, writers, writeTrack } from '#lib/convert/registry';
   import type { Flight } from '#lib/domain/model';
   import { zipStore } from '#lib/export/zip';
   import { m } from '#lib/paraglide/messages';
@@ -9,9 +9,10 @@
   type Row = { name: string; format?: string; flight?: Flight; error?: string };
 
   let rows = $state<Row[]>([]);
-  let target = $state<WriterKey>('gpx');
+  let targetId = $state('updraft/gpx');
   let save = $state(true);
   let busy = $state(false);
+  let writeError = $state('');
 
   async function load(files: File[]) {
     busy = true;
@@ -31,25 +32,40 @@
     busy = false;
   }
 
-  const fileName = (flight: Flight) => `${flight.sourceName.replace(/\.[^.]*$/, '')}.${WRITERS[target].ext}`;
+  const target = $derived(writers().find((w) => w.id === targetId) ?? writers()[0]);
+  const fileName = (flight: Flight) => `${flight.sourceName.replace(/\.[^.]*$/, '')}.${target.extensions[0]}`;
 
-  function download(flight: Flight) {
-    const w = WRITERS[target];
-    saveFile(new Blob([w.write(flight)], { type: w.mime }), fileName(flight));
+  // A plugin writer can throw, the message ends up on the page.
+  async function safely(run: () => Promise<void>) {
+    writeError = '';
+    try {
+      await run();
+    } catch (err) {
+      writeError = err instanceof Error ? err.message : String(err);
+    }
   }
 
-  function downloadAll() {
+  const download = (flight: Flight) =>
+    safely(async () => {
+      const data = await writeTrack(target, flight);
+      saveFile(new Blob([data as BlobPart], { type: target.mime ?? 'application/octet-stream' }), fileName(flight));
+    });
+
+  const downloadAll = () => safely(zipAll);
+
+  async function zipAll() {
     // Local duplicate counter for file names, not reactive state.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const seen = new Map<string, number>();
-    const enc = new TextEncoder();
-    const files = ok.map((r) => {
-      let name = fileName(r.flight!);
-      const n = (seen.get(name) ?? 0) + 1;
-      seen.set(name, n);
-      if (n > 1) name = name.replace(/(\.[^.]*)$/, `-${n}$1`);
-      return { name, data: enc.encode(WRITERS[target].write(r.flight!)) };
-    });
+    const files = await Promise.all(
+      ok.map(async (r) => {
+        let name = fileName(r.flight!);
+        const n = (seen.get(name) ?? 0) + 1;
+        seen.set(name, n);
+        if (n > 1) name = name.replace(/(\.[^.]*)$/, `-${n}$1`);
+        return { name, data: await writeTrack(target, r.flight!) };
+      })
+    );
     saveFile(new Blob([zipStore(files) as BlobPart], { type: 'application/zip' }), 'updraft-tracks.zip');
   }
 
@@ -83,15 +99,19 @@
   <div class="options">
     <label>
       {m.convert_output_format()}
-      <select bind:value={target}>
-        {#each Object.entries(WRITERS) as [key, w] (key)}<option value={key}>{w.label}</option>{/each}
+      <select bind:value={targetId}>
+        {#each writers() as w (w.id)}<option value={w.id}>{w.label}</option>{/each}
       </select>
     </label>
     <label class="check"><input type="checkbox" bind:checked={save} /> {m.convert_save_logbook()}</label>
     <button disabled={!ok.length} onclick={downloadAll}>{m.convert_download_all()}</button>
   </div>
-  {#if target === 'igc'}
+  {#if target.id === 'updraft/igc'}
     <p class="note">{m.convert_igc_note()}</p>
+  {/if}
+
+  {#if writeError}
+    <p class="error">{writeError}</p>
   {/if}
 
   {#if rows.length}
