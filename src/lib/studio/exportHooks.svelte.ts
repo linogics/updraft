@@ -16,7 +16,7 @@ export function exportPlugins(): StudioPlugin[] {
   const { docks } = studioLayout.value;
   const order = [...docks.left, ...docks.right, ...docks.bottom];
   const rank = (p: StudioPlugin) => order.indexOf(pluginPanelId(p.id));
-  return [...mountedPlugins].filter((p) => p.drawExport).sort((a, b) => rank(a) - rank(b));
+  return [...mountedPlugins].filter((p) => p.drawExport !== undefined).sort((a, b) => rank(a) - rank(b));
 }
 
 /**

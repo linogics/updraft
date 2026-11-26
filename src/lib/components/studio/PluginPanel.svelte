@@ -35,7 +35,7 @@
     const { ctx, dispose } = createPluginContext(host ?? studioHost(studio!), plugin.id, plugin.requires ?? [], (err) =>
       fail('an event handler failed', err)
     );
-    let destroy: unknown;
+    let destroy: void | (() => void);
     try {
       destroy = plugin.mount(el, ctx);
     } catch (err) {

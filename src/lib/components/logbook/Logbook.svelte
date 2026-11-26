@@ -210,8 +210,8 @@
 
   onMount(() => {
     // Chromium: track files opened with the installed app arrive here (file_handlers in the manifest).
-    window.launchQueue?.setConsumer(async (params) => {
-      void importFiles(await Promise.all(params.files.map((handle) => handle.getFile())));
+    window.launchQueue?.setConsumer((params) => {
+      void Promise.all(params.files.map((handle) => handle.getFile())).then(importFiles);
     });
     void refresh();
     // Records pulled from the server show up without a reload.

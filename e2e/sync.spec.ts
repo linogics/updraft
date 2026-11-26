@@ -37,8 +37,9 @@ test('connect, sign in and sync a record to a PocketBase server', async ({ page 
     }
 
     if (pathname === '/api/collections/records/records' && req.method() === 'POST') {
-      pushed.push(req.postDataJSON());
-      return json({ id: `r${pushed.length}`, ...req.postDataJSON() });
+      const body = req.postDataJSON() as { type: string; rid: string };
+      pushed.push(body);
+      return json({ id: `r${pushed.length}`, ...body });
     }
 
     if (pathname === '/api/collections/records/records') {

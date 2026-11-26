@@ -42,11 +42,20 @@ try {
 
 - Every promise is awaited, returned, caught, or marked as fire-and-forget with `void`. Never drop one silently.
 - Never `eval`, `new Function` or string timers.
+- No raw HTML sinks (`innerHTML`, `insertAdjacentHTML`) with untrusted input.
+
+## Code (enforced)
+
+- `const` by default, `let` only when the value changes. Svelte `$props` and `$derived` keep `let`.
+- `===` and `!==`, except `x == null` for null or undefined.
+- Braces around every multi-line body.
+- Imports sorted in groups: side effects, `node:`, packages with `$app`, `#lib` and `$lib`, relative.
+- Single quotes (Prettier).
 
 ## Not enforced, follow by hand
 
-- `const` by default, `let` only when the value changes. Uppercase names only for module constants (`BASEMAPS`, `XC_LEAGUES`).
-- Single quotes. Template literals only when they interpolate.
+- Uppercase names only for module constants (`BASEMAPS`, `XC_LEAGUES`).
+- Template literals only when they interpolate.
 - Platform first: prefer a browser feature or the standard library over a new dependency or an external call.
 - Do not restyle other people's comments unless you rewrite them.
 - No ";" or em-dashes in comments and docs. Split into sentences or use a comma.

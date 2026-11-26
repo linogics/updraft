@@ -295,7 +295,9 @@ export class StudioState {
     const ids = this.flights.map((f) => f.flight.id);
     const tracks = this.cameraTracks;
     this.pendingCameraSave = () =>
-      flightRepository.saveCameraTracks(ids, tracks).catch((err) => console.error('Could not save camera tracks', err));
+      void flightRepository
+        .saveCameraTracks(ids, tracks)
+        .catch((err) => console.error('Could not save camera tracks', err));
     this.cameraSaveTimer = setTimeout(() => this.persistCameraTracks(), CAMERA_SAVE_DELAY);
   }
 

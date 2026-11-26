@@ -79,8 +79,9 @@ async function mockServer(page: Page) {
 
     if (url.pathname === '/api/collections/records/records') {
       if (req.method() !== 'GET') {
-        writes.push(req.postDataJSON());
-        return json({ id: `r${writes.length}`, ...req.postDataJSON() });
+        const body = req.postDataJSON() as Record<string, unknown>;
+        writes.push(body);
+        return json({ id: `r${writes.length}`, ...body });
       }
 
       return list(

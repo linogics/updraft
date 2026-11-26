@@ -27,7 +27,7 @@ export default ts.config(
     ]
   },
   js.configs.recommended,
-  ...ts.configs.recommended,
+  ...ts.configs.recommendedTypeChecked,
   ...svelte.configs.recommended,
   // Flags innerHTML, outerHTML, insertAdjacentHTML and document.write with unsanitized input.
   noUnsanitized.configs.recommended,
@@ -102,22 +102,43 @@ export default ts.config(
     }
   },
   {
+    // Async mocks stand in for promise-returning interfaces, so they need no await.
+    files: ['src/**/*.test.ts'],
+    rules: { '@typescript-eslint/require-await': 'off' }
+  },
+  {
     // Playwright recommended rules for e2e specs and fixtures.
     files: ['e2e/**/*.ts'],
     ...playwright.configs['flat/recommended']
   },
   {
-    files: ['src/**/*.ts', 'src/**/*.svelte', 'e2e/**/*.ts'],
-    ignores: ['src/service-worker.ts'],
+    // One place for type info. scripts/*.test.ts is not in tsconfig, so it goes through the default project.
+    files: ['**/*.ts', '**/*.svelte', '**/*.svelte.ts'],
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: { allowDefaultProject: ['scripts/*.test.ts'] },
         extraFileExtensions: ['.svelte']
       }
     },
     rules: {
       // Every promise is awaited, returned, caught or marked with `void`, so no error is lost silently.
       '@typescript-eslint/no-floating-promises': 'error'
+    }
+  },
+  {
+    // Plain JS has no type info (scripts are outside tsconfig), and service-worker.ts is excluded from it.
+    files: ['**/*.js', '**/*.mjs', 'src/service-worker.ts'],
+    ...ts.configs.disableTypeChecked
+  },
+  {
+    // Imported .svelte components and their props resolve to `any` outside svelte-check, which already types them.
+    files: ['**/*.svelte'],
+    rules: {
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off'
     }
   },
   {
@@ -130,7 +151,6 @@ export default ts.config(
     languageOptions: {
       parserOptions: {
         projectService: true,
-        extraFileExtensions: ['.svelte'],
         parser: ts.parser
       }
     }

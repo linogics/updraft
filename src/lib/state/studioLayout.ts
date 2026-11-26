@@ -94,12 +94,10 @@ export function parseStudioLayout(
   const size = (key: LayoutSize) =>
     clampSize(
       key,
-      typeof sizes[key] === 'number' && Number.isFinite(sizes[key])
-        ? (sizes[key] as number)
-        : LAYOUT_LIMITS[key].initial
+      typeof sizes[key] === 'number' && Number.isFinite(sizes[key]) ? sizes[key] : LAYOUT_LIMITS[key].initial
     );
   const open = obj(o.open);
-  const isOpen = (d: Dock) => (typeof open[d] === 'boolean' ? (open[d] as boolean) : true);
+  const isOpen = (d: Dock) => (typeof open[d] === 'boolean' ? open[d] : true);
   return {
     docks,
     hidden,

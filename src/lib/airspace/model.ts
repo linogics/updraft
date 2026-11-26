@@ -57,7 +57,7 @@ export function airspaceLabel(p: AirspaceProps, units: Units): string {
     );
   const cls = classOf(p.icao_class);
   return m.airspace_summary({
-    name: String(p.name ?? m.airspace_default_name()),
+    name: typeof p.name === 'string' || typeof p.name === 'number' ? String(p.name) : m.airspace_default_name(),
     cls: cls === 'other' ? m.airspace_no_class() : m.airspace_class({ cls }),
     lower: lim('lower'),
     upper: lim('upper')
