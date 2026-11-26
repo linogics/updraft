@@ -4,10 +4,22 @@
   import { m } from '#lib/paraglide/messages';
   import { planRegistry } from '#lib/plan/registry.svelte';
   import { removePlugin } from '#lib/plugins/actions';
+  import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
   import { planLayout } from '#lib/state/planLayout.svelte';
   import { PLUGIN_PREFIX } from '#lib/studio/registry.svelte';
 
   import Popover from '../Popover.svelte';
+
+  const planPlugins = $derived(pluginPrefs.list.filter((e) => e.kind === 'xc-planner'));
+
+  function summary(e: (typeof planPlugins)[number]) {
+    return [
+      e.exports?.length ? m.plan_plugin_exports({ count: e.exports.length }) : '',
+      e.leagues?.length ? m.plan_plugin_leagues({ count: e.leagues.length }) : ''
+    ]
+      .filter(Boolean)
+      .join(', ');
+  }
 
   /** The page owns the dialog, the header (and so this menu) is rendered twice. */
   let { onadd }: { onadd: () => void } = $props();
@@ -38,6 +50,22 @@
       </li>
     {/each}
   </ul>
+  {#if planPlugins.length}
+    <ul aria-label={m.plan_plugins_heading()}>
+      {#each planPlugins as e (e.id)}
+        <li>
+          <span>{e.name} <small>{summary(e)}</small></span>
+          <button
+            type="button"
+            aria-label={m.plugin_uninstall_label({ name: e.name })}
+            onclick={() => removePlugin(e.id)}
+          >
+            {m.plugin_uninstall()}
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
   <div class="actions">
     <button type="button" onclick={onadd}>{m.plugin_add_menu()}</button>
   </div>
@@ -60,6 +88,9 @@
   .actions {
     display: grid;
     gap: 6px;
+  }
+  small {
+    color: var(--muted);
   }
   label {
     display: flex;
