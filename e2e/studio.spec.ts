@@ -195,6 +195,7 @@ test('hidden XC and Pilots panels cost nothing, showing XC starts scoring', asyn
   await expect(page.getByRole('region', { name: 'Stats' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'XC' })).toHaveCount(0);
   await expect(page.getByRole('combobox', { name: 'XC league' })).toHaveCount(0);
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- must wait to prove no worker ever spawns
   await page.waitForTimeout(3000);
   expect(workers).toEqual([]);
 
