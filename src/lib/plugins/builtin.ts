@@ -175,3 +175,29 @@ export const BUILTIN_CONVERTERS: readonly BuiltinConverter[] = [
     load: () => import('./builtin/formats/fit')
   }
 ];
+
+/** A bundled planner export. The label is translated, so it is a function here. */
+export interface BuiltinPlanExport {
+  label: () => string;
+  extension: string;
+  mime: string;
+}
+
+/** A bundled xc-planner plugin. The metadata is here so the planner can show buttons without importing it. */
+export interface BuiltinXcPlanner {
+  id: string;
+  exports: readonly BuiltinPlanExport[];
+  /** Module whose default export is an xc-planner plugin. */
+  load: () => Promise<{ default: unknown }>;
+}
+
+export const BUILTIN_XC_PLANNERS: readonly BuiltinXcPlanner[] = [
+  {
+    id: 'updraft/tasks',
+    exports: [
+      { label: () => m.plan_export_xctsk(), extension: 'xctsk', mime: 'application/json' },
+      { label: () => m.plan_export_gpx(), extension: 'gpx', mime: 'application/gpx+xml' }
+    ],
+    load: () => import('./builtin/tasks')
+  }
+];

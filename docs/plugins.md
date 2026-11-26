@@ -55,7 +55,7 @@ Fields of every kind:
 | ---------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `id`       | `string`                                  | `vendor/name`, each part matches `[a-z0-9-]{1,40}`, for example `acme/wind-panel`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout. The vendor `updraft` is reserved for bundled plugins, added plugins cannot use it. |
 | `name`     | `string`                                  | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                |
-| `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter'` | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
+| `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter' \| 'xc-planner'` | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
 | `provides` | `Record<string, (ctx) => object>`         | Optional. Services this plugin offers, see [Services](#services).                                                                 |
 | `requires` | `string[]`                                | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                              |
 
@@ -308,9 +308,35 @@ export default {
 - The bundled formats (IGC, GPX, KML, GeoJSON, TRK, FIT) are converters too and cannot be removed.
 - Users add and remove converters on the converter page, with Add format.
 
+## XC planner plugins
+
+An `xc-planner` plugin adds export buttons to the XC planner (`/plan`). Each export is one file format a planned route is written to. The types are in `src/lib/plugins/api.d.ts`.
+
+```js
+export default {
+  id: 'acme/csv-route',
+  name: 'CSV route',
+  kind: 'xc-planner',
+  apiVersion: 1,
+  exports: [
+    {
+      label: 'CSV turnpoints',
+      extension: 'csv',
+      mime: 'text/csv',
+      write: (route) => route.points.map((p) => [p.lat, p.lon].join(',')).join('\n')
+    }
+  ]
+};
+```
+
+- `exports` has 1 to 10 entries. `label` is not blank and names the button. `extension` is lower case, without the dot, 1 to 10 characters from `[a-z0-9]`, and unique within the plugin. Other plugins may reuse an extension, the label tells the buttons apart. `mime` defaults to `application/octet-stream`.
+- `write(route)` gets `{ points, speed }` with at least 2 turnpoints and the speed in km/h. It is a fresh copy, changing it has no effect. It returns a string (stored as UTF-8) or a `Uint8Array`. An error it throws is shown under the buttons.
+- The bundled `updraft/tasks` plugin provides the XCTrack task and the GPX route and cannot be removed.
+- A route suggestion is not an export. Use a normal studio plugin with `hosts: ['plan']` that calls `setRoute` of `updraft/plan@1`.
+
 ## Versioning
 
-Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend and converter kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
+Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend, converter and xc-planner kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
 
 ## Security
 

@@ -55,6 +55,30 @@ describe('addPlugin', () => {
     await expect(addPlugin('https://a.test/csv2.js')).rejects.toThrow('already handled by CSV');
   });
 
+  it('stores an xc-planner plugin with its export metadata', async () => {
+    loaded.current = {
+      id: 'acme/tasks',
+      name: 'Tasks',
+      kind: 'xc-planner',
+      apiVersion: 1,
+      exports: [
+        { label: ' CSV ', extension: 'csv', mime: 'text/csv', write: () => '' },
+        { label: 'TXT', extension: 'txt', write: () => '' }
+      ]
+    };
+    await addPlugin('https://a.test/tasks.js');
+    expect(pluginPrefs.list.at(-1)).toEqual({
+      url: 'https://a.test/tasks.js',
+      id: 'acme/tasks',
+      name: 'Tasks',
+      kind: 'xc-planner',
+      exports: [
+        { label: 'CSV', extension: 'csv', mime: 'text/csv' },
+        { label: 'TXT', extension: 'txt' }
+      ]
+    });
+  });
+
   it('refuses a kind the page does not accept and stores nothing', async () => {
     const before = pluginPrefs.list.length;
     loaded.current = { ...conv(['zzz']), id: 'acme/zzz' };

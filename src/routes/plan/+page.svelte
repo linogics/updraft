@@ -13,9 +13,9 @@
   import type { LatLon } from '#lib/domain/geo';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
-  import { writeRouteGpx, writeXctsk } from '#lib/domain/task';
   import { BASEMAPS } from '#lib/map/basemaps';
   import { m } from '#lib/paraglide/messages';
+  import { planExports, type PlannerExport } from '#lib/plan/exports';
   import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
   import { planRegistry } from '#lib/plan/registry.svelte';
   import { PlanState } from '#lib/state/plan.svelte';
@@ -100,11 +100,22 @@
     setTimeout(() => (copied = false), 1500);
   }
 
-  function download(text: string, ext: string, type: string) {
-    const url = URL.createObjectURL(new Blob([text], { type }));
+  let exportError = $state('');
+
+  async function download(e: PlannerExport) {
+    exportError = '';
+    let bytes: Uint8Array;
+    try {
+      bytes = await e.write({ points: plan.points, speed: plan.speed });
+    } catch (err) {
+      exportError = err instanceof Error ? err.message : String(err);
+      return;
+    }
+
+    const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: e.mime }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `updraft-route-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    a.download = `updraft-route-${new Date().toISOString().slice(0, 10)}.${e.extension}`;
     a.click();
     // Revoking at once can cancel the download in some browsers.
     setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -163,19 +174,11 @@
       </div>
 
       <div class="row">
-        <button
-          onclick={() => download(writeXctsk(plan.points), 'xctsk', 'application/json')}
-          disabled={plan.points.length < 2}
-        >
-          {m.plan_export_xctsk()}
-        </button>
-        <button
-          onclick={() => download(writeRouteGpx(plan.points, m.home_planner_title()), 'gpx', 'application/gpx+xml')}
-          disabled={plan.points.length < 2}
-        >
-          {m.plan_export_gpx()}
-        </button>
+        {#each planExports() as e (e.id)}
+          <button onclick={() => download(e)} disabled={plan.points.length < 2}>{e.title()}</button>
+        {/each}
       </div>
+      {#if exportError}<p class="error" role="alert">{exportError}</p>{/if}
 
       <label>
         {m.plan_base_map()}
@@ -247,6 +250,11 @@
 {/snippet}
 
 <style>
+  .error {
+    color: var(--danger);
+    margin: 0;
+    font-size: 0.85rem;
+  }
   .page {
     display: grid;
     grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);

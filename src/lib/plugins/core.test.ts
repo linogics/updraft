@@ -84,6 +84,43 @@ describe('validatePlugin', () => {
     });
   });
 
+  describe('xc-planner kind', () => {
+    const exp = { label: 'CSV', extension: 'csv', write: () => '' };
+    const planner = { id: 'acme/tasks', name: 'Tasks', kind: 'xc-planner', apiVersion: 1, exports: [exp] };
+
+    it('accepts exports', () => {
+      expect(validatePlugin(planner)).toBe(planner);
+      const two = {
+        ...planner,
+        exports: [
+          { ...exp, mime: 'text/csv' },
+          { ...exp, extension: 'txt' }
+        ]
+      };
+      expect(validatePlugin(two)).toBe(two);
+    });
+
+    it.each([
+      ['apiVersion 2', { ...planner, apiVersion: 2 }, /Unsupported apiVersion 2/],
+      ['no exports', { ...planner, exports: undefined }, /"exports"/],
+      ['empty exports', { ...planner, exports: [] }, /"exports"/],
+      [
+        '11 exports',
+        { ...planner, exports: Array.from({ length: 11 }, (_, i) => ({ ...exp, extension: `e${i}` })) },
+        /"exports"/
+      ],
+      ['export not an object', { ...planner, exports: [5] }, /must be an object/],
+      ['blank label', { ...planner, exports: [{ ...exp, label: ' ' }] }, /"label"/],
+      ['upper case extension', { ...planner, exports: [{ ...exp, extension: 'CSV' }] }, /"extension"/],
+      ['long extension', { ...planner, exports: [{ ...exp, extension: 'abcdefghijk' }] }, /"extension"/],
+      ['duplicate extension', { ...planner, exports: [exp, exp] }, /unique/],
+      ['blank mime', { ...planner, exports: [{ ...exp, mime: ' ' }] }, /"mime"/],
+      ['no write', { ...planner, exports: [{ ...exp, write: undefined }] }, /"write"/]
+    ])('rejects %s', (_, mod, message) => {
+      expect(() => validatePlugin(mod)).toThrow(message);
+    });
+  });
+
   describe('service kind', () => {
     const svc = { id: 'acme/svc', name: 'Svc', kind: 'service', apiVersion: 1, provides: { 'acme/svc@1': () => ({}) } };
 

@@ -150,6 +150,41 @@ export interface ConverterPlugin extends PluginBase {
   write?(track: PluginTrack): string | Uint8Array;
 }
 
+// XC planner kind
+
+/** A planned route as export plugins get it. */
+export interface PlanRoute {
+  /** Turnpoints in order, at least 2. */
+  points: readonly Readonly<{ lat: number; lon: number }>[];
+  /** Planned speed in km/h. */
+  speed: number;
+}
+
+/** One file format a planned route can be saved as. */
+export interface PlanExport {
+  /** Shown on the export button, for example `XCTrack task`. Not blank. */
+  label: string;
+  /** Lower case file extension without the dot, 1 to 10 characters from `[a-z0-9]`. */
+  extension: string;
+  /** Media type of the file. Defaults to `application/octet-stream`. */
+  mime?: string;
+  /** Builds the file content. Text is stored as UTF-8. */
+  write(route: PlanRoute): string | Uint8Array;
+}
+
+/** An extension of the XC planner, apiVersion 1: headless, it adds export buttons to the planner. */
+export interface XcPlannerPlugin extends PluginBase {
+  /** Same rules as `StudioPlugin.id`. */
+  id: string;
+  /** Not blank. */
+  name: string;
+  kind: 'xc-planner';
+  /** Must be `1`. */
+  apiVersion: 1;
+  /** Task file formats, 1 to 10. Extensions must be unique within the plugin, other plugins may reuse them. */
+  exports?: PlanExport[];
+}
+
 // Backend kind
 
 /** A sync backend, apiVersion 1: headless, the app picks one and syncs through the adapter it creates. */
