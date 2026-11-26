@@ -1,6 +1,5 @@
 import PocketBase, { ClientResponseError, LocalAuthStore } from 'pocketbase';
 
-import { isObj } from '#lib/storage/validate';
 import type { AuthMethod, BackendAdapter, BackendSession, SyncChange, SyncType } from '#lib/sync/types';
 
 import type { BackendPlugin } from '../backendKind';
@@ -12,6 +11,9 @@ export interface PocketBaseConfig {
 }
 
 const COLLECTION = 'records';
+// Per push request, the server accepts at most 200 changes and 32 MB.
+const MAX_CHANGES = 200;
+const MAX_BYTES = 16 * 1024 * 1024;
 const TYPES: readonly SyncType[] = ['flight', 'manual', 'cameraPath', 'pref'];
 
 interface Row {
@@ -24,7 +26,7 @@ interface Row {
   owner: string;
   shared: boolean;
   summary: unknown;
-  updated: string;
+  seq: number;
 }
 
 export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): BackendAdapter {
@@ -49,37 +51,6 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
     if (!s) throw new Error('Sign in failed.');
     return s;
   };
-
-  async function upsert(ownerId: string, c: SyncChange) {
-    const filter = pb.filter('owner = {:o} && type = {:t} && rid = {:r}', { o: ownerId, t: c.type, r: c.id });
-    const existing = await pb
-      .collection(COLLECTION)
-      .getFirstListItem<Row>(filter)
-      .catch((err) => {
-        if (err instanceof ClientResponseError && err.status === 404) return null;
-        throw err;
-      });
-    const body: Record<string, unknown> = {
-      updatedAt: c.updatedAt,
-      deleted: c.deleted === true,
-      data: c.deleted ? null : (c.data ?? null),
-      shared: false,
-      summary: null
-    };
-
-    // Only a live flight can be shared. The summary lets the club list skip the heavy `data` column.
-    const flight = c.type === 'flight' && !c.deleted && isObj(c.data) ? c.data : null;
-    if (flight?.shared === true) {
-      body.shared = true;
-      body.summary = flight.club ?? null;
-    }
-
-    if (!existing) {
-      await pb.collection(COLLECTION).create({ owner: ownerId, type: c.type, rid: c.id, ...body });
-    } else if (c.updatedAt > existing.updatedAt) {
-      await pb.collection(COLLECTION).update(existing.id, body);
-    }
-  }
 
   return {
     async authMethods() {
@@ -121,29 +92,39 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
     session,
 
     async push(changes) {
-      const ownerId = owner();
-      // shortcut: last write wins is checked here on the client, so two devices pushing the same record at the same
-      // moment can race. Fine for one pilot, move the check into a server hook when that matters.
-      for (const c of changes) await upsert(ownerId, c);
+      owner();
+      // Chunks stay well under the server body limit. A single large change goes alone.
+      for (let i = 0; i < changes.length;) {
+        let size = 0;
+        const chunk: SyncChange[] = [];
+        while (i < changes.length && chunk.length < MAX_CHANGES) {
+          const next = JSON.stringify(changes[i]).length;
+          if (chunk.length && size + next > MAX_BYTES) break;
+          chunk.push(changes[i++]);
+          size += next;
+        }
+
+        await pb.send('/api/updraft/push', { method: 'POST', body: { changes: chunk } }).catch((err) => {
+          if (err instanceof ClientResponseError && err.status === 404) {
+            throw new Error(
+              'The sync server kit is outdated. Update server/pb_migrations and add server/pb_hooks, see the self-hosting docs.'
+            );
+          }
+
+          throw err;
+        });
+      }
     },
 
     async pull(cursor) {
       const me = owner();
       // Shared flights of other pilots are readable too, but they are not part of this logbook.
       let filter = pb.filter('owner = {:me}', { me });
-      const at = cursor?.indexOf('|') ?? -1;
-      // shortcut: a record written in the same millisecond as the cursor but with a smaller id is missed until it
-      // changes again. Rare enough for a club server, use a server side sequence number if it shows up.
-      if (cursor && at > 0) {
-        filter += pb.filter(' && (updated > {:u} || (updated = {:u} && id > {:id}))', {
-          u: cursor.slice(0, at),
-          id: cursor.slice(at + 1)
-        });
-      }
+      // Any other cursor, such as the old `updated|id` one, means a full pull.
+      const seq = cursor && /^\d+$/.test(cursor) ? cursor : null;
+      if (seq) filter += pb.filter(' && seq > {:s}', { s: Number(seq) });
 
-      const page = await pb
-        .collection(COLLECTION)
-        .getList<Row>(1, pageSize, { filter, sort: 'updated,id', skipTotal: true });
+      const page = await pb.collection(COLLECTION).getList<Row>(1, pageSize, { filter, sort: 'seq', skipTotal: true });
       const changes: SyncChange[] = [];
       for (const r of page.items) {
         // The server is not trusted to match the schema, the engine validates the data itself.
@@ -157,7 +138,7 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
       const last = page.items.at(-1);
       return {
         changes,
-        cursor: last ? `${last.updated}|${last.id}` : cursor,
+        cursor: last ? String(last.seq) : seq,
         more: page.items.length === pageSize
       };
     },

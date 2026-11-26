@@ -1,10 +1,9 @@
 // Runs against a REAL PocketBase and is skipped without PB_URL. To repeat it:
 //   1. Download pocketbase_0.40.6_linux_amd64.zip from the GitHub release and check it against checksums.txt.
-//   2. ./pocketbase --dir <dir> --migrationsDir server/pb_migrations superuser upsert admin@test.local adminpass123
-//   3. ./pocketbase serve --dir <dir> --migrationsDir server/pb_migrations --http=127.0.0.1:8090 --automigrate=false
+//   2. ./pocketbase --dir <dir> --migrationsDir server/pb_migrations --hooksDir server/pb_hooks superuser upsert admin@test.local adminpass123
+//   3. ./pocketbase serve --dir <dir> --migrationsDir server/pb_migrations --hooksDir server/pb_hooks --http=127.0.0.1:8090 --automigrate=false
 //   4. PB_URL=http://127.0.0.1:8090 PB_ADMIN_EMAIL=admin@test.local PB_ADMIN_PASSWORD=adminpass123 \
 //        npm test -- pocketbase.integration
-//      Add PB_DB=<dir>/data.db to also run the equal `updated` test.
 import 'fake-indexeddb/auto';
 
 import PocketBase from 'pocketbase';
@@ -151,19 +150,68 @@ run('PocketBase backend', () => {
     expect(next.more).toBe(false);
   });
 
-  // PocketBase always stamps `updated` itself, so ties are forced in the database file. Needs PB_DB=<pb_data>/data.db.
-  it.skipIf(!process.env.PB_DB)('does not skip or repeat records that share the same updated value', async () => {
-    const email = await newUser();
-    const a = await signedIn(email, 2);
+  it('pages by seq without skipping or repeating, also for records written together', async () => {
+    const a = await signedIn(await newUser(), 2);
     await a.push(Array.from({ length: 5 }, (_, i) => change(`t${i}`, i + 1)));
+    // An update moves the record to the end of the sequence.
+    await a.push([change('t0', 50, { data: { v: 2 } })]);
 
-    const { DatabaseSync } = await import('node:sqlite');
-    const db = new DatabaseSync(process.env.PB_DB!);
-    db.prepare('UPDATE records SET updated = ? WHERE owner = ?').run('2026-01-01 00:00:00.000Z', users.at(-1)!.id);
-    db.close();
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    for (;;) {
+      const page: Awaited<ReturnType<BackendAdapter['pull']>> = await a.pull(cursor);
+      seen.push(...page.changes.map((c) => c.id));
+      cursor = page.cursor;
+      if (!page.more) break;
+    }
+
+    expect(seen).toEqual(['t1', 't2', 't3', 't4', 't0']);
+    expect((await a.pull(cursor)).changes).toEqual([]);
+  });
+
+  it('treats an old updated|id cursor as no cursor', async () => {
+    const a = await signedIn(await newUser());
+    await a.push([change('o1', 1), change('o2', 2)]);
+    const page = await a.pull('2026-01-01 00:00:00.000Z|zzzzzzzzzzzzzzz');
+    expect(page.changes.map((c) => c.id)).toEqual(['o1', 'o2']);
+    expect(page.cursor).toMatch(/^\d+$/);
+    expect((await signedIn(await newUser()).then((b) => b.pull('1|abc'))).cursor).toBeNull();
+  });
+
+  it('keeps the highest updatedAt when two devices push the same record at once', async () => {
+    const email = await newUser();
+    const a = await signedIn(email);
+    const b = await signedIn(email);
+    for (let i = 0; i < 5; i++) {
+      await Promise.all([
+        a.push([change(`r${i}`, 100, { data: { v: 'low' } })]),
+        b.push([change(`r${i}`, 200, { data: { v: 'high' } })])
+      ]);
+    }
 
     const { changes } = await pullAll(a);
-    expect(changes.map((c) => c.id).sort()).toEqual(['t0', 't1', 't2', 't3', 't4']);
+    expect(changes).toHaveLength(5);
+    for (const c of changes) expect(c).toMatchObject({ updatedAt: 200, data: { v: 'high' } });
+  });
+
+  it('refuses direct writes to records by a pilot', async () => {
+    const email = await newUser();
+    const a = await signedIn(email);
+    await a.push([change('own', 1)]);
+
+    const raw = new PocketBase(PB_URL);
+    const auth = await raw.collection('users').authWithPassword(email, PASSWORD);
+    await expect(
+      raw.collection('records').create({ owner: auth.record.id, type: 'flight', rid: 'x', updatedAt: 1 })
+    ).rejects.toThrow();
+    const row = await raw.collection('records').getFirstListItem('rid = "own"');
+    await expect(raw.collection('records').update(row.id, { updatedAt: 99 })).rejects.toThrow();
+  });
+
+  it('rejects an invalid push body', async () => {
+    const a = await signedIn(await newUser());
+    await expect(a.push([{ type: 'bogus', id: 'x', updatedAt: 1 } as unknown as SyncChange])).rejects.toThrow();
+    await expect(a.push([change('', 1)])).rejects.toThrow();
   });
 
   it('pulls many records in small pages without skipping or repeating', async () => {

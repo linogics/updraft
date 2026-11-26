@@ -23,7 +23,8 @@ export default ts.config(
       'playwright-report',
       '.codegraph',
       'docs',
-      'server/pb_migrations'
+      'server/pb_migrations',
+      'server/pb_hooks'
     ]
   },
   js.configs.recommended,
