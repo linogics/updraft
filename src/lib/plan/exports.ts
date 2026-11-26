@@ -71,17 +71,17 @@ export function planExports(): PlannerExport[] {
           i,
           e.mime,
           e.label,
-          async () => validatePlugin((await b.load()).default)
+          async () => validatePlugin((await b.load!()).default)
         )
       )
     ),
     ...pluginPrefs.list
       .filter((e) => e.kind === 'xc-planner')
       .flatMap((e) =>
-        e.exports!.map((x, i) =>
+        (e.exports ?? []).map((x, i) =>
           build(
             e.id,
-            e.exports!,
+            e.exports ?? [],
             i,
             x.mime,
             () => x.label,

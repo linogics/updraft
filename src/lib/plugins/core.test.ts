@@ -100,9 +100,88 @@ describe('validatePlugin', () => {
       expect(validatePlugin(two)).toBe(two);
     });
 
+    const rule = { name: 'Free', type: 'free', multiplier: 1 };
+    const league = { id: 'club', label: 'Club', rules: [rule] };
+    const withLeague = (l: unknown) => ({ ...planner, leagues: [l] });
+
+    it('accepts leagues alone or with exports', () => {
+      const only = { ...planner, exports: undefined, leagues: [league] };
+      expect(validatePlugin(only)).toBe(only);
+      const both = { ...planner, leagues: [league] };
+      expect(validatePlugin(both)).toBe(both);
+      const full = withLeague({
+        ...league,
+        rules: [
+          {
+            name: 'T',
+            type: 'flat',
+            multiplier: 2,
+            minSide: 0.15,
+            maxSide: 0.45,
+            minDistance: 5,
+            closing: { fixed: 0.8, free: 0.8, relative: 0.1 },
+            cylinders: 0.4,
+            decimals: 1
+          }
+        ]
+      });
+      expect(validatePlugin(full)).toBe(full);
+    });
+
+    it.each([
+      ['empty leagues', { ...planner, leagues: [] }, /"leagues"/],
+      [
+        '21 leagues',
+        { ...planner, leagues: Array.from({ length: 21 }, (_, i) => ({ ...league, id: `l${i}` })) },
+        /"leagues"/
+      ],
+      ['league not an object', withLeague(5), /must be an object/],
+      ['bad id', withLeague({ ...league, id: 'Club' }), /"id"/],
+      ['long id', withLeague({ ...league, id: 'a'.repeat(41) }), /"id"/],
+      ['duplicate id', { ...planner, leagues: [league, league] }, /used twice/],
+      ['blank label', withLeague({ ...league, label: ' ' }), /"label"/],
+      ['no rules', withLeague({ ...league, rules: [] }), /"rules"/],
+      ['11 rules', withLeague({ ...league, rules: Array.from({ length: 11 }, () => rule) }), /"rules"/],
+      ['rule not an object', withLeague({ ...league, rules: [null] }), /must be an object/],
+      ['blank rule name', withLeague({ ...league, rules: [{ ...rule, name: ' ' }] }), /"name"/],
+      ['bad type', withLeague({ ...league, rules: [{ ...rule, type: 'x' }] }), /"type"/],
+      ['zero multiplier', withLeague({ ...league, rules: [{ ...rule, multiplier: 0 }] }), /"multiplier"/],
+      ['multiplier 11', withLeague({ ...league, rules: [{ ...rule, multiplier: 11 }] }), /"multiplier"/],
+      ['NaN multiplier', withLeague({ ...league, rules: [{ ...rule, multiplier: NaN }] }), /"multiplier"/],
+      ['minSide on free', withLeague({ ...league, rules: [{ ...rule, minSide: 0.2 }] }), /"minSide"/],
+      ['minSide 0.5', withLeague({ ...league, rules: [{ ...rule, type: 'fai', minSide: 0.5 }] }), /"minSide"/],
+      ['maxSide on fai', withLeague({ ...league, rules: [{ ...rule, type: 'fai', maxSide: 0.4 }] }), /"maxSide"/],
+      [
+        'maxSide below minSide',
+        withLeague({ ...league, rules: [{ ...rule, type: 'flat', minSide: 0.3, maxSide: 0.2 }] }),
+        /"maxSide"/
+      ],
+      ['negative minDistance', withLeague({ ...league, rules: [{ ...rule, minDistance: -1 }] }), /"minDistance"/],
+      ['closing on free', withLeague({ ...league, rules: [{ ...rule, closing: {} }] }), /"closing"/],
+      [
+        'negative closing',
+        withLeague({ ...league, rules: [{ ...rule, type: 'oar', closing: { fixed: -1 } }] }),
+        /closing.fixed/
+      ],
+      [
+        'closing over 100',
+        withLeague({ ...league, rules: [{ ...rule, type: 'oar', closing: { free: 101 } }] }),
+        /closing.free/
+      ],
+      [
+        'relative over 1',
+        withLeague({ ...league, rules: [{ ...rule, type: 'oar', closing: { relative: 2 } }] }),
+        /closing.relative/
+      ],
+      ['cylinders over 5', withLeague({ ...league, rules: [{ ...rule, cylinders: 6 }] }), /"cylinders"/],
+      ['decimals 3', withLeague({ ...league, rules: [{ ...rule, decimals: 3 }] }), /"decimals"/]
+    ])('rejects %s', (_, mod, message) => {
+      expect(() => validatePlugin(mod)).toThrow(message);
+    });
+
     it.each([
       ['apiVersion 2', { ...planner, apiVersion: 2 }, /Unsupported apiVersion 2/],
-      ['no exports', { ...planner, exports: undefined }, /"exports"/],
+      ['no exports and no leagues', { ...planner, exports: undefined }, /"exports"/],
       ['empty exports', { ...planner, exports: [] }, /"exports"/],
       [
         '11 exports',

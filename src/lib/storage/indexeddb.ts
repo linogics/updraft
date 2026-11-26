@@ -9,8 +9,8 @@ import {
 
 import { type CameraTracks, parseTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
-import type { XcLeague } from '../state/xcPrefs';
 import type { SyncChange, SyncState, SyncType } from '../sync/types';
+import { leagueCacheId } from '../xc/leagues';
 import type { XcScore } from '../xc/types';
 import { notifyLocalChange } from './localChange';
 import {
@@ -69,7 +69,7 @@ async function markDirty(store: SyncStore, type: SyncType, id: string, deleted =
 }
 
 /** Order-independent key for a set of flights. */
-const xcKey = (flightId: string, league: XcLeague) => `${flightId}|${league}`;
+const xcKey = (flightId: string, league: string) => `${flightId}|${leagueCacheId(league)}`;
 
 const pathKey = (flightIds: string[]) => [...flightIds].sort().join('|');
 
@@ -113,11 +113,11 @@ export class IndexedDbFlightRepository implements FlightRepository {
     notifyLocalChange();
   }
 
-  async getXcScore(flightId: string, league: XcLeague): Promise<XcScore | null | undefined> {
+  async getXcScore(flightId: string, league: string): Promise<XcScore | null | undefined> {
     return (await (await this.db).get('xcScores', xcKey(flightId, league)))?.score;
   }
 
-  async putXcScore(flightId: string, league: XcLeague, score: XcScore | null): Promise<void> {
+  async putXcScore(flightId: string, league: string, score: XcScore | null): Promise<void> {
     await (await this.db).put('xcScores', { key: xcKey(flightId, league), flightId, score });
   }
 

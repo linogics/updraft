@@ -5,9 +5,9 @@ import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { PlanState } from '#lib/state/plan.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
-import { XC_LEAGUES } from '#lib/state/xcPrefs';
 import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { Units } from '#lib/ui/units';
+import { leagueOf, leagues as allLeagues } from '#lib/xc/leagues';
 
 export type { PlanService };
 
@@ -26,7 +26,8 @@ export function providePlanService(
       let unitsSrc: Units | undefined;
       let units: Readonly<Units>;
 
-      const leagues = Object.freeze(XC_LEAGUES.map((l) => Object.freeze({ id: l.id, label: l.label })));
+      let leaguesSrc: unknown;
+      let leagueList: readonly Readonly<{ id: string; label: string }>[] = [];
 
       const on = eventsOf<PlanEvent>(PLAN_SERVICE, {
         route: () => void plan.points,
@@ -78,9 +79,16 @@ export function providePlanService(
           commit(next);
         },
         league: () => xcPrefs.league,
-        leagues: () => leagues,
+        leagues() {
+          if (leaguesSrc !== allLeagues()) {
+            leaguesSrc = allLeagues();
+            leagueList = Object.freeze(allLeagues().map((l) => Object.freeze({ id: l.id, label: l.label })));
+          }
+
+          return leagueList;
+        },
         setLeague(id) {
-          const league = XC_LEAGUES.find((l) => l.id === id);
+          const league = leagueOf(id);
           if (!league) throw new Error(`Unknown league "${id}".`);
           if (league.id !== xcPrefs.league) xcPrefs.set(league.id);
         }

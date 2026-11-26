@@ -336,7 +336,7 @@ export class StudioState {
   private xcTask: Promise<void> = Promise.resolve();
 
   /** Switches the scoring league. Scores of the old league are dropped, scoring restarts only if needed. */
-  setLeague(league: typeof xcPrefs.league) {
+  setLeague(league: string) {
     xcPrefs.set(league);
     this.xcRun++;
     this.flights = this.flights.map((f) => ({ ...f, xc: undefined }));

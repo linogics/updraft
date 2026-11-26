@@ -3,6 +3,7 @@ import { m } from '#lib/paraglide/messages';
 import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { PluginDock, PluginHost } from '#lib/studio/plugins';
 import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
+import { BUILTIN_LEAGUES, type BuiltinLeague } from '#lib/xc/builtinLeagues';
 
 import type { ConverterMeta } from './converterKind';
 
@@ -187,8 +188,10 @@ export interface BuiltinPlanExport {
 export interface BuiltinXcPlanner {
   id: string;
   exports: readonly BuiltinPlanExport[];
-  /** Module whose default export is an xc-planner plugin. */
-  load: () => Promise<{ default: unknown }>;
+  /** Bundled leagues are plain data, so there is no module to load for them. */
+  leagues?: readonly BuiltinLeague[];
+  /** Module whose default export is an xc-planner plugin. Needed when there are exports. */
+  load?: () => Promise<{ default: unknown }>;
 }
 
 export const BUILTIN_XC_PLANNERS: readonly BuiltinXcPlanner[] = [
@@ -199,5 +202,6 @@ export const BUILTIN_XC_PLANNERS: readonly BuiltinXcPlanner[] = [
       { label: () => m.plan_export_gpx(), extension: 'gpx', mime: 'application/gpx+xml' }
     ],
     load: () => import('./builtin/tasks')
-  }
+  },
+  { id: 'updraft/leagues', exports: [], leagues: BUILTIN_LEAGUES }
 ];

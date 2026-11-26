@@ -1,8 +1,9 @@
 import { PLUGIN_DOCKS, PLUGIN_HOSTS, type PluginDock, type PluginHost } from '#lib/studio/plugins';
 
+import type { PlanLeague } from './api';
 import { type ConverterMeta, isConverterMeta } from './converterKind';
 import { PLUGIN_ID, PLUGIN_KINDS, type PluginKind, pluginUrl } from './core';
-import { isPlanExportMetas, type PlanExportMeta } from './xcPlannerKind';
+import { type PlanExportMeta, planMeta } from './xcPlannerKind';
 
 /** What the app knows about a plugin without importing it, so a hidden plugin costs nothing. */
 export interface PluginEntry extends Partial<ConverterMeta> {
@@ -14,8 +15,10 @@ export interface PluginEntry extends Partial<ConverterMeta> {
   dock?: PluginDock;
   /** Pages that show a studio plugin, missing means the studio only. */
   hosts?: PluginHost[];
-  /** The xc-planner kind stores `exports` as `{ label, extension, mime? }` in plugin order. */
+  /** The xc-planner kind stores `exports` as `{ label, extension, mime? }` in plugin order, when it has any. */
   exports?: PlanExportMeta[];
+  /** The xc-planner kind stores its validated leagues too, so scoring never imports the plugin. */
+  leagues?: PlanLeague[];
   /** The converter kind also stores `label`, `extensions`, `canRead` and `canWrite`, and optionally `mime`. */
 }
 
@@ -28,6 +31,7 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
   for (const e of raw) {
     const o = (e && typeof e === 'object' ? e : {}) as Record<string, unknown>;
     const url = pluginUrl(o.url);
+    const plan = o.kind === 'xc-planner' ? planMeta(o) : null;
     const name = typeof o.name === 'string' ? o.name.trim() : '';
     if (
       !url ||
@@ -37,7 +41,7 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       !PLUGIN_KINDS.includes(o.kind as PluginKind) ||
       (o.kind === 'studio' && !PLUGIN_DOCKS.includes(o.dock as PluginDock)) ||
       (o.kind === 'converter' && !isConverterMeta(o)) ||
-      (o.kind === 'xc-planner' && !isPlanExportMetas(o.exports)) ||
+      (o.kind === 'xc-planner' && !plan) ||
       ids.has(o.id) ||
       urls.has(url)
     ) {
@@ -55,13 +59,7 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       if (mime !== undefined) entry.mime = mime;
     }
 
-    if (o.kind === 'xc-planner') {
-      entry.exports = (o.exports as PlanExportMeta[]).map(({ label, extension, mime }) => ({
-        label: label.trim(),
-        extension,
-        ...(mime !== undefined && { mime })
-      }));
-    }
+    if (plan) Object.assign(entry, plan);
 
     if (Array.isArray(o.hosts) && o.hosts.every((h) => PLUGIN_HOSTS.includes(h as PluginHost))) {
       entry.hosts = o.hosts as PluginHost[];

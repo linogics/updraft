@@ -15,13 +15,13 @@
   import { getLocale } from '#lib/paraglide/runtime';
   import { logbookLayout } from '#lib/state/logbookLayout.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, studioHref } from '#lib/storage/importFlights';
   import { syncClient } from '#lib/sync/client.svelte';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance } from '#lib/ui/units';
+  import { leagues } from '#lib/xc/leagues';
   import { scoreFlight } from '#lib/xc/score';
   import type { XcScore } from '#lib/xc/types';
 
@@ -136,7 +136,7 @@
     }
   }
 
-  function setLeague(league: XcLeague) {
+  function setLeague(league: string) {
     xcPrefs.set(league);
     void scoreMissing(true);
   }
@@ -279,8 +279,8 @@
     <div class="actions">
       <label class="league">
         {m.xc_league()}
-        <select value={xcPrefs.league} onchange={(e) => setLeague(e.currentTarget.value as XcLeague)}>
-          {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+        <select value={xcPrefs.league} onchange={(e) => setLeague(e.currentTarget.value)}>
+          {#each leagues() as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
         </select>
       </label>
       {#if ready && scored < todo.length}<span class="muted">

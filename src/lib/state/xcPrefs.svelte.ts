@@ -1,13 +1,14 @@
-import { parseXcLeague, type XcLeague } from './xcPrefs';
+import { DEFAULT_LEAGUE, leagueOf } from '#lib/xc/leagues';
 
 const KEY = 'xcLeague';
 
 // Storage can throw (private mode, blocked site data). The league then resets to XContest.
-function load(): XcLeague {
+function load(): string {
   try {
-    return parseXcLeague(JSON.parse(localStorage.getItem(KEY) ?? 'null'));
+    const v: unknown = JSON.parse(localStorage.getItem(KEY) ?? 'null');
+    return typeof v === 'string' ? v : DEFAULT_LEAGUE;
   } catch {
-    return parseXcLeague(null);
+    return DEFAULT_LEAGUE;
   }
 }
 
@@ -23,7 +24,13 @@ function loadEnabled(): boolean {
 
 /** League used for XC scoring, kept in this browser. */
 class XcPrefs {
-  league = $state<XcLeague>(typeof localStorage === 'undefined' ? parseXcLeague(null) : load());
+  // The stored id may belong to a removed plugin, so it is only read through `league`.
+  private chosen = $state(typeof localStorage === 'undefined' ? DEFAULT_LEAGUE : load());
+
+  /** The league in use, XContest when the chosen one is not known any more. */
+  get league(): string {
+    return leagueOf(this.chosen) ? this.chosen : DEFAULT_LEAGUE;
+  }
 
   /** Master switch for XC scoring, off on a fresh start. */
   enabled = $state(typeof localStorage === 'undefined' ? false : loadEnabled());
@@ -37,8 +44,8 @@ class XcPrefs {
     }
   }
 
-  set(league: XcLeague) {
-    this.league = league;
+  set(league: string) {
+    this.chosen = league;
     try {
       localStorage.setItem(KEY, JSON.stringify(league));
     } catch {

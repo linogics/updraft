@@ -105,6 +105,31 @@ describe('parsePlugins xc-planner entries', () => {
   });
 });
 
+describe('parsePlugins xc-planner leagues', () => {
+  const leagues = [
+    {
+      id: 'club',
+      label: 'Club',
+      rules: [{ name: 'Tri', type: 'fai', multiplier: 1.5, minSide: 0.28, closing: { fixed: 0 }, decimals: 1 }]
+    }
+  ];
+  const base = { url: 'https://a.test/t.js', id: 'acme/tasks', name: 'Tasks', kind: 'xc-planner' };
+
+  it('keeps leagues with or without exports and drops unknown keys', () => {
+    const dirty = [{ ...leagues[0], x: 1, rules: [{ ...leagues[0].rules[0], y: 2 }] }];
+    expect(parsePlugins([{ ...base, leagues: dirty }])).toEqual([{ ...base, leagues }]);
+    const exports = [{ label: 'CSV', extension: 'csv' }];
+    expect(parsePlugins([{ ...base, exports, leagues }])).toEqual([{ ...base, exports, leagues }]);
+  });
+
+  it.each([{}, { leagues: [] }, { leagues: [{ id: 'X', label: 'x', rules: [] }] }, { exports: [], leagues }])(
+    'drops an entry with %j',
+    (bad) => {
+      expect(parsePlugins([{ ...base, ...bad }])).toEqual([]);
+    }
+  );
+});
+
 describe('pluginUrl', () => {
   it('accepts http and https only', () => {
     expect(pluginUrl(' https://a.test/x.js ')).toBe('https://a.test/x.js');

@@ -172,7 +172,45 @@ export interface PlanExport {
   write(route: PlanRoute): string | Uint8Array;
 }
 
-/** An extension of the XC planner, apiVersion 1: headless, it adds export buttons to the planner. */
+/** One route type a league scores. */
+export interface LeagueRule {
+  /** Shown to the user, for example `FAI triangle`. Not blank. */
+  name: string;
+  /**
+   * `free`: distance via up to 3 turnpoints. `flat`: triangle. `fai`: FAI triangle.
+   * `oar`: out-and-return via 1 turnpoint. `oar2`: out-and-return via 2 turnpoints.
+   */
+  type: 'free' | 'flat' | 'fai' | 'oar' | 'oar2';
+  /** Points per km, greater than 0, at most 10. */
+  multiplier: number;
+  /** Shortest side of a triangle as a share of the total, greater than 0 and below 0.5. `fai` only defaults to 0.28, `flat` has none unless set. */
+  minSide?: number;
+  /** Longest side of a triangle as a share of the total, between 0 and 1, `flat` only. Must be above `minSide`. */
+  maxSide?: number;
+  /** Shortest route in km that scores at all, 0 to 1000. */
+  minDistance?: number;
+  /**
+   * Closing gap allowed for triangles and out-and-returns, all in km, each 0 to 100 and `relative` 0 to 1.
+   * The gap is max(fixed, relative * route length). Not for `free`.
+   */
+  closing?: { fixed?: number; free?: number; relative?: number };
+  /** FAI cylinders in km, 0 to 5. Turnpoints are moved out by this radius. */
+  cylinders?: number;
+  /** Decimals of the final score, 1 or 2, default 2. */
+  decimals?: 1 | 2;
+}
+
+/** A scoring league made of declarative rules, so scoring never runs plugin code. */
+export interface PlanLeague {
+  /** Unique within the plugin, `[a-z0-9-]{1,40}`. The app stores it as `<plugin id>:<id>`. */
+  id: string;
+  /** Shown in the league pickers. Not blank. */
+  label: string;
+  /** 1 to 10 rules, the best scoring one wins. */
+  rules: LeagueRule[];
+}
+
+/** An extension of the XC planner, apiVersion 1: headless, it adds export buttons and scoring leagues. */
 export interface XcPlannerPlugin extends PluginBase {
   /** Same rules as `StudioPlugin.id`. */
   id: string;
@@ -183,6 +221,8 @@ export interface XcPlannerPlugin extends PluginBase {
   apiVersion: 1;
   /** Task file formats, 1 to 10. Extensions must be unique within the plugin, other plugins may reuse them. */
   exports?: PlanExport[];
+  /** XC scoring leagues, 1 to 20. They apply everywhere the app scores. At least one of `exports` and `leagues` is needed. */
+  leagues?: PlanLeague[];
 }
 
 // Backend kind
@@ -343,9 +383,9 @@ export interface StudioService {
    * `Visible must be true or false.`. Fires `flights`.
    */
   setVisible(id: string, visible: boolean): void;
-  /** Id of the scoring league the user chose. */
+  /** Id of the scoring league in use. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed. */
   league(): string;
-  /** All scoring leagues. The same frozen array on every call. */
+  /** All scoring leagues, bundled and from plugins. The same frozen array until the list changes. */
   leagues(): readonly Readonly<{ id: string; label: string }>[];
   /**
    * Switches the scoring league like the user would, so scores of the old league are dropped and scoring restarts.
@@ -473,9 +513,9 @@ export interface PlanService {
    * [-90, 90] or `lon` in [-180, 180]. The points are copied.
    */
   setRoute(points: readonly { lat: number; lon: number }[]): void;
-  /** Id of the active XC scoring league. */
+  /** Id of the active XC scoring league. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed. */
   league(): string;
-  /** The leagues the user can pick. The same frozen array every call. */
+  /** The leagues the user can pick. The same frozen array until the list changes. */
   leagues(): readonly Readonly<{ id: string; label: string }>[];
   /** Switches the XC league for the whole app, it is a global preference. An unknown id throws `Unknown league "x".`. */
   setLeague(id: string): void;
