@@ -15,8 +15,29 @@ export default defineConfig({
     })
   ],
   test: {
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
-    environment: 'node',
-    passWithNoTests: true
+    passWithNoTests: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+          exclude: ['src/**/*.client.*test.ts', 'node_modules/**'],
+          environment: 'node'
+        }
+      },
+      {
+        extends: true,
+        // The browser condition picks the client build of Svelte, so effects run.
+        resolve: { conditions: ['browser'] },
+        test: {
+          name: 'client',
+          include: ['src/**/*.client.*test.ts'],
+          environment: './vitest.client-env.ts',
+          // Node would load the server build of an external svelte, inlining lets the condition apply.
+          server: { deps: { inline: [/svelte/] } }
+        }
+      }
+    ]
   }
 });
