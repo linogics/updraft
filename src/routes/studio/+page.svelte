@@ -38,7 +38,7 @@
   );
   let error = $state('');
   let loaded = $state(false);
-  let steps = $state<string[]>([m.studio_step_read_flights(), m.studio_step_thermals(), m.studio_step_camera()]);
+  const steps = $state<string[]>([m.studio_step_read_flights(), m.studio_step_thermals(), m.studio_step_camera()]);
   let step = $state(0);
   // Analysis runs synchronously, so let the browser paint the loader before each heavy step.
   let viewsWidth = $state(1);

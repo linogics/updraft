@@ -51,12 +51,14 @@ export function parseStudioLayout(
   const seen = new Set<string>();
   const take = (list: unknown): string[] => {
     const out: string[] = [];
-    if (Array.isArray(list))
-      for (const id of list)
+    if (Array.isArray(list)) {
+      for (const id of list) {
         if (typeof id === 'string' && known.includes(id) && !seen.has(id)) {
           seen.add(id);
           out.push(id);
         }
+      }
+    }
 
     return out;
   };
@@ -68,22 +70,25 @@ export function parseStudioLayout(
     bottom: take(stored.bottom)
   };
   const hidden = take(o.hidden);
-  for (const id of known)
+  for (const id of known) {
     if (!seen.has(id)) {
       if (startHidden.includes(id)) hidden.push(id);
       else docks[defaults[id]].push(id);
     }
+  }
 
   const collapsed = Array.isArray(o.collapsed)
     ? [...new Set(o.collapsed.filter((id): id is string => typeof id === 'string' && known.includes(id)))]
     : startCollapsed.filter((id) => known.includes(id));
 
-  for (const id of pinned)
-    for (const d of Object.keys(docks) as Dock[])
+  for (const id of pinned) {
+    for (const d of Object.keys(docks) as Dock[]) {
       if (d !== defaults[id] && docks[d].includes(id)) {
         docks[d] = docks[d].filter((x) => x !== id);
         docks[defaults[id]].push(id);
       }
+    }
+  }
 
   const sizes = obj(o.sizes);
   const size = (key: LayoutSize) =>

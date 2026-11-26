@@ -56,10 +56,21 @@ export default ts.config(
         // A closing brace ends a step.
         { blankLine: 'always', prev: 'block-like', next: '*' }
       ],
+      // `x == null` stays allowed for the null-or-undefined idiom.
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
+      'prefer-const': 'error',
+      // Single-line bodies may omit braces, multi-line bodies need them.
+      curly: ['error', 'multi-line'],
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error'
     }
+  },
+  {
+    // CLI tooling, perf specs and benches print their results on purpose.
+    files: ['scripts/**', 'e2e/perf.spec.ts', 'src/lib/bench/**'],
+    rules: { 'no-console': 'off' }
   },
   {
     files: ['src/**/*.ts', 'src/**/*.svelte', 'e2e/**/*.ts'],
@@ -77,6 +88,11 @@ export default ts.config(
   },
   {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+    rules: {
+      // Svelte writes `let` for $props and $derived. svelte/prefer-const skips those runes.
+      'prefer-const': 'off',
+      'svelte/prefer-const': 'error'
+    },
     languageOptions: {
       parserOptions: {
         projectService: true,

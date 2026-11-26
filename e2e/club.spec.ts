@@ -58,18 +58,23 @@ async function mockServer(page: Page) {
     const list = (items: unknown[]) => json({ page: 1, perPage: 200, totalItems: -1, totalPages: -1, items });
 
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
-    if (url.pathname === '/api/collections/users/auth-methods')
+
+    if (url.pathname === '/api/collections/users/auth-methods') {
       return json({
         password: { enabled: true, identityFields: ['email'] },
         oauth2: { enabled: false, providers: [] },
         mfa: { enabled: false, duration: 0 },
         otp: { enabled: false, duration: 0 }
       });
-    if (url.pathname === '/api/collections/users/auth-with-password')
-      return json({ token, record: { id: 'u1', collectionName: 'users', email: EMAIL } });
+    }
 
-    if (url.pathname === `/api/collections/records/records/${KEY}`)
+    if (url.pathname === '/api/collections/users/auth-with-password') {
+      return json({ token, record: { id: 'u1', collectionName: 'users', email: EMAIL } });
+    }
+
+    if (url.pathname === `/api/collections/records/records/${KEY}`) {
       return json({ id: KEY, shared: true, data: FLIGHT });
+    }
 
     if (url.pathname === '/api/collections/records/records') {
       if (req.method() !== 'GET') {

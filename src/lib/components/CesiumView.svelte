@@ -78,7 +78,7 @@
       await applyTerrain(v, studio.terrain);
       if (!alive) return;
 
-      for (const lf of studio.flights)
+      for (const lf of studio.flights) {
         layers.set(
           lf.flight.id,
           new FlightLayer(
@@ -88,6 +88,8 @@
             () => studio.exaggeration
           )
         );
+      }
+
       camera = new CameraController(v);
       xcRoute = new XcRoute(v);
       airspaceLayer = new AirspaceLayer(v);
@@ -227,8 +229,9 @@
     if (!ready) return;
     const { colorBy, trackStyle, trackWidth, smoothTrack } = studio;
     void studio.exaggeration;
-    for (const lf of studio.flights)
+    for (const lf of studio.flights) {
       layers.get(lf.flight.id)?.renderTrack(colorBy, trackStyle, trackWidth, smoothTrack);
+    }
   });
 
   $effect(() => {

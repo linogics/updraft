@@ -25,8 +25,9 @@ export function densify(points: LatLon[], steps = 10): LatLon[] {
   const out: LatLon[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     const [a, b] = [points[i], points[i + 1]];
-    for (let k = 0; k < steps; k++)
+    for (let k = 0; k < steps; k++) {
       out.push({ lat: a.lat + ((b.lat - a.lat) * k) / steps, lon: a.lon + ((b.lon - a.lon) * k) / steps });
+    }
   }
 
   if (points.length) out.push(points[points.length - 1]);

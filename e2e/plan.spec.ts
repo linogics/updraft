@@ -7,8 +7,9 @@ const titles = (page: import('@playwright/test').Page) =>
 test('planner panels start collapsed, move, persist and reset', async ({ page }) => {
   await page.goto('/plan');
   await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace']);
-  for (const name of ['Thermal overlay', 'XC score', 'Airspace'])
+  for (const name of ['Thermal overlay', 'XC score', 'Airspace']) {
     await expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-expanded', 'false');
+  }
 
   await page.getByRole('button', { name: 'Thermal overlay panel actions' }).click();
   await expect(page.getByRole('menuitem', { name: /^Move to/ })).toHaveCount(0);

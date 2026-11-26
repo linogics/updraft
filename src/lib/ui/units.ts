@@ -70,8 +70,10 @@ export function formatSpeed(ms: number, u: Units): string {
 /** Below 1 km (metric) or 0.5 mi / 0.5 nm, short distances read better in m or ft. */
 export function formatDistance(m: number, u: Units): string {
   const long = toDistance(m, u.distance);
-  if (u.distance === 'km' ? long >= 1 : long >= 0.5)
+  if (u.distance === 'km' ? long >= 1 : long >= 0.5) {
     return `${formatNumber(long, 1)} ${UNIT_LABELS.distance[u.distance]}`;
+  }
+
   return u.distance === 'km' ? `${Math.round(m)} m` : `${Math.round(toAlt(m, 'ft'))} ft`;
 }
 

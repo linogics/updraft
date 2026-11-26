@@ -54,8 +54,10 @@ export function pluginPanel(e: PluginEntry): PanelDef {
       // Service plugins may provide what this one requires.
       await startServicePlugins();
       const plugin = await loadPlugin(e.url);
-      if (plugin.kind !== e.kind)
+      if (plugin.kind !== e.kind) {
         throw new Error(`The plugin now has the kind "${plugin.kind}" instead of "${e.kind}".`);
+      }
+
       if (plugin.id !== e.id) throw new Error(`The plugin now has the id "${plugin.id}" instead of "${e.id}".`);
       registerProvides(plugin);
       if (plugin.kind !== 'studio') throw new Error(`"${e.id}" is not a studio plugin.`);

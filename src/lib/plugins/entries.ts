@@ -32,14 +32,19 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       (o.kind === 'studio' && !PLUGIN_DOCKS.includes(o.dock as PluginDock)) ||
       ids.has(o.id) ||
       urls.has(url)
-    )
+    ) {
       continue;
+    }
+
     ids.add(o.id);
     urls.add(url);
     const entry: PluginEntry = { url, id: o.id, name, kind: o.kind as PluginKind };
     if (o.kind === 'studio') entry.dock = o.dock as PluginDock;
-    if (Array.isArray(o.hosts) && o.hosts.every((h) => PLUGIN_HOSTS.includes(h as PluginHost)))
+
+    if (Array.isArray(o.hosts) && o.hosts.every((h) => PLUGIN_HOSTS.includes(h as PluginHost))) {
       entry.hosts = o.hosts as PluginHost[];
+    }
+
     out.push(entry);
   }
 

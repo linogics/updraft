@@ -51,8 +51,11 @@ export function createPluginContext(
   const ctx: PluginContext = {
     use<T>(name: string) {
       if (!requires.includes(name)) throw new Error(`Service "${name}" is not in requires.`);
-      if (INTERNAL_SERVICE.test(name) && !pluginId.startsWith(RESERVED_NAMESPACE))
+
+      if (INTERNAL_SERVICE.test(name) && !pluginId.startsWith(RESERVED_NAMESPACE)) {
         throw new Error(`Service "${name}" is internal to bundled plugins.`);
+      }
+
       const service = services.use<T>(name) as T & { on?: (event: string, fn: () => void) => () => void };
       const on = service.on;
       if (typeof on !== 'function') return service;

@@ -63,8 +63,10 @@ export class ServiceRegistry {
     if (hit) return hit as T;
     const entry = this.factories.get(name);
     if (!entry) throw new Error(`Missing service "${name}". Add a plugin that provides it.`);
-    if (this.building.includes(name))
+
+    if (this.building.includes(name)) {
       throw new Error(`Service cycle: ${[...this.building, name].map((n) => `"${n}"`).join(' -> ')}.`);
+    }
 
     this.building.push(name);
     try {
@@ -82,34 +84,43 @@ export const services = new ServiceRegistry();
 /** Checks `provides` and `requires` of a plugin module whose id, name and kind are already valid. */
 export function validateServiceFields(p: Record<string, unknown>) {
   if (p.provides !== undefined) {
-    if (!p.provides || typeof p.provides !== 'object' || Array.isArray(p.provides))
+    if (!p.provides || typeof p.provides !== 'object' || Array.isArray(p.provides)) {
       throw new Error('"provides" must be an object of service factories.');
+    }
 
     for (const [name, factory] of Object.entries(p.provides)) {
-      if (!SERVICE_NAME.test(name))
+      if (!SERVICE_NAME.test(name)) {
         throw new Error(`The service name "${name}" must look like "vendor/service@1", with a-z, 0-9 and "-".`);
+      }
+
       if (typeof factory !== 'function') throw new Error(`The factory of "${name}" must be a function.`);
     }
   }
 
   if (p.requires !== undefined) {
-    if (!Array.isArray(p.requires) || p.requires.some((n) => typeof n !== 'string' || !SERVICE_NAME.test(n)))
+    if (!Array.isArray(p.requires) || p.requires.some((n) => typeof n !== 'string' || !SERVICE_NAME.test(n))) {
       throw new Error('"requires" must be a list of service names like "vendor/service@1".');
+    }
   }
 }
 
 /** Plugins added by URL cannot take the reserved namespace, neither as id nor as service name. */
 export function assertNotReserved(plugin: { id: string } & PluginBase) {
-  if (plugin.id.startsWith(RESERVED_NAMESPACE))
+  if (plugin.id.startsWith(RESERVED_NAMESPACE)) {
     throw new Error(`The id "${plugin.id}" is reserved, "${RESERVED_NAMESPACE}" is for bundled plugins.`);
-  for (const name of Object.keys(plugin.provides ?? {}))
-    if (name.startsWith(RESERVED_NAMESPACE))
+  }
+
+  for (const name of Object.keys(plugin.provides ?? {})) {
+    if (name.startsWith(RESERVED_NAMESPACE)) {
       throw new Error(`The service "${name}" is reserved, "${RESERVED_NAMESPACE}" is for bundled plugins.`);
+    }
+  }
 }
 
 /** Registers what a URL plugin provides. Safe to call again for a plugin that is already registered. */
 export function registerProvides(plugin: { id: string } & PluginBase) {
   assertNotReserved(plugin);
-  for (const [name, factory] of Object.entries(plugin.provides ?? {}))
+  for (const [name, factory] of Object.entries(plugin.provides ?? {})) {
     if (services.ownerOf(name) !== plugin.id) services.provide(name, factory, plugin.id);
+  }
 }

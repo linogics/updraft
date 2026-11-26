@@ -22,7 +22,7 @@
 
   let width = $state<number | null>(1920);
   let height = $state<number | null>(1080);
-  let parts = $state<OverlayParts>({ ...ALL_PARTS });
+  const parts = $state<OverlayParts>({ ...ALL_PARTS });
   let busy = $state(false);
   let error = $state('');
   let pluginNotice = $state('');

@@ -241,8 +241,11 @@ export class IndexedDbFlightRepository implements FlightRepository {
     }
 
     for (const m of backup.manual) ops.push(tx.objectStore('summaries').put(m), markDirty(sync, 'manual', m.id));
-    for (const c of backup.cameraPaths)
+
+    for (const c of backup.cameraPaths) {
       ops.push(tx.objectStore('cameraPaths').put(c), markDirty(sync, 'cameraPath', c.key));
+    }
+
     await Promise.all(ops);
     notifyLocalChange();
   }
