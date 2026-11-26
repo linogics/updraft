@@ -114,7 +114,7 @@ export default {
 
 Another plugin lists `'me/wind@1'` in `requires` and calls `ctx.use('me/wind@1').at(...)`.
 
-Performance: a service call is a plain function call in the page. Services are built on first use and return shared data without copying, so treat everything a service returns as read only and never modify it.
+Performance: a service call is a plain function call in the page. Services are built on first use and return shared data without copying, so treat everything a service returns as read only and never modify it. A service may also offer write functions, for example `setRoute` and `setLeague` of `updraft/plan@1`. A route set by a plugin can be undone by the user.
 
 ### Events
 

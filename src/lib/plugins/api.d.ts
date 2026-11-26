@@ -27,7 +27,8 @@ export interface ServiceContext {
 
 /**
  * Builds a service on its first use. The result is cached and every caller gets the same object.
- * Treat everything a service returns as read only.
+ * Treat everything a service returns as read only. A service may also offer write functions, documented per
+ * service. The data they return stays read only.
  */
 export type ServiceFactory = (ctx: ServiceContext) => object;
 
@@ -327,7 +328,9 @@ export type PlanEvent =
   /** The planned speed changed. */
   | 'speed'
   /** The user changed the display units. */
-  | 'units';
+  | 'units'
+  /** The XC scoring league changed. */
+  | 'league';
 
 /**
  * Service `updraft/plan@1`. Provided by the planner while it is open, not by the studio.
@@ -350,4 +353,16 @@ export interface PlanService {
   speed(): number;
   /** The same frozen object until the user changes units. */
   units(): Readonly<Units>;
+  /**
+   * Replaces the whole route. The user can undo it in the planner, as one step. An empty array clears the route.
+   * Throws when the argument is not an array, has more than 100 points, or a point lacks a finite `lat` in
+   * [-90, 90] or `lon` in [-180, 180]. The points are copied.
+   */
+  setRoute(points: readonly { lat: number; lon: number }[]): void;
+  /** Id of the active XC scoring league. */
+  league(): string;
+  /** The leagues the user can pick. The same frozen array every call. */
+  leagues(): readonly Readonly<{ id: string; label: string }>[];
+  /** Switches the XC league for the whole app, it is a global preference. An unknown id throws `Unknown league "x".`. */
+  setLeague(id: string): void;
 }

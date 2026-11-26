@@ -36,7 +36,7 @@
   let addPlugin: AddPluginDialog;
 
   // Plugins read the route through these services while the page is open.
-  const unprovide = providePlanService(plan);
+  const unprovide = providePlanService(plan, { commit });
   const unprovideState = providePlanState(plan);
   onDestroy(() => {
     unprovide();

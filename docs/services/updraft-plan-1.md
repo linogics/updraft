@@ -12,6 +12,7 @@ Subscribe with `on(event: PlanEvent, fn: () => void): () => void`.
 | `route` | The route changed. |
 | `speed` | The planned speed changed. |
 | `units` | The user changed the display units. |
+| `league` | The XC scoring league changed. |
 
 ## Members
 
@@ -21,6 +22,10 @@ Subscribe with `on(event: PlanEvent, fn: () => void): () => void`.
 | `distance(): number` | Route length in m. |
 | `speed(): number` | Planned speed in km/h. |
 | `units(): Readonly<Units>` | The same frozen object until the user changes units. |
+| `setRoute(points: readonly { lat: number; lon: number }[]): void` | Replaces the whole route. The user can undo it in the planner, as one step. An empty array clears the route. Throws when the argument is not an array, has more than 100 points, or a point lacks a finite `lat` in [-90, 90] or `lon` in [-180, 180]. The points are copied. |
+| `league(): string` | Id of the active XC scoring league. |
+| `leagues(): readonly Readonly<{ id: string; label: string }>[]` | The leagues the user can pick. The same frozen array every call. |
+| `setLeague(id: string): void` | Switches the XC league for the whole app, it is a global preference. An unknown id throws `Unknown league "x".`. |
 
 ## Types
 

@@ -1,8 +1,12 @@
+import type { LatLon } from '#lib/domain/geo';
+import { MAX_ROUTE_POINTS } from '#lib/domain/route';
 import type { PlanEvent, PlanService } from '#lib/plugins/api';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { PlanState } from '#lib/state/plan.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
+import { XC_LEAGUES } from '#lib/state/xcPrefs';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { Units } from '#lib/ui/units';
 
 export type { PlanService };
@@ -10,7 +14,10 @@ export type { PlanService };
 export const PLAN_SERVICE = 'updraft/plan@1';
 
 /** Provides `updraft/plan@1` for as long as the planner is open. Returns the unregister function. */
-export function providePlanService(plan: Pick<PlanState, 'points' | 'total' | 'speed'>) {
+export function providePlanService(
+  plan: Pick<PlanState, 'points' | 'total' | 'speed'>,
+  { commit }: { commit: (next: LatLon[]) => void }
+) {
   return services.provide(
     PLAN_SERVICE,
     (): PlanService => {
@@ -19,10 +26,13 @@ export function providePlanService(plan: Pick<PlanState, 'points' | 'total' | 's
       let unitsSrc: Units | undefined;
       let units: Readonly<Units>;
 
+      const leagues = Object.freeze(XC_LEAGUES.map((l) => Object.freeze({ id: l.id, label: l.label })));
+
       const on = eventsOf<PlanEvent>(PLAN_SERVICE, {
         route: () => void plan.points,
         speed: () => void plan.speed,
-        units: () => void unitPrefs.units
+        units: () => void unitPrefs.units,
+        league: () => void xcPrefs.league
       });
 
       return Object.freeze<PlanService>({
@@ -44,6 +54,35 @@ export function providePlanService(plan: Pick<PlanState, 'points' | 'total' | 's
           }
 
           return units;
+        },
+        setRoute(input) {
+          if (!Array.isArray(input)) throw new Error('Route must be an array of points.');
+
+          if (input.length > MAX_ROUTE_POINTS) {
+            throw new Error(`Route has more than ${MAX_ROUTE_POINTS} points.`);
+          }
+
+          const next = input.map((p: unknown, i): LatLon => {
+            const { lat, lon } = (typeof p === 'object' && p !== null ? p : {}) as Record<string, unknown>;
+            if (typeof lat !== 'number' || !(lat >= -90 && lat <= 90)) {
+              throw new Error(`Point ${i} needs a finite lat between -90 and 90.`);
+            }
+
+            if (typeof lon !== 'number' || !(lon >= -180 && lon <= 180)) {
+              throw new Error(`Point ${i} needs a finite lon between -180 and 180.`);
+            }
+
+            return { lat, lon };
+          });
+
+          commit(next);
+        },
+        league: () => xcPrefs.league,
+        leagues: () => leagues,
+        setLeague(id) {
+          const league = XC_LEAGUES.find((l) => l.id === id);
+          if (!league) throw new Error(`Unknown league "${id}".`);
+          if (league.id !== xcPrefs.league) xcPrefs.set(league.id);
         }
       });
     },
