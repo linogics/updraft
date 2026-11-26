@@ -5,15 +5,16 @@ import { pluginPanelId } from '#lib/studio/registry.svelte';
 
 import { BUILTIN_BACKENDS, BUILTIN_CONVERTERS, BUILTIN_PLUGINS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
-import { forgetPluginModule, loadPlugin, pluginUrl } from './core';
+import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
 import { pluginPrefs } from './pluginPrefs.svelte';
 import { assertNotReserved, registerProvides, services } from './services';
 
 /**
  * Loads and validates the plugin at `raw`, then stores it. A studio plugin also shows its panel in its start dock.
  * Throws an Error with a message for the user and changes nothing when anything is wrong.
+ * With `kinds`, a plugin of another kind is refused, for pages that only take one kind.
  */
-export async function addPlugin(raw: string) {
+export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] } = {}) {
   const url = pluginUrl(raw);
   if (!url) throw new Error('The address must be a valid http or https URL.');
   if (pluginPrefs.list.some((e) => e.url === url)) throw new Error('This plugin is already added.');
@@ -26,6 +27,7 @@ export async function addPlugin(raw: string) {
     ...pluginPrefs.list.map((e) => e.id)
   ];
   const plugin = await loadPlugin(url, taken);
+  if (kinds && !kinds.includes(plugin.kind)) throw new Error(`This page only accepts ${kinds.join(' or ')} plugins.`);
   assertNotReserved(plugin);
   const { id, kind } = plugin;
   const name = plugin.name.trim();

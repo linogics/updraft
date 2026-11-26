@@ -1,13 +1,18 @@
 <script lang="ts">
   import Dropzone from '#lib/components/Dropzone.svelte';
-  import { formatOf, readTrack, writers, writeTrack } from '#lib/convert/registry';
+  import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
+  import { converters, formatOf, readTrack, writers, writeTrack } from '#lib/convert/registry';
   import type { Flight } from '#lib/domain/model';
   import { zipStore } from '#lib/export/zip';
   import { m } from '#lib/paraglide/messages';
+  import { removePlugin } from '#lib/plugins/actions';
+  import { BUILTIN_CONVERTERS } from '#lib/plugins/builtin';
   import { flightRepository } from '#lib/storage';
 
   type Row = { name: string; format?: string; flight?: Flight; error?: string };
 
+  let addDialog: AddPluginDialog;
+  const builtIn = new Set(BUILTIN_CONVERTERS.map((b) => b.id));
   let rows = $state<Row[]>([]);
   let targetId = $state('updraft/gpx');
   let save = $state(true);
@@ -140,7 +145,36 @@
       </tbody>
     </table>
   {/if}
+
+  <section class="formats" aria-labelledby="formats-title">
+    <h2 id="formats-title">{m.convert_formats()}</h2>
+    <ul>
+      {#each converters() as c (c.id)}
+        <li>
+          <strong>{c.label}</strong>
+          <span class="muted">{c.extensions.map((e) => `.${e}`).join(' ')}</span>
+          <span class="muted">
+            {[c.canRead && m.convert_reads(), c.canWrite && m.convert_writes()].filter(Boolean).join(', ')}
+          </span>
+          {#if builtIn.has(c.id)}
+            <span class="badge">{m.convert_builtin()}</span>
+          {:else}
+            <button
+              type="button"
+              aria-label={m.plugin_uninstall_label({ name: c.label })}
+              onclick={() => removePlugin(c.id)}
+            >
+              {m.plugin_uninstall()}
+            </button>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+    <button type="button" onclick={() => addDialog.open()}>{m.convert_add_format()}</button>
+  </section>
 </div>
+
+<AddPluginDialog bind:this={addDialog} kinds={['converter']} />
 
 <style>
   .convert {
@@ -183,6 +217,35 @@
   td {
     padding: 6px 8px;
     border-bottom: 1px solid var(--border);
+  }
+  .formats {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+  }
+  h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+  ul {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+  }
+  .badge {
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 12px;
   }
   .muted {
     color: var(--muted);
