@@ -4,13 +4,32 @@ import { services } from '#lib/plugins/services';
 import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
 import type { StudioState } from '#lib/state/studio.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
+import { XC_LEAGUES } from '#lib/state/xcPrefs';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { Units } from '#lib/ui/units';
 
 export type { PluginFlight, StudioService };
 
 export const STUDIO_SERVICE = 'updraft/studio@1';
 
-type Host = Pick<StudioState, 'flights' | 'time' | 'selected' | 'selectedId' | 'viewer' | 'seek'>;
+type Host = Pick<
+  StudioState,
+  | 'flights'
+  | 'time'
+  | 'selected'
+  | 'selectedId'
+  | 'viewer'
+  | 'seek'
+  | 'play'
+  | 'pause'
+  | 'playing'
+  | 'exportIn'
+  | 'exportOut'
+  | 'start'
+  | 'end'
+  | 'setVisible'
+  | 'setLeague'
+>;
 
 /** Provides `updraft/studio@1` for as long as the studio is open. Returns the unregister function. */
 export function provideStudioService(studio: Host) {
@@ -23,13 +42,19 @@ export function provideStudioService(studio: Host) {
       let flights: readonly PluginFlight[] = [];
       let unitsSrc: Units | undefined;
       let units: Readonly<Units>;
+      let range: Readonly<{ start: number; end: number }> = Object.freeze({ start: 0, end: 0 });
+
+      const leagues = Object.freeze(XC_LEAGUES.map((l) => Object.freeze({ id: l.id, label: l.label })));
 
       const on = eventsOf<StudioEvent>(STUDIO_SERVICE, {
         time: () => void studio.time,
         flights: () => void studio.flights,
         selection: () => void studio.selected,
         units: () => void unitPrefs.units,
-        altRef: () => void altRefPrefs.ref
+        altRef: () => void altRefPrefs.ref,
+        league: () => void xcPrefs.league,
+        playing: () => void studio.playing,
+        range: () => void [studio.exportIn ?? studio.start, studio.exportOut ?? studio.end]
       });
 
       return Object.freeze<StudioService>({
@@ -67,6 +92,46 @@ export function provideStudioService(studio: Host) {
         seek: (ms) => studio.seek(Number(ms)),
         select(id) {
           if (studio.flights.some((lf) => lf.flight.id === id)) studio.selectedId = id;
+        },
+        setVisible(id, visible) {
+          if (typeof visible !== 'boolean') throw new Error('Visible must be true or false.');
+          if (studio.flights.some((lf) => lf.flight.id === id)) studio.setVisible(id, visible);
+        },
+        league: () => xcPrefs.league,
+        leagues: () => leagues,
+        setLeague(id) {
+          const league = XC_LEAGUES.find((l) => l.id === id);
+          if (!league) throw new Error(`Unknown league "${id}".`);
+          if (league.id !== xcPrefs.league) studio.setLeague(league.id);
+        },
+        play: () => studio.play(),
+        pause: () => studio.pause(),
+        playing: () => studio.playing,
+        range() {
+          const start = studio.exportIn ?? studio.start;
+          const end = studio.exportOut ?? studio.end;
+          if (range.start !== start || range.end !== end) range = Object.freeze({ start, end });
+          return range;
+        },
+        setRange(start, end) {
+          if (
+            typeof start !== 'number' ||
+            typeof end !== 'number' ||
+            !Number.isFinite(start) ||
+            !Number.isFinite(end)
+          ) {
+            throw new Error('Range start and end must be finite numbers.');
+          }
+
+          const clamp = (t: number) => Math.min(studio.end, Math.max(studio.start, t));
+          const [a, b] = [clamp(start), clamp(end)];
+          if (!(a < b)) throw new Error('Range start must be before end.');
+          studio.exportIn = a;
+          studio.exportOut = b;
+        },
+        clearRange() {
+          studio.exportIn = null;
+          studio.exportOut = null;
         },
         viewer: () => (studio.viewer && !studio.viewer.isDestroyed() ? studio.viewer : null)
       });

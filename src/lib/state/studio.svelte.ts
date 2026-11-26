@@ -466,6 +466,7 @@ export class StudioState {
   }
 
   play() {
+    if (this.playing) return;
     if (this.time >= this.end) this.time = this.start;
     this.playing = true;
     this.lastTick = performance.now();
