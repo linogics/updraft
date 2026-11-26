@@ -79,6 +79,7 @@ async function importPlugin(raw: string): Promise<AnyPlugin> {
   let mod: { default?: unknown };
   try {
     // Full trust by design, the user confirmed it. SRI cannot cover a user given import().
+    // eslint-disable-next-line no-unsanitized/method -- http(s) only via pluginUrl, user confirmed
     mod = await import(/* @vite-ignore */ url);
   } catch (err) {
     throw new Error(`Could not load the plugin. ${err instanceof Error ? err.message : String(err)}`, { cause: err });
