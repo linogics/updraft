@@ -221,14 +221,20 @@ export interface PluginFlight {
 export type StudioEvent =
   /** The playback time changed. */
   | 'time'
-  /** The pilot list changed: a flight was added or removed, or a color, visibility or time shift changed. */
+  /** The pilot list changed: a flight was added or removed, or a color, visibility (also `setVisible`) or time shift changed. */
   | 'flights'
   /** The selected pilot changed. */
   | 'selection'
   /** The user changed the display units. */
   | 'units'
   /** The user changed the altitude reference. */
-  | 'altRef';
+  | 'altRef'
+  /** The scoring league changed. */
+  | 'league'
+  /** Playback started or stopped. */
+  | 'playing'
+  /** The effective range changed: the timeline marks, or the studio start and end while they are unset. */
+  | 'range';
 
 /**
  * Service `updraft/studio@1`. Provided by the studio while it is open, not by the planner.
@@ -257,6 +263,39 @@ export interface StudioService {
   seek(ms: number): void;
   /** Selects the pilot with that flight id. An unknown id is ignored. */
   select(id: string): void;
+  /**
+   * Shows or hides the pilot with that flight id. An unknown id is ignored. Anything but a boolean throws
+   * `Visible must be true or false.`. Fires `flights`.
+   */
+  setVisible(id: string, visible: boolean): void;
+  /** Id of the scoring league the user chose. */
+  league(): string;
+  /** All scoring leagues. The same frozen array on every call. */
+  leagues(): readonly Readonly<{ id: string; label: string }>[];
+  /**
+   * Switches the scoring league like the user would, so scores of the old league are dropped and scoring restarts.
+   * An unknown id throws `Unknown league "x".`. The current league is a no-op.
+   */
+  setLeague(id: string): void;
+  /** Starts playback. A no-op while playing. At the end it starts again from the beginning. */
+  play(): void;
+  /** Stops playback. A no-op while paused. */
+  pause(): void;
+  /** Whether playback is running. */
+  playing(): boolean;
+  /**
+   * The in and out marks of the timeline, which set the video export range, in ms on the studio clock.
+   * Unset marks read as the studio start and end. The same frozen object until a mark or the studio range changes.
+   */
+  range(): Readonly<{ start: number; end: number }>;
+  /**
+   * Sets both marks. Both must be finite numbers with `start` before `end`, otherwise it throws
+   * `Range start and end must be finite numbers.` or `Range start must be before end.`.
+   * Values outside the studio range are clamped into it first, and the clamped values must still be in order, so a range entirely outside the studio throws `Range start must be before end.` too.
+   */
+  setRange(start: number, end: number): void;
+  /** Removes both marks, so the export covers the whole studio range. */
+  clearRange(): void;
   /** The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time. */
   viewer(): Viewer | null;
 }
