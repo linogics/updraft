@@ -113,8 +113,9 @@ export function createPocketBase({ url, pageSize = 200 }: PocketBaseConfig): Bac
       return signedIn();
     },
 
-    async signOut() {
+    signOut() {
       pb.authStore.clear();
+      return Promise.resolve();
     },
 
     session,

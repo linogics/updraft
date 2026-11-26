@@ -12,13 +12,14 @@
     "dev": "vite dev --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "check": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "sync": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync",
+    "check": "npm run sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "svelte-kit sync && vitest run",
     "test:ui": "playwright test",
     "bench": "svelte-kit sync && vitest bench --run --silent=false",
     "bench:ui": "PERF=1 playwright test perf --reporter=line",
-    "lint": "prettier --check . && eslint .",
-    "format": "prettier --write . && eslint --fix .",
+    "lint": "npm run sync && prettier --check . && eslint .",
+    "format": "npm run sync && prettier --write . && eslint --fix .",
     "docs:services": "node scripts/gen-service-docs.mjs src/lib/plugins/api.d.ts docs/services"
   },
   "devDependencies": {

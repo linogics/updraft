@@ -31,7 +31,7 @@ self.onmessage = (e: MessageEvent<{ fixes: Fix[]; league: XcLeague }>) => {
     const best = solver(flight as never, (scoringRules as Record<string, object>)[league], {
       maxcycle: BUDGET_MS
     }).next().value;
-    self.postMessage({ score: best ? mapResult(league, best as never) : null });
+    self.postMessage({ score: best ? mapResult(league, best) : null });
   } catch (err) {
     self.postMessage({ error: String(err) });
   }

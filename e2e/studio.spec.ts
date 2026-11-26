@@ -55,7 +55,8 @@ test('removing the thermal overlay panel turns it off, adding it turns it on', a
   await page.getByRole('button', { name: /^Panels/ }).click();
   const panelSwitch = page.getByRole('checkbox', { name: 'Thermal overlay' });
   await panelSwitch.uncheck();
-  const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('thermalOverlayPrefs') ?? 'null'));
+  const stored = () =>
+    page.evaluate(() => JSON.parse(localStorage.getItem('thermalOverlayPrefs') ?? 'null') as { enabled: boolean });
   expect((await stored()).enabled).toBe(false);
 
   await panelSwitch.check();
@@ -422,7 +423,7 @@ test.describe('plugins', () => {
     const corner = async () => {
       const download = page.waitForEvent('download');
       await page.getByRole('button', { name: 'Download PNG' }).click();
-      const bytes = [...readFileSync((await (await download).path())!)];
+      const bytes = [...readFileSync(await (await download).path())];
       return page.evaluate(async (b) => {
         const bmp = await createImageBitmap(new Blob([new Uint8Array(b)]));
         const c = new OffscreenCanvas(bmp.width, bmp.height).getContext('2d')!;

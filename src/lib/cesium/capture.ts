@@ -22,6 +22,7 @@ const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 16));
  * stops, so frames only come from frame(). setHold(true) tells the camera to stay put while
  * extra renders wait for tiles, so each output frame moves the camera exactly once.
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- async turns the unavailable-viewer throw into a rejection
 export async function beginCapture(
   viewer: Cesium.Viewer,
   width: number,

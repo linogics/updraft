@@ -98,7 +98,7 @@ export function createPluginContext(
 
   return {
     ctx: Object.freeze(ctx),
-    dispose() {
+    dispose: () => {
       for (const stop of [...stops]) stop();
       overlay?.remove();
     }

@@ -3,7 +3,7 @@ import * as maplibregl from 'maplibre-gl';
 
 import type { Units } from '#lib/ui/units';
 
-import { AIRSPACE_CLASSES, airspaceLabel, CLASS_COLORS } from './model';
+import { AIRSPACE_CLASSES, airspaceLabel, type AirspaceProps, CLASS_COLORS } from './model';
 import type { AirspacePrefsValue } from './prefs';
 import { TILE_URL } from './tiles';
 
@@ -54,7 +54,7 @@ export function syncAirspaces(map: maplibregl.Map, p: AirspacePrefsValue, key: s
     return;
   }
 
-  const src = map.getSource(SOURCE) as VectorTileSource | undefined;
+  const src = map.getSource<VectorTileSource>(SOURCE);
   if (!src) {
     map.addSource(SOURCE, { type: 'vector', tiles: [tiles], minzoom: 0, maxzoom: 14, attribution: '© openAIP' });
     map.addLayer({ id: FILL, type: 'fill', source: SOURCE, 'source-layer': 'airspaces', paint: {} }, before);
@@ -79,10 +79,11 @@ export function bindAirspacePopup(map: maplibregl.Map, units: () => Units) {
     const seen = new Set<unknown>();
     const lines: string[] = [];
     for (const f of map.queryRenderedFeatures(e.point, { layers: [FILL] })) {
-      const id = f.properties.source_id ?? f.properties.name;
+      const props: AirspaceProps = f.properties;
+      const id = props.source_id ?? props.name;
       if (seen.has(id)) continue;
       seen.add(id);
-      lines.push(airspaceLabel(f.properties, units()));
+      lines.push(airspaceLabel(props, units()));
     }
 
     if (!lines.length) return;

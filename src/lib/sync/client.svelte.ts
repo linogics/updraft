@@ -111,7 +111,7 @@ export class SyncClient {
     try {
       signing = adapter.signIn(method, input);
     } catch (e) {
-      signing = Promise.reject(e);
+      signing = Promise.reject(e instanceof Error ? e : new Error(String(e)));
     }
 
     return this.finishSignIn(adapter, signing);

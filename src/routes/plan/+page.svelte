@@ -124,13 +124,16 @@
     const active = xcPrefs.enabled && route.length > 1;
     plan.scoring = active;
     if (!active) return;
-    const timer = setTimeout(async () => {
+    const timer = setTimeout(() => {
       // Fake one-second timestamps and no altitude, only the geometry matters.
       const fixes = densify(route).map((p, i) => ({ t: i * 1000, lat: p.lat, lon: p.lon, alt: 0 }));
-      const result = await scoreFlight(fixes, league).catch(() => null);
-      if (id !== run) return;
-      plan.score = result;
-      plan.scoring = false;
+      void scoreFlight(fixes, league)
+        .catch(() => null)
+        .then((result) => {
+          if (id !== run) return;
+          plan.score = result;
+          plan.scoring = false;
+        });
     }, 400);
     return () => clearTimeout(timer);
   });

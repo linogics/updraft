@@ -9,7 +9,7 @@ const route = [
 
 describe('route export', () => {
   it('writes an XCTrack task with one cylinder per point', () => {
-    const task = JSON.parse(writeXctsk(route));
+    const task = JSON.parse(writeXctsk(route)) as { turnpoints: unknown[] };
     expect(task).toMatchObject({ taskType: 'CLASSIC', version: 1, earthModel: 'WGS84' });
     expect(task.turnpoints).toEqual([
       { radius: 400, waypoint: { name: 'TP01', description: '', lat: 46.1, lon: 8.2, altSmoothed: 0 } },

@@ -6,7 +6,10 @@ import { pluginPrefs } from './pluginPrefs.svelte';
 const backend = vi.hoisted(() => ({ id: 'acme/be', name: 'Be', kind: 'backend', apiVersion: 1, create: () => ({}) }));
 const move = vi.hoisted(() => vi.fn());
 
-vi.mock('./core', async (orig) => ({ ...(await orig<typeof import('./core')>()), loadPlugin: async () => backend }));
+vi.mock('./core', async (orig) => ({
+  ...(await orig<typeof import('./core')>()),
+  loadPlugin: () => Promise.resolve(backend)
+}));
 vi.mock('./cache', () => ({ cachePlugin: async () => {}, uncachePlugin: async () => {} }));
 vi.mock('#lib/state/studioLayout.svelte', () => ({ studioLayout: { move, forget: () => {} } }));
 

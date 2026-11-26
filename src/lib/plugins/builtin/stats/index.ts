@@ -21,7 +21,7 @@ const plugin: StudioPlugin = {
       props: {
         studio: ctx.use<StudioService>('updraft/studio@1'),
         analysis: ctx.use<AnalysisService>('updraft/flight-analysis@1'),
-        need: ctx.need
+        need: ctx.need.bind(ctx)
       }
     });
 

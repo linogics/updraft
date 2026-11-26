@@ -51,7 +51,9 @@ test('the route downloads as an XCTrack task', async ({ page }) => {
     page.getByRole('button', { name: 'XCTrack task' }).click()
   ]);
   expect(file.suggestedFilename()).toMatch(/\.xctsk$/);
-  const task = JSON.parse(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c).toString()));
+  const task = JSON.parse(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c).toString())) as {
+    turnpoints: unknown[];
+  };
   expect(task.turnpoints).toHaveLength(2);
 });
 

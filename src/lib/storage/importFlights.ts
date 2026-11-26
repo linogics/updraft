@@ -13,7 +13,7 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
       await flightRepository.save(flight);
       ids.push(flight.id);
     } catch (err) {
-      errors.push(`${file.name}: ${err instanceof Error ? err.message : err}`);
+      errors.push(`${file.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
