@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { type Transition, transitionAlts } from '#lib/domain/analysis/transitions';
   import { indexAt } from '#lib/domain/timeline';
-  import { transitionAlts, type Transition } from '#lib/domain/analysis/transitions';
   import { m } from '#lib/paraglide/messages';
-  import { useNeed } from '#lib/state/useNeed.svelte';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { useNeed } from '#lib/state/useNeed.svelte';
   import { varioColor } from '#lib/ui/colors';
   import { formatClock, formatDuration, formatNumber } from '#lib/ui/format';
   import {

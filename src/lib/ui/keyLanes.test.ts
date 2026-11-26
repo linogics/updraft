@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
+
 import { DEFAULT_TRACKS, type PropTrack } from '../domain/cameraPath';
 import {
-  keyTimes,
   keysInBox,
+  keyTimes,
   laneCurve,
   laneDelta,
   laneScale,

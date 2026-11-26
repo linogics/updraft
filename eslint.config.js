@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
 import prettier from 'eslint-config-prettier';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import ts from 'typescript-eslint';
@@ -65,6 +66,17 @@ export default ts.config(
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error'
+    }
+  },
+  {
+    // Sorted groups: side effects, node builtins, packages with SvelteKit modules, app aliases, relative.
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': [
+        'error',
+        { groups: [['^\\u0000'], ['^node:'], ['^@?\\w', '^\\$(app|env)(/|$)'], ['^#lib/', '^\\$lib(/|$)'], ['^\\.']] }
+      ],
+      'simple-import-sort/exports': 'error'
     }
   },
   {

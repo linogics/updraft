@@ -1,18 +1,20 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import * as maplibregl from 'maplibre-gl';
-  import type { GeoJSONSource, LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
+
+  import type { GeoJSONSource, LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl';
+  import * as maplibregl from 'maplibre-gl';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow, so bundle it explicitly.
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+  import { onMount } from 'svelte';
+
   import { syncAirspaces } from '#lib/airspace/layers';
   import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-  import { syncThermals } from '#lib/thermals/layers';
-  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import type { LatLon } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import { m } from '#lib/paraglide/messages';
+  import { syncThermals } from '#lib/thermals/layers';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 
   let {
     points,

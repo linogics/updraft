@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+
 import { analyzeFlight } from '../domain/analysis/analyze';
-import groundGrid from './groundGrid.json';
 import { buildDemoFlights } from './demoFlights';
+import groundGrid from './groundGrid.json';
 
 // Bilinear ground height from the grid written by scripts/demo-terrain.mjs.
 function groundAt(lat: number, lon: number): number {

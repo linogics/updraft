@@ -1,6 +1,7 @@
-import { validateStudioPlugin, type StudioPlugin } from '#lib/studio/plugins';
-import { validateBackendPlugin, type BackendPlugin } from './backendKind';
-import { validateServicePlugin, type ServicePlugin } from './serviceKind';
+import { type StudioPlugin, validateStudioPlugin } from '#lib/studio/plugins';
+
+import { type BackendPlugin, validateBackendPlugin } from './backendKind';
+import { type ServicePlugin, validateServicePlugin } from './serviceKind';
 import { validateServiceFields } from './services';
 
 /** Grows with every new kind of plugin. Add its validator to `validators` below. */

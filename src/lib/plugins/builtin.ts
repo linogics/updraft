@@ -1,5 +1,5 @@
-import { m } from '#lib/paraglide/messages';
 import { airspacePrefs } from '#lib/airspace/prefs.svelte';
+import { m } from '#lib/paraglide/messages';
 import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { PluginDock, PluginHost } from '#lib/studio/plugins';
 import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';

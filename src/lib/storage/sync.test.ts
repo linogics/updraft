@@ -1,8 +1,10 @@
 import 'fake-indexeddb/auto';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { IndexedDbFlightRepository } from './indexeddb';
+
 import type { Flight } from '../domain/model';
 import type { SyncChange } from '../sync/types';
+import { IndexedDbFlightRepository } from './indexeddb';
 
 const flight = (id: string): Flight => ({
   id,

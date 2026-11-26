@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
-  import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
-  import { syncUrl } from '#lib/sync/config';
-  import { syncClient as client } from '#lib/sync/client.svelte';
+  import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
+  import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
   import { setSyncKeys, syncKeysEnabled } from '#lib/sync';
+  import { syncClient as client } from '#lib/sync/client.svelte';
+  import { syncUrl } from '#lib/sync/config';
   import type { AuthMethod } from '#lib/sync/types';
 
   const DEFAULT_BACKEND = 'updraft/pocketbase';

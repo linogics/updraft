@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { tick, type Snippet } from 'svelte';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
+  import { type Snippet, tick } from 'svelte';
+
   import { m } from '#lib/paraglide/messages';
   import type { PageLayout } from '#lib/state/pageLayout.svelte';
+
+  import Menu from '../Menu.svelte';
   import { announce, movePagePanel, panelMenuId } from '../studio/panelActions.svelte';
   import { drag, liftStyle, startDrag } from '../studio/panelDrag.svelte';
-  import Menu from '../Menu.svelte';
 
   interface Panel {
     id: string;

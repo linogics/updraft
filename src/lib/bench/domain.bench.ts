@@ -1,16 +1,17 @@
 // Domain benchmarks on a realistic long flight. Run with `npm run bench`, not part of CI.
 // Budgets: import + analysis of an 8 h flight under 1 s, any main-thread step under 50 ms.
 import { describe, expect, test } from 'vitest';
-import { directCamera } from '../domain/director';
-import { readIgc, writeIgc } from '../domain/formats/igc';
-import { writeGpx } from '../domain/formats/gpx';
+
 import { analyzeFlight } from '../domain/analysis/analyze';
+import { directCamera } from '../domain/director';
+import { writeGpx } from '../domain/formats/gpx';
+import { readIgc, writeIgc } from '../domain/formats/igc';
+import { breakdown, totals } from '../domain/logbook';
 import { routeFromFlight } from '../domain/routeFromFlight';
 import { smoothPath } from '../domain/smooth';
-import { resampleAltitudes, positionAt } from '../domain/timeline';
-import { totals, breakdown } from '../domain/logbook';
-import { chain, circle, straight } from '../domain/testing/tracks';
 import { buildIgc } from '../domain/testing/igc-builder';
+import { chain, circle, straight } from '../domain/testing/tracks';
+import { positionAt, resampleAltitudes } from '../domain/timeline';
 
 // 8 h at 1 Hz: 48 cycles of a 5 min thermal and a 5 min glide, about 28 800 fixes.
 const cycle = [

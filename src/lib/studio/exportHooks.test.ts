@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import { paintPlugins } from './exportHooks.svelte';
 import type { StudioPlugin } from './plugins';
 

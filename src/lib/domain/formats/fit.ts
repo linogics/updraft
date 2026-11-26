@@ -1,5 +1,6 @@
-import { m } from '../../paraglide/messages';
 import FitParser from 'fit-file-parser';
+
+import { m } from '../../paraglide/messages';
 import type { Fix, Flight } from '../model';
 import { toFlight } from './common';
 

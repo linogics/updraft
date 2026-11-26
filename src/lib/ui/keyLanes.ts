@@ -1,13 +1,13 @@
 import {
   CAMERA_PROPS,
-  toLane,
-  valueAt,
   type CameraProp,
   type CameraTracks,
   type Interp,
   type Key,
   type KeyRef,
-  type PropTrack
+  type PropTrack,
+  toLane,
+  valueAt
 } from '../domain/cameraPath';
 import { m } from '../paraglide/messages';
 

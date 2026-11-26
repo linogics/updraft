@@ -1,7 +1,8 @@
 import * as Cesium from 'cesium';
+
 import type { LatLon } from '#lib/domain/geo';
-import type { XcScore } from '#lib/xc/score';
 import { ring } from '#lib/xc/ring';
+import type { XcScore } from '#lib/xc/score';
 
 const line = (pts: LatLon[]) => Cesium.Cartesian3.fromDegreesArray(pts.flatMap((p) => [p.lon, p.lat]));
 

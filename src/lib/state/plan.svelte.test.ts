@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { PlanState } from './plan.svelte';
 
 describe('PlanState', () => {

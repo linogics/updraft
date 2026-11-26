@@ -1,5 +1,6 @@
-import { m } from '../paraglide/messages';
 import type * as Cesium from 'cesium';
+
+import { m } from '../paraglide/messages';
 
 /** Longest wait for globe tiles per frame before grabbing it anyway. */
 const TILE_WAIT_MS = 15_000;

@@ -1,5 +1,6 @@
 import { m } from '#lib/paraglide/messages';
 import { PLAN_STATE_SERVICE } from '#lib/plan/planService.svelte';
+
 import { componentPlugin } from '../componentPlugin';
 import PlanXcPanel from './PlanXcPanel.svelte';
 

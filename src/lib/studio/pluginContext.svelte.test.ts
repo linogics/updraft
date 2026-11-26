@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { services } from '#lib/plugins/services';
+
 import { createPluginContext, type PluginHostEnv } from './pluginContext.svelte';
 
 const host: PluginHostEnv = { overlayParent: () => null };

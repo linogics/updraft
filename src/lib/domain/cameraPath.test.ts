@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
+
 import {
-  DEFAULT_TRACKS,
-  MAX_KEYS,
+  type CameraTracks,
   captureView,
   clearKeys,
   copyKeys,
+  DEFAULT_TRACKS,
+  type Interp,
+  type Key,
+  MAX_KEYS,
   moveKeys,
-  pasteKeys,
   parseTracks,
+  pasteKeys,
+  type PropTrack,
   removeKeys,
   setAnimated,
   setKey,
@@ -17,11 +22,7 @@ import {
   timeSets,
   unwrapNear,
   valueAt,
-  viewAt,
-  type CameraTracks,
-  type Interp,
-  type Key,
-  type PropTrack
+  viewAt
 } from './cameraPath';
 
 const track = (keys: [number, number, Interp?][], animated = true, value = 0): PropTrack => ({

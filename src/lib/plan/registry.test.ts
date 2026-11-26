@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+
 import { registry } from '#lib/studio/registry.svelte';
+
 import { planRegistry } from './registry.svelte';
 
 describe('planner registry', () => {

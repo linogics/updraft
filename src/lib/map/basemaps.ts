@@ -1,4 +1,5 @@
 import type { BasemapId } from '#lib/domain/scene';
+
 import { m } from '../paraglide/messages';
 
 // Free, keyless map sources shared by the 3D (Cesium) and 2D (MapLibre) views.

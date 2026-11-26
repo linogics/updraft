@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { Thermal } from '../model';
 import { chain, straight } from '../testing/tracks';
 import { climbKinds, extractTransitions, summarizeTransitions, transitionAlts } from './transitions';

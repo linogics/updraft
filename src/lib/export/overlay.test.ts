@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_PARTS, overlayLayout, type Rect, type OverlayParts } from './overlay';
+
+import { ALL_PARTS, overlayLayout, type OverlayParts, type Rect } from './overlay';
 
 const NONE: OverlayParts = { hud: false, altitudeGraph: false, stats: false, minimap: false, credits: false };
 

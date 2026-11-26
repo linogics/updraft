@@ -1,14 +1,16 @@
 <script lang="ts">
+  import 'uplot/dist/uPlot.min.css';
+
   import { onMount, untrack } from 'svelte';
   import uPlot from 'uplot';
-  import 'uplot/dist/uPlot.min.css';
+
   import { resampleAltitudes } from '#lib/domain/timeline';
   import { m } from '#lib/paraglide/messages';
-  import type { StudioState } from '#lib/state/studio.svelte';
-  import { phaseColor } from '#lib/ui/colors';
-  import { useNeed } from '#lib/state/useNeed.svelte';
   import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
+  import { useNeed } from '#lib/state/useNeed.svelte';
+  import { phaseColor } from '#lib/ui/colors';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
 

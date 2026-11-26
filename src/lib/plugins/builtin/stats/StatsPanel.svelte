@@ -1,11 +1,12 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import type { AnalysisService } from '#lib/studio/analysisService.svelte';
-  import type { StudioService } from '#lib/studio/studioService.svelte';
-  import type { NeedKind } from '#lib/state/studio.svelte';
-  import { phaseColor } from '#lib/ui/colors';
+
   import AltRefSwitch from '#lib/components/AltRefSwitch.svelte';
   import { m } from '#lib/paraglide/messages';
+  import type { NeedKind } from '#lib/state/studio.svelte';
+  import type { AnalysisService } from '#lib/studio/analysisService.svelte';
+  import type { StudioService } from '#lib/studio/studioService.svelte';
+  import { phaseColor } from '#lib/ui/colors';
   import { formatDuration, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 

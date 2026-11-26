@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { decodeRoute, densify, encodeRoute, MAX_ROUTE_POINTS } from './route';
 
 describe('route codec', () => {

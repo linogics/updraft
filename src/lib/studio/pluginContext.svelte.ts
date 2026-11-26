@@ -1,5 +1,5 @@
-import { RESERVED_NAMESPACE, services } from '#lib/plugins/services';
 import type { PluginContext } from '#lib/plugins/api';
+import { RESERVED_NAMESPACE, services } from '#lib/plugins/services';
 import type { StudioState } from '#lib/state/studio.svelte';
 
 export type { PluginContext };

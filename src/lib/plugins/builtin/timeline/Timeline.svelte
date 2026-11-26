@@ -1,13 +1,14 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+
+  import CameraLabels from '#lib/components/CameraLabels.svelte';
+  import CameraLanes from '#lib/components/CameraLanes.svelte';
   import { snapStart, type SyncMode } from '#lib/domain/sync';
   import { m } from '#lib/paraglide/messages';
   import { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { LoadedFlight, StudioState } from '#lib/state/studio.svelte';
-  import { SNAP_PX } from '#lib/ui/keyLanes';
   import { formatClock, formatDuration } from '#lib/ui/format';
-  import CameraLabels from '#lib/components/CameraLabels.svelte';
-  import CameraLanes from '#lib/components/CameraLanes.svelte';
+  import { SNAP_PX } from '#lib/ui/keyLanes';
 
   let { studio }: { studio: StudioState } = $props();
 

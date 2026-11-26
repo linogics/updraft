@@ -1,25 +1,25 @@
 <script lang="ts">
   import {
     CAMERA_PROPS,
-    INTERPS,
+    type CameraProp,
     captureView,
     clearKeys,
     hasKeys,
+    INTERPS,
     keyAt,
+    type PropTrack,
     removeKeys,
     setAnimated,
     setKey,
     setTrack,
     setValueAt,
-    valueAt,
-    type CameraProp,
-    type PropTrack
+    valueAt
   } from '#lib/domain/cameraPath';
-  import { DENSITIES, directCamera, type Density } from '#lib/domain/director';
+  import { DENSITIES, type Density, directCamera } from '#lib/domain/director';
+  import { m } from '#lib/paraglide/messages';
   import type { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
-  import { m } from '#lib/paraglide/messages';
-  import { INTERP_INFO, PROP_LABEL, nextKeyTime, prevKeyTime } from '#lib/ui/keyLanes';
+  import { INTERP_INFO, nextKeyTime, prevKeyTime, PROP_LABEL } from '#lib/ui/keyLanes';
 
   let { studio, editor }: { studio: StudioState; editor: CameraEditor } = $props();
 

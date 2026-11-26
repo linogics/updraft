@@ -1,5 +1,6 @@
-import { PLUGIN_ID, PLUGIN_KINDS, pluginUrl, type PluginKind } from './core';
 import { PLUGIN_DOCKS, PLUGIN_HOSTS, type PluginDock, type PluginHost } from '#lib/studio/plugins';
+
+import { PLUGIN_ID, PLUGIN_KINDS, type PluginKind, pluginUrl } from './core';
 
 /** What the app knows about a plugin without importing it, so a hidden plugin costs nothing. */
 export interface PluginEntry {

@@ -1,11 +1,12 @@
+import { BUILTIN_PLUGINS, type BuiltinPlugin } from '#lib/plugins/builtin';
 import { loadPlugin, validatePlugin } from '#lib/plugins/core';
 import type { PluginEntry } from '#lib/plugins/entries';
-import { startServicePlugins } from '#lib/plugins/startup';
-import { registerProvides } from '#lib/plugins/services';
-import { BUILTIN_PLUGINS, type BuiltinPlugin } from '#lib/plugins/builtin';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
-import type { StudioPlugin } from './plugins';
+import { registerProvides } from '#lib/plugins/services';
+import { startServicePlugins } from '#lib/plugins/startup';
+
 import type { PanelDef, PanelModule } from './panels';
+import type { StudioPlugin } from './plugins';
 
 /** Plugin panel ids carry this prefix, so they never clash with a built-in id now or later. */
 export const PLUGIN_PREFIX = 'plugin:';

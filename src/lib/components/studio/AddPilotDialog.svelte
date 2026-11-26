@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { importFlights } from '#lib/storage/importFlights';
-  import { addStored } from '#lib/studio/addPilots';
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { flightRepository, type FlightSummary } from '#lib/storage';
+  import { importFlights } from '#lib/storage/importFlights';
+  import { addStored } from '#lib/studio/addPilots';
   import { formatAirtime } from '#lib/ui/format';
   import { TRACK_ACCEPT, trackFiles } from '#lib/ui/trackFiles';
 

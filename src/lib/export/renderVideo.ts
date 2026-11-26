@@ -1,14 +1,16 @@
 import {
   AudioBufferSource,
   BufferTarget,
-  CanvasSource,
   canEncodeAudio,
   canEncodeVideo,
+  CanvasSource,
   Mp4OutputFormat,
   Output,
   Quality
 } from 'mediabunny';
+
 import type { CaptureSession } from '#lib/cesium/capture';
+
 import { frameTime, type StudioRange, type Timing } from './videoTiming';
 
 /** Whether the browser can encode H.264 at this size, bitrate and frame rate. */

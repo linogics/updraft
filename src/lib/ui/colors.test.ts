@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { pilotColor, varioColor, phaseColor } from './colors';
+
+import { phaseColor, pilotColor, varioColor } from './colors';
 
 describe('colors', () => {
   it('gives distinct pilot colours and wraps around', () => {

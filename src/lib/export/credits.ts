@@ -1,5 +1,5 @@
-import { BASEMAPS, TERRARIUM_ATTRIBUTION } from '#lib/map/basemaps';
 import type { BasemapId, TerrainSource } from '#lib/domain/scene';
+import { BASEMAPS, TERRARIUM_ATTRIBUTION } from '#lib/map/basemaps';
 import { THERMAL_ATTRIBUTION } from '#lib/thermals/tiles';
 
 /** Map, terrain and thermal overlay attribution for an exported frame, one line. */

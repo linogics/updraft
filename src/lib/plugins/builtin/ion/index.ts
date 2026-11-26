@@ -1,4 +1,5 @@
 import { m } from '#lib/paraglide/messages';
+
 import { componentPlugin } from '../componentPlugin';
 import IonPanel from './IonPanel.svelte';
 

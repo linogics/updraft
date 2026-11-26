@@ -1,9 +1,9 @@
 // Canvas 2D overlay for exported frames. Framework-free: only the context it draws on is touched.
+import { indexAt } from '../domain/timeline';
 import { m } from '../paraglide/messages';
+import type { LoadedFlight } from '../state/studio.svelte';
 import { formatClock, formatDuration } from '../ui/format';
 import { formatAlt, formatDistance, formatSpeed, formatVario, type Units } from '../ui/units';
-import { indexAt } from '../domain/timeline';
-import type { LoadedFlight } from '../state/studio.svelte';
 
 export interface OverlayParts {
   hud: boolean;

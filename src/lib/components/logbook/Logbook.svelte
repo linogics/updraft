@@ -1,28 +1,29 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import Backup from '#lib/components/logbook/Backup.svelte';
-  import Sync from '#lib/components/logbook/Sync.svelte';
-  import BarChart from '#lib/components/logbook/BarChart.svelte';
+
+  import { shareFlight } from '#lib/club/share';
   import Dropzone from '#lib/components/Dropzone.svelte';
+  import Backup from '#lib/components/logbook/Backup.svelte';
+  import BarChart from '#lib/components/logbook/BarChart.svelte';
+  import Sync from '#lib/components/logbook/Sync.svelte';
   import PanelColumn from '#lib/components/panels/PanelColumn.svelte';
   import { panelStatus } from '#lib/components/studio/panelActions.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
   import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from '#lib/domain/logbook';
-  import { scoreFlight } from '#lib/xc/score';
-  import type { XcScore } from '#lib/xc/types';
-  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
-  import { logbookLayout } from '#lib/state/logbookLayout.svelte';
-  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { unitPrefs } from '#lib/state/units.svelte';
-  import { syncClient } from '#lib/sync/client.svelte';
-  import { flightRepository, type FlightSummary } from '#lib/storage';
-  import { importFlights, studioHref } from '#lib/storage/importFlights';
-  import { shareFlight } from '#lib/club/share';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
+  import { logbookLayout } from '#lib/state/logbookLayout.svelte';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+  import { flightRepository, type FlightSummary } from '#lib/storage';
+  import { importFlights, studioHref } from '#lib/storage/importFlights';
+  import { syncClient } from '#lib/sync/client.svelte';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance } from '#lib/ui/units';
+  import { scoreFlight } from '#lib/xc/score';
+  import type { XcScore } from '#lib/xc/types';
 
   let flights = $state<FlightSummary[]>([]);
   let selected = $state<string[]>([]);

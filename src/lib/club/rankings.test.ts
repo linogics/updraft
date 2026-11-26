@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { ValidClubEntry } from './index';
 import { rankings } from './rankings';
 import type { ClubStats } from './stats';

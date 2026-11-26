@@ -1,7 +1,9 @@
-import { expect, openDemoStudio, test } from './fixtures';
 import { readFileSync } from 'node:fs';
+
 import type { Page } from '@playwright/test';
+
 import { buildIgc } from '../src/lib/domain/testing/igc-builder';
+import { expect, openDemoStudio, test } from './fixtures';
 
 test('home page uses the Sora display font', async ({ page }) => {
   await page.goto('/');

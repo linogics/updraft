@@ -1,8 +1,8 @@
 import { analyzeFlight } from '../domain/analysis/analyze';
 import type { Flight } from '../domain/model';
+import type { XcLeague } from '../state/xcPrefs';
 import { scoreFlight } from '../xc/score';
 import type { XcScore } from '../xc/types';
-import type { XcLeague } from '../state/xcPrefs';
 
 /** What a shared flight tells the club without its track. Every ranking reads from here. */
 export interface ClubStats {

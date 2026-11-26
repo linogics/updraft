@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+
   import { m } from '#lib/paraglide/messages';
-  import type { StudioState } from '#lib/state/studio.svelte';
   import { services } from '#lib/plugins/services';
-  import { createPluginContext, studioHost, type PluginHostEnv } from '#lib/studio/pluginContext.svelte';
+  import type { StudioState } from '#lib/state/studio.svelte';
   import { mountedPlugins } from '#lib/studio/exportHooks.svelte';
+  import { createPluginContext, type PluginHostEnv, studioHost } from '#lib/studio/pluginContext.svelte';
   import type { StudioPlugin } from '#lib/studio/plugins';
+
   import PanelError from './PanelError.svelte';
 
   /**

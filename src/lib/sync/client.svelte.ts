@@ -1,11 +1,12 @@
-import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
+import { loadClub, loadClubFlight } from '#lib/club';
 import type { BackendPlugin } from '#lib/plugins/backendKind';
+import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
 import { loadPlugin, validatePlugin } from '#lib/plugins/core';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import { flightRepository } from '#lib/storage';
 import type { FlightRepository } from '#lib/storage/repository';
-import { loadClub, loadClubFlight } from '#lib/club';
-import { loadSyncConfig, parseSyncConfig, writeOverride, type SyncConfig } from './config';
+
+import { loadSyncConfig, parseSyncConfig, type SyncConfig, writeOverride } from './config';
 import { SyncEngine, type SyncOptions } from './engine.svelte';
 import type { AuthMethod, BackendAdapter, BackendSession } from './types';
 

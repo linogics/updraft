@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { distance } from '../domain/geo';
 import { ring } from './ring';
 

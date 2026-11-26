@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
-  import { pngFilename } from '#lib/export/filename';
-  import { m } from '#lib/paraglide/messages';
+  import { SvelteSet } from 'svelte/reactivity';
+
   import { mapCredits } from '#lib/export/credits';
-  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
+  import { pngFilename } from '#lib/export/filename';
+  import { ALL_PARTS, type OverlayParts, paintOverlay, PART_LABELS } from '#lib/export/overlay';
+  import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { exportPlugins, paintPlugins } from '#lib/studio/exportHooks.svelte';
-  import { SvelteSet } from 'svelte/reactivity';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 
   let { studio }: { studio: StudioState } = $props();
 

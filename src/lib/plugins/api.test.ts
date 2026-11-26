@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import src from './api.d.ts?raw';
 
 describe('plugin api types', () => {

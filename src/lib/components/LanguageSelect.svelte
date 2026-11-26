@@ -1,6 +1,6 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
-  import { getLocale, setLocale, type Locale } from '#lib/paraglide/runtime';
+  import { getLocale, type Locale, setLocale } from '#lib/paraglide/runtime';
 </script>
 
 <!-- Each language is named in itself. setLocale saves the choice and reloads. -->

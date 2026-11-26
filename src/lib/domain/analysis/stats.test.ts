@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeStats } from './stats';
-import { chain, straight } from '../testing/tracks';
+
 import type { Phase } from '../model';
+import { chain, straight } from '../testing/tracks';
+import { computeStats } from './stats';
 
 describe('computeStats', () => {
   // 100 s climb north, then 100 s glide south back past the start.

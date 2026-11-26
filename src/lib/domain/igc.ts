@@ -1,5 +1,6 @@
-import { m } from '../paraglide/messages';
 import IGCParser from 'igc-parser';
+
+import { m } from '../paraglide/messages';
 import type { Fix, Flight } from './model';
 
 export interface ParseOptions {

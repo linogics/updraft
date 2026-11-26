@@ -1,7 +1,6 @@
 import type { Viewer } from 'cesium';
+
 import type { BeginCapture } from '#lib/cesium/capture';
-import { DEFAULT_TRACKS, type CameraTracks, type CameraView } from '#lib/domain/cameraPath';
-import type { NeedKind } from '#lib/plugins/api';
 import { analyzeFlight } from '#lib/domain/analysis/analyze';
 import { DEFAULT_FILTER, filterThermals, type ThermalFilter } from '#lib/domain/analysis/filter';
 import {
@@ -11,24 +10,26 @@ import {
   type Transition,
   type TransitionSummary
 } from '#lib/domain/analysis/transitions';
+import { type CameraTracks, type CameraView, DEFAULT_TRACKS } from '#lib/domain/cameraPath';
 import type { Flight, FlightAnalysis, PhaseKind, Thermal } from '#lib/domain/model';
 import {
-  DEFAULT_SCENE,
   type BasemapId,
   type CameraMode,
   type ColorMode,
+  DEFAULT_SCENE,
   type Layout,
   type TerrainSource,
   type TrackStyle
 } from '#lib/domain/scene';
-import { defaultSyncMode, shiftFixes, syncOffsets, type SyncMode } from '#lib/domain/sync';
+import { defaultSyncMode, shiftFixes, type SyncMode, syncOffsets } from '#lib/domain/sync';
 import { indexAt } from '#lib/domain/timeline';
 import { groundSeries } from '#lib/map/groundHeights';
+import type { NeedKind } from '#lib/plugins/api';
 import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import { flightRepository } from '#lib/storage';
 import { pilotColor } from '#lib/ui/colors';
-import { scoreFlight, type XcScore } from '#lib/xc/score';
 import { yieldToMain } from '#lib/ui/yield';
+import { scoreFlight, type XcScore } from '#lib/xc/score';
 
 /** Work that only runs while a view asks for it, see StudioState.need. */
 export type { NeedKind };

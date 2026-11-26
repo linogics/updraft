@@ -1,8 +1,8 @@
 <script lang="ts">
   import { AIRSPACE_CLASSES } from '#lib/airspace/model';
   import { MAX_FLOOR_LIMIT } from '#lib/airspace/prefs';
-  import { m } from '#lib/paraglide/messages';
   import { airspacePrefs as prefs } from '#lib/airspace/prefs.svelte';
+  import { m } from '#lib/paraglide/messages';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { fromAlt, toAlt, UNIT_LABELS } from '#lib/ui/units';
 

@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onMount, type Snippet } from 'svelte';
   import MenuIcon from '@lucide/svelte/icons/menu';
   import X from '@lucide/svelte/icons/x';
+  import { onMount, type Snippet } from 'svelte';
+
   import { m } from '#lib/paraglide/messages';
 
   let {

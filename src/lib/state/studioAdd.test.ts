@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { Flight } from '#lib/domain/model';
 import { pilotColor } from '#lib/ui/colors';
 

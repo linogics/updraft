@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
+
+import type { Fix, Phase } from '../model';
+import { chain, circle, straight } from '../testing/tracks';
 import { detectPhases } from './phases';
 import { computeSeries } from './series';
-import { chain, circle, straight } from '../testing/tracks';
-import type { Fix, Phase } from '../model';
 
 function phasesOf(fixes: Fix[]): Phase[] {
   return detectPhases(fixes, computeSeries(fixes).heading);

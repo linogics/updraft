@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { movePanelIn, parsePageLayout } from './pageLayout';
 
 const defaults = { main: ['a', 'b'], side: ['c', 'd'] };

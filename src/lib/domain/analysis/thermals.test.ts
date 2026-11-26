@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { extractThermals } from './thermals';
-import { chain, circle, straight } from '../testing/tracks';
+
 import type { Phase } from '../model';
+import { chain, circle, straight } from '../testing/tracks';
+import { extractThermals } from './thermals';
 
 describe('extractThermals', () => {
   const fixes = chain(

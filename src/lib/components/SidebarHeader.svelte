@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+
   import Logo from '#lib/components/Logo.svelte';
 
   let { title, actions }: { title?: string; actions?: Snippet } = $props();

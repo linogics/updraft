@@ -1,16 +1,18 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
+  import type { Snippet } from 'svelte';
+
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
-  import { DOCK_LABELS, DOCKS, type Dock, type PanelDef } from '#lib/studio/panels';
+  import { type Dock, DOCK_LABELS, DOCKS, type PanelDef } from '#lib/studio/panels';
   import { panelById } from '#lib/studio/registry.svelte';
+
   import Menu from '../Menu.svelte';
-  import { removePanel, movePanel, panelMenuId } from './panelActions.svelte';
-  import PanelHost from './PanelHost.svelte';
+  import { movePanel, panelMenuId, removePanel } from './panelActions.svelte';
   import { drag, liftStyle, startDrag } from './panelDrag.svelte';
+  import PanelHost from './PanelHost.svelte';
 
   /** Side docks stack their panels, the bottom dock shows one at a time behind tabs, next to `lead`. */
   let { dock, studio, ids, lead }: { dock: Dock; studio: StudioState; ids: string[]; lead?: Snippet } = $props();

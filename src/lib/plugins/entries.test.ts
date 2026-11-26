@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { pluginUrl } from './core';
 import { parsePlugins } from './entries';
 

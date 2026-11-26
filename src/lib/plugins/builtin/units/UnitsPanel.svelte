@@ -9,9 +9,9 @@
     SPEED_UNITS,
     UNIT_LABELS,
     UNIT_PRESETS,
-    VARIO_UNITS,
     type UnitPreset,
-    type Units
+    type Units,
+    VARIO_UNITS
   } from '#lib/ui/units';
 
   // The dock passes the studio to every panel, units do not need it.

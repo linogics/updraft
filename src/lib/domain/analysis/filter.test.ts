@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { Thermal } from '../model';
 import { DEFAULT_FILTER, filterThermals } from './filter';
 

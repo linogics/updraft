@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { decodeScene, encodeScene, DEFAULT_SCENE, resolveTerrain, type SceneConfig } from './scene';
+
+import { decodeScene, DEFAULT_SCENE, encodeScene, resolveTerrain, type SceneConfig } from './scene';
 
 describe('scene config', () => {
   it('round-trips through URL search params', () => {

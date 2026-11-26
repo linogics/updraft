@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { validatePlugin } from './core';
 
 const ok = { id: 'acme/wind', name: 'Wind', kind: 'studio', apiVersion: 2, dock: 'right', mount: () => {} };

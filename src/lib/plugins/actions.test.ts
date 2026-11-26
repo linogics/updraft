@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import { addPlugin } from './actions';
 import { pluginPrefs } from './pluginPrefs.svelte';
 

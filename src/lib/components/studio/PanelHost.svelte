@@ -22,11 +22,12 @@
 </script>
 
 <script lang="ts">
-  import { m } from '#lib/paraglide/messages';
-  import PanelError from './PanelError.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
+  import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import type { PluginHostEnv } from '#lib/studio/pluginContext.svelte';
+
+  import PanelError from './PanelError.svelte';
 
   let { panel, studio, host }: { panel: PanelDef; studio?: StudioState; host?: PluginHostEnv } = $props();
 

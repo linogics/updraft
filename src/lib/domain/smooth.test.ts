@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { Fix } from './model';
 import { smoothPath } from './smooth';
 

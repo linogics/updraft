@@ -2,10 +2,12 @@
   import Languages from '@lucide/svelte/icons/languages';
   import Maximize from '@lucide/svelte/icons/maximize';
   import Minimize from '@lucide/svelte/icons/minimize';
+
   import { CAMERA_MODES, LAYOUTS } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
-  import { getLocale, setLocale, type Locale } from '#lib/paraglide/runtime';
+  import { getLocale, type Locale, setLocale } from '#lib/paraglide/runtime';
   import type { StudioState } from '#lib/state/studio.svelte';
+
   import Logo from './Logo.svelte';
   import Popover from './Popover.svelte';
   import PanelsMenu from './studio/PanelsMenu.svelte';

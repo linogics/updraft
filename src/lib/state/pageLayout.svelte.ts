@@ -1,4 +1,4 @@
-import { movePanelIn, parsePageLayout, type PageLayoutValue } from './pageLayout';
+import { movePanelIn, type PageLayoutValue, parsePageLayout } from './pageLayout';
 
 /**
  * Panel layout of one page, kept in this browser. `extra` lists panel ids that come and go at runtime,

@@ -1,4 +1,5 @@
-import { mount, unmount, type Component } from 'svelte';
+import { type Component, mount, unmount } from 'svelte';
+
 import type { StudioState } from '#lib/state/studio.svelte';
 import type { PluginDock, PluginHost, StudioPlugin } from '#lib/studio/plugins';
 import { STUDIO_STATE_SERVICE } from '#lib/studio/studioService.svelte';

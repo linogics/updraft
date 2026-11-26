@@ -1,10 +1,10 @@
 // Regenerates src/lib/demo/groundGrid.json, the ground height grid the demo flight tests check against.
 // Run with `node scripts/demo-terrain.mjs` (needs network access, no dependencies).
 // Samples Terrarium zoom-12 tiles (height = r*256 + g + b/256 - 32768, same as src/lib/domain/terrarium.ts).
-import { inflateSync } from 'node:zlib';
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 const ZOOM = 12;
 const TILE = 256;

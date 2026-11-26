@@ -1,25 +1,26 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
   import * as Cesium from 'cesium';
-  import { beginCapture, captureFrame } from '#lib/cesium/capture';
-  import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
-  import { FlightLayer } from '#lib/cesium/flightLayer';
-  import { XcRoute } from '#lib/cesium/xcRoute';
-  import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
+  import { onMount, untrack } from 'svelte';
+
   import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-  import { ThermalLayer } from '#lib/cesium/thermalLayer';
-  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
-  import { loadAirspaces, type AirspaceFeature } from '#lib/airspace/tiles';
+  import { type AirspaceFeature, loadAirspaces } from '#lib/airspace/tiles';
+  import { AirspaceLayer } from '#lib/cesium/airspaceLayer';
   import { CameraController, viewFromCamera } from '#lib/cesium/cameraModes';
+  import { beginCapture, captureFrame } from '#lib/cesium/capture';
+  import { FlightLayer } from '#lib/cesium/flightLayer';
+  import { ThermalLayer } from '#lib/cesium/thermalLayer';
+  import { createViewer, sampleGroundHeight, setBasemap, setTerrain } from '#lib/cesium/viewer';
+  import { XcRoute } from '#lib/cesium/xcRoute';
   import { loadRuntimeConfig } from '#lib/config';
-  import { m } from '#lib/paraglide/messages';
   import { altitudeOffset } from '#lib/domain/align';
   import { viewAt } from '#lib/domain/cameraPath';
   import type { BasemapId, TerrainSource } from '#lib/domain/scene';
+  import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
-  import { unitPrefs } from '#lib/state/units.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 
   let { studio }: { studio: StudioState } = $props();
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from './logbook';
 
 const HOUR = 3_600_000;

@@ -1,22 +1,23 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { replaceState } from '$app/navigation';
-  import SideDrawer from '#lib/components/SideDrawer.svelte';
-  import SidebarHeader from '#lib/components/SidebarHeader.svelte';
-  import { m } from '#lib/paraglide/messages';
-  import PlanMap from '#lib/components/PlanMap.svelte';
-  import PlanPanelsMenu from '#lib/components/plan/PlanPanelsMenu.svelte';
+
   import PanelColumn from '#lib/components/panels/PanelColumn.svelte';
+  import PlanPanelsMenu from '#lib/components/plan/PlanPanelsMenu.svelte';
+  import PlanMap from '#lib/components/PlanMap.svelte';
+  import SidebarHeader from '#lib/components/SidebarHeader.svelte';
+  import SideDrawer from '#lib/components/SideDrawer.svelte';
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
-  import PanelHost from '#lib/components/studio/PanelHost.svelte';
   import { panelStatus } from '#lib/components/studio/panelActions.svelte';
+  import PanelHost from '#lib/components/studio/PanelHost.svelte';
   import type { LatLon } from '#lib/domain/geo';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
+  import { writeRouteGpx, writeXctsk } from '#lib/domain/task';
   import { BASEMAPS } from '#lib/map/basemaps';
+  import { m } from '#lib/paraglide/messages';
   import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
   import { planRegistry } from '#lib/plan/registry.svelte';
-  import { writeRouteGpx, writeXctsk } from '#lib/domain/task';
   import { PlanState } from '#lib/state/plan.svelte';
   import { LEGS_PANEL, planLayout } from '#lib/state/planLayout.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';

@@ -1,4 +1,5 @@
 import type { BackendAdapter } from '#lib/sync/types';
+
 import type { PluginBase } from './services';
 
 /** apiVersion of the backend kind. */

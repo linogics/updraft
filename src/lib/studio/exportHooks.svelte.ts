@@ -1,7 +1,9 @@
 import { SvelteSet } from 'svelte/reactivity';
+
 import { studioLayout } from '#lib/state/studioLayout.svelte';
-import { pluginPanelId } from './registry.svelte';
+
 import type { StudioPlugin } from './plugins';
+import { pluginPanelId } from './registry.svelte';
 
 /** Plugins whose panel is mounted right now. Hidden plugins are not loaded and do not take part in exports. */
 export const mountedPlugins = new SvelteSet<StudioPlugin>();

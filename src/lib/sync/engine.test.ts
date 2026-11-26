@@ -1,7 +1,9 @@
 import 'fake-indexeddb/auto';
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { IndexedDbFlightRepository } from '../storage/indexeddb';
+
 import type { Flight } from '../domain/model';
+import { IndexedDbFlightRepository } from '../storage/indexeddb';
 import { SyncEngine } from './engine.svelte';
 import { setSyncKeys } from './prefs';
 import type { SyncChange, SyncTransport } from './types';
