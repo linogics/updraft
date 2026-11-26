@@ -41,7 +41,7 @@
   let editing = $state<string | null>(null);
   let draft = $state({ pilot: '', site: '', glider: '', notes: '' });
   let adding = $state(false);
-  let manual = $state({
+  const manual = $state({
     date: new Date().toISOString().slice(0, 10),
     durationMin: 60,
     pilot: '',

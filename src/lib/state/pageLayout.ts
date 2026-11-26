@@ -34,11 +34,12 @@ export function parsePageLayout(
     const list = stored[col];
     if (!Array.isArray(list)) continue;
 
-    for (const id of list)
+    for (const id of list) {
       if (typeof id === 'string' && known.includes(id) && !seen.has(id)) {
         seen.add(id);
         columns[col].push(id);
       }
+    }
   }
 
   for (const [col, ids] of Object.entries(defaults)) for (const id of ids) if (!seen.has(id)) columns[col].push(id);

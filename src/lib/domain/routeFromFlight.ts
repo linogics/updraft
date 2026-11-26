@@ -20,7 +20,7 @@ export function routeFromFlight(fixes: Fix[], turnpoints: number): LatLon[] {
   for (let j = 1; j <= legs; j++) {
     const cur = new Float64Array(m).fill(-Infinity);
     const prev = new Int32Array(m);
-    for (let i = j; i < m; i++)
+    for (let i = j; i < m; i++) {
       for (let p = j - 1; p < i; p++) {
         const v = best[j - 1][p] + d[p * m + i];
         if (v > cur[i]) {
@@ -28,6 +28,7 @@ export function routeFromFlight(fixes: Fix[], turnpoints: number): LatLon[] {
           prev[i] = p;
         }
       }
+    }
 
     best.push(cur);
     from.push(prev);

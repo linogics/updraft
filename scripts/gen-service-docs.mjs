@@ -80,8 +80,10 @@ function referenced(nodes, skip) {
 
 function typeSection(d) {
   const intro = [`### ${d.name.text}`, doc(d)];
-  if (ts.isTypeAliasDeclaration(d))
+  if (ts.isTypeAliasDeclaration(d)) {
     return [...intro, '```ts\n' + d.getText(sf).replace(/^export /, '') + '\n```'].filter(Boolean).join('\n\n');
+  }
+
   const rows = d.members.map((m) => [code(m.name.getText(sf)), code(m.type?.getText(sf) ?? ''), cell(doc(m))]);
   return [...intro, table(['Field', 'Type', 'Description'], rows)].filter(Boolean).join('\n\n');
 }

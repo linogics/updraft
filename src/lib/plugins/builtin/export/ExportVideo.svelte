@@ -54,7 +54,7 @@
   let mode = $state<'length' | 'speed'>('length');
   let seconds = $state<number | null>(30);
   let factor = $state<number | null>(60);
-  let parts = $state<OverlayParts>({ ...ALL_PARTS });
+  const parts = $state<OverlayParts>({ ...ALL_PARTS });
   let music = $state.raw<AudioBuffer | null>(null);
   let musicName = $state('');
   let musicMode = $state<'trim' | 'fit'>('trim');

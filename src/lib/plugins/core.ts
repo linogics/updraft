@@ -38,11 +38,16 @@ export function pluginUrl(raw: unknown): string | null {
 export function validatePlugin(mod: unknown, taken: readonly string[] = []): AnyPlugin {
   if (!mod || typeof mod !== 'object') throw new Error('The module has no default export object.');
   const p = mod as Record<string, unknown>;
-  if (typeof p.id !== 'string' || !PLUGIN_ID.test(p.id))
+  if (typeof p.id !== 'string' || !PLUGIN_ID.test(p.id)) {
     throw new Error('"id" must look like "vendor/name", each part 1 to 40 characters from a-z, 0-9 and "-".');
+  }
+
   if (typeof p.name !== 'string' || !p.name.trim()) throw new Error('"name" must be a non-empty string.');
-  if (!PLUGIN_KINDS.includes(p.kind as PluginKind))
+
+  if (!PLUGIN_KINDS.includes(p.kind as PluginKind)) {
     throw new Error(`"kind" must be one of ${PLUGIN_KINDS.map((k) => `"${k}"`).join(', ')}.`);
+  }
+
   if (taken.includes(p.id)) throw new Error(`The id "${p.id}" is already in use.`);
   validateServiceFields(p);
   return validators[p.kind as PluginKind](p);

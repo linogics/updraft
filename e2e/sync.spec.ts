@@ -22,23 +22,28 @@ test('connect, sign in and sync a record to a PocketBase server', async ({ page 
       route.fulfill({ status, headers: cors, contentType: 'application/json', body: JSON.stringify(body) });
 
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
-    if (pathname === '/api/collections/users/auth-methods')
+
+    if (pathname === '/api/collections/users/auth-methods') {
       return json({
         password: { enabled: true, identityFields: ['email'] },
         oauth2: { enabled: false, providers: [] },
         mfa: { enabled: false, duration: 0 },
         otp: { enabled: false, duration: 0 }
       });
-    if (pathname === '/api/collections/users/auth-with-password')
+    }
+
+    if (pathname === '/api/collections/users/auth-with-password') {
       return json({ token, record: { id: 'u1', collectionName: 'users', email: EMAIL } });
+    }
 
     if (pathname === '/api/collections/records/records' && req.method() === 'POST') {
       pushed.push(req.postDataJSON());
       return json({ id: `r${pushed.length}`, ...req.postDataJSON() });
     }
 
-    if (pathname === '/api/collections/records/records')
+    if (pathname === '/api/collections/records/records') {
       return json({ page: 1, perPage: 200, totalItems: -1, totalPages: -1, items: [] });
+    }
 
     return json({ message: 'Not mocked.' }, 404);
   });

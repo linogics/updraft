@@ -13,8 +13,10 @@ function encode(height: number): [number, number, number, number] {
 /** srcSize² tile whose height is given per pixel. */
 function tile(srcSize: number, height: (x: number, y: number) => number): Uint8ClampedArray {
   const data = new Uint8ClampedArray(srcSize * srcSize * 4);
-  for (let y = 0; y < srcSize; y++)
+  for (let y = 0; y < srcSize; y++) {
     for (let x = 0; x < srcSize; x++) data.set(encode(height(x, y)), (y * srcSize + x) * 4);
+  }
+
   return data;
 }
 

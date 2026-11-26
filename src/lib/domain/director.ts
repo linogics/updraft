@@ -88,8 +88,10 @@ function directShots(
 
     for (const { kind, a, b } of segs) {
       const times = [a];
-      if (density === 'mid' && b - a > LONG_PHASE_MS)
+      if (density === 'mid' && b - a > LONG_PHASE_MS) {
         for (let t = a + MID_STEP_MS; t < b; t += MID_STEP_MS) times.push(t);
+      }
+
       times.push(b);
       const start = heading;
       const turns = Math.max(1, Math.round((b - a) / 1000 / ORBIT_SECONDS_PER_TURN));
@@ -108,7 +110,7 @@ function directShots(
     }
   }
 
-  if (density === 'high')
+  if (density === 'high') {
     for (const phase of sorted) {
       const a = fixes[phase.start].t;
       const b = fixes[phase.end].t;
@@ -126,6 +128,7 @@ function directShots(
         }
       }
     }
+  }
 
   keys.push({ t: outMs, heading, pitch: PULL_BACK.pitch, range: PULL_BACK.range });
   if (keys.length <= MAX_KEYS) return keys;
