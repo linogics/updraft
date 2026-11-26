@@ -331,6 +331,7 @@ export default {
 
 - `exports` has 1 to 10 entries. `label` is not blank and names the button. `extension` is lower case, without the dot, 1 to 10 characters from `[a-z0-9]`, and unique within the plugin. Other plugins may reuse an extension, the label tells the buttons apart. `mime` defaults to `application/octet-stream`.
 - `write(route)` gets `{ points, speed }` with at least 2 turnpoints and the speed in km/h. It is a fresh copy, changing it has no effect. It returns a string (stored as UTF-8) or a `Uint8Array`. An error it throws is shown under the buttons.
+- Users add and remove these plugins in the planner's Panels menu, with Add plugin.
 - The bundled `updraft/tasks` plugin provides the XCTrack task and the GPX route and cannot be removed.
 - The bundled `updraft/leagues` plugin provides the seven built-in leagues and cannot be removed.
 - A route suggestion is not an export. Use a normal studio plugin with `hosts: ['plan']` that calls `setRoute` of `updraft/plan@1`.

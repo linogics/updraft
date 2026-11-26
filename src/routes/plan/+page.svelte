@@ -232,7 +232,7 @@
   </main>
 </div>
 
-<AddPluginDialog bind:this={addPlugin} />
+<AddPluginDialog bind:this={addPlugin} kinds={['studio', 'xc-planner']} />
 
 {#snippet body(id: string)}
   {#if id === LEGS_PANEL}

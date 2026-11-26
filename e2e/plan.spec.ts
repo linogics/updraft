@@ -116,4 +116,37 @@ test.describe('plugins', () => {
     await page.getByRole('button', { name: 'Panels', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: 'Plan Hello' })).toHaveCount(0);
   });
+
+  test('an xc-planner plugin adds an export and a league and can be uninstalled', async ({ page }) => {
+    const planUrl = 'https://plugins.example.test/csv-club.js';
+    const body = `export default {
+      id: 'test/csv-club', name: 'CSV Club', kind: 'xc-planner', apiVersion: 1,
+      exports: [{ label: 'CSV test', extension: 'csv', write: (r) => r.points.length + '' }],
+      leagues: [{ id: 'club', label: 'Club test league', rules: [{ name: 'Free', type: 'free', multiplier: 1 }] }]
+    };`;
+    await page.route(planUrl, (route) =>
+      route.fulfill({ contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' }, body })
+    );
+    await page.goto('/plan?r=' + encodeURIComponent('47,8~47,8.2'));
+    await page.getByRole('button', { name: 'Panels', exact: true }).click();
+    await page.getByRole('button', { name: 'Add plugin…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add plugin' });
+    await dialog.getByLabel(/^Plugin address/).fill(planUrl);
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect(page.getByRole('button', { name: 'CSV test' })).toBeVisible();
+    await page.getByRole('button', { name: 'Panels', exact: true }).click();
+    await expect(page.getByRole('list', { name: 'Tasks and leagues' })).toContainText('Exports: 1, Leagues: 1');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'XC score', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'XC score' }).getByRole('combobox')).toContainText(
+      'Club test league'
+    );
+
+    await page.getByRole('button', { name: 'Panels', exact: true }).click();
+    await page.getByRole('button', { name: 'Uninstall plugin CSV Club' }).click();
+    await expect(page.getByRole('button', { name: 'CSV test' })).toHaveCount(0);
+    await expect(page.getByRole('list', { name: 'Tasks and leagues' })).toHaveCount(0);
+  });
 });

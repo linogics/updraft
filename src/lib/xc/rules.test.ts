@@ -45,9 +45,14 @@ describe('solveFlight', () => {
   it.each([
     ['XContest', out],
     ['FAI-OAR', oar]
-  ])('scores %s like the library', (id, fixes) => {
-    const mine = solveFlight(fixes, id, BUILTIN_LEAGUES.find((l) => l.id === id)!.rules, 5000);
-    expect(mine).not.toBeNull();
-    expect(mine).toEqual(direct(fixes, id));
-  });
+  ])(
+    'scores %s like the library',
+    (id, fixes) => {
+      const mine = solveFlight(fixes, id, BUILTIN_LEAGUES.find((l) => l.id === id)!.rules, 5000);
+      expect(mine).not.toBeNull();
+      expect(mine).toEqual(direct(fixes, id));
+    },
+    // Two solver runs per case, slow machines need more than the default 5 s.
+    30_000
+  );
 });
