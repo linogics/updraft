@@ -54,4 +54,15 @@ describe('addPlugin', () => {
     loaded.current = { ...conv(['csv']), id: 'acme/csv2' };
     await expect(addPlugin('https://a.test/csv2.js')).rejects.toThrow('already handled by CSV');
   });
+
+  it('refuses a kind the page does not accept and stores nothing', async () => {
+    const before = pluginPrefs.list.length;
+    loaded.current = { ...conv(['zzz']), id: 'acme/zzz' };
+    await expect(addPlugin('https://a.test/zzz.js', { kinds: ['studio'] })).rejects.toThrow(
+      'This page only accepts studio plugins.'
+    );
+    expect(pluginPrefs.list).toHaveLength(before);
+    await addPlugin('https://a.test/zzz.js', { kinds: ['converter'] });
+    expect(pluginPrefs.list).toHaveLength(before + 1);
+  });
 });

@@ -306,6 +306,7 @@ export default {
 - The app checks every reader result: `date` is `YYYY-MM-DD`, there is at least one fix, all numbers are finite, `lat` and `lon` are in range and `t` never decreases. It copies the fields it knows and assigns `id` and the file name itself. A bad result becomes an error for that file.
 - `write` returns a string (stored as UTF-8) or a `Uint8Array`.
 - The bundled formats (IGC, GPX, KML, GeoJSON, TRK, FIT) are converters too and cannot be removed.
+- Users add and remove converters on the converter page, with Add format.
 
 ## Versioning
 

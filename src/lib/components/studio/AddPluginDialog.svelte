@@ -1,6 +1,10 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
   import { addPlugin } from '#lib/plugins/actions';
+  import type { PluginKind } from '#lib/plugins/core';
+
+  /** Limits the accepted plugin kinds. Any kind when left out. */
+  let { kinds }: { kinds?: PluginKind[] } = $props();
 
   let dialog: HTMLDialogElement;
   let url = $state('');
@@ -21,7 +25,7 @@
     busy = true;
     error = '';
     try {
-      await addPlugin(url);
+      await addPlugin(url, { kinds });
       dialog.close();
     } catch (err) {
       console.error('Could not add plugin', err);
