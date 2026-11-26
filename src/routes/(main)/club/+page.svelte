@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+
   import { clubStudioHref, type ValidClubEntry } from '#lib/club';
   import { formatCategory } from '#lib/club/format';
-  import { CATEGORIES, rankings, type Category, type Medal } from '#lib/club/rankings';
+  import { CATEGORIES, type Category, type Medal, rankings } from '#lib/club/rankings';
   import { m } from '#lib/paraglide/messages';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { XC_LEAGUES } from '#lib/state/xcPrefs';

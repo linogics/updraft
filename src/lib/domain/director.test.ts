@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_KEYS, type CameraTracks } from './cameraPath';
-import { directCamera as directTracks, type Density } from './director';
+
+import { type CameraTracks, MAX_KEYS } from './cameraPath';
+import { type Density, directCamera as directTracks } from './director';
 import { headingDelta } from './geo';
 import type { Fix, Phase } from './model';
 

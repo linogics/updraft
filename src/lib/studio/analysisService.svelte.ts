@@ -1,8 +1,8 @@
+import type { TransitionSummary } from '#lib/domain/analysis/transitions';
+import type { FlightStats } from '#lib/domain/model';
+import type { AnalysisEvent, AnalysisService } from '#lib/plugins/api';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
-import type { FlightStats } from '#lib/domain/model';
-import type { TransitionSummary } from '#lib/domain/analysis/transitions';
-import type { AnalysisEvent, AnalysisService } from '#lib/plugins/api';
 import type { StudioState } from '#lib/state/studio.svelte';
 
 export const ANALYSIS_SERVICE = 'updraft/flight-analysis@1';

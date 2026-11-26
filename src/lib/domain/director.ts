@@ -1,4 +1,4 @@
-import { DEFAULT_TRACKS, MAX_KEYS, unwrapNear, type CameraTracks, type CameraView, type PropTrack } from './cameraPath';
+import { type CameraTracks, type CameraView, DEFAULT_TRACKS, MAX_KEYS, type PropTrack, unwrapNear } from './cameraPath';
 
 type Shot = CameraView & { t: number };
 import { bearing, distance } from './geo';

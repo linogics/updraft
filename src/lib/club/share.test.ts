@@ -1,5 +1,7 @@
 import 'fake-indexeddb/auto';
+
 import { describe, expect, it } from 'vitest';
+
 import type { Flight } from '../domain/model';
 import { chain, straight } from '../domain/testing/tracks';
 import { IndexedDbFlightRepository } from '../storage/indexeddb';

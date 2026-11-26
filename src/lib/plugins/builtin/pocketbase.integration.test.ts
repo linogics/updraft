@@ -6,12 +6,15 @@
 //        npm test -- pocketbase.integration
 //      Add PB_DB=<dir>/data.db to also run the equal `updated` test.
 import 'fake-indexeddb/auto';
+
 import PocketBase from 'pocketbase';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { Flight } from '#lib/domain/model';
 import { IndexedDbFlightRepository } from '#lib/storage/indexeddb';
 import { SyncEngine } from '#lib/sync/engine.svelte';
 import type { BackendAdapter, SyncChange } from '#lib/sync/types';
+
 import { createPocketBase } from './pocketbase';
 
 const { PB_URL, PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD } = process.env;

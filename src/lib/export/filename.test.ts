@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { mp4Filename, pngFilename, slugify } from './filename';
 
 describe('slugify', () => {

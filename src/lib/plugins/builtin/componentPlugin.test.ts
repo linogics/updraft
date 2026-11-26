@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import type { PluginContext } from '#lib/studio/pluginContext.svelte';
+
 import { componentPlugin } from './componentPlugin';
 
 vi.mock('svelte', () => ({ mount: vi.fn(() => ({})), unmount: vi.fn() }));

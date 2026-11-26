@@ -2,10 +2,10 @@
   import AddPilotDialog from '#lib/components/studio/AddPilotDialog.svelte';
   import { distance } from '#lib/domain/geo';
   import { indexAt, positionAt } from '#lib/domain/timeline';
-  import type { StudioState } from '#lib/state/studio.svelte';
-  import { useNeed } from '#lib/state/useNeed.svelte';
-  import { unitPrefs } from '#lib/state/units.svelte';
   import { m } from '#lib/paraglide/messages';
+  import type { StudioState } from '#lib/state/studio.svelte';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { useNeed } from '#lib/state/useNeed.svelte';
   import { formatClock } from '#lib/ui/format';
   import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
 

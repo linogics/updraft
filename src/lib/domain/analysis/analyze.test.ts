@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeFlight } from './analyze';
-import { chain, circle, straight } from '../testing/tracks';
+
 import type { Flight } from '../model';
+import { chain, circle, straight } from '../testing/tracks';
+import { analyzeFlight } from './analyze';
 
 describe('analyzeFlight', () => {
   const fixes = chain(

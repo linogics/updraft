@@ -1,4 +1,4 @@
-import { parseAltRef, type AltRef } from './altRefPrefs';
+import { type AltRef, parseAltRef } from './altRefPrefs';
 
 const KEY = 'altRef';
 

@@ -1,5 +1,6 @@
 import { loadOpenAipKey, saveOpenAipKey } from '#lib/config';
-import { parseAirspacePrefs, type AirspacePrefsValue } from './prefs';
+
+import { type AirspacePrefsValue, parseAirspacePrefs } from './prefs';
 
 const KEY = 'airspacePrefs';
 

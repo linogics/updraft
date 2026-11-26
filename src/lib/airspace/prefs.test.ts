@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { AIRSPACE_CLASSES } from './model';
 import { parseAirspacePrefs } from './prefs';
 

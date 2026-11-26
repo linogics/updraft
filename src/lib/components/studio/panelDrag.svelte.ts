@@ -1,8 +1,10 @@
 import { tick } from 'svelte';
+
 import { m } from '#lib/paraglide/messages';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import type { Dock } from '#lib/studio/panels';
 import { panelById, registry } from '#lib/studio/registry.svelte';
+
 import { dropIndex } from './dropIndex';
 import { announce, movePanel } from './panelActions.svelte';
 

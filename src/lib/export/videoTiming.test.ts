@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+
+import { ASPECTS, bitrateFor, clampFps, clampSide, presetSize } from './videoFormat';
 import { frameTime, lengthForSpeed, planTiming, speedForLength } from './videoTiming';
-import { bitrateFor, clampFps, clampSide, presetSize, ASPECTS } from './videoFormat';
 
 const MIN = 60_000;
 const range = { inMs: 1_000_000, outMs: 1_000_000 + 10 * MIN };

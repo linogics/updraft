@@ -1,7 +1,8 @@
 import * as Cesium from 'cesium';
-import type { AirspaceFeature } from '#lib/airspace/tiles';
-import { classOf, CLASS_COLORS, isVisible, volumeHeights } from '#lib/airspace/model';
+
+import { CLASS_COLORS, classOf, isVisible, volumeHeights } from '#lib/airspace/model';
 import type { AirspacePrefsValue } from '#lib/airspace/prefs';
+import type { AirspaceFeature } from '#lib/airspace/tiles';
 
 const SKIPPED_TYPES = ['fir', 'uir'];
 const ring = (r: number[][]) => Cesium.Cartesian3.fromDegreesArray(r.flatMap((c) => [c[0], c[1]]));

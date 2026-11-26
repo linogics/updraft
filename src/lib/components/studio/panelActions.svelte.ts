@@ -1,8 +1,9 @@
 import { tick } from 'svelte';
-import type { PageLayout } from '#lib/state/pageLayout.svelte';
+
 import { m } from '#lib/paraglide/messages';
+import type { PageLayout } from '#lib/state/pageLayout.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
-import { DOCK_LABELS, type Dock } from '#lib/studio/panels';
+import { type Dock, DOCK_LABELS } from '#lib/studio/panels';
 import { panelById } from '#lib/studio/registry.svelte';
 
 /** Text of the one polite live region the studio page renders. */

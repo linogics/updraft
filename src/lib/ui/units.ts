@@ -1,6 +1,7 @@
 // Display units. Domain values stay SI (m, m/s); conversion happens only at the edge.
 
 import type { Units } from '#lib/plugins/api';
+
 import { formatNumber } from './format';
 
 export type { Units };

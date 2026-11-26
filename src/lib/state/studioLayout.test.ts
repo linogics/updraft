@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+
 import type { Dock } from '#lib/studio/panels';
+
 import { forgetInLayout, hideInLayout, moveInLayout, parseStudioLayout } from './studioLayout';
 
 const defaults: Record<string, Dock> = { a: 'left', b: 'left', c: 'right', d: 'bottom', e: 'bottom' };

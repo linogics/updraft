@@ -1,14 +1,15 @@
-import { describe, expect, it } from 'vitest';
 import { FitBaseType, FitEncoder } from 'fit-file-parser';
-import { buildIgc } from '../testing/igc-builder';
+import { describe, expect, it } from 'vitest';
+
 import type { Flight } from '../model';
+import { buildIgc } from '../testing/igc-builder';
 import { readFit } from './fit';
 import { readGeoJson } from './geojson';
 import { readGpx } from './gpx';
 import { readIgc } from './igc';
+import { readTrack, WRITERS } from './index';
 import { readKml } from './kml';
 import { readTrk } from './trk';
-import { WRITERS, readTrack } from './index';
 
 const flight: Flight = readIgc(
   buildIgc([

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { mapResult, type RawSolution } from './mapResult';
 
 const p = (x: number, y: number) => ({ x, y });

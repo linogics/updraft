@@ -1,7 +1,8 @@
 import { planLayout } from '#lib/state/planLayout.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
-import { BUILTIN_BACKENDS, BUILTIN_PLUGINS } from './builtin';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
+
+import { BUILTIN_BACKENDS, BUILTIN_PLUGINS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, pluginUrl } from './core';
 import { pluginPrefs } from './pluginPrefs.svelte';

@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { services } from '#lib/plugins/services';
 import { PlanState } from '#lib/state/plan.svelte';
-import { PLAN_SERVICE, providePlanService, type PlanService } from './planService.svelte';
+
+import { PLAN_SERVICE, type PlanService, providePlanService } from './planService.svelte';
 
 describe('updraft/plan@1', () => {
   afterEach(() => services.unregisterOwner('updraft'));

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+
+import { distance } from './geo';
 import { routeFromFlight } from './routeFromFlight';
 import { straight } from './testing/tracks';
-import { distance } from './geo';
 
 const start = { t: 0, lat: 47, lon: 8, alt: 1000 };
 const out = straight(start, { headingDeg: 90, speed: 10, climb: 0, duration: 100 });

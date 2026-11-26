@@ -1,33 +1,34 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { page } from '$app/state';
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+
   import CesiumView from '#lib/components/CesiumView.svelte';
   import LoadScreen from '#lib/components/LoadScreen.svelte';
+  import MiniMap from '#lib/components/MiniMap.svelte';
+  import PlayerBar from '#lib/components/PlayerBar.svelte';
   import Splitter from '#lib/components/Splitter.svelte';
   import Dock from '#lib/components/studio/Dock.svelte';
   import { panelStatus } from '#lib/components/studio/panelActions.svelte';
   import { drag } from '#lib/components/studio/panelDrag.svelte';
-  import { DOCK_LABELS, DOCKS } from '#lib/studio/panels';
-  import { pluginPanelId } from '#lib/studio/registry.svelte';
-  import { LAYOUT_LIMITS as L } from '#lib/state/studioLayout';
-  import { studioLayout } from '#lib/state/studioLayout.svelte';
-  import MiniMap from '#lib/components/MiniMap.svelte';
-  import PlayerBar from '#lib/components/PlayerBar.svelte';
   import Toolbar from '#lib/components/Toolbar.svelte';
   import { loadRuntimeConfig } from '#lib/config';
+  import type { Flight } from '#lib/domain/model';
   import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
-  import type { Flight } from '#lib/domain/model';
-  import { trackFiles } from '#lib/ui/trackFiles';
-  import { importAndAdd } from '#lib/studio/addPilots';
   import { StudioState } from '#lib/state/studio.svelte';
+  import { LAYOUT_LIMITS as L } from '#lib/state/studioLayout';
+  import { studioLayout } from '#lib/state/studioLayout.svelte';
   import { useNeed } from '#lib/state/useNeed.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { provideStudioService, provideStudioState } from '#lib/studio/studioService.svelte';
-  import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
   import { flightRepository } from '#lib/storage';
+  import { importAndAdd } from '#lib/studio/addPilots';
+  import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
+  import { DOCK_LABELS, DOCKS } from '#lib/studio/panels';
+  import { pluginPanelId } from '#lib/studio/registry.svelte';
+  import { provideStudioService, provideStudioState } from '#lib/studio/studioService.svelte';
   import { syncClient } from '#lib/sync/client.svelte';
+  import { trackFiles } from '#lib/ui/trackFiles';
 
   const studio = new StudioState();
   // Scoring follows the XC switch, not whether the panel is open.

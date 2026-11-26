@@ -1,4 +1,5 @@
 import * as Cesium from 'cesium';
+
 import type { ThermalOverlayDraw } from '#lib/thermals/prefs';
 import { THERMAL_ATTRIBUTION, THERMAL_MAX_ZOOM, THERMAL_TILES } from '#lib/thermals/tiles';
 

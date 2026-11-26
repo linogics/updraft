@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+
 import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
+import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+
 import { panelById, registry } from './registry.svelte';
 
 describe('bundled plugin panels', () => {

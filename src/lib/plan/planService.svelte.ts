@@ -1,9 +1,9 @@
+import type { PlanEvent, PlanService } from '#lib/plugins/api';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { PlanState } from '#lib/state/plan.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
-import type { PlanEvent, PlanService } from '#lib/plugins/api';
 
 export type { PlanService };
 

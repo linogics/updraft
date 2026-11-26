@@ -1,10 +1,12 @@
 import 'fake-indexeddb/auto';
+
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
-import { IndexedDbFlightRepository } from './indexeddb';
-import { DEFAULT_TRACKS, type CameraTracks } from '../domain/cameraPath';
+
+import { type CameraTracks, DEFAULT_TRACKS } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 import type { XcScore } from '../xc/types';
+import { IndexedDbFlightRepository } from './indexeddb';
 
 const tracks = (): CameraTracks => ({
   ...DEFAULT_TRACKS,

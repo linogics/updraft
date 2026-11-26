@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import * as maplibregl from 'maplibre-gl';
+  import 'maplibre-gl/dist/maplibre-gl.css';
+
+  import type { FeatureCollection } from 'geojson';
   import type {
     ExpressionSpecification,
     GeoJSONSource,
@@ -8,25 +9,26 @@
     SourceSpecification,
     StyleSpecification
   } from 'maplibre-gl';
-  import type { FeatureCollection } from 'geojson';
-  import 'maplibre-gl/dist/maplibre-gl.css';
+  import * as maplibregl from 'maplibre-gl';
   // MapLibre derives its worker URL at runtime, which Vite cannot follow; bundle it explicitly.
   import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+  import { onMount } from 'svelte';
+
   import { bindAirspacePopup, syncAirspaces } from '#lib/airspace/layers';
   import { airspacePrefs } from '#lib/airspace/prefs.svelte';
-  import { syncThermals } from '#lib/thermals/layers';
-  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
-  import { unitPrefs } from '#lib/state/units.svelte';
   import { distance } from '#lib/domain/geo';
   import { BASEMAP_IDS, type BasemapId, type TrackStyle } from '#lib/domain/scene';
   import { smoothPath } from '#lib/domain/smooth';
   import { positionAt } from '#lib/domain/timeline';
-  import { ring } from '#lib/xc/ring';
   import { BASEMAPS, TERRARIUM_ATTRIBUTION, TERRARIUM_MAX_ZOOM, TERRARIUM_URL } from '#lib/map/basemaps';
   import type { StudioState } from '#lib/state/studio.svelte';
+  import { unitPrefs } from '#lib/state/units.svelte';
+  import { xcPrefs } from '#lib/state/xcPrefs.svelte';
+  import { syncThermals } from '#lib/thermals/layers';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { varioColor } from '#lib/ui/colors';
   import { colorRuns, trackColorAt } from '#lib/ui/trackColors';
+  import { ring } from '#lib/xc/ring';
 
   let { studio, follow = false }: { studio: StudioState; follow?: boolean } = $props();
 

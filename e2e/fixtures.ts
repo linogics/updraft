@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { expect, type Page, test as base } from '@playwright/test';
 
 // Map tiles, terrain and airspace come from the internet. Block them so tests are offline and stable.
 export const test = base.extend({

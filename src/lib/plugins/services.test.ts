@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import { assertNotReserved, ServiceRegistry } from './services';
 
 describe('ServiceRegistry', () => {

@@ -1,5 +1,7 @@
 import type * as maplibregl from 'maplibre-gl';
+
 import { FILL as AIRSPACE_FILL } from '#lib/airspace/layers';
+
 import type { ThermalOverlayDraw } from './prefs';
 import { THERMAL_ATTRIBUTION, THERMAL_MAX_ZOOM, THERMAL_TILES } from './tiles';
 

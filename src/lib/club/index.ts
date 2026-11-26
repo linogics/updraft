@@ -1,5 +1,5 @@
-import { isFlight, isClubStats } from '../storage/validate';
 import type { Flight } from '../domain/model';
+import { isClubStats, isFlight } from '../storage/validate';
 import type { BackendAdapter, ClubEntry } from '../sync/types';
 import type { ClubStats } from './stats';
 

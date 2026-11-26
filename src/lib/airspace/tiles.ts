@@ -1,6 +1,7 @@
 import { VectorTile } from '@mapbox/vector-tile';
+import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import { PbfReader } from 'pbf';
-import type { Feature, Polygon, MultiPolygon } from 'geojson';
+
 import type { AirspaceProps } from './model';
 
 export type AirspaceFeature = Feature<Polygon | MultiPolygon, AirspaceProps>;

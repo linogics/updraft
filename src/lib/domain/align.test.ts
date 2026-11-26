@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { altitudeOffset, MAX_AUTO_OFFSET } from './align';
 
 describe('altitudeOffset', () => {

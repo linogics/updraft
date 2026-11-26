@@ -1,10 +1,10 @@
 <script lang="ts">
   import { BASEMAP_IDS, EXAGGERATION } from '#lib/domain/scene';
-  import { m } from '#lib/paraglide/messages';
   import { BASEMAPS } from '#lib/map/basemaps';
-  import { formatNumber } from '#lib/ui/format';
+  import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { thermalPrefs } from '#lib/state/thermalPrefs.svelte';
+  import { formatNumber } from '#lib/ui/format';
 
   let { studio }: { studio: StudioState } = $props();
 </script>

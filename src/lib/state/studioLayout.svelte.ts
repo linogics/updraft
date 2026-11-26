@@ -1,13 +1,14 @@
 import type { Dock } from '#lib/studio/panels';
 import { panelById, registry } from '#lib/studio/registry.svelte';
+
 import {
   clampSize,
   forgetInLayout,
   hideInLayout,
   LAYOUT_LIMITS,
+  type LayoutSize,
   moveInLayout,
   parseStudioLayout,
-  type LayoutSize,
   type StudioLayoutValue
 } from './studioLayout';
 

@@ -1,6 +1,6 @@
+import type { LatLon } from '../domain/geo';
 import { resampleTerrarium } from '../domain/terrarium';
 import { TERRARIUM_URL } from './basemaps';
-import type { LatLon } from '../domain/geo';
 
 /** Zoom of the ground lookup: 256 px tiles of ~10 m in the Alps. Same level as takeoff alignment. */
 const GROUND_ZOOM = 13;

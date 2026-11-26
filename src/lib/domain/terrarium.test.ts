@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { resampleTerrarium, terrariumHeight } from './terrarium';
 
 /** RGBA pixel encoding a height in Terrarium format. */

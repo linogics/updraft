@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { computeSeries } from './series';
+
 import { chain, straight } from '../testing/tracks';
+import { computeSeries } from './series';
 
 describe('computeSeries', () => {
   it('reports constant vario for a constant climb', () => {

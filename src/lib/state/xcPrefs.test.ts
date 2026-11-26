@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { parseXcLeague } from './xcPrefs';
 
 describe('parseXcLeague', () => {

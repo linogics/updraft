@@ -2,8 +2,8 @@
 /// <reference no-default-lib="true"/>
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
-import { immutable, assets, prerendered } from '$app/manifest';
 import { version } from '$app/env';
+import { assets, immutable, prerendered } from '$app/manifest';
 
 const sw = globalThis as unknown as ServiceWorkerGlobalScope;
 const CACHE = `updraft-${version}`;

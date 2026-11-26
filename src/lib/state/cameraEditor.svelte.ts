@@ -1,18 +1,19 @@
 import {
+  type CameraProp,
   copyKeys,
+  type Interp,
   keyAt,
+  type KeyClip,
+  type KeyRef,
   mapTracks,
   moveKeys,
   pasteKeys,
   removeKeys,
   setKeysInterp,
   shiftValues,
-  timeSets,
-  type CameraProp,
-  type Interp,
-  type KeyClip,
-  type KeyRef
+  timeSets
 } from '#lib/domain/cameraPath';
+
 import type { StudioState } from './studio.svelte';
 
 /** Timeline camera editing: selection, clipboard and edits. Every edit goes through StudioState.editCamera. */

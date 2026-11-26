@@ -1,9 +1,11 @@
 import { mount, unmount } from 'svelte';
-import StatsPanel from './StatsPanel.svelte';
+
 import { m } from '#lib/paraglide/messages';
 import type { AnalysisService } from '#lib/studio/analysisService.svelte';
 import type { StudioPlugin } from '#lib/studio/plugins';
 import type { StudioService } from '#lib/studio/studioService.svelte';
+
+import StatsPanel from './StatsPanel.svelte';
 
 /** Reference example: the built-in Stats panel reads the studio only through services. */
 const plugin: StudioPlugin = {

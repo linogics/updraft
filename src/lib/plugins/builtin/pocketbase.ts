@@ -1,7 +1,9 @@
-import { isObj } from '#lib/storage/validate';
 import PocketBase, { ClientResponseError, LocalAuthStore } from 'pocketbase';
-import type { BackendPlugin } from '../backendKind';
+
+import { isObj } from '#lib/storage/validate';
 import type { AuthMethod, BackendAdapter, BackendSession, SyncChange, SyncType } from '#lib/sync/types';
+
+import type { BackendPlugin } from '../backendKind';
 
 export interface PocketBaseConfig {
   url: string;

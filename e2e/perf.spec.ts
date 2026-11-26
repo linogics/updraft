@@ -2,8 +2,9 @@
 // Budgets: parse and store of an 8 h flight under 1 s, studio page ready under 2 s, frames under 16 ms, main-thread tasks under 50 ms.
 // Run it on a machine with a GPU. Without one Chromium renders WebGL on the CPU and frame times are meaningless.
 import type { Page } from '@playwright/test';
+
 import { buildIgc } from '../src/lib/domain/testing/igc-builder';
-import { chain, circle, straight, type Start } from '../src/lib/domain/testing/tracks';
+import { chain, circle, type Start, straight } from '../src/lib/domain/testing/tracks';
 import { expect, test } from './fixtures';
 
 const DAY = Date.UTC(2026, 6, 15);

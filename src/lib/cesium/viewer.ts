@@ -1,8 +1,11 @@
 import './setup';
-import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
+
+import * as Cesium from 'cesium';
+
 import type { BasemapId, TerrainSource } from '#lib/domain/scene';
 import { BASEMAPS } from '#lib/map/basemaps';
+
 import { createTerrainProvider, SAMPLE_LEVEL } from './terrain';
 
 const WIDGETS_OFF = {

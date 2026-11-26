@@ -1,8 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+
   import Spinner from '#lib/components/Spinner.svelte';
-  import { routeFromFlight } from '#lib/domain/routeFromFlight';
   import { encodeRoute } from '#lib/domain/route';
+  import { routeFromFlight } from '#lib/domain/routeFromFlight';
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';

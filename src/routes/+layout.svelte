@@ -1,8 +1,10 @@
 <script lang="ts">
   import '../app.css';
+
   import { onMount } from 'svelte';
   import { beforeNavigate, onNavigate } from '$app/navigation';
   import { navigating, updated } from '$app/state';
+
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
   import { startServicePlugins } from '#lib/plugins/startup';

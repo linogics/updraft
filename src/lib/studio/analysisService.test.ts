@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { services } from '#lib/plugins/services';
-import { ANALYSIS_SERVICE, provideAnalysisService, type AnalysisService } from './analysisService.svelte';
+
+import { ANALYSIS_SERVICE, type AnalysisService, provideAnalysisService } from './analysisService.svelte';
 
 describe('updraft/flight-analysis@1', () => {
   afterEach(() => services.unregisterOwner('updraft'));

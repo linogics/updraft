@@ -1,31 +1,32 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import type { CaptureSession } from '#lib/cesium/capture';
-  import { ALL_PARTS, PART_LABELS, paintOverlay, type OverlayParts } from '#lib/export/overlay';
-  import { exportPlugins, paintPlugins } from '#lib/studio/exportHooks.svelte';
   import { SvelteSet } from 'svelte/reactivity';
+
+  import type { CaptureSession } from '#lib/cesium/capture';
   import { mapCredits } from '#lib/export/credits';
-  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { mp4Filename } from '#lib/export/filename';
   import { decodeMusic, renderMusic } from '#lib/export/music';
+  import { ALL_PARTS, type OverlayParts, paintOverlay, PART_LABELS } from '#lib/export/overlay';
   import {
+    type Aspect,
     ASPECTS,
+    bitrateFor,
+    clampFps,
+    clampSide,
     MAX_FPS,
     MAX_SIDE,
     MIN_FPS,
     MIN_SIDE,
-    QUALITIES,
-    bitrateFor,
-    clampFps,
-    clampSide,
     presetSize,
-    type Aspect,
+    QUALITIES,
     type QualityId
   } from '#lib/export/videoFormat';
-  import { LENGTH_PRESETS, SPEED_PRESETS, planTiming, type TimingMode } from '#lib/export/videoTiming';
+  import { LENGTH_PRESETS, planTiming, SPEED_PRESETS, type TimingMode } from '#lib/export/videoTiming';
+  import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { m } from '#lib/paraglide/messages';
+  import { exportPlugins, paintPlugins } from '#lib/studio/exportHooks.svelte';
+  import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
   import { formatClock, formatDuration } from '#lib/ui/format';
 
   let { studio }: { studio: StudioState } = $props();

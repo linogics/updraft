@@ -1,24 +1,25 @@
 import {
-  openDB,
   type DBSchema,
   type IDBPDatabase,
   type IDBPObjectStore,
   type IDBPTransaction,
+  openDB,
   type StoreNames
 } from 'idb';
-import { parseTracks, type CameraTracks } from '../domain/cameraPath';
+
+import { type CameraTracks, parseTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 import type { XcLeague } from '../state/xcPrefs';
 import type { SyncChange, SyncState, SyncType } from '../sync/types';
 import type { XcScore } from '../xc/types';
 import { notifyLocalChange } from './localChange';
 import {
-  summarize,
   type Backup,
   type FlightRepository,
   type FlightSummary,
   type ManualEntry,
-  type MetaPatch
+  type MetaPatch,
+  summarize
 } from './repository';
 import { isCameraPath, isFlight, isManual, isObj } from './validate';
 

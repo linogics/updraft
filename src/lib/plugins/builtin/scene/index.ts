@@ -1,4 +1,5 @@
 import { m } from '#lib/paraglide/messages';
+
 import { componentPlugin } from '../componentPlugin';
 import ScenePanel from './ScenePanel.svelte';
 

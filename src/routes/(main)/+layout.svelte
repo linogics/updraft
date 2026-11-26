@@ -1,14 +1,15 @@
 <script lang="ts">
   import { onMount, type Snippet } from 'svelte';
   import { page } from '$app/state';
+
   import LanguageSelect from '#lib/components/LanguageSelect.svelte';
-  import SideDrawer from '#lib/components/SideDrawer.svelte';
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
+  import SideDrawer from '#lib/components/SideDrawer.svelte';
+  import { m } from '#lib/paraglide/messages';
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { studioHref } from '#lib/storage/importFlights';
   import { onLocalChange } from '#lib/storage/localChange';
   import { syncClient } from '#lib/sync/client.svelte';
-  import { m } from '#lib/paraglide/messages';
 
   let { children }: { children: Snippet } = $props();
 

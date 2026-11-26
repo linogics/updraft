@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { eventsOf } from './events.svelte';
 
 // Effects are inert under vitest (server build of Svelte), the reactive part is covered by the e2e plugin tests.

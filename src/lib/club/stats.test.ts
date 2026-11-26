@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { chain, circle, straight } from '../domain/testing/tracks';
+
 import type { Flight } from '../domain/model';
+import { chain, circle, straight } from '../domain/testing/tracks';
 import { isClubStats } from '../storage/validate';
 import type { XcScore } from '../xc/types';
 import { computeClubStats } from './stats';

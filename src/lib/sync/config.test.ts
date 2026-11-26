@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchPreset, loadSyncConfig, parseSyncConfig, syncUrl, writeOverride } from './config';
 
 beforeEach(() => {

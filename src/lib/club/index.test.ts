@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { BackendAdapter } from '../sync/types';
 import { loadClub, loadClubFlight } from './index';
 

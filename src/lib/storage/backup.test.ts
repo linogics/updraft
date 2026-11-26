@@ -1,5 +1,7 @@
 import 'fake-indexeddb/auto';
+
 import { describe, expect, it } from 'vitest';
+
 import { restoreBackup } from './backup';
 
 const ok = { app: 'updraft', version: 1, flights: [], manual: [], cameraPaths: [] };

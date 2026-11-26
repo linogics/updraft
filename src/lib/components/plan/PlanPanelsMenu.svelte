@@ -1,10 +1,12 @@
 <script lang="ts">
   import PanelsTop from '@lucide/svelte/icons/panels-top-left';
+
   import { m } from '#lib/paraglide/messages';
-  import { planLayout } from '#lib/state/planLayout.svelte';
-  import { removePlugin } from '#lib/plugins/actions';
   import { planRegistry } from '#lib/plan/registry.svelte';
+  import { removePlugin } from '#lib/plugins/actions';
+  import { planLayout } from '#lib/state/planLayout.svelte';
   import { PLUGIN_PREFIX } from '#lib/studio/registry.svelte';
+
   import Popover from '../Popover.svelte';
 
   /** The page owns the dialog, the header (and so this menu) is rendered twice. */

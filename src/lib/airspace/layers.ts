@@ -1,6 +1,8 @@
-import * as maplibregl from 'maplibre-gl';
 import type { ExpressionSpecification, FilterSpecification, VectorTileSource } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+
 import type { Units } from '#lib/ui/units';
+
 import { AIRSPACE_CLASSES, airspaceLabel, CLASS_COLORS } from './model';
 import type { AirspacePrefsValue } from './prefs';
 import { TILE_URL } from './tiles';

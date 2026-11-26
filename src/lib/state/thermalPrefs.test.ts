@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { parseThermalPrefs } from './thermalPrefs';
 
 describe('parseThermalPrefs', () => {

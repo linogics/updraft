@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { services } from '#lib/plugins/services';
-import { STUDIO_SERVICE, provideStudioService, type StudioService } from './studioService.svelte';
+
+import { provideStudioService, STUDIO_SERVICE, type StudioService } from './studioService.svelte';
 
 const lf = (id: string, color: string) => ({
   flight: { id, pilot: id, glider: null, fixes: [] },

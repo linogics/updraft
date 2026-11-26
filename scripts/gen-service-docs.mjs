@@ -10,9 +10,10 @@
 // - Every member needs a TSDoc comment. The `on(event: XEvent, fn)` member is described in the Events table.
 // - XEvent is a string-literal union and each member has its own comment, which becomes "when it fires".
 // - Exported interfaces and type aliases of the same file that the members use are listed under Types.
-import ts from 'typescript';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+import ts from 'typescript';
 
 const [file, outDir] = process.argv.slice(2);
 if (!file || !outDir) {

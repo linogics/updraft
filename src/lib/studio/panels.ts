@@ -1,6 +1,8 @@
 import type { Component } from 'svelte';
+
 import { m } from '#lib/paraglide/messages';
 import type { StudioState } from '#lib/state/studio.svelte';
+
 import type { PluginHostEnv } from './pluginContext.svelte';
 
 export type Dock = 'left' | 'right' | 'bottom';

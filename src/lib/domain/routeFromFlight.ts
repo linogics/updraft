@@ -1,5 +1,5 @@
-import type { Fix } from './model';
 import { distance, type LatLon } from './geo';
+import type { Fix } from './model';
 
 const MAX_CANDIDATES = 400;
 

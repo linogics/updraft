@@ -1,5 +1,7 @@
 import 'fake-indexeddb/auto';
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { Flight } from '../domain/model';
 import type { BackendPlugin } from '../plugins/backendKind';
 import { IndexedDbFlightRepository } from '../storage/indexeddb';

@@ -1,8 +1,8 @@
 import type { CameraTracks } from '../domain/cameraPath';
 import { distance } from '../domain/geo';
 import type { Flight } from '../domain/model';
-import type { SyncChange, SyncState } from '../sync/types';
 import type { XcLeague } from '../state/xcPrefs';
+import type { SyncChange, SyncState } from '../sync/types';
 import type { XcScore } from '../xc/types';
 
 /** Flight metadata without fixes, for listings. */

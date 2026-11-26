@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { indexAt, positionAt } from './timeline';
+
 import type { Fix } from './model';
+import { indexAt, positionAt } from './timeline';
 
 const fixes: Fix[] = [
   { t: 1000, lat: 0, lon: 0, alt: 100 },

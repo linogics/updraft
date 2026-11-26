@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { CAMERA_PROPS, keyAt, toLane, type CameraProp, type KeyRef } from '#lib/domain/cameraPath';
+  import { CAMERA_PROPS, type CameraProp, keyAt, type KeyRef, toLane } from '#lib/domain/cameraPath';
+  import { m } from '#lib/paraglide/messages';
   import type { CameraEditor } from '#lib/state/cameraEditor.svelte';
   import type { StudioState } from '#lib/state/studio.svelte';
+  import { formatClock } from '#lib/ui/format';
   import {
+    type Box,
     INTERP_INFO,
-    PROP_LABEL,
-    ROW_PX,
-    SNAP_PX,
-    keyTimes,
     keysInBox,
+    keyTimes,
     laneCurve,
     laneDelta,
-    mergeRefs,
-    snapTime,
-    valueY,
-    type Box,
     type LanePoint,
-    type Scale
+    mergeRefs,
+    PROP_LABEL,
+    ROW_PX,
+    type Scale,
+    SNAP_PX,
+    snapTime,
+    valueY
   } from '#lib/ui/keyLanes';
-  import { m } from '#lib/paraglide/messages';
-  import { formatClock } from '#lib/ui/format';
 
   let {
     studio,

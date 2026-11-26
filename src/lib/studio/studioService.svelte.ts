@@ -1,8 +1,8 @@
+import type { PluginFlight, StudioEvent, StudioService } from '#lib/plugins/api';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
-import type { StudioState } from '#lib/state/studio.svelte';
 import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
-import type { PluginFlight, StudioEvent, StudioService } from '#lib/plugins/api';
+import type { StudioState } from '#lib/state/studio.svelte';
 import { unitPrefs } from '#lib/state/units.svelte';
 import type { Units } from '#lib/ui/units';
 

@@ -1,5 +1,5 @@
-import type { LatLon } from './geo';
 import { xmlEscape } from './formats/common';
+import type { LatLon } from './geo';
 
 /** Cylinder radius around each turnpoint, metres. XCTrack's default. */
 const RADIUS = 400;
