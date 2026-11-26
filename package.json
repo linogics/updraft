@@ -17,6 +17,8 @@
     "test:ui": "playwright test",
     "bench": "svelte-kit sync && vitest bench --run --silent=false",
     "bench:ui": "PERF=1 playwright test perf --reporter=line",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write . && eslint --fix .",
     "docs:services": "node scripts/gen-service-docs.mjs src/lib/plugins/api.d.ts docs/services"
   },
   "devDependencies": {
@@ -41,7 +43,7 @@
     "svelte": "^5.58.0",
     "svelte-check": "^4.7.8",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.73.0",
+    "typescript-eslint": "^8.74.0",
     "vite": "^8.3.8",
     "vitest": "^5.1.1"
   },
