@@ -1,7 +1,9 @@
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
+import vitest from '@vitest/eslint-plugin';
 import prettier from 'eslint-config-prettier';
 import noUnsanitized from 'eslint-plugin-no-unsanitized';
+import playwright from 'eslint-plugin-playwright';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
@@ -86,6 +88,23 @@ export default ts.config(
     // CLI tooling, perf specs and benches print their results on purpose.
     files: ['scripts/**', 'e2e/perf.spec.ts', 'src/lib/bench/**'],
     rules: { 'no-console': 'off' }
+  },
+  {
+    // Vitest recommended rules for unit tests and benches.
+    files: ['src/**/*.test.ts', 'src/**/*.bench.ts'],
+    ...vitest.configs.recommended,
+    rules: {
+      ...vitest.configs.recommended.rules,
+      // expect(value, message) is a vitest feature and keeps failing pilots identifiable.
+      'vitest/valid-expect': ['error', { maxArgs: 2 }],
+      // expectSame in formats.test.ts wraps the assertions.
+      'vitest/expect-expect': ['error', { assertFunctionNames: ['expect', 'expectSame'] }]
+    }
+  },
+  {
+    // Playwright recommended rules for e2e specs and fixtures.
+    files: ['e2e/**/*.ts'],
+    ...playwright.configs['flat/recommended']
   },
   {
     files: ['src/**/*.ts', 'src/**/*.svelte', 'e2e/**/*.ts'],

@@ -90,10 +90,12 @@ test('play and seek an 8 h flight', async ({ page }) => {
     return info ? String(gl!.getParameter(info.UNMASKED_RENDERER_WEBGL)) : 'unknown';
   });
   console.log(`webgl renderer: ${renderer}`);
+  // eslint-disable-next-line playwright/no-conditional-in-test -- only logs a hint, no assertion depends on it
   if (/swiftshader|llvmpipe|software/i.test(renderer)) {
     console.log('warning: software WebGL, run `npm run bench:ui -- --headed` on a machine with a GPU');
   }
 
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- fixed settle time before measuring long tasks
   await page.waitForTimeout(1000);
   await longTasks(page);
 
