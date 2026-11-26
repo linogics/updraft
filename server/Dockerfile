@@ -19,4 +19,4 @@ FROM alpine:3.22
 RUN apk add --no-cache ca-certificates
 COPY --from=fetch /tmp/pocketbase /usr/local/bin/pocketbase
 EXPOSE 8090
-CMD ["pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--migrationsDir=/pb/pb_migrations", "--automigrate=false"]
+CMD ["pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--migrationsDir=/pb/pb_migrations", "--hooksDir=/pb/pb_hooks", "--automigrate=false"]

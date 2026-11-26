@@ -36,10 +36,10 @@ test('connect, sign in and sync a record to a PocketBase server', async ({ page 
       return json({ token, record: { id: 'u1', collectionName: 'users', email: EMAIL } });
     }
 
-    if (pathname === '/api/collections/records/records' && req.method() === 'POST') {
-      const body = req.postDataJSON() as { type: string; rid: string };
-      pushed.push(body);
-      return json({ id: `r${pushed.length}`, ...body });
+    if (pathname === '/api/updraft/push') {
+      const body = req.postDataJSON() as { changes: Array<{ type: string; id: string }> };
+      for (const c of body.changes) pushed.push({ type: c.type, rid: c.id });
+      return json({ ok: true });
     }
 
     if (pathname === '/api/collections/records/records') {
