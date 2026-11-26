@@ -77,13 +77,17 @@ async function mockServer(page: Page) {
       return json({ id: KEY, shared: true, data: FLIGHT });
     }
 
-    if (url.pathname === '/api/collections/records/records') {
-      if (req.method() !== 'GET') {
-        const body = req.postDataJSON() as Record<string, unknown>;
-        writes.push(body);
-        return json({ id: `r${writes.length}`, ...body });
+    if (url.pathname === '/api/updraft/push') {
+      const body = req.postDataJSON() as { changes: Array<{ type: string; deleted?: boolean; data?: unknown }> };
+      for (const c of body.changes) {
+        const data = c.data as { shared?: boolean } | undefined;
+        writes.push({ ...c, shared: c.type === 'flight' && !c.deleted && data?.shared === true });
       }
 
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/api/collections/records/records') {
       return list(
         url.searchParams.get('filter')?.includes('shared = true') ? [{ id: KEY, owner: 'u2', summary: STATS }] : []
       );
