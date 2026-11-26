@@ -247,7 +247,7 @@ A plugin that was added earlier but fails to load later, for example because the
 
 ## Backends
 
-A backend plugin connects the sync engine to a server. `create({ url })` returns a `BackendAdapter`, which is a `SyncTransport` (`push(changes)` and `pull(cursor)`, see Sync in `docs/development.md`) plus login. The types are in `src/lib/sync/types.ts`.
+A backend plugin connects the sync engine to a server. `create({ url })` returns a `BackendAdapter`, which is a `SyncTransport` (`push(changes)` and `pull(cursor)`, see Sync in `docs/development.md`) plus login. The types are in `src/lib/plugins/api.d.ts`.
 
 ```ts
 export default {
