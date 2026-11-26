@@ -6,11 +6,11 @@
   import { CATEGORIES, type Category, type Medal, rankings } from '#lib/club/rankings';
   import { m } from '#lib/paraglide/messages';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { XC_LEAGUES } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { syncClient } from '#lib/sync/client.svelte';
   import { formatAirtime, formatNumber } from '#lib/ui/format';
   import { formatDistance } from '#lib/ui/units';
+  import { leagueLabel } from '#lib/xc/leagues';
 
   let entries = $state.raw<ValidClubEntry[]>([]);
   let loading = $state(true);
@@ -20,7 +20,7 @@
   let owner = $state('');
 
   const u = $derived(unitPrefs.units);
-  const league = $derived(XC_LEAGUES.find((l) => l.id === xcPrefs.league)?.label ?? xcPrefs.league);
+  const league = $derived(leagueLabel(xcPrefs.league));
   const ranks = $derived(rankings(entries, xcPrefs.league));
   const byKey = $derived(new Map(entries.map((e) => [e.key, e])));
   const mine = $derived(new Set(entries.filter((e) => e.mine).map((e) => e.owner)));

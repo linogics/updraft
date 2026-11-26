@@ -7,11 +7,11 @@
   import { m } from '#lib/paraglide/messages';
   import type { StudioState } from '#lib/state/studio.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { formatNumber } from '#lib/ui/format';
   import { formatDistance } from '#lib/ui/units';
   import { XC_TYPE_LABELS } from '#lib/xc/labels';
+  import { leagues } from '#lib/xc/leagues';
 
   let { studio }: { studio: StudioState } = $props();
 
@@ -48,12 +48,8 @@
 </label>
 {#if studio.selected}
   <fieldset class="feature" disabled={!xcPrefs.enabled}>
-    <select
-      value={xcPrefs.league}
-      onchange={(e) => studio.setLeague(e.currentTarget.value as XcLeague)}
-      aria-label={m.xc_league()}
-    >
-      {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+    <select value={xcPrefs.league} onchange={(e) => studio.setLeague(e.currentTarget.value)} aria-label={m.xc_league()}>
+      {#each leagues() as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
     </select>
     <!-- Nothing is scored while XC is off. -->
     {#if !xcPrefs.enabled}{:else if xc}

@@ -2,10 +2,10 @@
   import { m } from '#lib/paraglide/messages';
   import type { PlanState } from '#lib/state/plan.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
-  import { XC_LEAGUES, type XcLeague } from '#lib/state/xcPrefs';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { formatDistance } from '#lib/ui/units';
   import { XC_TYPE_LABELS } from '#lib/xc/labels';
+  import { leagues } from '#lib/xc/leagues';
 
   let { plan }: { plan: PlanState } = $props();
 </script>
@@ -22,8 +22,8 @@
 <fieldset class="feature" disabled={!xcPrefs.enabled}>
   <label>
     {m.plan_league()}
-    <select value={xcPrefs.league} onchange={(e) => xcPrefs.set(e.currentTarget.value as XcLeague)}>
-      {#each XC_LEAGUES as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+    <select value={xcPrefs.league} onchange={(e) => xcPrefs.set(e.currentTarget.value)}>
+      {#each leagues() as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
     </select>
   </label>
   <!-- The page clears the score and does not score while XC is off. -->

@@ -8,6 +8,7 @@ import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
 import { pluginPrefs } from './pluginPrefs.svelte';
 import { assertNotReserved, registerProvides, services } from './services';
+import { parseLeagues } from './xcPlannerKind';
 
 /**
  * Loads and validates the plugin at `raw`, then stores it. A studio plugin also shows its panel in its start dock.
@@ -65,11 +66,14 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
         id,
         name,
         kind,
-        exports: (plugin.exports ?? []).map(({ label, extension, mime }) => ({
-          label: label.trim(),
-          extension,
-          ...(mime && { mime })
-        }))
+        ...(plugin.exports && {
+          exports: plugin.exports.map(({ label, extension, mime }) => ({
+            label: label.trim(),
+            extension,
+            ...(mime && { mime })
+          }))
+        }),
+        ...(plugin.leagues && { leagues: parseLeagues(plugin.leagues) })
       });
       break;
 

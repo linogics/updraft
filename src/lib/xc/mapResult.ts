@@ -1,5 +1,4 @@
 import type { LatLon } from '../domain/geo';
-import type { XcLeague } from '../state/xcPrefs';
 import type { XcScore } from './types';
 
 interface Pt {
@@ -18,7 +17,7 @@ const TYPES: Record<string, XcScore['type']> = { od: 'free', tri: 'flat', fai: '
 const ll = (p: Pt): LatLon => ({ lat: p.y, lon: p.x });
 
 /** Maps a solver result to our plain type. Null when nothing was scored. */
-export function mapResult(league: XcLeague, s: RawSolution): XcScore | null {
+export function mapResult(league: string, s: RawSolution): XcScore | null {
   const info = s.scoreInfo;
   const type = TYPES[s.opt.scoring.code];
   if (!info?.tp?.length || !type || !s.score) return null;

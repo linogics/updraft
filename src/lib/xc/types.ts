@@ -1,8 +1,7 @@
 import type { LatLon } from '../domain/geo';
-import type { XcLeague } from '../state/xcPrefs';
 
 export interface XcScore {
-  league: XcLeague;
+  league: string;
   /** Free distance, flat or FAI triangle, or out-and-return. */
   type: 'free' | 'flat' | 'fai' | 'oar';
   /** Scored distance in metres, before the multiplier. */

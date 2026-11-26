@@ -1,6 +1,5 @@
 import { analyzeFlight } from '../domain/analysis/analyze';
 import type { Flight } from '../domain/model';
-import type { XcLeague } from '../state/xcPrefs';
 import { scoreFlight } from '../xc/score';
 import type { XcScore } from '../xc/types';
 
@@ -26,7 +25,7 @@ export interface ClubStats {
 }
 
 export interface ClubStatsOptions {
-  league: XcLeague;
+  league: string;
   /** Ground height in metres MSL per fix. */
   ground?: ArrayLike<number>;
   /** A known score for `league`. Null means nothing scored. Scored here when left out. */

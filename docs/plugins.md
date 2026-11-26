@@ -310,7 +310,7 @@ export default {
 
 ## XC planner plugins
 
-An `xc-planner` plugin adds export buttons to the XC planner (`/plan`). Each export is one file format a planned route is written to. The types are in `src/lib/plugins/api.d.ts`.
+An `xc-planner` plugin adds export buttons to the XC planner (`/plan`) and XC scoring leagues. Each export is one file format a planned route is written to. A plugin gives `exports`, `leagues` or both. The types are in `src/lib/plugins/api.d.ts`.
 
 ```js
 export default {
@@ -332,7 +332,51 @@ export default {
 - `exports` has 1 to 10 entries. `label` is not blank and names the button. `extension` is lower case, without the dot, 1 to 10 characters from `[a-z0-9]`, and unique within the plugin. Other plugins may reuse an extension, the label tells the buttons apart. `mime` defaults to `application/octet-stream`.
 - `write(route)` gets `{ points, speed }` with at least 2 turnpoints and the speed in km/h. It is a fresh copy, changing it has no effect. It returns a string (stored as UTF-8) or a `Uint8Array`. An error it throws is shown under the buttons.
 - The bundled `updraft/tasks` plugin provides the XCTrack task and the GPX route and cannot be removed.
+- The bundled `updraft/leagues` plugin provides the seven built-in leagues and cannot be removed.
 - A route suggestion is not an export. Use a normal studio plugin with `hosts: ['plan']` that calls `setRoute` of `updraft/plan@1`.
+
+### Leagues
+
+A league is plain data, so scoring never runs plugin code. The app maps the rules onto the igc-xc-score solver in a worker.
+
+```js
+export default {
+  id: 'acme/club-league',
+  name: 'Club league',
+  kind: 'xc-planner',
+  apiVersion: 1,
+  leagues: [
+    {
+      id: 'club',
+      label: 'Club league',
+      rules: [
+        { name: 'Free distance', type: 'free', multiplier: 1 },
+        { name: 'FAI triangle', type: 'fai', multiplier: 2, closing: { relative: 0.05 } }
+      ]
+    }
+  ]
+};
+```
+
+- `leagues` has 1 to 20 entries. `id` is unique within the plugin and matches `[a-z0-9-]{1,40}`. `label` is not blank and shows in the league pickers. `rules` has 1 to 10 entries and the best scoring one wins.
+- The app stores the league as `<plugin id>:<league id>`, here `acme/club-league:club`. The bundled leagues keep their plain ids, for example `XContest`.
+- A league applies app wide: logbook scores, studio XC panel, club stats, the planner and the `league()`, `leagues()` and `setLeague()` of `updraft/studio@1` and `updraft/plan@1`. The league data is stored when the plugin is added and the plugin is not imported for scoring.
+- When the plugin is removed while its league is chosen, the app uses `XContest`. A shared club flight scored with a league this browser does not know shows the league id instead of a label.
+- Cached scores of a plugin league are keyed by its rules, so changing the rules scores again.
+
+Rule fields, all distances in km:
+
+| Field         | Meaning                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | Shown to the user. Not blank.                                                                                                        |
+| `type`        | `free` distance via 3 turnpoints, `flat` triangle, `fai` FAI triangle, `oar` out-and-return via 1 turnpoint, `oar2` via 2 turnpoints. |
+| `multiplier`  | Points per km, above 0 and at most 10.                                                                                               |
+| `minSide`     | Shortest triangle side as a share of the total, above 0 and below 0.5. `flat` and `fai` only, `fai` defaults to 0.28.               |
+| `maxSide`     | Longest triangle side as a share of the total, above `minSide` and at most 1. `flat` only.                                           |
+| `minDistance` | Shortest route that scores, 0 to 1000.                                                                                               |
+| `closing`     | `{ fixed, free, relative }`, not for `free`. The allowed gap is max(`fixed`, `relative` * route length). `free` is gap without penalty. `fixed` and `free` are 0 to 100, `relative` 0 to 1. |
+| `cylinders`   | FAI cylinder radius, 0 to 5. Turnpoints are moved out by it.                                                                         |
+| `decimals`    | Decimals of the final score, 1 or 2, default 2.                                                                                      |
 
 ## Versioning
 

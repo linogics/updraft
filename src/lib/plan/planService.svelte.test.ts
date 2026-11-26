@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import { services } from '#lib/plugins/services';
 import { PlanState } from '#lib/state/plan.svelte';
 import { xcPrefs } from '#lib/state/xcPrefs.svelte';
@@ -8,6 +9,32 @@ import { PLAN_SERVICE, type PlanService, providePlanService } from './planServic
 
 describe('updraft/plan@1', () => {
   afterEach(() => services.unregisterOwner('updraft'));
+
+  it('lists plugin leagues in a new frozen array only when the list changes', () => {
+    providePlanService(new PlanState(), { commit: () => {} });
+    const s = services.use<PlanService>(PLAN_SERVICE);
+    const before = s.leagues();
+    pluginPrefs.add({
+      url: 'https://a.test/l.js',
+      id: 'acme/l',
+      name: 'L',
+      kind: 'xc-planner',
+      leagues: [{ id: 'club', label: 'Club', rules: [{ name: 'F', type: 'free', multiplier: 1 }] }]
+    });
+
+    try {
+      expect(s.leagues()).not.toBe(before);
+      expect(s.leagues()).toBe(s.leagues());
+      expect(s.leagues().at(-1)).toEqual({ id: 'acme/l:club', label: 'Club' });
+      expect(Object.isFrozen(s.leagues().at(-1))).toBe(true);
+      expect(() => s.setLeague('acme/l:club')).not.toThrow();
+    } finally {
+      xcPrefs.set('XContest');
+      pluginPrefs.remove('acme/l');
+    }
+
+    expect(() => s.setLeague('acme/l:club')).toThrow('Unknown league');
+  });
 
   it('returns the same frozen points until the route changes', () => {
     const plan = new PlanState();

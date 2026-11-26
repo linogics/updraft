@@ -30,8 +30,8 @@ Subscribe with `on(event: StudioEvent, fn: () => void): () => void`.
 | `seek(ms: number): void` | Moves playback to `ms` on the studio clock. The studio clamps it to the playable range. |
 | `select(id: string): void` | Selects the pilot with that flight id. An unknown id is ignored. |
 | `setVisible(id: string, visible: boolean): void` | Shows or hides the pilot with that flight id. An unknown id is ignored. Anything but a boolean throws `Visible must be true or false.`. Fires `flights`. |
-| `league(): string` | Id of the scoring league the user chose. |
-| `leagues(): readonly Readonly<{ id: string; label: string }>[]` | All scoring leagues. The same frozen array on every call. |
+| `league(): string` | Id of the scoring league in use. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed. |
+| `leagues(): readonly Readonly<{ id: string; label: string }>[]` | All scoring leagues, bundled and from plugins. The same frozen array until the list changes. |
 | `setLeague(id: string): void` | Switches the scoring league like the user would, so scores of the old league are dropped and scoring restarts. An unknown id throws `Unknown league "x".`. The current league is a no-op. |
 | `play(): void` | Starts playback. A no-op while playing. At the end it starts again from the beginning. |
 | `pause(): void` | Stops playback. A no-op while paused. |
