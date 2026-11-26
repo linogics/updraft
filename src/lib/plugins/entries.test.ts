@@ -72,6 +72,39 @@ describe('parsePlugins converter entries', () => {
   });
 });
 
+describe('parsePlugins xc-planner entries', () => {
+  const entry = {
+    url: 'https://a.test/t.js',
+    id: 'acme/tasks',
+    name: 'Tasks',
+    kind: 'xc-planner',
+    exports: [
+      { label: 'CSV', extension: 'csv', mime: 'text/csv' },
+      { label: 'TXT', extension: 'txt' }
+    ]
+  };
+
+  it('keeps a valid entry and drops stray fields', () => {
+    expect(parsePlugins([{ ...entry, dock: 'left', junk: 1 }])).toEqual([entry]);
+  });
+
+  it.each([
+    { exports: undefined },
+    { exports: [] },
+    { exports: [{ label: ' ', extension: 'csv' }] },
+    { exports: [{ label: 'A', extension: 'CSV' }] },
+    {
+      exports: [
+        { label: 'A', extension: 'a' },
+        { label: 'B', extension: 'a' }
+      ]
+    },
+    { exports: [{ label: 'A', extension: 'a', mime: ' ' }] }
+  ])('drops an entry with %j', (bad) => {
+    expect(parsePlugins([{ ...entry, ...bad }])).toEqual([]);
+  });
+});
+
 describe('pluginUrl', () => {
   it('accepts http and https only', () => {
     expect(pluginUrl(' https://a.test/x.js ')).toBe('https://a.test/x.js');

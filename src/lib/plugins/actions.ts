@@ -3,7 +3,7 @@ import { planLayout } from '#lib/state/planLayout.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 
-import { BUILTIN_BACKENDS, BUILTIN_CONVERTERS, BUILTIN_PLUGINS } from './builtin';
+import { BUILTIN_BACKENDS, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, BUILTIN_XC_PLANNERS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
 import { pluginPrefs } from './pluginPrefs.svelte';
@@ -24,6 +24,7 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
     ...BUILTIN_PLUGINS.map((p) => p.id),
     ...BUILTIN_BACKENDS.map((p) => p.id),
     ...BUILTIN_CONVERTERS.map((p) => p.id),
+    ...BUILTIN_XC_PLANNERS.map((p) => p.id),
     ...pluginPrefs.list.map((e) => e.id)
   ];
   const plugin = await loadPlugin(url, taken);
@@ -57,6 +58,20 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
       });
       break;
     }
+
+    case 'xc-planner':
+      pluginPrefs.add({
+        url,
+        id,
+        name,
+        kind,
+        exports: (plugin.exports ?? []).map(({ label, extension, mime }) => ({
+          label: label.trim(),
+          extension,
+          ...(mime && { mime })
+        }))
+      });
+      break;
 
     case 'service':
     case 'backend':
