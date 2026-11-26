@@ -1,4 +1,4 @@
-import { readTrack } from '../domain/formats';
+import { readTrack } from '../convert/registry';
 import { DEFAULT_SCENE, encodeScene } from '../domain/scene';
 import { flightRepository } from './index';
 

@@ -5,7 +5,7 @@
   import { importFlights } from '#lib/storage/importFlights';
   import { addStored } from '#lib/studio/addPilots';
   import { formatAirtime } from '#lib/ui/format';
-  import { TRACK_ACCEPT, trackFiles } from '#lib/ui/trackFiles';
+  import { trackAccept, trackFiles } from '#lib/ui/trackFiles';
 
   let { studio }: { studio: StudioState } = $props();
 
@@ -120,7 +120,7 @@
     <div class="row">
       <input
         type="file"
-        accept={TRACK_ACCEPT}
+        accept={trackAccept()}
         multiple
         hidden
         bind:this={fileInput}

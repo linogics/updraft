@@ -4,6 +4,8 @@ import { xcPrefs } from '#lib/state/xcPrefs.svelte';
 import type { PluginDock, PluginHost } from '#lib/studio/plugins';
 import { thermalOverlayPrefs } from '#lib/thermals/prefs.svelte';
 
+import type { ConverterMeta } from './converterKind';
+
 /** A plugin that ships with the app. The metadata is here so a hidden one is never imported. */
 export interface BuiltinPlugin {
   id: string;
@@ -109,4 +111,67 @@ export interface BuiltinBackend {
 
 export const BUILTIN_BACKENDS: readonly BuiltinBackend[] = [
   { id: 'updraft/pocketbase', name: 'PocketBase', load: () => import('./builtin/pocketbase') }
+];
+
+/** A bundled track format. The metadata is here so the module is only imported when a file needs it. */
+export interface BuiltinConverter extends ConverterMeta {
+  id: string;
+  /** Module whose default export is a converter plugin. */
+  load: () => Promise<{ default: unknown }>;
+}
+
+/** Every bundled format. The array order decides which converter wins for an extension and the list order. */
+export const BUILTIN_CONVERTERS: readonly BuiltinConverter[] = [
+  {
+    id: 'updraft/igc',
+    label: 'IGC',
+    extensions: ['igc'],
+    canRead: true,
+    canWrite: true,
+    mime: 'application/octet-stream',
+    load: () => import('./builtin/formats/igc')
+  },
+  {
+    id: 'updraft/gpx',
+    label: 'GPX',
+    extensions: ['gpx'],
+    canRead: true,
+    canWrite: true,
+    mime: 'application/gpx+xml',
+    load: () => import('./builtin/formats/gpx')
+  },
+  {
+    id: 'updraft/kml',
+    label: 'KML',
+    extensions: ['kml'],
+    canRead: true,
+    canWrite: true,
+    mime: 'application/vnd.google-earth.kml+xml',
+    load: () => import('./builtin/formats/kml')
+  },
+  {
+    id: 'updraft/geojson',
+    label: 'GeoJSON',
+    extensions: ['geojson', 'json'],
+    canRead: true,
+    canWrite: true,
+    mime: 'application/geo+json',
+    load: () => import('./builtin/formats/geojson')
+  },
+  {
+    id: 'updraft/trk',
+    label: 'TRK',
+    extensions: ['trk'],
+    canRead: true,
+    canWrite: false,
+    load: () => import('./builtin/formats/trk')
+  },
+  {
+    id: 'updraft/fit',
+    label: 'FIT',
+    extensions: ['fit'],
+    canRead: true,
+    canWrite: false,
+    load: () => import('./builtin/formats/fit')
+  }
 ];

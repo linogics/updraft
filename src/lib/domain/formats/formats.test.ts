@@ -4,11 +4,10 @@ import { describe, expect, it } from 'vitest';
 import type { Flight } from '../model';
 import { buildIgc } from '../testing/igc-builder';
 import { readFit } from './fit';
-import { readGeoJson } from './geojson';
-import { readGpx } from './gpx';
-import { readIgc } from './igc';
-import { readTrack, WRITERS } from './index';
-import { readKml } from './kml';
+import { readGeoJson, writeGeoJson } from './geojson';
+import { readGpx, writeGpx } from './gpx';
+import { readIgc, writeIgc } from './igc';
+import { readKml, writeKml } from './kml';
 import { readTrk } from './trk';
 
 const flight: Flight = readIgc(
@@ -33,14 +32,14 @@ function expectSame(a: Flight, b: Flight) {
 
 describe('round trips', () => {
   it('igc', () => {
-    const out = WRITERS.igc.write(flight);
+    const out = writeIgc(flight);
     expect(out).toContain('\r\n');
     expect(out.startsWith('AXXXupdraft')).toBe(true);
     expectSame(flight, readIgc(out, 'b.igc'));
   });
-  it('gpx', () => expectSame(flight, readGpx(WRITERS.gpx.write(flight), 'b.gpx')));
-  it('kml', () => expectSame(flight, readKml(WRITERS.kml.write(flight), 'b.kml')));
-  it('geojson', () => expectSame(flight, readGeoJson(WRITERS.geojson.write(flight), 'b.geojson')));
+  it('gpx', () => expectSame(flight, readGpx(writeGpx(flight), 'b.gpx')));
+  it('kml', () => expectSame(flight, readKml(writeKml(flight), 'b.kml')));
+  it('geojson', () => expectSame(flight, readGeoJson(writeGeoJson(flight), 'b.geojson')));
 });
 
 describe('readers', () => {
@@ -117,15 +116,6 @@ describe('readers', () => {
     expect(() => readGeoJson(noTime, 'x.geojson')).toThrow(/without time/);
     const kml = '<kml><Placemark><LineString><coordinates>11,47,1000</coordinates></LineString></Placemark></kml>';
     expect(() => readKml(kml, 'x.kml')).toThrow(/no time/);
-  });
-
-  it('rejects unsupported extensions', async () => {
-    await expect(readTrack(new File(['x'], 'a.txt'))).rejects.toThrow('Unsupported file type');
-  });
-
-  it('dispatches on extension, case-insensitive', async () => {
-    const f = await readTrack(new File([WRITERS.gpx.write(flight)], 'Flight.GPX'));
-    expect(f.pilot).toBe('Flight');
   });
 
   it('reads a FIT file built with the encoder', async () => {

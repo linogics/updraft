@@ -1,8 +1,9 @@
+import { clashOf } from '#lib/convert/registry';
 import { planLayout } from '#lib/state/planLayout.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 
-import { BUILTIN_BACKENDS, BUILTIN_PLUGINS } from './builtin';
+import { BUILTIN_BACKENDS, BUILTIN_CONVERTERS, BUILTIN_PLUGINS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, pluginUrl } from './core';
 import { pluginPrefs } from './pluginPrefs.svelte';
@@ -21,6 +22,7 @@ export async function addPlugin(raw: string) {
   const taken = [
     ...BUILTIN_PLUGINS.map((p) => p.id),
     ...BUILTIN_BACKENDS.map((p) => p.id),
+    ...BUILTIN_CONVERTERS.map((p) => p.id),
     ...pluginPrefs.list.map((e) => e.id)
   ];
   const plugin = await loadPlugin(url, taken);
@@ -35,6 +37,25 @@ export async function addPlugin(raw: string) {
       // A planner only plugin has no studio panel.
       if (!plugin.hosts || plugin.hosts.includes('studio')) studioLayout.move(pluginPanelId(id), plugin.dock, Infinity);
       break;
+
+    case 'converter': {
+      const { label, extensions, mime } = plugin;
+      const clash = clashOf(extensions);
+      if (clash) throw new Error(`The extension ".${clash.ext}" is already handled by ${clash.c.label}.`);
+      pluginPrefs.add({
+        url,
+        id,
+        name,
+        kind,
+        label: label.trim(),
+        extensions: [...extensions],
+        canRead: !!plugin.read,
+        canWrite: !!plugin.write,
+        ...(mime && { mime })
+      });
+      break;
+    }
+
     case 'service':
     case 'backend':
       pluginPrefs.add({ url, id, name, kind });

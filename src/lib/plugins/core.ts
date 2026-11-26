@@ -1,15 +1,16 @@
 import { type StudioPlugin, validateStudioPlugin } from '#lib/studio/plugins';
 
 import { type BackendPlugin, validateBackendPlugin } from './backendKind';
+import { type ConverterPlugin, validateConverterPlugin } from './converterKind';
 import { type ServicePlugin, validateServicePlugin } from './serviceKind';
 import { validateServiceFields } from './services';
 
 /** Grows with every new kind of plugin. Add its validator to `validators` below. */
-export type PluginKind = 'studio' | 'service' | 'backend';
-export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service', 'backend'];
+export type PluginKind = 'studio' | 'service' | 'backend' | 'converter';
+export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service', 'backend', 'converter'];
 
 /** A validated plugin module of any kind. */
-export type AnyPlugin = StudioPlugin | ServicePlugin | BackendPlugin;
+export type AnyPlugin = StudioPlugin | ServicePlugin | BackendPlugin | ConverterPlugin;
 
 export const PLUGIN_ID = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}$/;
 
@@ -17,7 +18,8 @@ export const PLUGIN_ID = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}$/;
 const validators: Record<PluginKind, (mod: Record<string, unknown>) => AnyPlugin> = {
   studio: validateStudioPlugin,
   service: validateServicePlugin,
-  backend: validateBackendPlugin
+  backend: validateBackendPlugin,
+  converter: validateConverterPlugin
 };
 
 /** Only http(s) pages can be imported. Returns the normalised URL or null. */

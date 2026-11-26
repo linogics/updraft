@@ -1,9 +1,10 @@
 import { PLUGIN_DOCKS, PLUGIN_HOSTS, type PluginDock, type PluginHost } from '#lib/studio/plugins';
 
+import { type ConverterMeta, isConverterMeta } from './converterKind';
 import { PLUGIN_ID, PLUGIN_KINDS, type PluginKind, pluginUrl } from './core';
 
 /** What the app knows about a plugin without importing it, so a hidden plugin costs nothing. */
-export interface PluginEntry {
+export interface PluginEntry extends Partial<ConverterMeta> {
   url: string;
   id: string;
   name: string;
@@ -12,6 +13,7 @@ export interface PluginEntry {
   dock?: PluginDock;
   /** Pages that show a studio plugin, missing means the studio only. */
   hosts?: PluginHost[];
+  /** The converter kind also stores `label`, `extensions`, `canRead` and `canWrite`, and optionally `mime`. */
 }
 
 /** Validates the stored plugin list entry by entry. Bad entries and repeated ids or URLs are dropped. */
@@ -31,6 +33,7 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       !name ||
       !PLUGIN_KINDS.includes(o.kind as PluginKind) ||
       (o.kind === 'studio' && !PLUGIN_DOCKS.includes(o.dock as PluginDock)) ||
+      (o.kind === 'converter' && !isConverterMeta(o)) ||
       ids.has(o.id) ||
       urls.has(url)
     ) {
@@ -41,6 +44,12 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
     urls.add(url);
     const entry: PluginEntry = { url, id: o.id, name, kind: o.kind as PluginKind };
     if (o.kind === 'studio') entry.dock = o.dock as PluginDock;
+
+    if (o.kind === 'converter') {
+      const { label, extensions, canRead, canWrite, mime } = o as unknown as ConverterMeta;
+      Object.assign(entry, { label: label.trim(), extensions, canRead, canWrite });
+      if (mime !== undefined) entry.mime = mime;
+    }
 
     if (Array.isArray(o.hosts) && o.hosts.every((h) => PLUGIN_HOSTS.includes(h as PluginHost))) {
       entry.hosts = o.hosts as PluginHost[];
