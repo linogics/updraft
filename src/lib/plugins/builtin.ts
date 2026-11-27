@@ -177,6 +177,17 @@ export const BUILTIN_CONVERTERS: readonly BuiltinConverter[] = [
   }
 ];
 
+/** A bundled badge plugin. Imported only when badges are computed. */
+export interface BuiltinBadge {
+  id: string;
+  /** Module whose default export is a badge plugin. */
+  load: () => Promise<{ default: unknown }>;
+}
+
+export const BUILTIN_BADGES: readonly BuiltinBadge[] = [
+  { id: 'updraft/badges', load: () => import('./builtin/badges') }
+];
+
 /** A bundled planner export. The label is translated, so it is a function here. */
 export interface BuiltinPlanExport {
   label: () => string;

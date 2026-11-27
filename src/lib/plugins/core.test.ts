@@ -84,6 +84,30 @@ describe('validatePlugin', () => {
     });
   });
 
+  describe('badge kind', () => {
+    const b = { id: 'far', label: 'Far', unit: 'distance', thresholds: [1, 2, 3, 4, 5, 6, 7, 8], value: () => 0 };
+    const plugin = { id: 'acme/badges', name: 'Badges', kind: 'badge', apiVersion: 1, badges: [b] };
+
+    it('accepts badges', () => {
+      expect(validatePlugin(plugin)).toBe(plugin);
+    });
+
+    it.each([
+      ['a wrong apiVersion', { apiVersion: 2 }, /Unsupported apiVersion 2/],
+      ['no badges', { badges: [] }, /"badges"/],
+      ['a bad id', { badges: [{ ...b, id: 'Far' }] }, /"id"/],
+      ['a repeated id', { badges: [b, b] }, /used twice/],
+      ['a blank label', { badges: [{ ...b, label: ' ' }] }, /"label"/],
+      ['an unknown unit', { badges: [{ ...b, unit: 'mile' }] }, /"unit"/],
+      ['too few thresholds', { badges: [{ ...b, thresholds: [1, 2] }] }, /"thresholds"/],
+      ['equal thresholds', { badges: [{ ...b, thresholds: [1, 2, 3, 4, 5, 6, 7, 7] }] }, /"thresholds"/],
+      ['a zero threshold', { badges: [{ ...b, thresholds: [0, 2, 3, 4, 5, 6, 7, 8] }] }, /"thresholds"/],
+      ['no value function', { badges: [{ ...b, value: 1 }] }, /"value"/]
+    ])('rejects %s', (_, patch, message) => {
+      expect(() => validatePlugin({ ...plugin, ...patch })).toThrow(message);
+    });
+  });
+
   describe('xc-planner kind', () => {
     const exp = { label: 'CSV', extension: 'csv', write: () => '' };
     const planner = { id: 'acme/tasks', name: 'Tasks', kind: 'xc-planner', apiVersion: 1, exports: [exp] };

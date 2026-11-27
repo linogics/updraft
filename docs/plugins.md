@@ -57,7 +57,7 @@ Fields of every kind:
 | ---------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `id`       | `string`                                  | `vendor/name`, each part matches `[a-z0-9-]{1,40}`, for example `acme/wind-panel`. Unique among plugins and built-in panels. Stable, it identifies the panel in the saved layout. The vendor `updraft` is reserved for bundled plugins, added plugins cannot use it. |
 | `name`     | `string`                                  | Not blank. Shown as the panel title, in the Panels menu and in the export dialogs.                                                |
-| `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter' \| 'xc-planner'` | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
+| `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter' \| 'xc-planner' \| 'badge'` | What the plugin extends. Each kind has its own fields and its own `apiVersion`.                                                   |
 | `provides` | `Record<string, (ctx) => object>`         | Optional. Services this plugin offers, see [Services](#services).                                                                 |
 | `requires` | `string[]`                                | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                              |
 
@@ -381,9 +381,38 @@ Rule fields, all distances in km:
 | `cylinders`   | FAI cylinder radius, 0 to 5. Turnpoints are moved out by it.                                                                         |
 | `decimals`    | Decimals of the final score, 1 or 2, default 2.                                                                                      |
 
+## Badge plugins
+
+A `badge` plugin adds tiered achievements. Each badge reads the summaries of a pilot's flights and returns one number. The tier is the highest threshold that number reaches. Badge plugins are managed from the logbook Achievements panel. The types are in `src/lib/plugins/api.d.ts`.
+
+```js
+export default {
+  id: 'acme/badges',
+  name: 'Acme badges',
+  kind: 'badge',
+  apiVersion: 1,
+  badges: [
+    {
+      id: 'night-owl',
+      label: 'Long flights',
+      unit: 'duration',
+      thresholds: [3600, 7200, 10800, 14400, 18000, 21600, 28800, 36000],
+      value: (flights) => flights.filter((f) => f.durationS >= 3600).length
+    }
+  ]
+};
+```
+
+- `badges` has 1 or more entries. `id` is unique within the plugin, 1 to 40 characters from `[a-z0-9-]`. `label` is not blank.
+- `unit` is one of `distance`, `speed`, `duration`, `altitude`, `vario` or `count`. It tells the app how to display the number. Everything is SI: metres, m/s, seconds, or a plain count. The app converts for display only.
+- `thresholds` are exactly 8 finite numbers above 0, each larger than the one before. They are the tiers Bronze, Silver, Gold, Platinum, Diamond, Cloudbase, Stratos and Legend, in that order.
+- `value(flights)` gets every flight summary of a pilot, in any order, as `BadgeFlight` objects with `date`, `site`, `glider`, `durationS`, `freeDistance`, `maxAltMsl`, `maxGain`, optional `maxAgl`, `bestClimb`, `bestThermalGain` and an optional `xc` of `{ kind, distance, speed? }`. It returns a finite number of 0 or more. A throw or an invalid result counts as 0.
+- `value` must never drop when a flight is added, like a maximum, a sum or a count. The app finds the date a tier was reached by asking for the value of the flights up to a day.
+- The bundled `updraft/badges` plugin provides 15 badges and cannot be removed.
+
 ## Versioning
 
-Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend, converter and xc-planner kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
+Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend, converter, xc-planner and badge kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 plugins are not supported.
 
 ## Security
 

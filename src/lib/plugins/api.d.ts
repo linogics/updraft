@@ -225,6 +225,76 @@ export interface XcPlannerPlugin extends PluginBase {
   leagues?: PlanLeague[];
 }
 
+// Badge kind
+
+/** The quantity a badge measures. Thresholds and values are SI: metres, m/s, seconds, or a plain count. */
+export type BadgeUnit = 'distance' | 'speed' | 'duration' | 'altitude' | 'vario' | 'count';
+
+/** One flight as badges see it. Everything is SI, so convert for display only. */
+export interface BadgeFlight {
+  /** Flight date, `YYYY-MM-DD`. */
+  date: string;
+  /** Takeoff site name, or null when unknown. May be blank or differ in case between flights. */
+  site: string | null;
+  /** Glider name, or null when unknown. May be blank or differ in case between flights. */
+  glider: string | null;
+  /** Airtime in seconds. */
+  durationS: number;
+  /** Free distance in metres, the furthest of the free route and the distance from takeoff. */
+  freeDistance: number;
+  /** Highest altitude in metres above sea level. */
+  maxAltMsl: number;
+  /** Highest altitude minus takeoff altitude, in metres. */
+  maxGain: number;
+  /** Highest height above ground in metres. Missing when no ground heights were available. */
+  maxAgl?: number;
+  /** Best average climb of one thermal in m/s. */
+  bestClimb: number;
+  /** Biggest altitude gain of one thermal in metres. */
+  bestThermalGain: number;
+  /** The best scored route of the flight, missing when none scored. */
+  xc?: {
+    /** Route type: `free`, `flat` (flat triangle), `fai` (FAI triangle), `oar` or `oar2` (out-and-return). */
+    kind: string;
+    /** Route length in metres. */
+    distance: number;
+    /** Average speed in m/s from the first to the last route point. Missing for closed routes. */
+    speed?: number;
+  };
+}
+
+/** One tiered achievement. The tier is the highest threshold that `value` reaches. */
+export interface BadgeDef {
+  /** Unique within the plugin, `[a-z0-9-]{1,40}`. */
+  id: string;
+  /** Shown to the user, for example `Longest flight`. Not blank. */
+  label: string;
+  unit: BadgeUnit;
+  /**
+   * The values for Bronze, Silver, Gold, Platinum, Diamond, Cloudbase, Stratos and Legend, in that order.
+   * Exactly 8 finite numbers above 0, strictly increasing, in the SI unit of `unit`.
+   */
+  thresholds: number[];
+  /**
+   * The badge value over all flights of a pilot, in any order. Return a finite number of 0 or more.
+   * It must never drop when a flight is added, like a maximum or a count. Anything else counts as 0.
+   */
+  value(flights: BadgeFlight[]): number;
+}
+
+/** A set of badges, apiVersion 1: headless, the app shows the tiers a pilot reached. */
+export interface BadgePlugin extends PluginBase {
+  /** Same rules as `StudioPlugin.id`. */
+  id: string;
+  /** Not blank. */
+  name: string;
+  kind: 'badge';
+  /** Must be `1`. */
+  apiVersion: 1;
+  /** 1 or more, ids unique within the plugin. */
+  badges: BadgeDef[];
+}
+
 // Backend kind
 
 /** A sync backend, apiVersion 1: headless, the app picks one and syncs through the adapter it creates. */

@@ -79,6 +79,25 @@ describe('addPlugin', () => {
     });
   });
 
+  it('stores a badge plugin with its badge metadata but not the value function', async () => {
+    const badge = { id: 'a', label: ' A ', unit: 'count', thresholds: [1, 2, 3, 4, 5, 6, 7, 8] };
+    loaded.current = {
+      id: 'acme/badges',
+      name: 'Badges',
+      kind: 'badge',
+      apiVersion: 1,
+      badges: [{ ...badge, value: () => 0 }]
+    };
+    await addPlugin('https://a.test/badges.js');
+    expect(pluginPrefs.list.at(-1)).toEqual({
+      url: 'https://a.test/badges.js',
+      id: 'acme/badges',
+      name: 'Badges',
+      kind: 'badge',
+      badges: [{ ...badge, label: 'A' }]
+    });
+  });
+
   it('refuses a kind the page does not accept and stores nothing', async () => {
     const before = pluginPrefs.list.length;
     loaded.current = { ...conv(['zzz']), id: 'acme/zzz' };
