@@ -78,4 +78,72 @@ function session(user) {
   };
 }
 
-module.exports = { applyChanges, jsonOf, session, MAX_CHANGES, MAX_PULL };
+// OAuth is off unless the server knows which app origins may receive the token and its own public address.
+// The public address is configured, not read from the request, so a forged Host header cannot steer the redirect.
+const OAUTH_COOKIE = 'updraft_oauth';
+const OAUTH_PATH = '/api/updraft/v1/auth';
+
+function appOrigins() {
+  return ($os.getenv('UPDRAFT_APP_ORIGINS') || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s !== '');
+}
+
+function publicUrl() {
+  const url = ($os.getenv('UPDRAFT_PUBLIC_URL') || '').trim().replace(/\/+$/, '');
+  return /^https?:\/\/[^\s?#]+$/.test(url) ? url : '';
+}
+
+// The providers enabled on the users collection, as { id, label, config }.
+function oauthProviders() {
+  if (appOrigins().length === 0 || publicUrl() === '') return [];
+  const oauth2 = $app.findCollectionByNameOrId('users').oauth2;
+  if (!oauth2.enabled) return [];
+  const list = [];
+  for (const config of oauth2.providers) {
+    try {
+      list.push({ id: config.name, label: config.displayName || config.initProvider().displayName(), config });
+    } catch (_) {
+      // A broken provider config is not offered.
+    }
+  }
+  return list;
+}
+
+// Safe inside an inline script and a JSON string.
+function scriptJson(value) {
+  return JSON.stringify(value).replace(
+    /[<>&\u2028\u2029]/g,
+    (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')
+  );
+}
+
+// Hands the result to the window that opened the popup, and only to the origin saved before the redirect.
+function resultPage(e, origin, message) {
+  const nonce = $security.randomString(24);
+  const script = `window.opener&&window.opener.postMessage(${scriptJson({ type: 'updraft-auth', ...message })},${scriptJson(origin)});window.close();`;
+  const h = e.response.header();
+  h.set('Content-Security-Policy', `default-src 'none'; base-uri 'none'; script-src 'nonce-${nonce}'`);
+  h.set('Cache-Control', 'no-store');
+  h.set('Referrer-Policy', 'no-referrer');
+  h.set('X-Content-Type-Options', 'nosniff');
+  return e.html(
+    200,
+    `<!doctype html><meta charset="utf-8"><title>Updraft</title><p>You can close this window.</p><script nonce="${nonce}">${script}</script>`
+  );
+}
+
+module.exports = {
+  applyChanges,
+  jsonOf,
+  session,
+  appOrigins,
+  publicUrl,
+  oauthProviders,
+  resultPage,
+  OAUTH_COOKIE,
+  OAUTH_PATH,
+  MAX_CHANGES,
+  MAX_PULL
+};

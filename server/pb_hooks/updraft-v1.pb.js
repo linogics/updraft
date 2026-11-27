@@ -4,10 +4,14 @@ const BASE = '/api/updraft/v1';
 const auth = $apis.requireAuth('users');
 
 routerAdd('GET', BASE, (e) => {
-  const { MAX_CHANGES, MAX_PULL } = require(`${__hooks}/updraft.js`);
+  const { MAX_CHANGES, MAX_PULL, oauthProviders } = require(`${__hooks}/updraft.js`);
   return e.json(200, {
     version: 1,
-    auth: { password: true, signup: $os.getenv('UPDRAFT_SIGNUP') === 'true', oauth: [] },
+    auth: {
+      password: true,
+      signup: $os.getenv('UPDRAFT_SIGNUP') === 'true',
+      oauth: oauthProviders().map((p) => ({ id: p.id, label: p.label }))
+    },
     club: true,
     limits: { maxChanges: MAX_CHANGES, maxPull: MAX_PULL }
   });
@@ -45,6 +49,166 @@ routerAdd('POST', `${BASE}/auth/signup`, (e) => {
     throw new BadRequestError('Invalid email or password.');
   }
   return e.json(200, session(user));
+});
+
+// OAuth sign in for a popup. Start: redirect to the provider with state and PKCE saved in a cookie.
+routerAdd('GET', `${BASE}/auth/redirect/{provider}`, (e) => {
+  const { appOrigins, publicUrl, oauthProviders, OAUTH_COOKIE, OAUTH_PATH } = require(`${__hooks}/updraft.js`);
+  const origin = e.request.url.query().get('origin') || '';
+  if (appOrigins().indexOf(origin) < 0) throw new BadRequestError('origin is not allowed.');
+  const id = e.request.pathValue('provider');
+  const found = oauthProviders().find((p) => p.id === id);
+  if (!found) throw new NotFoundError('Unknown provider.');
+
+  const state = $security.randomString(32);
+  const verifier = $security.randomString(64);
+  // S256 challenge: base64url of the sha256 bytes.
+  const challenge = Buffer.from($security.sha256(verifier), 'hex')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  const base = publicUrl();
+  const provider = found.config.initProvider();
+  provider.setRedirectURL(`${base}${OAUTH_PATH}/callback`);
+  const url = `${provider.buildAuthURL(state)}&code_challenge=${challenge}&code_challenge_method=S256`;
+
+  e.setCookie(
+    new Cookie({
+      name: OAUTH_COOKIE,
+      value: encodeURIComponent(JSON.stringify({ state, verifier, origin, provider: id })),
+      path: OAUTH_PATH,
+      maxAge: 600,
+      httpOnly: true,
+      secure: base.startsWith('https://'),
+      sameSite: 2 // Lax, so the cookie comes back on the provider's redirect.
+    })
+  );
+  e.response.header().set('Cache-Control', 'no-store');
+  return e.redirect(302, url);
+});
+
+// OAuth sign in, step two. Always answers with a page that posts the result to the opener.
+routerAdd('GET', `${BASE}/auth/callback`, (e) => {
+  const { appOrigins, publicUrl, oauthProviders, resultPage, session, OAUTH_COOKIE, OAUTH_PATH } = require(
+    `${__hooks}/updraft.js`
+  );
+  const q = e.request.url.query();
+
+  let saved = null;
+  try {
+    saved = JSON.parse(decodeURIComponent(e.request.cookie(OAUTH_COOKIE).value));
+  } catch (_) {
+    // No cookie or a broken one.
+  }
+  e.setCookie(new Cookie({ name: OAUTH_COOKIE, value: '', path: OAUTH_PATH, maxAge: -1, httpOnly: true }));
+
+  // Without a trusted cookie there is no origin to answer to, so nothing is posted anywhere.
+  const state = q.get('state') || '';
+  if (
+    !saved ||
+    typeof saved !== 'object' ||
+    typeof saved.origin !== 'string' ||
+    appOrigins().indexOf(saved.origin) < 0 ||
+    typeof saved.state !== 'string' ||
+    state === '' ||
+    saved.state !== state
+  )
+    return e.html(
+      400,
+      '<!doctype html><meta charset="utf-8"><title>Updraft</title><p>Sign in failed. Start again from the app.</p>'
+    );
+
+  const fail = (message) => resultPage(e, saved.origin, { error: message });
+  if (q.get('error') || !q.get('code')) return fail('Sign in was cancelled.');
+  const found = oauthProviders().find((p) => p.id === saved.provider);
+  if (!found) return fail('Unknown provider.');
+
+  let authUser = null;
+  try {
+    const provider = found.config.initProvider();
+    provider.setRedirectURL(`${publicUrl()}${OAUTH_PATH}/callback`);
+    // Manual code exchange, because the JS binding cannot pass the PKCE verifier option to fetchToken.
+    const form = {
+      grant_type: 'authorization_code',
+      code: q.get('code'),
+      redirect_uri: provider.redirectURL(),
+      client_id: provider.clientId(),
+      client_secret: provider.clientSecret(),
+      code_verifier: saved.verifier
+    };
+    const res = $http.send({
+      url: provider.tokenURL(),
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+      body: Object.keys(form)
+        .map((k) => `${k}=${encodeURIComponent(form[k])}`)
+        .join('&'),
+      timeout: 15
+    });
+    if (res.statusCode !== 200 || !res.json || typeof res.json.access_token !== 'string')
+      throw new Error(`token endpoint answered ${res.statusCode}`);
+    authUser = provider.fetchAuthUser({
+      accessToken: res.json.access_token,
+      tokenType: res.json.token_type || 'Bearer',
+      refreshToken: res.json.refresh_token || ''
+    });
+  } catch (err) {
+    $app.logger().warn('OAuth sign in failed', 'provider', saved.provider, 'error', String(err));
+    return fail('Sign in failed.');
+  }
+  if (!authUser.id) return fail('Sign in failed.');
+
+  const users = $app.findCollectionByNameOrId('users');
+  let user = null;
+  try {
+    const link = $app.findFirstExternalAuthByExpr(
+      $dbx.hashExp({ collectionRef: users.id, provider: saved.provider, providerId: authUser.id })
+    );
+    user = $app.findRecordById(users, link.recordRef());
+  } catch (_) {
+    // Not linked yet.
+  }
+  if (!user) {
+    // Same trust as PocketBase's own OAuth sign in: the provider vouches for the email.
+    if (authUser.email) {
+      try {
+        user = $app.findAuthRecordByEmail(users, authUser.email);
+      } catch (_) {
+        // No account with that email.
+      }
+    }
+    if (!user) {
+      if ($os.getenv('UPDRAFT_SIGNUP') !== 'true' || !authUser.email)
+        return fail(
+          `No account matches your ${found.label} email. Ask the server admin to create one with that email.`
+        );
+      try {
+        user = new Record(users);
+        user.set('email', authUser.email);
+        const password = $security.randomString(32);
+        user.set('password', password);
+        user.set('passwordConfirm', password);
+        user.set('verified', true);
+        $app.save(user);
+      } catch (err) {
+        $app.logger().warn('OAuth signup failed', 'error', String(err));
+        return fail('Sign in failed.');
+      }
+    }
+    try {
+      const link = new Record($app.findCollectionByNameOrId('_externalAuths'));
+      link.set('collectionRef', users.id);
+      link.set('recordRef', user.id);
+      link.set('provider', saved.provider);
+      link.set('providerId', authUser.id);
+      $app.save(link);
+    } catch (err) {
+      $app.logger().warn('OAuth link failed', 'error', String(err));
+      return fail('Sign in failed.');
+    }
+  }
+  return resultPage(e, saved.origin, session(user));
 });
 
 routerAdd(
