@@ -64,6 +64,13 @@ export function collectPrefChanges(known: Known): { changes: SyncChange[]; next:
       }
     }
 
+    // A pref never seen on the server must not beat the server copy. It goes out at 0 and stays unknown,
+    // so the pull applies whatever the server kept, the own echo included.
+    if (!known[id]) {
+      changes.push({ type: 'pref', id, updatedAt: 0, data });
+      continue;
+    }
+
     const updatedAt = Date.now();
     changes.push({ type: 'pref', id, updatedAt, data });
     next[id] = { raw, updatedAt };
@@ -83,7 +90,8 @@ export function applyRemotePrefs(changes: SyncChange[], known: Known): Known {
     const isSecret = SYNC_SECRET_KEYS.includes(c.id);
     if (c.type !== 'pref' || c.deleted || !allowed.includes(c.id) || !Number.isFinite(c.updatedAt)) continue;
     if (isSecret ? typeof c.data !== 'string' : c.data === undefined) continue;
-    if (c.updatedAt <= (next[c.id]?.updatedAt ?? 0)) continue;
+    // A pref unknown here takes any remote value, even one stamped 0.
+    if (next[c.id] && c.updatedAt <= next[c.id].updatedAt) continue;
 
     write(c.id, isSecret ? (c.data as string) : JSON.stringify(c.data));
     next[c.id] = { raw: read(c.id) ?? '', updatedAt: c.updatedAt };

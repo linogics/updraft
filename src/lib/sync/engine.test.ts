@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Flight } from '../domain/model';
 import { IndexedDbFlightRepository } from '../storage/indexeddb';
 import { SyncEngine } from './engine.svelte';
-import { setSyncKeys } from './prefs';
+import { applyRemotePrefs, collectPrefChanges, setSyncKeys } from './prefs';
 import type { SyncChange, SyncTransport } from './types';
 
 const flight = (id: string, pilot = 'P'): Flight => ({
@@ -184,6 +184,28 @@ describe('SyncEngine', () => {
     await b.engine.syncNow();
     await a.engine.syncNow();
     expect(server.log).toHaveLength(1);
+  });
+
+  it('does not let a first-contact local pref beat a newer server value', async () => {
+    const server = new FakeServer();
+    const a = device(server);
+    localStorage.setItem('units', JSON.stringify({ speed: 'old' }));
+    server.log.push({ type: 'pref', id: 'units', updatedAt: 5, data: { speed: 'new' } });
+
+    await a.engine.syncNow();
+
+    expect(server.log[1]).toMatchObject({ type: 'pref', id: 'units', updatedAt: 0 });
+    expect(JSON.parse(localStorage.getItem('units') ?? 'null')).toEqual({ speed: 'new' });
+  });
+
+  it('keeps a first-contact pref unknown, so a server value stamped 0 still applies', () => {
+    localStorage.setItem('units', JSON.stringify({ speed: 'mine' }));
+    const { changes, next } = collectPrefChanges({});
+    expect(changes).toEqual([{ type: 'pref', id: 'units', updatedAt: 0, data: { speed: 'mine' } }]);
+    expect(next.units).toBeUndefined();
+
+    applyRemotePrefs([{ type: 'pref', id: 'units', updatedAt: 0, data: { speed: 'other' } }], next);
+    expect(JSON.parse(localStorage.getItem('units') ?? 'null')).toEqual({ speed: 'other' });
   });
 
   it('syncs api keys only with opt-in', async () => {

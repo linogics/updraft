@@ -32,6 +32,31 @@ describe('IndexedDbFlightRepository', () => {
     expect(await repo.get('missing')).toBeUndefined();
   });
 
+  it('keeps the club summary in step with edited pilot, site and glider but not notes', async () => {
+    const repo = new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
+    const club = {
+      v: 1 as const,
+      pilot: 'Old',
+      date: '2026-07-15',
+      site: null,
+      glider: null,
+      durationS: 60,
+      freeDistanceKm: 1,
+      maxAltMsl: 1000,
+      maxGain: 10,
+      bestClimb: 1,
+      bestThermalGain: 10
+    };
+    await repo.save({ ...flight('a'), shared: true, club });
+
+    await repo.updateMeta('a', { pilot: 'New', notes: 'n' });
+
+    const got = await repo.get('a');
+    expect(got?.pilot).toBe('New');
+    expect(got?.club?.pilot).toBe('New');
+    expect(got?.club && 'notes' in got.club).toBe(false);
+  });
+
   it('lists summaries newest first without fixes', async () => {
     const repo = new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
     await repo.save(flight('old', '2025-05-01'));
