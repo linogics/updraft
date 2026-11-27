@@ -70,14 +70,18 @@ jobs:
           for i in $(seq 30); do curl -fsS http://localhost:8090/api/health && break; sleep 1; done
           curl -fsS http://localhost:8090/api/health
           # The hooks are mounted if the capabilities route answers.
-          curl -fsS http://localhost:8090/api/updraft/v1
+          curl -fsS http://localhost:8090/api/updraft/v2
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Spec conformance
-        run: npx svelte-kit sync && SPEC_URL=http://localhost:8090 SPEC_APP_ORIGIN=http://localhost:5173 npx vitest run spec.conformance
+      - name: Seed pilots and a club
+        run: |
+          docker exec pb pocketbase superuser upsert ci@example.org ci-admin-pass-1 --dir=/pb/pb_data --migrationsDir=/pb/pb_migrations
+          node scripts/seed-contract.mjs --url http://localhost:8090 --admin ci@example.org --password ci-admin-pass-1 >> "$GITHUB_ENV"
+      - name: Contract suite
+        run: npx svelte-kit sync && npm run contract -- --url http://localhost:8090 --token "$T1" --token2 "$T2" --club "$CLUB"
       - name: Server logs
         if: failure()
         run: docker logs pb

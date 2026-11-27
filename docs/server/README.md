@@ -1,6 +1,6 @@
-# Sync server spec v2 (draft)
+# Sync server spec v2
 
-You can write your own sync server in any language. If it follows this spec, a client that speaks v2 works with it as is. The app speaks v2. The older [v1](../plugins/backend/server/README.md) is only kept for the PocketBase kit until it moves to v2.
+You can write your own sync server in any language. If it follows this spec, a client that speaks v2 works with it as is. The app speaks v2, and so does the PocketBase reference server in `server/`.
 
 ## Overview
 
@@ -252,3 +252,35 @@ npm run contract -- --url http://127.0.0.1:8090 --token <t> [--token2 <t>] [--cl
 - The test waits and retries on 429, so rate limits are fine.
 
 The same suite runs in CI against `src/lib/sync/v2/memory-server.ts`, a small in-memory server that follows the spec. Read it if you want to see what a minimal implementation looks like.
+
+## Reference implementation
+
+The PocketBase kit in `server/`, set up as described in [self-hosting-sync.md](../self-hosting-sync.md). It passes the contract suite, club tests included.
+
+| File                                       | What it does                                                                                              |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `server/pb_hooks/updraft-v2.pb.js`         | All routes of the spec.                                                                                   |
+| `server/pb_hooks/updraft.js`               | Shared code: the version check with its counter in one transaction, club entries, tracks, OAuth, limits.  |
+| `server/pb_migrations/*.js`                | The collections `items`, `tracks`, `sync_counter`, `clubs`, `club_members`, `club_entries` and the rate limiter settings. |
+| `server/compose.yaml`, `server/Dockerfile` | Runs PocketBase with the hooks and migrations mounted.                                                    |
+| `scripts/seed-contract.mjs`                | Creates two pilots and a club they share, for the contract suite.                                         |
+
+How it keeps the promises of the spec:
+
+- One counter (`sync_counter`) numbers every write of items and club entries. Its value is the item `version` and the feed cursor, so a cursor is only valid up to the counter, and a bigger one answers 400.
+- The version check and the counter run in one transaction, so two devices cannot both win.
+- Track files are stored in the `tracks` collection as file fields, apart from the items, so feeds never load them.
+- Club entries (`club_entries`) hold the summary and an opaque key per flight and club. The key is the row id.
+- The auth routes are limited to 2 requests per 3 seconds per client IP in the hooks, with `Retry-After`. The other routes only have PocketBase's general limit, which does not send `Retry-After`.
+- Limits: `maxPage` 200, `maxItemBytes` 1 MB, `maxTrackBytes` 20 MB.
+
+To run the contract suite against a local container (signup must be on, see [self-hosting-sync.md](../self-hosting-sync.md#development)):
+
+```sh
+docker build -t updraft-server server
+docker run -d --name pb -p 8090:8090 -e UPDRAFT_SIGNUP=true \
+  -v "$PWD/server/pb_migrations:/pb/pb_migrations" -v "$PWD/server/pb_hooks:/pb/pb_hooks" updraft-server
+docker exec pb pocketbase superuser upsert admin@example.org a-long-password --dir=/pb/pb_data --migrationsDir=/pb/pb_migrations
+eval "$(node scripts/seed-contract.mjs --url http://localhost:8090 --admin admin@example.org --password a-long-password)"
+npm run contract -- --url http://localhost:8090 --token "$T1" --token2 "$T2" --club "$CLUB"
+```
