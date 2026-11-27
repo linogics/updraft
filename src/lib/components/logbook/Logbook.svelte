@@ -84,16 +84,16 @@
   };
 
   const COLUMN_LABELS = { main: m.logbook_column_main(), side: m.logbook_column_side() };
+  const noFlights = $derived(flights.length === 0);
+  const noBadges = $derived(!flights.some(countsForBadges));
   const panels = $derived([
-    ...(flights.length ? [{ id: 'charts', title: () => m.logbook_charts(), body: chartsBody }] : []),
-    ...(flights.some(countsForBadges)
-      ? [{ id: 'achievements', title: () => m.achievements_title(), body: achievementsBody }]
-      : []),
-    { id: 'flights', title: () => m.logbook_col_flights(), body: flightsBody },
-    ...(flights.length ? [{ id: 'breakdown', title: () => m.logbook_breakdown(), body: breakdownBody }] : []),
     { id: 'upload', title: () => m.logbook_upload(), body: uploadBody },
+    { id: 'flights', title: () => m.logbook_col_flights(), body: flightsBody },
+    { id: 'breakdown', title: () => m.logbook_breakdown(), body: breakdownBody, empty: noFlights },
     { id: 'sync', title: () => m.sync_heading(), body: syncBody },
-    { id: 'backup', title: () => m.backup_heading(), body: backupBody }
+    { id: 'backup', title: () => m.backup_heading(), body: backupBody },
+    { id: 'airtime', title: () => m.logbook_airtime(), body: airtimeBody, empty: noFlights },
+    { id: 'achievements', title: () => m.achievements_title(), body: achievementsBody, empty: noBadges }
   ]);
 
   const hours = (seconds: number) => formatNumber(seconds / 3600, seconds < 36_000 ? 1 : 0);
@@ -226,50 +226,66 @@
   onDestroy(() => xcRun++);
 </script>
 
-{#snippet chartsBody()}
-  <div class="charts">
-    <BarChart bars={months} label={m.home_bars_label()} />
-    <BarChart bars={years} label={m.logbook_hours_per_year()} />
-  </div>
+{#snippet emptyNotice()}
+  <p class="empty-notice">{m.logbook_empty_notice()}</p>
+{/snippet}
+
+{#snippet airtimeBody()}
+  {#if noFlights}
+    {@render emptyNotice()}
+  {:else}
+    <div class="airtime">
+      <BarChart bars={months} label={m.home_bars_label()} />
+      <BarChart bars={years} label={m.logbook_hours_per_year()} />
+    </div>
+  {/if}
 {/snippet}
 
 {#snippet achievementsBody()}
-  <Achievements {flights} />
+  {#if noBadges}
+    {@render emptyNotice()}
+  {:else}
+    <Achievements {flights} />
+  {/if}
 {/snippet}
 
 {#snippet breakdownBody()}
-  <div class="head">
-    <div class="seg" role="group" aria-label={m.logbook_group_by()}>
-      {#each ['year', 'site', 'glider'] as const as k (k)}
-        <button class:on={by === k} aria-pressed={by === k} onclick={() => (by = k)}>{BY_LABELS[k]()}</button>
-      {/each}
+  {#if noFlights}
+    {@render emptyNotice()}
+  {:else}
+    <div class="head">
+      <div class="seg" role="group" aria-label={m.logbook_group_by()}>
+        {#each ['year', 'site', 'glider'] as const as k (k)}
+          <button class:on={by === k} aria-pressed={by === k} onclick={() => (by = k)}>{BY_LABELS[k]()}</button>
+        {/each}
+      </div>
     </div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>{BY_LABELS[by]()}</th><th class="num">{m.logbook_col_flights()}</th><th class="num">
-          {m.logbook_col_hours()}
-        </th><th class="num">{m.logbook_col_points()}</th><th class="num hide">{m.logbook_col_longest()}</th><th
-          class="num hide"
-        >
-          {m.export_row_max_altitude()}
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each rows as r (r.label)}
+    <table>
+      <thead>
         <tr>
-          <td>{r.label}</td>
-          <td class="num">{r.flights}</td>
-          <td class="num">{formatNumber(r.hours, 1)}</td>
-          <td class="num">{formatNumber(r.points, 2)}</td>
-          <td class="num hide">{mins(r.longestMin)}</td>
-          <td class="num hide">{r.maxAlt === undefined ? '–' : formatAlt(r.maxAlt, u)}</td>
+          <th>{BY_LABELS[by]()}</th><th class="num">{m.logbook_col_flights()}</th><th class="num">
+            {m.logbook_col_hours()}
+          </th><th class="num">{m.logbook_col_points()}</th><th class="num hide">{m.logbook_col_longest()}</th><th
+            class="num hide"
+          >
+            {m.export_row_max_altitude()}
+          </th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each rows as r (r.label)}
+          <tr>
+            <td>{r.label}</td>
+            <td class="num">{r.flights}</td>
+            <td class="num">{formatNumber(r.hours, 1)}</td>
+            <td class="num">{formatNumber(r.points, 2)}</td>
+            <td class="num hide">{mins(r.longestMin)}</td>
+            <td class="num hide">{r.maxAlt === undefined ? '–' : formatAlt(r.maxAlt, u)}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {/if}
 {/snippet}
 
 {#snippet uploadBody()}
@@ -510,7 +526,7 @@
     font: 500 30px/1 var(--display);
     font-variant-numeric: tabular-nums;
   }
-  .charts {
+  .airtime {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 12px;
@@ -582,6 +598,11 @@
     justify-content: end;
     border-bottom: 1px solid var(--border);
   }
+  .empty-notice {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
   .muted {
     color: var(--muted);
   }
@@ -641,7 +662,7 @@
     }
   }
   @media (max-width: 700px) {
-    .charts {
+    .airtime {
       grid-template-columns: 1fr;
     }
     .hide {
