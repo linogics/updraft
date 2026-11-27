@@ -18,6 +18,20 @@ export interface WindService {
   /** Wind at a point. */
   at(lat: number, lon: number): Wind;
 }
+/** Kind \`wind-panel\`. A panel with wind. */
+export interface WindPlugin extends Base {
+  /** Shown to the user. */
+  label: string;
+  /** Not required. */
+  note?: string;
+  /** Reads a sample. */
+  read(at: number): Wind;
+}
+/** Fields of every plugin. */
+export interface Base {
+  /** Plugin id. */
+  id: string;
+}
 /** A wind sample. */
 export interface Wind {
   /** m/s. */
@@ -28,14 +42,22 @@ export interface Wind {
 it('writes one page per service with events, members and types', () => {
   const dir = mkdtempSync(join(tmpdir(), 'svcdocs-'));
   writeFileSync(join(dir, 'wind.d.ts'), dts);
-  execFileSync('node', ['scripts/gen-service-docs.mjs', join(dir, 'wind.d.ts'), join(dir, 'out')]);
-  const page = readFileSync(join(dir, 'out/me-wind-1.md'), 'utf8');
+  execFileSync('node', ['scripts/gen-plugin-docs.mjs', join(dir, 'wind.d.ts'), join(dir, 'out')]);
+  const page = readFileSync(join(dir, 'out/service/reference/me-wind-1.md'), 'utf8');
   expect(page).toContain('# me/wind@1');
   expect(page).toContain('| `data` | New data arrived. |');
   expect(page).toContain('| `altitude` | Altitude \\| changed. |');
   expect(page).toContain('| `at(lat: number, lon: number): Wind` | Wind at a point. |');
   expect(page).toContain('### Wind');
-  expect(readFileSync(join(dir, 'out/README.md'), 'utf8')).toContain(
+  expect(readFileSync(join(dir, 'out/service/reference/README.md'), 'utf8')).toContain(
     '- [me/wind@1](me-wind-1.md) Provided by the wind plugin.'
   );
+
+  const kind = readFileSync(join(dir, 'out/wind-panel/api.md'), 'utf8');
+  expect(kind).toContain('# `wind-panel` plugin: API reference');
+  expect(kind).toContain('| `note?` | `string` | Not required. |');
+  expect(kind).toContain('| `label` | `string` | Shown to the user. |');
+  expect(kind).toContain('| `read` | `(at: number): Wind` | Reads a sample. |');
+  expect(kind).toContain('| `id` | `string` | Plugin id. |');
+  expect(kind).toContain('### Wind');
 });

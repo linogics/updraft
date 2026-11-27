@@ -1,4 +1,4 @@
-// Reference plugin for the updraft studio, see docs/plugins.md.
+// Reference plugin for the updraft studio, see docs/plugins/studio/README.md.
 // Shows the camera heading as a compass rose in the overlay and paints it into exports.
 // It reads the Cesium viewer through studio.viewer(), which is null in the 2D map.
 // Plain JavaScript, no build step. The default export is the whole contract.

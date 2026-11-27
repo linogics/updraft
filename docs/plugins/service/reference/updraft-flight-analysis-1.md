@@ -38,12 +38,12 @@ Statistics of one flight. All values are SI.
 | `trackLength` | `number` | Metres along the track. |
 | `straightDistance` | `number` | Metres, straight line takeoff to landing. |
 | `maxDistanceFromTakeoff` | `number` | Metres, furthest point from takeoff. |
-| `maxAlt` | `number` |  |
-| `minAlt` | `number` |  |
-| `takeoffAlt` | `number` |  |
-| `landingAlt` | `number` |  |
-| `maxClimb` | `number` |  |
-| `maxSink` | `number` |  |
+| `maxAlt` | `number` | Highest altitude in metres. |
+| `minAlt` | `number` | Lowest altitude in metres. |
+| `takeoffAlt` | `number` | Altitude at takeoff in metres. |
+| `landingAlt` | `number` | Altitude at landing in metres. |
+| `maxClimb` | `number` | Best climb rate in m/s. |
+| `maxSink` | `number` | Worst sink rate in m/s, a negative number. |
 | `phaseShare` | `Record<'thermalling' \| 'gliding' \| 'searching', number>` | Share of time per phase, 0..1. |
 | `glideRatio` | `number \| null` | Average glide ratio over gliding phases, null if none. |
 
@@ -53,9 +53,9 @@ Transition altitudes: where climbs were left and the next one found. Glides only
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `count` | `number` |  |
-| `avgStartAlt` | `number \| null` |  |
-| `avgEndAlt` | `number \| null` |  |
-| `lowestArrival` | `number \| null` |  |
-| `avgGlideRatio` | `number \| null` |  |
+| `count` | `number` | Number of glides. |
+| `avgStartAlt` | `number \| null` | Average altitude where the glides started, in metres. Null when there is none. |
+| `avgEndAlt` | `number \| null` | Average altitude where the glides ended, in metres. Null when there is none. |
+| `lowestArrival` | `number \| null` | Lowest altitude where a glide ended, in metres. Null when there is none. |
+| `avgGlideRatio` | `number \| null` | Average glide ratio of the glides. Null when there is none. |
 | `avgSpeed` | `number \| null` | m/s. |

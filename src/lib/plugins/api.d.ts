@@ -64,7 +64,7 @@ export interface PluginContext {
   need(kind: NeedKind): () => void;
 }
 
-/** A panel in a dock, apiVersion 2. */
+/** Kind `studio`. A panel in a dock, apiVersion 2. */
 export interface StudioPlugin extends PluginBase {
   /**
    * `vendor/name`, each part matching `[a-z0-9-]{1,40}`, for example `acme/wind-panel`.
@@ -74,6 +74,7 @@ export interface StudioPlugin extends PluginBase {
   id: string;
   /** Not blank. Shown as the panel title, in the Panels menu and in the export dialogs. */
   name: string;
+  /** Must be `'studio'`. */
   kind: 'studio';
   /** Must be `2`. Any other value is refused with `Unsupported apiVersion X, this studio supports 2.`. */
   apiVersion: 2;
@@ -97,12 +98,13 @@ export interface StudioPlugin extends PluginBase {
   drawExport?(ctx2d: CanvasRenderingContext2D, time: number): void;
 }
 
-/** A headless plugin, apiVersion 1: no panel, it only provides services. */
+/** Kind `service`. A headless plugin, apiVersion 1: no panel, it only provides services. */
 export interface ServicePlugin extends PluginBase {
-  /** Same rules as `StudioPlugin.id`. */
+  /** `vendor/name`, each part matching `[a-z0-9-]{1,40}`. Unique among plugins. The vendor `updraft` is reserved for bundled plugins. */
   id: string;
   /** Not blank. */
   name: string;
+  /** Must be `'service'`. */
   kind: 'service';
   /** Must be `1`. */
   apiVersion: 1;
@@ -114,8 +116,11 @@ export interface ServicePlugin extends PluginBase {
 
 /** A track as plugins see it. Times in Unix ms, altitude in m, positions in degrees. */
 export interface PluginTrack {
+  /** Pilot name. */
   pilot: string;
+  /** Glider name, or null when unknown. */
   glider: string | null;
+  /** Takeoff site name, or null when unknown. */
   site: string | null;
   /** Flight date, `YYYY-MM-DD`. */
   date: string;
@@ -124,14 +129,15 @@ export interface PluginTrack {
 }
 
 /**
- * One track file format, apiVersion 1. A plugin reads and/or writes its format, the app converts through its own
+ * Kind `converter`. One track file format, apiVersion 1. A plugin reads and/or writes its format, the app converts through its own
  * flight model. Data that `PluginTrack` has no field for is lost.
  */
 export interface ConverterPlugin extends PluginBase {
-  /** Same rules as `StudioPlugin.id`. */
+  /** `vendor/name`, each part matching `[a-z0-9-]{1,40}`. Unique among plugins. The vendor `updraft` is reserved for bundled plugins. */
   id: string;
   /** Not blank. */
   name: string;
+  /** Must be `'converter'`. */
   kind: 'converter';
   /** Must be `1`. */
   apiVersion: 1;
@@ -210,12 +216,13 @@ export interface PlanLeague {
   rules: LeagueRule[];
 }
 
-/** An extension of the XC planner, apiVersion 1: headless, it adds export buttons and scoring leagues. */
+/** Kind `xc-planner`. An extension of the XC planner, apiVersion 1: headless, it adds export buttons and scoring leagues. */
 export interface XcPlannerPlugin extends PluginBase {
-  /** Same rules as `StudioPlugin.id`. */
+  /** `vendor/name`, each part matching `[a-z0-9-]{1,40}`. Unique among plugins. The vendor `updraft` is reserved for bundled plugins. */
   id: string;
   /** Not blank. */
   name: string;
+  /** Must be `'xc-planner'`. */
   kind: 'xc-planner';
   /** Must be `1`. */
   apiVersion: 1;
@@ -269,6 +276,7 @@ export interface BadgeDef {
   id: string;
   /** Shown to the user, for example `Longest flight`. Not blank. */
   label: string;
+  /** The quantity the badge measures, it tells the app how to display the value. */
   unit: BadgeUnit;
   /**
    * The values for Bronze, Silver, Gold, Platinum, Diamond, Cloudbase, Stratos and Legend, in that order.
@@ -282,12 +290,13 @@ export interface BadgeDef {
   value(flights: BadgeFlight[]): number;
 }
 
-/** A set of badges, apiVersion 1: headless, the app shows the tiers a pilot reached. */
+/** Kind `badge`. A set of badges, apiVersion 1: headless, the app shows the tiers a pilot reached. */
 export interface BadgePlugin extends PluginBase {
-  /** Same rules as `StudioPlugin.id`. */
+  /** `vendor/name`, each part matching `[a-z0-9-]{1,40}`. Unique among plugins. The vendor `updraft` is reserved for bundled plugins. */
   id: string;
   /** Not blank. */
   name: string;
+  /** Must be `'badge'`. */
   kind: 'badge';
   /** Must be `1`. */
   apiVersion: 1;
@@ -297,12 +306,13 @@ export interface BadgePlugin extends PluginBase {
 
 // Backend kind
 
-/** A sync backend, apiVersion 1: headless, the app picks one and syncs through the adapter it creates. */
+/** Kind `backend`. A sync backend, apiVersion 1: headless, the app picks one and syncs through the adapter it creates. */
 export interface BackendPlugin extends PluginBase {
-  /** Same rules as `StudioPlugin.id`. */
+  /** `vendor/name`, each part matching `[a-z0-9-]{1,40}`. Unique among plugins. The vendor `updraft` is reserved for bundled plugins. */
   id: string;
   /** Not blank. */
   name: string;
+  /** Must be `'backend'`. */
   kind: 'backend';
   /** Must be `1`. */
   apiVersion: 1;
@@ -314,17 +324,26 @@ export type SyncType = 'flight' | 'manual' | 'cameraPath' | 'pref';
 
 /** One record version. `data` is the Flight, the manual FlightSummary, `{ key, tracks }` or the pref value. */
 export interface SyncChange {
+  /** What the record is. */
   type: SyncType;
+  /** Record id, unique within its `type`. */
   id: string;
   /** Client clock in ms. The higher value wins per whole record. */
   updatedAt: number;
+  /** Set for a deleted record, which has no `data`. */
   deleted?: true;
+  /** The record content, absent when `deleted` is set. */
   data?: unknown;
 }
 
 /** Login and auth are the transport's own business. */
 export interface SyncTransport {
+  /** Stores the changes. A change only replaces the stored record when its `updatedAt` is higher. */
   push(changes: SyncChange[]): Promise<void>;
+  /**
+   * Returns the changes after an opaque `cursor`, `null` for the start, in a stable order. `more` is true while
+   * there are further pages. Only the signed in account's own records, never shared flights of other pilots.
+   */
   pull(cursor: string | null): Promise<{ changes: SyncChange[]; cursor: string | null; more?: boolean }>;
 }
 
@@ -348,7 +367,9 @@ export interface ClubEntry {
   key: string;
   /** Opaque account id. All flights of one pilot share it. */
   owner: string;
+  /** Whether the flight belongs to the signed in account. */
   mine: boolean;
+  /** The club summary of the flight record. Untrusted. */
   stats: unknown;
 }
 
@@ -362,12 +383,15 @@ export interface ClubAccess {
 
 /** A transport that also owns login. The adapter keeps its own token, the app never sees one. */
 export interface BackendAdapter extends SyncTransport {
+  /** What the server offers for signing in. */
   authMethods(): Promise<AuthMethod[]>;
   /** A `redirect` method opens a popup, so call this from a user gesture. */
   signIn(method: AuthMethod, input?: Record<string, string>): Promise<BackendSession>;
+  /** Ends the session and forgets the token. */
   signOut(): Promise<void>;
   /** The stored session, survives a reload. */
   session(): BackendSession | null;
+  /** Shared flights of all pilots. Leave it out when the backend has no club. */
   club?: ClubAccess;
 }
 
@@ -497,11 +521,17 @@ export interface FlightStats {
   straightDistance: number;
   /** Metres, furthest point from takeoff. */
   maxDistanceFromTakeoff: number;
+  /** Highest altitude in metres. */
   maxAlt: number;
+  /** Lowest altitude in metres. */
   minAlt: number;
+  /** Altitude at takeoff in metres. */
   takeoffAlt: number;
+  /** Altitude at landing in metres. */
   landingAlt: number;
+  /** Best climb rate in m/s. */
   maxClimb: number;
+  /** Worst sink rate in m/s, a negative number. */
   maxSink: number;
   /** Share of time per phase, 0..1. */
   phaseShare: Record<'thermalling' | 'gliding' | 'searching', number>;
@@ -511,10 +541,15 @@ export interface FlightStats {
 
 /** Transition altitudes: where climbs were left and the next one found. Glides only. */
 export interface TransitionSummary {
+  /** Number of glides. */
   count: number;
+  /** Average altitude where the glides started, in metres. Null when there is none. */
   avgStartAlt: number | null;
+  /** Average altitude where the glides ended, in metres. Null when there is none. */
   avgEndAlt: number | null;
+  /** Lowest altitude where a glide ended, in metres. Null when there is none. */
   lowestArrival: number | null;
+  /** Average glide ratio of the glides. Null when there is none. */
   avgGlideRatio: number | null;
   /** m/s. */
   avgSpeed: number | null;

@@ -1,4 +1,4 @@
-// Reference plugin for the updraft studio, see docs/plugins.md.
+// Reference plugin for the updraft studio, see docs/plugins/studio/README.md.
 // Shows the altitude of the selected pilot and the climb over the last 10 s.
 // Plain JavaScript, no build step. The default export is the whole contract.
 

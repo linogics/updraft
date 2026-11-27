@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/linogics/updraft/blob/main/docs/help.md
     about: How to use the app.
   - name: Plugin docs
-    url: https://github.com/linogics/updraft/blob/main/docs/plugins.md
+    url: https://github.com/linogics/updraft/blob/main/docs/plugins/README.md
     about: Writing and installing plugins.
   - name: Self-hosting sync
     url: https://github.com/linogics/updraft/blob/main/docs/self-hosting-sync.md
