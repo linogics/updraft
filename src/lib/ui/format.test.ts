@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatAirtime, formatClock, formatDuration } from './format';
+import { formatAirtime, formatClock, formatDate, formatDuration } from './format';
 
 describe('format', () => {
   it('formats airtime as minutes or hours with minutes', () => {
@@ -13,6 +13,13 @@ describe('format', () => {
     expect(formatDuration(59)).toBe('0:59');
     expect(formatDuration(125)).toBe('2:05');
     expect(formatDuration(3_725)).toBe('1:02:05');
+  });
+
+  it('formats a calendar date per locale without time zone shift', () => {
+    expect(formatDate('2026-07-18', 'en')).toBe('7/18/2026');
+    expect(formatDate('2026-07-18', 'de')).toBe('18.7.2026');
+    expect(formatDate('2026-01-01', 'fr')).toBe('01/01/2026');
+    expect(formatDate('', 'en')).toBe('');
   });
 
   it('formats a UTC clock time', () => {

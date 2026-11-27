@@ -36,3 +36,11 @@ export function formatNumber(v: number, digits = 0, minDigits = digits): string 
     useGrouping: false
   }).format(v);
 }
+
+/** Calendar date (YYYY-MM-DD) as a short numeric date in the given or current locale, without time zone shift. */
+export function formatDate(iso: string, locale: string = getLocale()): string {
+  const [y, mo, d] = iso.split('-').map(Number);
+  const t = Date.UTC(y, mo - 1, d);
+  // Intl throws on an invalid time, so a malformed date shows as stored.
+  return Number.isFinite(t) ? new Intl.DateTimeFormat(locale, { timeZone: 'UTC' }).format(t) : iso;
+}
