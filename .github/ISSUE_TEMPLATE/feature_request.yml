@@ -26,5 +26,5 @@ body:
     attributes:
       label: Scope
       options:
-        - label: Could be built as a plugin (see docs/plugins.md)
+        - label: Could be built as a plugin (see docs/plugins/README.md)
         - label: Needs a server, not browser-only
