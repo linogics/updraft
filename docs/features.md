@@ -117,8 +117,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 ### Possible in the browser
 
 - Loading tracks by URL and importing XCTrack tasks (`.xctsk`).
-- Task and waypoint export: XCTrack `.xctsk` with QR code, SeeYou `.cup`, XCSoar `.tsk`, GPX, KML, FormatGEO.
-- More XC leagues.
+- More task and waypoint export: a QR code for `.xctsk`, SeeYou `.cup`, XCSoar `.tsk`, KML, FormatGEO.
 - Type, month and time-of-day filters for the thermal hotspots.
 - Exact airspace limits: flight levels and AGL ceilings are treated as MSL, GND floors start at 0 m, FIR and UIR are skipped.
 - Airspaces in the altitude chart.
