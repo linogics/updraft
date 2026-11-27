@@ -380,6 +380,7 @@
   "player_speed": "Wiedergabegeschwindigkeit",
   "plugin_add_menu": "Plugin hinzufügen…",
   "plugin_add_submit": "Hinzufügen",
+  "plugin_added": "{name} hinzugefügt",
   "plugin_add_title": "Plugin hinzufügen",
   "plugin_adding": "Wird hinzugefügt…",
   "plugin_failed": "Plugin {name} ist fehlgeschlagen: {message}",

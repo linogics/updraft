@@ -8,7 +8,7 @@
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
   import SideDrawer from '#lib/components/SideDrawer.svelte';
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
-  import { panelStatus } from '#lib/components/studio/panelActions.svelte';
+  import { announce, panelStatus } from '#lib/components/studio/panelActions.svelte';
   import PanelHost from '#lib/components/studio/PanelHost.svelte';
   import type { LatLon } from '#lib/domain/geo';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
@@ -18,12 +18,14 @@
   import { planExports, type PlannerExport } from '#lib/plan/exports';
   import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
   import { planRegistry } from '#lib/plan/registry.svelte';
+  import type { PluginEntry } from '#lib/plugins/entries';
   import { PlanState } from '#lib/state/plan.svelte';
   import { LEGS_PANEL, planLayout } from '#lib/state/planLayout.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import type { PluginHostEnv } from '#lib/studio/pluginContext.svelte';
-  import { pluginEntry } from '#lib/studio/registry.svelte';
+  import { pluginEntry, pluginPanelId } from '#lib/studio/registry.svelte';
+  import { flash, scrollToPanel } from '#lib/ui/attention';
   import { formatDuration } from '#lib/ui/format';
   import { formatDistance } from '#lib/ui/units';
   import { scoreFlight } from '#lib/xc/score';
@@ -34,6 +36,16 @@
   let copied = $state(false);
   let mapEl: HTMLElement | undefined;
   let addPlugin: AddPluginDialog;
+  let opener: HTMLElement | undefined;
+
+  async function onadded(e: PluginEntry) {
+    flash(opener);
+    announce(m.plugin_added({ name: e.name }));
+    if (e.kind !== 'studio' || !e.hosts?.includes('plan')) return;
+    const id = pluginPanelId(e.id);
+    if (planLayout.value.collapsed.includes(id)) planLayout.toggleCollapsed(id);
+    await scrollToPanel(id);
+  }
 
   // Plugins read the route through these services while the page is open.
   const unprovide = providePlanService(plan, { commit });
@@ -160,7 +172,12 @@
   <SideDrawer label={m.plan_title()}>
     {#snippet header()}
       <SidebarHeader title={m.home_planner_title()}>
-        {#snippet actions()}<PlanPanelsMenu onadd={() => addPlugin.open()} />{/snippet}
+        {#snippet actions()}<PlanPanelsMenu
+            onadd={(el) => {
+              opener = el;
+              addPlugin.open();
+            }}
+          />{/snippet}
       </SidebarHeader>
     {/snippet}
     <div class="side">
@@ -232,7 +249,7 @@
   </main>
 </div>
 
-<AddPluginDialog bind:this={addPlugin} kinds={['studio', 'xc-planner']} />
+<AddPluginDialog bind:this={addPlugin} kinds={['studio', 'xc-planner']} {onadded} />
 
 {#snippet body(id: string)}
   {#if id === LEGS_PANEL}

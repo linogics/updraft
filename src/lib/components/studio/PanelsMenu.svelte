@@ -3,19 +3,32 @@
 
   import { m } from '#lib/paraglide/messages';
   import { removePlugin } from '#lib/plugins/actions';
+  import type { PluginEntry } from '#lib/plugins/entries';
   import { studioLayout } from '#lib/state/studioLayout.svelte';
-  import { PLUGIN_PREFIX, pluginEntry, registry } from '#lib/studio/registry.svelte';
+  import { PLUGIN_PREFIX, pluginEntry, pluginPanelId, registry } from '#lib/studio/registry.svelte';
+  import { flash, scrollToPanel, sortByName } from '#lib/ui/attention';
 
   import Popover from '../Popover.svelte';
   import AddPluginDialog from './AddPluginDialog.svelte';
+  import { announce } from './panelActions.svelte';
 
   let addPlugin: AddPluginDialog;
+  let trigger = $state<HTMLButtonElement>();
+
+  async function onadded(e: PluginEntry) {
+    flash(trigger);
+    announce(m.plugin_added({ name: e.name }));
+    // A planner only plugin has no studio panel.
+    if (e.kind !== 'studio' || (e.hosts && !e.hosts.includes('studio'))) return;
+    studioLayout.reveal(pluginPanelId(e.id));
+    await scrollToPanel(pluginPanelId(e.id));
+  }
 </script>
 
-<Popover label={m.panels_menu()}>
+<Popover label={m.panels_menu()} bind:button={trigger}>
   {#snippet icon()}<PanelsTop size={16} aria-hidden="true" />{/snippet}
   <ul>
-    {#each registry.list as p (p.id)}
+    {#each sortByName(registry.list, (p) => p.title()) as p (p.id)}
       <li>
         <label>
           <!-- The switch attribute is Safari only for now, other browsers draw a checkbox. -->
@@ -45,7 +58,7 @@
   </div>
 </Popover>
 
-<AddPluginDialog bind:this={addPlugin} />
+<AddPluginDialog bind:this={addPlugin} {onadded} />
 
 <style>
   ul {

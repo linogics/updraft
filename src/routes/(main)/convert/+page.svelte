@@ -1,17 +1,28 @@
 <script lang="ts">
   import Dropzone from '#lib/components/Dropzone.svelte';
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
+  import { announce, panelStatus } from '#lib/components/studio/panelActions.svelte';
   import { converters, formatOf, readTrack, writers, writeTrack } from '#lib/convert/registry';
   import type { Flight } from '#lib/domain/model';
   import { zipStore } from '#lib/export/zip';
   import { m } from '#lib/paraglide/messages';
   import { removePlugin } from '#lib/plugins/actions';
   import { BUILTIN_CONVERTERS } from '#lib/plugins/builtin';
+  import type { PluginEntry } from '#lib/plugins/entries';
   import { flightRepository } from '#lib/storage';
+  import { flash, scrollToSelector, sortByName } from '#lib/ui/attention';
 
   type Row = { name: string; format?: string; flight?: Flight; error?: string };
 
   let addDialog: AddPluginDialog;
+  let addButton = $state<HTMLButtonElement>();
+
+  function onadded(e: PluginEntry) {
+    flash(addButton);
+    announce(m.plugin_added({ name: e.name }));
+    return scrollToSelector(`[data-id="${CSS.escape(e.id)}"]`);
+  }
+
   const builtIn = new Set(BUILTIN_CONVERTERS.map((b) => b.id));
   let rows = $state<Row[]>([]);
   let targetId = $state('updraft/gpx');
@@ -149,8 +160,8 @@
   <section class="formats" aria-labelledby="formats-title">
     <h2 id="formats-title">{m.convert_formats()}</h2>
     <ul>
-      {#each converters() as c (c.id)}
-        <li>
+      {#each sortByName(converters(), (c) => c.label) as c (c.id)}
+        <li data-id={c.id}>
           <strong>{c.label}</strong>
           <span class="muted">{c.extensions.map((e) => `.${e}`).join(' ')}</span>
           <span class="muted">
@@ -170,11 +181,12 @@
         </li>
       {/each}
     </ul>
-    <button type="button" onclick={() => addDialog.open()}>{m.convert_add_format()}</button>
+    <button bind:this={addButton} type="button" onclick={() => addDialog.open()}>{m.convert_add_format()}</button>
   </section>
 </div>
 
-<AddPluginDialog bind:this={addDialog} kinds={['converter']} />
+<AddPluginDialog bind:this={addDialog} kinds={['converter']} {onadded} />
+<p class="sr" role="status">{panelStatus.text}</p>
 
 <style>
   .convert {
@@ -252,5 +264,13 @@
   }
   .error {
     color: var(--danger);
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 </style>
