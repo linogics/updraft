@@ -1,6 +1,6 @@
 # Self-hosting sync
 
-updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/http` speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
+updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/http` speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml). To run a server of your own in another language, see the [sync server guide](plugins/backend/server/README.md). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
 
 Users connect from the Sync section of the logbook, see [Point the app at the server](#point-the-app-at-the-server).
 
@@ -8,11 +8,27 @@ Users connect from the Sync section of the logbook, see [Point the app at the se
 
 1. Start the server: `docker compose -f server/compose.yaml up -d --build`. The image downloads the pinned PocketBase release and checks its sha256. The data lives in the `pb_data` volume.
 2. Create the admin: `docker compose -f server/compose.yaml exec pocketbase pocketbase superuser upsert you@example.com 'a-long-password' --dir=/pb/pb_data`.
-3. Open `http://localhost:8090/_/`, sign in and add the pilots in the `users` collection (email and password). Public signup is off. To allow it, set the create rule of `users` to an empty string in the collection settings.
+3. Open `http://localhost:8090/_/`, sign in and add the pilots in the `users` collection (email and password). Public signup is off. To allow it, start the server with `UPDRAFT_SIGNUP=true`, see [Environment variables](#environment-variables). Leave the create rule of `users` closed, signup goes through the hook.
 
-The first start applies `server/pb_migrations`. It creates the `records` collection. Each pilot can only read their own rows. Writes are refused on the collection itself and go through the hook `server/pb_hooks/updraft.pb.js`, which serves `POST /api/updraft/push`. It checks the last write wins rule and numbers every change in one transaction.
+The first start applies `server/pb_migrations`. It creates the `records` collection. Writes are refused on the collection itself. The hooks `server/pb_hooks/updraft.js` and `server/pb_hooks/updraft-v1.pb.js` serve the whole sync spec under `/api/updraft/v1`. Push checks the last write wins rule and numbers every change in one transaction.
 
-`server/pb_hooks` is required. Docker mounts it. Without Docker, download PocketBase v0.40.6, then run `./pocketbase serve --migrationsDir server/pb_migrations --hooksDir server/pb_hooks --automigrate=false`. If a hoster manages the server, upload both folders. When the hook is missing, the app reports that the sync server kit is outdated. Automigrate is off so settings changed in the dashboard do not write new migration files into the repo.
+`server/pb_hooks` is required. Docker mounts it. Without Docker, download PocketBase v0.40.6, then run `./pocketbase serve --migrationsDir server/pb_migrations --hooksDir server/pb_hooks --automigrate=false`. If a hoster manages the server, upload both folders. When the hooks are missing, the app reports that the sync server kit is outdated. Automigrate is off so settings changed in the dashboard do not write new migration files into the repo.
+
+## Environment variables
+
+| Variable              | Effect                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| `UPDRAFT_SIGNUP`      | `true` lets anyone create an account through `POST /api/updraft/v1/auth/signup` or an OAuth sign in. Off by default. |
+| `UPDRAFT_APP_ORIGINS` | Exact origins of the app, comma separated. Needed for OAuth sign in.                                      |
+| `UPDRAFT_PUBLIC_URL`  | The public https address of the server. Needed for OAuth sign in. Without both, no provider is offered.   |
+
+With compose, put them in the shell or in a `.env` file next to `server/compose.yaml`, then restart:
+
+```sh
+UPDRAFT_SIGNUP=true docker compose -f server/compose.yaml up -d
+```
+
+Without Docker, export them before `./pocketbase serve`.
 
 ## HTTPS and CORS
 
@@ -35,7 +51,11 @@ The provider is linked to the account whose email matches the provider's primary
 
 Every account on the server is a club member. A pilot can share single flights with the club. A shared flight shows its summary (pilot, date, site, glider, duration, distance, altitude, thermals, XC score) and its full track to all signed in accounts, read only. Nothing else leaves the pilot's logbook.
 
-This is done by the migration `1795700000_updraft_club.js`, which adds the `shared` and `summary` fields to `records`. The list and view rule is `@request.auth.id != "" && (owner = @request.auth.id || shared = true)`. Updates go through the push hook, so a pilot can only change their own records. Delete stays owner only. Apply the migration by restarting the server. If you do not want a club, do not give accounts to people outside it.
+A pilot shares a flight by setting `shared` on it in the app. The push route copies the flag and the summary (`data.club`) of a live flight into the `shared` and `summary` fields of its row, which the migration `1795700000_updraft_club.js` adds. Deleting or unsharing a flight clears them.
+
+Signed in accounts read the club through `GET /api/updraft/v1/club` (the list with summaries) and `GET /api/updraft/v1/club/{key}` (the full flight). An unshared or unknown key answers 404. The server always offers the club. If you do not want one, do not give accounts to people outside it.
+
+PocketBase's own records API is closed since `1796100000_updraft_close_records_api.js`. Only the superuser dashboard can read or change `records` directly. The v1 routes run as superuser and check ownership and sharing in code.
 
 ## Known limits
 
