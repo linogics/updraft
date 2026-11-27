@@ -19,6 +19,7 @@ export function validate(schema: JsonSchema, value: unknown, defs: Defs, path: s
   if (kind === 'opaque') return null;
   if (kind === 'function') return typeof value === 'function' ? null : `${path}: expected function`;
   if (kind === 'void') return value === undefined ? null : `${path}: expected no value`;
+  if (kind === 'promise') return value instanceof Promise ? null : `${path}: expected promise`;
 
   if (schema.anyOf) {
     return schema.anyOf.some((s) => validate(s, value, defs, path) === null)
@@ -107,7 +108,7 @@ function validateObject(schema: JsonSchema, value: unknown, defs: Defs, path: st
 
 /**
  * Wraps a service so that every call is checked against its schema. Parameters are checked before the call and
- * the result after it, a mismatch throws `Error('<service>.<method>: <message>')`. Only declared methods and
+ * the result after it (the resolved value for a promise), a mismatch throws `Error('<service>.<method>: <message>')`. Only declared methods and
  * `on` are exposed. `on` accepts the declared events only. A result object that was checked once is not checked
  * again, so a service that returns the same frozen object stays cheap.
  */
@@ -132,6 +133,16 @@ export function checkService<T extends object>(schema: ServiceSchema, service: T
       });
 
       const result = target[method](...args);
+      const { resolves } = def.returns;
+      if (def.returns['x-kind'] === 'promise' && resolves) {
+        fail(method, validate(def.returns, result, defs, `${method}()`));
+        // A rejection passes through unchanged.
+        return (result as Promise<unknown>).then((v) => {
+          fail(method, validate(resolves, v, defs, `${method}()`));
+          return v;
+        });
+      }
+
       const cacheable = typeof result === 'object' && result !== null;
       if (cacheable && seen.has(result)) return result;
 

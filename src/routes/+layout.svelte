@@ -1,14 +1,18 @@
 <script lang="ts">
   import '../app.css';
 
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { beforeNavigate, onNavigate } from '$app/navigation';
   import { navigating, updated } from '$app/state';
 
+  import { provideCoreServices } from '#lib/data';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
   import { startServicePlugins } from '#lib/plugins/startup';
   import { syncClient } from '#lib/sync/client.svelte';
+
+  // Before the children mount, so every page can use the services. The app is client only, nothing runs on a server.
+  onDestroy(provideCoreServices());
 
   // The locale only changes on reload, so setting the lang attribute once is enough.
   onMount(() => {

@@ -6,21 +6,22 @@
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
   import SideDrawer from '#lib/components/SideDrawer.svelte';
   import { m } from '#lib/paraglide/messages';
-  import { flightRepository, type FlightSummary } from '#lib/storage';
+  import type { FlightsService, FlightSummary } from '#lib/plugins/api';
+  import { services } from '#lib/plugins/services';
   import { studioHref } from '#lib/storage/importFlights';
-  import { onLocalChange } from '#lib/storage/localChange';
   import { syncClient } from '#lib/sync/client.svelte';
 
   let { children }: { children: Snippet } = $props();
 
   const HELP_URL = 'https://github.com/linogics/updraft/blob/main/docs/help.md';
 
+  const flights = services.use<FlightsService>('updraft/flights@1');
   let loaded = $state(false);
   // Manual logbook entries have no track to play back.
   let last = $state<FlightSummary>();
 
   async function refresh() {
-    last = (await flightRepository.list()).find((f) => !f.manual);
+    last = (await flights.list()).find((f) => !f.manual);
     loaded = true;
   }
 
@@ -29,13 +30,7 @@
 
   onMount(() => {
     void refresh();
-    const offLocal = onLocalChange(() => void refresh());
-    const offApplied = syncClient.onApplied(() => void refresh());
-
-    return () => {
-      offLocal();
-      offApplied();
-    };
+    return flights.on('changed', () => void refresh());
   });
 </script>
 

@@ -63,9 +63,12 @@ export interface JsonSchema {
   description?: string;
   /**
    * `function` is a callback or a function value, `opaque` is a host object that cannot be described and is
-   * not checked, for example the Cesium viewer, `void` is the absence of a value.
+   * not checked, for example the Cesium viewer, `void` is the absence of a value, `promise` is a promise
+   * whose value matches `resolves`.
    */
-  'x-kind'?: 'function' | 'opaque' | 'void';
+  'x-kind'?: 'function' | 'opaque' | 'void' | 'promise';
+  /** With `x-kind: promise`, the schema of the value the promise resolves to. A rejection is not checked. */
+  resolves?: JsonSchema;
 }
 
 /** One method of a service. */
@@ -724,4 +727,241 @@ export interface PlanService {
    * @write
    */
   setLeague(id: string): void;
+}
+
+/** One track point. */
+export interface Fix {
+  /** Unix epoch milliseconds (UTC). */
+  t: number;
+  /** Latitude in degrees. */
+  lat: number;
+  /** Longitude in degrees. */
+  lon: number;
+  /** Altitude in metres as recorded, GPS or pressure altitude. */
+  alt: number;
+}
+
+/** A parsed flight with its track. */
+export interface Flight {
+  /** Flight id. */
+  id: string;
+  /** Name of the file or source the flight came from. */
+  sourceName: string;
+  /** Pilot name. */
+  pilot: string;
+  /** Glider, if known. */
+  glider: string | null;
+  /** Launch site, if known. */
+  site: string | null;
+  /** Flight date, ISO 8601 (YYYY-MM-DD). */
+  date: string;
+  /** Free text notes. */
+  notes?: string;
+  /** Opted in to the club list of the sync server. */
+  shared?: boolean;
+  /** Track points sorted by time. Not empty. */
+  fixes: Fix[];
+}
+
+/** A logbook entry without its track, for listings. */
+export interface FlightSummary {
+  /** Flight id. */
+  id: string;
+  /** Name of the file or source the flight came from. Empty for a manual entry. */
+  sourceName: string;
+  /** Pilot name. */
+  pilot: string;
+  /** Glider, if known. */
+  glider: string | null;
+  /** Launch site, if known. */
+  site: string | null;
+  /** Flight date, ISO 8601 (YYYY-MM-DD). */
+  date: string;
+  /** Number of track points, 0 for a manual entry. */
+  fixCount: number;
+  /** Time of the first fix in epoch ms. For a manual entry, noon of the date. */
+  startTime: number;
+  /** Time of the last fix in epoch ms. */
+  endTime: number;
+  /** Free text notes. */
+  notes?: string;
+  /** Highest fix altitude in metres. */
+  maxAlt?: number;
+  /** Track length in km. */
+  trackKm?: number;
+  /** Logged by hand, no track stored. */
+  manual?: true;
+  /** Opted in to the club list. */
+  shared?: boolean;
+}
+
+/** A flight logged by hand, without a track. */
+export interface ManualEntry {
+  /** An existing id replaces that entry, leave it out for a new one. */
+  id?: string;
+  /** Flight date, ISO 8601 (YYYY-MM-DD). */
+  date: string;
+  /** Pilot name. */
+  pilot: string;
+  /** Glider, if known. */
+  glider: string | null;
+  /** Launch site, if known. */
+  site: string | null;
+  /** Airtime in minutes. */
+  durationMin: number;
+  /** Free text notes. */
+  notes: string;
+}
+
+/** The fields of a logbook entry that can be changed. A field that is left out stays as it is. */
+export interface MetaPatch {
+  /** Pilot name. */
+  pilot?: string;
+  /** Glider, null clears it. */
+  glider?: string | null;
+  /** Launch site, null clears it. */
+  site?: string | null;
+  /** Free text notes. */
+  notes?: string;
+}
+
+/** Events of `FlightsService.on`. */
+export type FlightsEvent =
+  /** The logbook changed: a flight or manual entry was saved, edited, deleted, imported or restored, or a sync pulled changes. Also fires for other local writes that sync, such as camera paths. */
+  'changed';
+
+/**
+ * Service `updraft/flights@1`. The logbook stored in this browser, provided by the app on every page.
+ * Listings carry no track points, read them with `track`.
+ */
+export interface FlightsService {
+  /**
+   * Calls `fn` after the named event fired. `fn` gets no payload, read the current data through the functions
+   * of this service. It does not fire for the state at the time you subscribe. Returns a function that stops it.
+   * Inside a plugin, every subscription made through a service from `ctx.use` also stops on its own when the
+   * plugin unmounts. An unknown event throws `Unknown event "x" of updraft/flights@1.`.
+   */
+  on(event: FlightsEvent, fn: () => void): () => void;
+  /** All entries, manual ones included, newest first. */
+  list(): Promise<readonly FlightSummary[]>;
+  /** One entry by id, or null when there is none. */
+  get(id: string): Promise<FlightSummary | null>;
+  /** The track points of a flight, sorted by time. Null for a manual entry or an unknown id. */
+  track(id: string): Promise<readonly Fix[] | null>;
+  /**
+   * Stores a flight, or replaces the one with the same id. Resolves to the flight id.
+   * Rejects when the flight has no fixes.
+   * @write
+   */
+  save(flight: Flight): Promise<string>;
+  /**
+   * Stores a manual entry, or replaces the one with the same `id`. Resolves to the entry id.
+   * @write
+   */
+  saveManual(entry: ManualEntry): Promise<string>;
+  /**
+   * Changes the pilot, glider, site or notes of an entry. An unknown id does nothing.
+   * @write
+   */
+  updateMeta(id: string, patch: MetaPatch): Promise<void>;
+  /**
+   * Deletes a flight or manual entry with its cached scores. An unknown id does nothing.
+   * @write
+   */
+  delete(id: string): Promise<void>;
+}
+
+/** Events of `PrefsService.on`. */
+export type PrefsEvent =
+  /** The user or a plugin changed the display units. */
+  | 'units'
+  /** The altitude reference changed. */
+  | 'altRef'
+  /** The scoring league changed. */
+  | 'league'
+  /** The thermal columns or labels switched on or off. */
+  | 'thermals';
+
+/**
+ * Service `updraft/prefs@1`. The personal preferences of the user, kept in this browser, provided by the app on every page.
+ * The ion token and API keys are not part of it.
+ */
+export interface PrefsService {
+  /**
+   * Calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the
+   * current values through the functions of this service. It does not fire for the state at the time you subscribe.
+   * Returns a function that stops it. Inside a plugin, every subscription made through a service from `ctx.use`
+   * also stops on its own when the plugin unmounts. An unknown event throws `Unknown event "x" of updraft/prefs@1.`.
+   */
+  on(event: PrefsEvent, fn: () => void): () => void;
+  /** The display units. The same frozen object until they change. */
+  units(): Readonly<Units>;
+  /**
+   * Sets the display units. Throws `Invalid units.` when a field is not one of its allowed values.
+   * @write
+   */
+  setUnits(units: Units): void;
+  /** The altitude reference. */
+  altRef(): AltRef;
+  /**
+   * Sets the altitude reference. Throws `Invalid altitude reference.` for any other value than `msl` or `agl`.
+   * @write
+   */
+  setAltRef(ref: AltRef): void;
+  /** Id of the active XC scoring league. `XContest` when the chosen one was removed. */
+  league(): string;
+  /**
+   * Switches the XC league for the whole app. An unknown id throws `Unknown league "x".`.
+   * @write
+   */
+  setLeague(id: string): void;
+  /** Whether the thermal columns are drawn in the 3D view. */
+  thermalColumns(): boolean;
+  /** Whether the thermal labels are drawn in the 3D view. */
+  thermalLabels(): boolean;
+  /**
+   * Shows or hides the thermal columns and labels. A value that is left out stays as it is.
+   * Throws `Thermal switches must be true or false.` for a value that is not a boolean.
+   * @write
+   */
+  setThermals(prefs: { columns?: boolean; labels?: boolean }): void;
+}
+
+/** Events of `SyncService.on`. */
+export type SyncEvent =
+  /** The status changed: signed in or out, a server was chosen or forgotten, a sync started or ended. */
+  'status';
+
+/** The state of the sync with a server. */
+export interface SyncInfo {
+  /** Whether the user is signed in to a server. */
+  signedIn: boolean;
+  /** Address of the chosen server, or null when none is chosen. */
+  url: string | null;
+  /** Time of the last finished sync in epoch ms, or null when none ran yet. */
+  lastSyncAt: number | null;
+  /** Whether a sync is running right now. */
+  busy: boolean;
+}
+
+/**
+ * Service `updraft/sync@1`. The sync of the logbook with a server, provided by the app on every page.
+ * Signing in and out stays with the user.
+ */
+export interface SyncService {
+  /**
+   * Calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the
+   * current values through the functions of this service. It does not fire for the state at the time you subscribe.
+   * Returns a function that stops it. Inside a plugin, every subscription made through a service from `ctx.use`
+   * also stops on its own when the plugin unmounts. An unknown event throws `Unknown event "x" of updraft/sync@1.`.
+   */
+  on(event: SyncEvent, fn: () => void): () => void;
+  /** The current sync state. A new object on every call. */
+  status(): SyncInfo;
+  /**
+   * Runs a sync now. Resolves when it ended, also when nothing ran because the user is not signed in or a sync just ran.
+   * Failures show in the sync panel of the app and never reject.
+   * @write
+   */
+  syncNow(): Promise<void>;
 }

@@ -1,39 +1,9 @@
 import type { CameraTracks } from '../domain/cameraPath';
 import { distance } from '../domain/geo';
 import type { Flight } from '../domain/model';
+import type { FlightSummary, ManualEntry, MetaPatch } from '../plugins/api';
 
-/** Flight metadata without fixes, for listings. */
-export interface FlightSummary {
-  id: string;
-  sourceName: string;
-  pilot: string;
-  glider: string | null;
-  site: string | null;
-  date: string;
-  fixCount: number;
-  startTime: number;
-  endTime: number;
-  notes?: string;
-  /** Highest fix altitude in metres. */
-  maxAlt?: number;
-  trackKm?: number;
-  /** Logged by hand, no track stored. */
-  manual?: true;
-  /** Opted in to the club list. */
-  shared?: boolean;
-}
-
-export interface ManualEntry {
-  id?: string;
-  date: string;
-  pilot: string;
-  glider: string | null;
-  site: string | null;
-  durationMin: number;
-  notes: string;
-}
-
-export type MetaPatch = Partial<Pick<FlightSummary, 'pilot' | 'glider' | 'site' | 'notes'>>;
+export type { FlightSummary, ManualEntry, MetaPatch };
 
 export interface Backup {
   app: 'updraft';

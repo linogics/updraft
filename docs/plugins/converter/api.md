@@ -60,7 +60,8 @@ The JSON Schema subset that describes values in a service schema. Numbers must b
 | `minimum?` | `number` | Lower bound of a number, inclusive. |
 | `maximum?` | `number` | Upper bound of a number, inclusive. |
 | `description?` | `string` | Human readable text, shown in the API explorer. |
-| `'x-kind'?` | `'function' \| 'opaque' \| 'void'` | `function` is a callback or a function value, `opaque` is a host object that cannot be described and is not checked, for example the Cesium viewer, `void` is the absence of a value. |
+| `'x-kind'?` | `'function' \| 'opaque' \| 'void' \| 'promise'` | `function` is a callback or a function value, `opaque` is a host object that cannot be described and is not checked, for example the Cesium viewer, `void` is the absence of a value, `promise` is a promise whose value matches `resolves`. |
+| `resolves?` | `JsonSchema` | With `x-kind: promise`, the schema of the value the promise resolves to. A rejection is not checked. |
 
 ### ServiceMethodSchema
 

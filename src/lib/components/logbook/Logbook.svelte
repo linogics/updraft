@@ -16,10 +16,12 @@
   import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from '#lib/domain/logbook';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
+  import type { FlightsService, FlightSummary } from '#lib/plugins/api';
+  import { services } from '#lib/plugins/services';
   import { logbookLayout } from '#lib/state/logbookLayout.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { flightRepository, type FlightSummary } from '#lib/storage';
+  import { flightRepository } from '#lib/storage';
   import { importFlights, studioHref } from '#lib/storage/importFlights';
   import { syncClient } from '#lib/sync/client.svelte';
   import { formatAirtime, formatDate, formatNumber } from '#lib/ui/format';
@@ -96,12 +98,14 @@
     { id: 'achievements', title: () => m.achievements_title(), body: achievementsBody, empty: noBadges }
   ]);
 
+  const store = services.use<FlightsService>('updraft/flights@1');
+
   const hours = (seconds: number) => formatNumber(seconds / 3600, seconds < 36_000 ? 1 : 0);
   const mins = (min: number) => formatAirtime(min * 60_000);
   const dur = (f: FlightSummary) => formatAirtime(f.endTime - f.startTime);
 
   async function refresh() {
-    flights = await flightRepository.list();
+    flights = [...(await store.list())];
     selected = selected.filter((id) => flights.some((f) => f.id === id));
     ready = true;
     void scoreMissing();
@@ -129,8 +133,8 @@
     for (const id of missing) {
       let score: XcScore | null;
       try {
-        const flight = await flightRepository.get(id);
-        score = flight ? await scoreFlight(flight.fixes, league) : null;
+        const fixes = await store.track(id);
+        score = fixes ? await scoreFlight([...fixes], league) : null;
         await flightRepository.putXcScore(id, league, score);
       } catch (err) {
         console.error('Could not score flight', err);
@@ -160,13 +164,13 @@
 
   async function loadDemo() {
     const demo = buildDemoFlights();
-    for (const f of demo) await flightRepository.save(f);
+    for (const f of demo) await store.save(f);
     void openStudio(demo.map((f) => f.id));
   }
 
   async function remove(f: FlightSummary) {
     if (!confirm(m.logbook_confirm_delete({ pilot: f.pilot, date: f.date }))) return;
-    await flightRepository.delete(f.id);
+    await store.delete(f.id);
     await refresh();
   }
 
@@ -190,7 +194,7 @@
 
   async function saveEdit() {
     if (!editing) return;
-    await flightRepository.updateMeta(editing, {
+    await store.updateMeta(editing, {
       pilot: draft.pilot.trim() || 'Unknown',
       site: draft.site.trim() || null,
       glider: draft.glider.trim() || null,
@@ -202,7 +206,7 @@
 
   async function addManual(e: SubmitEvent) {
     e.preventDefault();
-    await flightRepository.saveManual({
+    await store.saveManual({
       date: manual.date,
       durationMin: manual.durationMin,
       pilot: manual.pilot.trim() || 'Unknown',

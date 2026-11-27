@@ -48,7 +48,7 @@ Access is checked when:
 - an installed plugin provides the service and the app or a bundled plugin calls it,
 - always in development and tests.
 
-A checked call validates the parameters before and the result after, and throws `Error('<service>.<method>: <message>')`, for example `updraft/studio@1.flights: flights()[0].fixes[3].lat: expected number`. `on` accepts the declared events only. A checked service exposes only the methods of its schema. A result object that passed once is not checked again, so services that return the same frozen object stay cheap. Calls between the app and bundled code are not checked in production, so per-frame calls stay fast.
+A checked call validates the parameters before and the result after (the resolved value for a method that returns a promise, `x-kind: promise` with `resolves`, a rejection passes through unchanged), and throws `Error('<service>.<method>: <message>')`, for example `updraft/studio@1.flights: flights()[0].fixes[3].lat: expected number`. `on` accepts the declared events only. A checked service exposes only the methods of its schema. A result object that passed once is not checked again, so services that return the same frozen object stay cheap. Calls between the app and bundled code are not checked in production, so per-frame calls stay fast.
 
 The app lists every service with its schema on the API page (`/api`), linked from the Add plugin dialog. The schemas of the app's own services are generated from `src/lib/plugins/api.d.ts` and live in `src/lib/plugins/schemas/`.
 
@@ -63,6 +63,9 @@ Each service has a generated reference page with its events, members and types.
 - [updraft/studio@1](reference/updraft-studio-1.md), provided by the studio. Flights, playback time, selection, display units, altitude reference and the Cesium viewer.
 - [updraft/flight-analysis@1](reference/updraft-flight-analysis-1.md), provided by the studio. Statistics and transition summaries by flight id.
 - [updraft/plan@1](reference/updraft-plan-1.md), provided by the planner. See the [XC planner host](../studio/README.md#the-xc-planner-host).
+- [updraft/flights@1](reference/updraft-flights-1.md), provided on every page. The logbook: list, read tracks, save, edit and delete flights. Methods return promises.
+- [updraft/prefs@1](reference/updraft-prefs-1.md), provided on every page. Units, altitude reference, XC league and thermal switches.
+- [updraft/sync@1](reference/updraft-sync-1.md), provided on every page. Sync status and a manual sync.
 
 ## Example
 

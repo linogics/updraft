@@ -1,0 +1,185 @@
+{
+  "name": "updraft/prefs@1",
+  "description": "The personal preferences of the user, kept in this browser, provided by the app on every page. The ion token and API keys are not part of it.",
+  "methods": {
+    "units": {
+      "description": "The display units. The same frozen object until they change.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "$ref": "#/$defs/Units"
+      }
+    },
+    "setUnits": {
+      "description": "Sets the display units. Throws `Invalid units.` when a field is not one of its allowed values.",
+      "access": "write",
+      "params": [
+        {
+          "name": "units",
+          "schema": {
+            "$ref": "#/$defs/Units"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "altRef": {
+      "description": "The altitude reference.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "$ref": "#/$defs/AltRef"
+      }
+    },
+    "setAltRef": {
+      "description": "Sets the altitude reference. Throws `Invalid altitude reference.` for any other value than `msl` or `agl`.",
+      "access": "write",
+      "params": [
+        {
+          "name": "ref",
+          "schema": {
+            "$ref": "#/$defs/AltRef"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "league": {
+      "description": "Id of the active XC scoring league. `XContest` when the chosen one was removed.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "string"
+      }
+    },
+    "setLeague": {
+      "description": "Switches the XC league for the whole app. An unknown id throws `Unknown league \"x\".`.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "thermalColumns": {
+      "description": "Whether the thermal columns are drawn in the 3D view.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "boolean"
+      }
+    },
+    "thermalLabels": {
+      "description": "Whether the thermal labels are drawn in the 3D view.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "boolean"
+      }
+    },
+    "setThermals": {
+      "description": "Shows or hides the thermal columns and labels. A value that is left out stays as it is. Throws `Thermal switches must be true or false.` for a value that is not a boolean.",
+      "access": "write",
+      "params": [
+        {
+          "name": "prefs",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "columns": {
+                "type": "boolean"
+              },
+              "labels": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    }
+  },
+  "events": {
+    "units": {
+      "description": "The user or a plugin changed the display units."
+    },
+    "altRef": {
+      "description": "The altitude reference changed."
+    },
+    "league": {
+      "description": "The scoring league changed."
+    },
+    "thermals": {
+      "description": "The thermal columns or labels switched on or off."
+    }
+  },
+  "$defs": {
+    "Units": {
+      "description": "The four display units. Values from the studio are always SI, convert them for display.",
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "string",
+          "enum": [
+            "km",
+            "mi",
+            "nm"
+          ],
+          "description": "Distances: kilometres, miles or nautical miles."
+        },
+        "alt": {
+          "type": "string",
+          "enum": [
+            "m",
+            "ft"
+          ],
+          "description": "Altitudes: metres or feet."
+        },
+        "vario": {
+          "type": "string",
+          "enum": [
+            "ms",
+            "fpm",
+            "kt"
+          ],
+          "description": "Climb and sink rates: m/s, feet per minute or knots."
+        },
+        "speed": {
+          "type": "string",
+          "enum": [
+            "kmh",
+            "mph",
+            "kt"
+          ],
+          "description": "Speeds: km/h, mph or knots."
+        }
+      },
+      "required": [
+        "distance",
+        "alt",
+        "vario",
+        "speed"
+      ]
+    },
+    "AltRef": {
+      "description": "The altitude reference for transition altitudes.",
+      "type": "string",
+      "enum": [
+        "msl",
+        "agl"
+      ]
+    }
+  }
+}
