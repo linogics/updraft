@@ -21,7 +21,7 @@ The `kind` field says what a plugin extends. Each kind has its own guide, its ow
 | `badge`      | Tiered achievements for the logbook.            | [badge](badge/README.md)             | [api](badge/api.md)                     |
 | `backend`    | A sync server the app can connect to.           | [backend](backend/README.md)         | [api](backend/api.md)                   |
 
-Your own sync server does not need a backend plugin if it follows the [sync server spec](backend/server/README.md).
+Your own sync server does not need a backend plugin if it follows the [sync server spec](backend/server/README.md) (sync HTTP spec v2 is a draft, the app still uses v1, see [v2 guide](../server/README.md)).
 
 The full typed contract is `/updraft-plugin.d.ts` on the deployed app (source `src/lib/plugins/api.d.ts`). JavaScript plugins can use it in JSDoc, for example `/** @param {import('./updraft-plugin.d.ts').PluginContext} ctx */`. The API reference pages are generated from it, so they cannot drift from the contract.
 

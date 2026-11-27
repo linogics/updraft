@@ -1,5 +1,7 @@
 # Sync server spec
 
+This is v1. The draft of v2 is in the [sync server spec v2 guide](../../../server/README.md).
+
 You can write your own sync server in any language. If it follows this spec, the bundled backend `updraft/http` works with it as is. You do not need to write a plugin. Plugins are only for backends that speak something else, see [backend plugins](../README.md).
 
 ## Overview
