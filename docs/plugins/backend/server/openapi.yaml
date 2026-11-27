@@ -1,0 +1,341 @@
+openapi: 3.1.0
+info:
+  title: Updraft sync HTTP spec
+  version: '1'
+  description: |
+    The HTTP interface between the Updraft app and a sync server. Any server that implements it can be used as a backend.
+    The reference implementation is the PocketBase kit in `server/pb_hooks`.
+
+    All routes live under the base path `/api/updraft/v1`.
+
+    Capabilities: the client calls `GET /api/updraft/v1` first and only uses what the server announces.
+    `auth.password` enables `POST /auth/password`, `auth.signup` enables `POST /auth/signup`, and `club` enables
+    `GET /club` and `GET /club/{key}`. `auth.oauth` lists redirect providers and is reserved, servers send an empty array for now.
+    `push` and `pull` are always required. A route whose capability is off answers 403 or 404.
+
+    Errors are JSON with at least a `message` string. Extra fields are allowed and ignored.
+
+    Last write wins: a pushed change only replaces the stored record when its `updatedAt` is strictly higher.
+    An equal or older change is dropped without an error. A delete is a change with `deleted: true` and no data, the
+    server keeps it as a tombstone so other devices learn about it.
+
+    Cursors are opaque to the client. Every accepted change gets the next number of a per server counter, and
+    `pull` returns records in that order. The client stores the returned `cursor` and sends it back. A change that
+    is dropped never moves a cursor.
+servers:
+  - url: /api/updraft/v1
+security:
+  - bearer: []
+paths:
+  /:
+    get:
+      operationId: getCapabilities
+      summary: Capabilities
+      description: Tells the client what this server supports. Needs no token.
+      security: []
+      responses:
+        '200':
+          description: The capabilities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capabilities'
+  /auth/password:
+    post:
+      operationId: signInWithPassword
+      summary: Sign in with a password
+      description: Only available when `auth.password` is true. Servers should rate limit this route.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identity, password]
+              properties:
+                identity:
+                  type: string
+                  description: The email of the account.
+                password:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Session'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /auth/signup:
+    post:
+      operationId: signUp
+      summary: Create an account
+      description: Only available when `auth.signup` is true, otherwise the server answers 403.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          $ref: '#/components/responses/Session'
+        '400':
+          description: The email is invalid or taken, or the password is shorter than 8 characters.
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /push:
+    post:
+      operationId: push
+      summary: Store changes
+      description: |
+        Applies the changes in order with last write wins, see the API description. The request body size is limited by the
+        server, the PocketBase kit allows 32 MB, so the client keeps each request under 16 MB.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [changes]
+              properties:
+                changes:
+                  type: array
+                  maxItems: 200
+                  items:
+                    $ref: '#/components/schemas/SyncChange'
+      responses:
+        '200':
+          description: All changes were handled.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: More than `limits.maxChanges` changes, or an invalid change. Nothing is stored.
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '413':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /pull:
+    get:
+      operationId: pull
+      summary: Fetch changes
+      description: |
+        Returns the records of the signed in account, ordered by the server counter, that come after `cursor`.
+        Other accounts' records are never returned. Keep calling with the returned cursor while `more` is true.
+      parameters:
+        - name: cursor
+          in: query
+          description: The `cursor` of the previous page. Absent or empty starts from the beginning.
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: limit
+          in: query
+          description: Page size, up to `limits.maxPull`.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 200
+      responses:
+        '200':
+          description: One page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [changes, cursor, more]
+                properties:
+                  changes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SyncChange'
+                  cursor:
+                    type:
+                      - string
+                      - 'null'
+                    description: The position of the last row in this page. On an empty page it is the cursor that was sent, or null when none was.
+                  more:
+                    type: boolean
+                    description: True when the page was full, so there may be more rows.
+        '400':
+          description: The cursor is not a number or the limit is out of range.
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /club:
+    get:
+      operationId: listClub
+      summary: List shared flights
+      description: |
+        Only available when `club` is true. Lists the live shared flights of all accounts, oldest first, without the
+        track data. The list is not paged, which is fine for club sized servers.
+      responses:
+        '200':
+          description: The flights.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [flights]
+                properties:
+                  flights:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, owner, mine, stats]
+                      properties:
+                        key:
+                          type: string
+                          description: Opaque id to pass to `GET /club/{key}`.
+                        owner:
+                          type: string
+                          description: Opaque id of the pilot who shared the flight.
+                        mine:
+                          type: boolean
+                          description: True when the signed in account owns the flight.
+                        stats:
+                          description: Small summary the owner's client attached to the flight.
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /club/{key}:
+    get:
+      operationId: getClubFlight
+      summary: Fetch a shared flight
+      description: Only available when `club` is true.
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The full flight record.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: {}
+        '401':
+          $ref: '#/components/responses/Error'
+        '404':
+          description: The key is unknown, or the flight is not shared. The two cases look the same.
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: The `token` from a sign in, sent as `Authorization Bearer`.
+  responses:
+    Error:
+      description: An error. The body has at least `message`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Session:
+      description: Signed in.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [token, user]
+            properties:
+              token:
+                type: string
+              user:
+                type: object
+                required: [id, name]
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                    description: A label for the account, such as the email.
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+      additionalProperties: true
+    Capabilities:
+      type: object
+      required: [version, auth, club, limits]
+      properties:
+        version:
+          const: 1
+        auth:
+          type: object
+          required: [password, signup, oauth]
+          properties:
+            password:
+              type: boolean
+            signup:
+              type: boolean
+            oauth:
+              type: array
+              description: Reserved for redirect sign in providers. Always empty in v1 servers for now.
+              items: {}
+        club:
+          type: boolean
+        limits:
+          type: object
+          required: [maxChanges, maxPull]
+          properties:
+            maxChanges:
+              type: integer
+              description: Most changes in one push.
+            maxPull:
+              type: integer
+              description: Largest pull page.
+    SyncChange:
+      type: object
+      required: [type, id, updatedAt]
+      properties:
+        type:
+          enum: [flight, manual, cameraPath, pref]
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        updatedAt:
+          type: number
+          description: Client clock in milliseconds. Decides last write wins.
+        deleted:
+          type: boolean
+          description: Marks a tombstone. Pulled deletes always carry `true`.
+        data:
+          description: The record. Absent on a delete.

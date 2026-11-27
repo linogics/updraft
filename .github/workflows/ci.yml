@@ -63,7 +63,7 @@ jobs:
       - run: docker build -t updraft-server server
       - name: Smoke test
         run: |
-          docker run -d --name pb -p 8090:8090 \
+          docker run -d --name pb -p 8090:8090 -e UPDRAFT_SIGNUP=true \
             -v "$PWD/server/pb_migrations:/pb/pb_migrations" \
             -v "$PWD/server/pb_hooks:/pb/pb_hooks" updraft-server
           for i in $(seq 30); do curl -fsS http://localhost:8090/api/health && break; sleep 1; done
@@ -71,6 +71,13 @@ jobs:
           # The push route is mounted if it answers 401 instead of 404.
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8090/api/updraft/push)
           test "$code" = 401
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Spec conformance
+        run: SPEC_URL=http://localhost:8090 npx vitest run spec.conformance
       - name: Server logs
         if: failure()
         run: docker logs pb
