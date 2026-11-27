@@ -8,12 +8,14 @@
     children
   }: { label: string; icon?: Snippet; button?: HTMLButtonElement; children: Snippet } = $props();
 
-  const id = `popover-${Math.random().toString(36).slice(2, 9)}`;
+  const uid = $props.id();
+  const id = `popover-${uid}`;
+  const anchored = typeof CSS !== 'undefined' && CSS.supports('position-area: block-end');
   let panel: HTMLDivElement;
 
-  // Native popover gives light dismiss and Escape; place it under its button when it opens.
+  // Native popover gives light dismiss and Escape. Without CSS anchor positioning, place it under its button when it opens.
   function place(e: ToggleEvent) {
-    if (e.newState !== 'open') return;
+    if (anchored || e.newState !== 'open') return;
     const r = button!.getBoundingClientRect();
     const left = Math.min(r.left, window.innerWidth - panel.offsetWidth - 8);
     panel.style.top = `${r.bottom + 6}px`;
@@ -50,5 +52,15 @@
     color: var(--text);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     font-size: 13px;
+  }
+  @supports (position-area: block-end) {
+    .panel {
+      position-area: block-end span-inline-end;
+      margin-block: 6px;
+      position-try-fallbacks:
+        flip-block,
+        flip-inline,
+        flip-block flip-inline;
+    }
   }
 </style>

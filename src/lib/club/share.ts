@@ -1,7 +1,7 @@
 import { groundSeries } from '../map/groundHeights';
 import { xcPrefs } from '../state/xcPrefs.svelte';
 import { flightRepository } from '../storage';
-import type { FlightRepository } from '../storage/repository';
+import type { IndexedDbFlightRepository } from '../storage/indexeddb';
 import { scoreFlight } from '../xc/score';
 import { computeClubStats } from './stats';
 
@@ -29,7 +29,7 @@ export async function shareFlight(
   {
     repo = flightRepository,
     ground = groundOrUndefined
-  }: { repo?: FlightRepository; ground?: typeof groundOrUndefined } = {}
+  }: { repo?: IndexedDbFlightRepository; ground?: typeof groundOrUndefined } = {}
 ): Promise<void> {
   const flight = await repo.get(id);
   if (!flight) throw new Error(`Flight ${id} not found.`);

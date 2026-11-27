@@ -9,7 +9,7 @@ Open the dev server as http://localhost:5173, not http://127.0.0.1:5173, because
 ```
 src/lib/
   domain/     framework-free TypeScript: track formats, analysis, timeline, scene config (unit tested)
-  storage/    FlightRepository interface, IndexedDB implementation, backup
+  storage/    IndexedDB flight repository, backup
   cesium/     3D viewer, terrain providers, flight layer, camera modes
   map/        shared tile sources (base maps, terrain)
   airspace/   openAIP tiles and styling
@@ -33,7 +33,6 @@ One-time setup: in the repository settings set Pages source to "GitHub Actions",
 
 ## Prepared for a backend
 
-- `FlightRepository` (`src/lib/storage/repository.ts`): add an HTTP implementation and switch it in `src/lib/storage/index.ts`.
 - Domain types are plain JSON and the analysis functions are pure, so they can run on the server unchanged.
 - The studio view is fully described by `SceneConfig` in the URL. It can become a stored scene behind a share link.
 - Flight IDs are UUIDs.

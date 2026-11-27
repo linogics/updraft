@@ -4,7 +4,7 @@ import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
 import { loadPlugin, validatePlugin } from '#lib/plugins/core';
 import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
 import { flightRepository } from '#lib/storage';
-import type { FlightRepository } from '#lib/storage/repository';
+import type { IndexedDbFlightRepository } from '#lib/storage/indexeddb';
 
 import { loadSyncConfig, parseSyncConfig, type SyncConfig, writeOverride } from './config';
 import { SyncEngine, type SyncOptions } from './engine.svelte';
@@ -24,7 +24,7 @@ async function loadBackend(id: string): Promise<BackendPlugin> {
 }
 
 export interface ClientDeps {
-  repo?: FlightRepository;
+  repo?: IndexedDbFlightRepository;
   loadBackend?: (id: string) => Promise<BackendPlugin>;
   engine?: SyncOptions;
 }
@@ -47,7 +47,7 @@ export class SyncClient {
   private adapter: BackendAdapter | null = null;
   private started: Promise<void> | undefined;
   private listeners: ((count: number) => void)[] = [];
-  private readonly repo: FlightRepository;
+  private readonly repo: IndexedDbFlightRepository;
   private readonly load: (id: string) => Promise<BackendPlugin>;
   private readonly engineOpts: SyncOptions;
 
