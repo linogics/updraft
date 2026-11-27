@@ -3,7 +3,8 @@ import { planLayout } from '#lib/state/planLayout.svelte';
 import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 
-import { BUILTIN_BACKENDS, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, BUILTIN_XC_PLANNERS } from './builtin';
+import { badgeMetas } from './badgeKind';
+import { BUILTIN_BACKENDS, BUILTIN_BADGES, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, BUILTIN_XC_PLANNERS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
 import type { PluginEntry } from './entries';
@@ -27,6 +28,7 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
     ...BUILTIN_BACKENDS.map((p) => p.id),
     ...BUILTIN_CONVERTERS.map((p) => p.id),
     ...BUILTIN_XC_PLANNERS.map((p) => p.id),
+    ...BUILTIN_BADGES.map((p) => p.id),
     ...pluginPrefs.list.map((e) => e.id)
   ];
   const plugin = await loadPlugin(url, taken);
@@ -76,6 +78,10 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
         }),
         ...(plugin.leagues && { leagues: parseLeagues(plugin.leagues) })
       });
+      break;
+
+    case 'badge':
+      pluginPrefs.add({ url, id, name, kind, badges: badgeMetas(plugin.badges) });
       break;
 
     case 'service':

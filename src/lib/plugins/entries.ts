@@ -1,6 +1,7 @@
 import { PLUGIN_DOCKS, PLUGIN_HOSTS, type PluginDock, type PluginHost } from '#lib/studio/plugins';
 
 import type { PlanLeague } from './api';
+import { type BadgeMeta, badgeMetas, isBadgeMetas } from './badgeKind';
 import { type ConverterMeta, isConverterMeta } from './converterKind';
 import { PLUGIN_ID, PLUGIN_KINDS, type PluginKind, pluginUrl } from './core';
 import { type PlanExportMeta, planMeta } from './xcPlannerKind';
@@ -19,6 +20,8 @@ export interface PluginEntry extends Partial<ConverterMeta> {
   exports?: PlanExportMeta[];
   /** The xc-planner kind stores its validated leagues too, so scoring never imports the plugin. */
   leagues?: PlanLeague[];
+  /** The badge kind stores its badges without `value`, so lists never import the plugin. */
+  badges?: BadgeMeta[];
   /** The converter kind also stores `label`, `extensions`, `canRead` and `canWrite`, and optionally `mime`. */
 }
 
@@ -42,6 +45,7 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       (o.kind === 'studio' && !PLUGIN_DOCKS.includes(o.dock as PluginDock)) ||
       (o.kind === 'converter' && !isConverterMeta(o)) ||
       (o.kind === 'xc-planner' && !plan) ||
+      (o.kind === 'badge' && !isBadgeMetas(o.badges)) ||
       ids.has(o.id) ||
       urls.has(url)
     ) {
@@ -58,6 +62,8 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
       Object.assign(entry, { label: label.trim(), extensions, canRead, canWrite });
       if (mime !== undefined) entry.mime = mime;
     }
+
+    if (o.kind === 'badge') entry.badges = badgeMetas(o.badges as BadgeMeta[]);
 
     if (plan) Object.assign(entry, plan);
 

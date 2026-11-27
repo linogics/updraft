@@ -147,3 +147,23 @@ describe('pluginUrl', () => {
     }
   });
 });
+
+describe('parsePlugins badge entries', () => {
+  const badge = { id: 'a', label: 'A', unit: 'count', thresholds: [1, 2, 3, 4, 5, 6, 7, 8] };
+  const entry = { url: 'https://a.test/b.js', id: 'acme/badges', name: 'Badges', kind: 'badge', badges: [badge] };
+
+  it('keeps a valid entry and drops stray fields', () => {
+    expect(parsePlugins([{ ...entry, dock: 'left' }])).toEqual([entry]);
+  });
+
+  it.each([
+    { badges: undefined },
+    { badges: [] },
+    { badges: [{ ...badge, unit: 'furlong' }] },
+    { badges: [{ ...badge, thresholds: [1, 2, 3] }] },
+    { badges: [{ ...badge, thresholds: [1, 2, 3, 4, 5, 6, 7, 7] }] },
+    { badges: [badge, badge] }
+  ])('drops an entry with %j', (bad) => {
+    expect(parsePlugins([{ ...entry, ...bad }])).toEqual([]);
+  });
+});
