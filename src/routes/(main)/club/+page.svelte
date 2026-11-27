@@ -1,10 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  import { clubBadges } from '#lib/badges/club';
+  import { formatBadgeValue, labelOf, TIER_LABELS } from '#lib/badges/labels';
+  import { loadBadgeGroups } from '#lib/badges/registry';
   import { clubStudioHref, type ValidClubEntry } from '#lib/club';
   import { formatCategory } from '#lib/club/format';
   import { CATEGORIES, type Category, type Medal, rankings } from '#lib/club/rankings';
+  import TierMedal from '#lib/components/badges/TierMedal.svelte';
   import { m } from '#lib/paraglide/messages';
+  import type { BadgeDef } from '#lib/plugins/badgeKind';
+  import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import { syncClient } from '#lib/sync/client.svelte';
@@ -15,7 +21,7 @@
   let entries = $state.raw<ValidClubEntry[]>([]);
   let loading = $state(true);
   let error = $state('');
-  let view = $state<'rankings' | 'flights'>('rankings');
+  let view = $state<'rankings' | 'flights' | 'badges'>('rankings');
   // Owner id the Flights tab is limited to, empty for all pilots.
   let owner = $state('');
 
@@ -32,6 +38,18 @@
       .sort((a, b) => b.stats.date.localeCompare(a.stats.date))
   );
   const ownerName = $derived(entries.find((e) => e.owner === owner)?.stats.pilot ?? '');
+
+  // Only the viewer's own badge plugins count, labels are translated for the bundled ones.
+  let defs = $state.raw<BadgeDef[]>([]);
+  const pilots = $derived(clubBadges(entries, defs));
+
+  $effect(() => {
+    let current = true;
+    void loadBadgeGroups(pluginPrefs.list).then(
+      (g) => current && (defs = g.flatMap((x) => x.badges.map((b) => ({ ...b, label: labelOf(x, b) }))))
+    );
+    return () => (current = false);
+  });
 
   const TITLES: Record<Category, () => string> = {
     xcPoints: () => m.club_cat_xc_points({ league }),
@@ -53,7 +71,8 @@
   };
   const VIEWS = {
     rankings: () => m.club_tab_rankings(),
-    flights: () => m.club_tab_flights()
+    flights: () => m.club_tab_flights(),
+    badges: () => m.club_tab_badges()
   };
 
   async function load() {
@@ -87,7 +106,7 @@
     {#if syncClient.hasClub}
       <div class="bar">
         <div class="seg" role="group" aria-label={m.club_views()}>
-          {#each ['rankings', 'flights'] as const as k (k)}
+          {#each ['rankings', 'flights', 'badges'] as const as k (k)}
             <button class:on={view === k} aria-pressed={view === k} onclick={() => (view = k)}>{VIEWS[k]()}</button>
           {/each}
         </div>
@@ -133,6 +152,25 @@
         </section>
       {/each}
     </div>
+  {:else if view === 'badges'}
+    <p class="muted">{m.club_badges_note()}</p>
+    <ol class="pilots">
+      {#each pilots as p (p.owner)}
+        <li>
+          <span>
+            <button class="link" onclick={() => showFlightsOf(p.owner)}>{p.pilot}</button>{#if p.mine}<em>
+                {m.club_you()}
+              </em>{/if}
+          </span>
+          <ul class="medals">
+            {#each p.badges as b (b.def)}
+              {@const text = `${b.def.label}: ${TIER_LABELS[b.tier]()} (${formatBadgeValue(b.def.unit, b.value, u)})`}
+              <li title={text}><TierMedal tier={b.tier} role="img" aria-label={text} /></li>
+            {/each}
+          </ul>
+        </li>
+      {/each}
+    </ol>
   {:else}
     {#if owner}
       <p class="filter">
@@ -304,6 +342,24 @@
   }
   .bronze {
     background: color-mix(in srgb, var(--warn) 55%, #5a3418);
+  }
+  .pilots li {
+    grid-template-columns: minmax(0, 12rem) 1fr;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .medals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .medals li {
+    display: block;
+    padding: 0;
+    border: 0;
   }
   table {
     width: 100%;

@@ -25,6 +25,16 @@
   --needle: #f0b43c;
   --climb: #e66767;
   --sink: #3987e5;
+  /* Badge tiers, Bronze to Legend. */
+  --tier-none: var(--border);
+  --tier-bronze: #b87333;
+  --tier-silver: #9aa4ae;
+  --tier-gold: #e0a800;
+  --tier-platinum: #5fb3c9;
+  --tier-diamond: #3ea8f0;
+  --tier-cloudbase: #6f86ff;
+  --tier-stratos: #a46bf0;
+  --tier-legend: #f0506e;
   --display: 'Sora', system-ui, sans-serif;
   --mono: 'Geist Mono', ui-monospace, monospace;
   color-scheme: dark;
