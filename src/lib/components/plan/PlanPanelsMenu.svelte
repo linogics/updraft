@@ -7,6 +7,7 @@
   import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
   import { planLayout } from '#lib/state/planLayout.svelte';
   import { PLUGIN_PREFIX } from '#lib/studio/registry.svelte';
+  import { sortByName } from '#lib/ui/attention';
 
   import Popover from '../Popover.svelte';
 
@@ -21,14 +22,15 @@
       .join(', ');
   }
 
-  /** The page owns the dialog, the header (and so this menu) is rendered twice. */
-  let { onadd }: { onadd: () => void } = $props();
+  /** The page owns the dialog, the header (and so this menu) is rendered twice. The page flashes the opener. */
+  let { onadd }: { onadd: (trigger?: HTMLButtonElement) => void } = $props();
+  let trigger = $state<HTMLButtonElement>();
 </script>
 
-<Popover label={m.panels_menu()}>
+<Popover label={m.panels_menu()} bind:button={trigger}>
   {#snippet icon()}<PanelsTop size={16} aria-hidden="true" />{/snippet}
   <ul>
-    {#each planRegistry.user as p (p.id)}
+    {#each sortByName(planRegistry.user, (p) => p.title()) as p (p.id)}
       <li>
         <label>
           <!-- The switch attribute is Safari only for now, other browsers draw a checkbox. -->
@@ -52,7 +54,7 @@
   </ul>
   {#if planPlugins.length}
     <ul aria-label={m.plan_plugins_heading()}>
-      {#each planPlugins as e (e.id)}
+      {#each sortByName(planPlugins, (e) => e.name) as e (e.id)}
         <li>
           <span>{e.name} <small>{summary(e)}</small></span>
           <button
@@ -67,7 +69,7 @@
     </ul>
   {/if}
   <div class="actions">
-    <button type="button" onclick={onadd}>{m.plugin_add_menu()}</button>
+    <button type="button" onclick={() => onadd(trigger)}>{m.plugin_add_menu()}</button>
   </div>
 </Popover>
 

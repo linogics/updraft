@@ -1,16 +1,20 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  let { label, icon, children }: { label: string; icon?: Snippet; children: Snippet } = $props();
+  let {
+    label,
+    icon,
+    button = $bindable(),
+    children
+  }: { label: string; icon?: Snippet; button?: HTMLButtonElement; children: Snippet } = $props();
 
   const id = `popover-${Math.random().toString(36).slice(2, 9)}`;
-  let button: HTMLButtonElement;
   let panel: HTMLDivElement;
 
   // Native popover gives light dismiss and Escape; place it under its button when it opens.
   function place(e: ToggleEvent) {
     if (e.newState !== 'open') return;
-    const r = button.getBoundingClientRect();
+    const r = button!.getBoundingClientRect();
     const left = Math.min(r.left, window.innerWidth - panel.offsetWidth - 8);
     panel.style.top = `${r.bottom + 6}px`;
     panel.style.left = `${Math.max(8, left)}px`;

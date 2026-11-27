@@ -6,6 +6,7 @@ import { pluginPanelId } from '#lib/studio/registry.svelte';
 import { BUILTIN_BACKENDS, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, BUILTIN_XC_PLANNERS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
+import type { PluginEntry } from './entries';
 import { pluginPrefs } from './pluginPrefs.svelte';
 import { assertNotReserved, registerProvides, services } from './services';
 import { parseLeagues } from './xcPlannerKind';
@@ -15,7 +16,7 @@ import { parseLeagues } from './xcPlannerKind';
  * Throws an Error with a message for the user and changes nothing when anything is wrong.
  * With `kinds`, a plugin of another kind is refused, for pages that only take one kind.
  */
-export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] } = {}) {
+export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] } = {}): Promise<PluginEntry> {
   const url = pluginUrl(raw);
   if (!url) throw new Error('The address must be a valid http or https URL.');
   if (pluginPrefs.list.some((e) => e.url === url)) throw new Error('This plugin is already added.');
@@ -84,6 +85,7 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
   }
 
   await cachePlugin(url);
+  return pluginPrefs.list.find((e) => e.id === id)!;
 }
 
 /** Removes the plugin from the list, the layout and the offline cache. A studio panel unmounts. */

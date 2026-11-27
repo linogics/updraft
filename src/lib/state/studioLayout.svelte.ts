@@ -69,6 +69,15 @@ class StudioLayout {
     this.save({ ...this.value, collapsed: c.includes(id) ? c.filter((x) => x !== id) : [...c, id] });
   }
 
+  /** Opens the dock of a panel and unfolds it, a bottom panel also becomes the active tab. */
+  reveal(id: string) {
+    const dock = (['left', 'right', 'bottom'] as const).find((d) => this.value.docks[d].includes(id));
+    if (!dock) return;
+    if (!this.value.open[dock]) this.toggleDock(dock);
+    if (this.value.collapsed.includes(id)) this.toggleCollapsed(id);
+    if (dock === 'bottom') this.setTab(id);
+  }
+
   resize(key: LayoutSize, v: number) {
     this.save({ ...this.value, sizes: { ...this.value.sizes, [key]: clampSize(key, v) } });
   }

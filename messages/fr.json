@@ -380,6 +380,7 @@
   "player_speed": "Vitesse de lecture",
   "plugin_add_menu": "Ajouter un plugin…",
   "plugin_add_submit": "Ajouter",
+  "plugin_added": "{name} ajouté",
   "plugin_add_title": "Ajouter un plugin",
   "plugin_adding": "Ajout…",
   "plugin_failed": "Le plugin {name} a échoué : {message}",

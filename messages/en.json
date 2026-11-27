@@ -380,6 +380,7 @@
   "player_speed": "Playback speed",
   "plugin_add_menu": "Add plugin…",
   "plugin_add_submit": "Add",
+  "plugin_added": "{name} added",
   "plugin_add_title": "Add plugin",
   "plugin_adding": "Adding…",
   "plugin_failed": "Plugin {name} failed: {message}",

@@ -2,9 +2,10 @@
   import { m } from '#lib/paraglide/messages';
   import { addPlugin } from '#lib/plugins/actions';
   import type { PluginKind } from '#lib/plugins/core';
+  import type { PluginEntry } from '#lib/plugins/entries';
 
-  /** Limits the accepted plugin kinds. Any kind when left out. */
-  let { kinds }: { kinds?: PluginKind[] } = $props();
+  /** Limits the accepted plugin kinds. Any kind when left out. `onadded` runs after a successful add. */
+  let { kinds, onadded }: { kinds?: PluginKind[]; onadded?: (entry: PluginEntry) => void } = $props();
 
   let dialog: HTMLDialogElement;
   let url = $state('');
@@ -25,8 +26,9 @@
     busy = true;
     error = '';
     try {
-      await addPlugin(url, { kinds });
+      const entry = await addPlugin(url, { kinds });
       dialog.close();
+      onadded?.(entry);
     } catch (err) {
       console.error('Could not add plugin', err);
       error = err instanceof Error ? err.message : String(err);
