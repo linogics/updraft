@@ -325,13 +325,14 @@ test.describe('plugins', () => {
     );
   }
 
-  async function add(page: Page) {
+  async function add(page: Page, consent = true) {
     await page.getByRole('button', { name: /^Panels/ }).click();
     await page.getByRole('button', { name: 'Add plugin…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Add plugin' });
     await expect(dialog.getByText('A plugin runs with full access to this page and your flights.')).toBeVisible();
     await dialog.getByLabel(/^Plugin address/).fill(URL);
     await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    if (consent) await dialog.getByRole('button', { name: 'Install' }).click();
     return dialog;
   }
 
@@ -382,6 +383,7 @@ test.describe('plugins', () => {
     const dialog = page.getByRole('dialog', { name: 'Add plugin' });
     await dialog.getByLabel(/^Plugin address/).fill(new globalThis.URL('/plugins/example.js', page.url()).href);
     await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Install' }).click();
     await expect(dialog).toBeHidden();
 
     const pilot = await pilotRows(page).first().getAttribute('aria-label');
@@ -391,12 +393,34 @@ test.describe('plugins', () => {
   test('a plugin with an unsupported apiVersion is rejected inline', async ({ page }) => {
     await openDemoStudio(page);
     await serve(page, plugin().replace('apiVersion: 2', 'apiVersion: 3'));
-    const dialog = await add(page);
+    const dialog = await add(page, false);
     await expect(dialog.getByRole('alert')).toContainText('Unsupported apiVersion 3');
     await expect(dialog).toBeVisible();
 
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.getByRole('region', { name: 'Hello' })).toHaveCount(0);
+  });
+
+  test('a plugin that changes data asks for consent and can be revoked in the menu', async ({ page }) => {
+    await openDemoStudio(page);
+    await serve(page, plugin());
+    const dialog = await add(page, false);
+    await expect(dialog.getByRole('checkbox', { name: /^Change updraft\/studio@1/ })).toBeChecked();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Hello' })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Add plugin…' }).click();
+    await dialog.getByLabel(/^Plugin address/).fill(URL);
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Install' }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole('button', { name: /^Panels/ }).click();
+    const grant = page.getByRole('checkbox', { name: /^Change updraft\/studio@1/ });
+    await expect(grant).toBeChecked();
+    await grant.uncheck();
+    await expect(grant).not.toBeChecked();
   });
 
   test('a plugin whose mount throws shows an error in its panel only', async ({ page }) => {

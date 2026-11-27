@@ -589,5 +589,9 @@
   "api_types": "Types",
   "api_read": "lecture",
   "api_write": "écriture",
-  "api_link": "Référence de l'API"
+  "api_link": "Référence de l'API",
+  "plugin_consent_title": "Autoriser les modifications ?",
+  "plugin_consent_item": "Modifier {service} ({methods})",
+  "plugin_consent_allow": "Installer",
+  "plugin_grants_label": "Autorisations de {name}"
 }

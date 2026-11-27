@@ -128,6 +128,10 @@ A plugin that was added earlier but fails to load later, for example because the
 
 Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend, converter, xc-planner and badge kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused, for example with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 studio plugins are not supported.
 
+## Permissions
+
+An installed plugin may read every service in its `requires` without asking. Calling a method that writes (`access: 'write'` in the service schema) needs the user's consent. When you add a plugin that requires services with write methods, the dialog lists them with one checkbox each, all checked, and you confirm or cancel. The allowed services are stored with the plugin and can be changed any time in the plugin settings next to Uninstall, the change applies on the next call. A write call without a grant throws `Error('<plugin id> may not change <service>. Allow it in the plugin settings.')`. A plugin that has no grants, for example one stored before this existed, can still read. Bundled plugins (ids under `updraft/`) and the app are exempt, and so is a plugin calling a service it provides itself.
+
 ## Security
 
 A plugin is code from the internet that runs in the app page. There is no sandbox. It has the same access as the app itself, including every flight stored in this browser, the network and the page content. The app cannot see what a plugin does.

@@ -22,6 +22,10 @@ export interface PluginEntry extends Partial<ConverterMeta> {
   leagues?: PlanLeague[];
   /** The badge kind stores its badges without `value`, so lists never import the plugin. */
   badges?: BadgeMeta[];
+  /** The services the plugin requires, so the settings can list the ones it may change. */
+  requires?: string[];
+  /** The services the plugin may call write methods on. Missing means none. */
+  grants?: string[];
   /** The converter kind also stores `label`, `extensions`, `canRead` and `canWrite`, and optionally `mime`. */
 }
 
@@ -70,6 +74,10 @@ export function parsePlugins(raw: unknown): PluginEntry[] {
     if (Array.isArray(o.hosts) && o.hosts.every((h) => PLUGIN_HOSTS.includes(h as PluginHost))) {
       entry.hosts = o.hosts as PluginHost[];
     }
+
+    const names = (v: unknown) => (Array.isArray(v) ? v.filter((n): n is string => typeof n === 'string') : []);
+    if (names(o.requires).length) entry.requires = names(o.requires);
+    if (names(o.grants).length) entry.grants = names(o.grants);
 
     out.push(entry);
   }

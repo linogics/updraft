@@ -12,6 +12,10 @@ export const RESERVED_NAMESPACE = 'updraft/';
 /** Bundled code is the app itself and the plugins with an id under the reserved vendor. */
 const isInstalled = (owner: string) => owner !== 'updraft' && !owner.startsWith(RESERVED_NAMESPACE);
 
+/** The error for a write call that an installed plugin may not make. */
+export const deniedMessage = (pluginId: string, service: string) =>
+  `${pluginId} may not change ${service}. Allow it in the plugin settings.`;
+
 /** Development and tests check every call, so a service that drifts from its schema fails early. */
 const CHECK_ALWAYS = import.meta.env.DEV || import.meta.env.MODE === 'test';
 
@@ -26,6 +30,14 @@ export class ServiceRegistry {
   private building: string[] = [];
   // Checked wrappers are keyed by the instance, a rebuilt service gets a new one.
   private checked = new WeakMap<object, object>();
+  // Guarded wrappers per instance and caller, they read the grants on every call.
+  private guarded = new WeakMap<object, Map<string, object>>();
+  private grantsOf: (pluginId: string) => readonly string[] = () => [];
+
+  /** Where the registry asks which services an installed plugin may change. Nothing is granted until this is set. */
+  setGrants(fn: (pluginId: string) => readonly string[]) {
+    this.grantsOf = fn;
+  }
 
   /**
    * Registers a lazy factory. The first provider of a name wins, a second one throws. Returns the unregister function.
@@ -95,7 +107,31 @@ export class ServiceRegistry {
       this.checked.set(raw, wrapped);
     }
 
-    return wrapped as T;
+    // Installed plugins need a grant to change a service they do not provide. Bundled callers are exempt.
+    if (caller === undefined || !isInstalled(caller) || entry.owner === caller) return wrapped as T;
+    let byCaller = this.guarded.get(raw);
+    if (!byCaller) {
+      byCaller = new Map<string, object>();
+      this.guarded.set(raw, byCaller);
+    }
+
+    let guard = byCaller.get(caller);
+    if (!guard) {
+      const out: Record<string, unknown> = { ...wrapped };
+      for (const [method, def] of Object.entries(entry.schema.methods)) {
+        if (def.access !== 'write') continue;
+
+        out[method] = (...args: unknown[]) => {
+          if (!this.grantsOf(caller).includes(name)) throw new Error(deniedMessage(caller, name));
+          return (wrapped as Record<string, (...a: unknown[]) => unknown>)[method](...args);
+        };
+      }
+
+      guard = Object.freeze(out);
+      byCaller.set(caller, guard);
+    }
+
+    return guard as T;
   }
 
   private build(name: string, entry: { factory: ServiceFactory; owner: string }): object {

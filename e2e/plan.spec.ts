@@ -88,6 +88,7 @@ test.describe('plugins', () => {
     const dialog = page.getByRole('dialog', { name: 'Add plugin' });
     await dialog.getByLabel(/^Plugin address/).fill(URL);
     await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Install' }).click();
     await expect(dialog).toBeHidden();
 
     await expect

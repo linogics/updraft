@@ -10,6 +10,7 @@
   import { sortByName } from '#lib/ui/attention';
 
   import Popover from '../Popover.svelte';
+  import PluginGrants from '../studio/PluginGrants.svelte';
 
   const planPlugins = $derived(pluginPrefs.list.filter((e) => e.kind === 'xc-planner'));
 
@@ -49,6 +50,7 @@
         >
           {m.plugin_uninstall()}
         </button>
+        <PluginGrants id={p.id.slice(PLUGIN_PREFIX.length)} />
       </li>
     {/each}
   </ul>
@@ -64,6 +66,7 @@
           >
             {m.plugin_uninstall()}
           </button>
+          <PluginGrants id={e.id} />
         </li>
       {/each}
     </ul>
@@ -85,6 +88,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 8px;
   }
   .actions {

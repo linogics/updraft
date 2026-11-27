@@ -1,4 +1,5 @@
 import { parsePlugins, type PluginEntry } from './entries';
+import { services } from './services';
 
 const KEY = 'plugins';
 
@@ -23,6 +24,22 @@ class PluginPrefs {
     this.save(this.list.filter((e) => e.id !== id));
   }
 
+  /** Grants or revokes the right of a plugin to change `service`, effective on its next call. */
+  setGrant(id: string, service: string, on: boolean) {
+    this.save(
+      this.list.map((e) => {
+        if (e.id !== id) return e;
+        const grants = (e.grants ?? []).filter((n) => n !== service);
+        return { ...e, grants: on ? [...grants, service] : grants };
+      })
+    );
+  }
+
+  /** Stores what a plugin requires and may change, after `add`. */
+  setAccess(id: string, requires: string[], grants: string[]) {
+    this.save(this.list.map((e) => (e.id === id ? { ...e, requires, grants } : e)));
+  }
+
   private save(next: PluginEntry[]) {
     this.list = next;
     try {
@@ -34,3 +51,5 @@ class PluginPrefs {
 }
 
 export const pluginPrefs = new PluginPrefs();
+
+services.setGrants((id) => pluginPrefs.list.find((e) => e.id === id)?.grants ?? []);

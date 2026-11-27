@@ -6,6 +6,7 @@
   import TierMedal from '#lib/components/badges/TierMedal.svelte';
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
   import { announce } from '#lib/components/studio/panelActions.svelte';
+  import PluginGrants from '#lib/components/studio/PluginGrants.svelte';
   import { m } from '#lib/paraglide/messages';
   import { removePlugin } from '#lib/plugins/actions';
   import type { BadgeDef } from '#lib/plugins/badgeKind';
@@ -125,6 +126,7 @@
             >
               {m.plugin_uninstall()}
             </button>
+            <PluginGrants id={e.id} />
           </li>
         {/each}
       </ul>

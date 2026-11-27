@@ -142,3 +142,45 @@ describe('validateServiceFields', () => {
     );
   });
 });
+
+describe('grants', () => {
+  const schema: ServiceSchema = {
+    name: 'a/x@1',
+    description: '',
+    methods: {
+      get: { access: 'read', params: [], returns: { type: 'number' } },
+      set: { access: 'write', params: [], returns: { 'x-kind': 'void' } }
+    }
+  } as unknown as ServiceSchema;
+
+  function setup(grants: string[]) {
+    const r = new ServiceRegistry();
+    r.provide('a/x@1', () => ({ get: () => 1, set: () => {} }), 'updraft/core', schema);
+    r.setGrants(() => grants);
+    return { r, grants };
+  }
+
+  it('denies a write of an installed plugin without a grant but allows reads', () => {
+    const { r } = setup([]);
+    const s = r.use<{ get(): number; set(): void }>('a/x@1', 'acme/p');
+    expect(s.get()).toBe(1);
+    expect(() => s.set()).toThrow('acme/p may not change a/x@1. Allow it in the plugin settings.');
+  });
+
+  it('allows a granted write and follows a revoke without a new use call', () => {
+    const grants = ['a/x@1'];
+    const r = new ServiceRegistry();
+    r.provide('a/x@1', () => ({ get: () => 1, set: () => {} }), 'updraft/core', schema);
+    r.setGrants(() => grants);
+    const s = r.use<{ set(): void }>('a/x@1', 'acme/p');
+    expect(() => s.set()).not.toThrow();
+    grants.length = 0;
+    expect(() => s.set()).toThrow(/may not change/);
+  });
+
+  it('exempts bundled callers', () => {
+    const { r } = setup([]);
+    expect(() => r.use<{ set(): void }>('a/x@1', 'updraft/xc').set()).not.toThrow();
+    expect(() => r.use<{ set(): void }>('a/x@1').set()).not.toThrow();
+  });
+});

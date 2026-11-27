@@ -3,6 +3,7 @@
   import { addPlugin } from '#lib/plugins/actions';
   import type { PluginKind } from '#lib/plugins/core';
   import type { PluginEntry } from '#lib/plugins/entries';
+  import type { WriteService } from '#lib/plugins/grants';
 
   /** Limits the accepted plugin kinds. Any kind when left out. `onadded` runs after a successful add. */
   let { kinds, onadded }: { kinds?: PluginKind[]; onadded?: (entry: PluginEntry) => void } = $props();
@@ -11,6 +12,17 @@
   let url = $state('');
   let error = $state('');
   let busy = $state(false);
+  // Set while the dialog asks which changes the plugin may make.
+  let asking = $state<{ writes: WriteService[]; picked: string[]; done: (grants: string[] | null) => void }>();
+
+  const consent = (writes: WriteService[]) =>
+    new Promise<string[] | null>((done) => (asking = { writes, picked: writes.map((w) => w.name), done }));
+
+  // Escape, Cancel or a click outside declines.
+  function onclose() {
+    asking?.done(null);
+    asking = undefined;
+  }
 
   /** Opens the dialog as a modal. The browser returns focus to the opener on close. */
   export function open() {
@@ -22,14 +34,23 @@
   async function onsubmit(e: SubmitEvent) {
     // Cancel closes the dialog through its form method, nothing to check.
     if ((e.submitter as HTMLButtonElement | null)?.value === 'cancel') return;
+
+    if (asking) {
+      e.preventDefault();
+      asking.done(asking.picked);
+      asking = undefined;
+      return;
+    }
+
     e.preventDefault();
     busy = true;
     error = '';
     try {
-      const entry = await addPlugin(url, { kinds });
+      const entry = await addPlugin(url, { kinds, consent });
       dialog.close();
       onadded?.(entry);
     } catch (err) {
+      if (!dialog.open) return;
       console.error('Could not add plugin', err);
       error = err instanceof Error ? err.message : String(err);
     } finally {
@@ -38,39 +59,56 @@
   }
 </script>
 
-<dialog bind:this={dialog} aria-labelledby="add-plugin-title" closedby="any">
+<dialog bind:this={dialog} aria-labelledby="add-plugin-title" closedby="any" {onclose}>
   <h1 id="add-plugin-title">{m.plugin_add_title()}</h1>
 
   <form method="dialog" {onsubmit}>
-    <p class="warning" id="add-plugin-warning">{m.plugin_trust_warning()}</p>
+    {#if asking}
+      <fieldset>
+        <legend>{m.plugin_consent_title()}</legend>
+        {#each asking.writes as w (w.name)}
+          <label>
+            <input type="checkbox" value={w.name} bind:group={asking.picked} />
+            {m.plugin_consent_item({ service: w.name, methods: w.methods.join(', ') })}
+          </label>
+        {/each}
+      </fieldset>
 
-    <p><a href="/api" target="_blank" rel="noopener">{m.api_link()}</a></p>
+      <div class="row">
+        <button value="cancel" formnovalidate>{m.common_cancel()}</button>
+        <button value="allow" class="primary">{m.plugin_consent_allow()}</button>
+      </div>
+    {:else}
+      <p class="warning" id="add-plugin-warning">{m.plugin_trust_warning()}</p>
 
-    <label for="add-plugin-url">{m.plugin_url_label()}</label>
-    <!-- svelte-ignore a11y_autofocus -->
-    <input
-      id="add-plugin-url"
-      type="url"
-      name="url"
-      required
-      autofocus
-      autocomplete="off"
-      autocapitalize="none"
-      spellcheck="false"
-      placeholder="https://example.com/plugin.js"
-      aria-describedby="add-plugin-warning{error ? ' add-plugin-error' : ''}"
-      aria-invalid={error ? 'true' : undefined}
-      bind:value={url}
-    />
+      <p><a href="/api" target="_blank" rel="noopener">{m.api_link()}</a></p>
 
-    {#if error}
-      <p class="error" id="add-plugin-error" role="alert">{error}</p>
+      <label for="add-plugin-url">{m.plugin_url_label()}</label>
+      <!-- svelte-ignore a11y_autofocus -->
+      <input
+        id="add-plugin-url"
+        type="url"
+        name="url"
+        required
+        autofocus
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="https://example.com/plugin.js"
+        aria-describedby="add-plugin-warning{error ? ' add-plugin-error' : ''}"
+        aria-invalid={error ? 'true' : undefined}
+        bind:value={url}
+      />
+
+      {#if error}
+        <p class="error" id="add-plugin-error" role="alert">{error}</p>
+      {/if}
+
+      <div class="row">
+        <button value="cancel" formnovalidate>{m.common_cancel()}</button>
+        <button value="add" class="primary" disabled={busy}>{busy ? m.plugin_adding() : m.plugin_add_submit()}</button>
+      </div>
     {/if}
-
-    <div class="row">
-      <button value="cancel" formnovalidate>{m.common_cancel()}</button>
-      <button value="add" class="primary" disabled={busy}>{busy ? m.plugin_adding() : m.plugin_add_submit()}</button>
-    </div>
   </form>
 </dialog>
 
@@ -132,6 +170,21 @@
   }
   input[aria-invalid='true'] {
     border-color: var(--danger);
+  }
+  fieldset {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-size: 13px;
   }
   .error {
     color: var(--danger);
