@@ -8,6 +8,11 @@ services:
     environment:
       # Set to true to let anyone create an account through POST /api/updraft/v1/auth/signup.
       UPDRAFT_SIGNUP: ${UPDRAFT_SIGNUP:-false}
+      # OAuth sign in for the v1 popup flow. Both must be set, or it stays off.
+      # Comma separated app origins that may receive the token, exact match, for example https://updraft.example.org.
+      UPDRAFT_APP_ORIGINS: ${UPDRAFT_APP_ORIGINS:-}
+      # The public https address of this server. The provider redirects back to <this>/api/updraft/v1/auth/callback, so register that URL there.
+      UPDRAFT_PUBLIC_URL: ${UPDRAFT_PUBLIC_URL:-}
     ports:
       - '127.0.0.1:8090:8090'
     volumes:

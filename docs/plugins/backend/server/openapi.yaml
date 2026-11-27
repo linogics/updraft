@@ -10,7 +10,7 @@ info:
 
     Capabilities: the client calls `GET /api/updraft/v1` first and only uses what the server announces.
     `auth.password` enables `POST /auth/password`, `auth.signup` enables `POST /auth/signup`, and `club` enables
-    `GET /club` and `GET /club/{key}`. `auth.oauth` lists redirect providers and is reserved, servers send an empty array for now.
+    `GET /club` and `GET /club/{key}`. `auth.oauth` lists the redirect sign in providers, see `GET /auth/redirect/{provider}`. It is an empty array when the server offers none.
     `push` and `pull` are always required. A route whose capability is off answers 403 or 404.
 
     Errors are JSON with at least a `message` string. Extra fields are allowed and ignored.
@@ -96,6 +96,85 @@ paths:
           $ref: '#/components/responses/Error'
         '403':
           $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /auth/redirect/{provider}:
+    get:
+      operationId: oauthRedirect
+      summary: Start an OAuth sign in
+      description: |
+        Only for providers listed in `auth.oauth`. The app opens this URL in a popup. The server checks `origin` against
+        its allow list of exact app origins, saves the sign in state in a short lived cookie on the server's own path
+        `/api/updraft/v1/auth` and redirects (302) to the provider. The provider returns to `GET /auth/callback`.
+        Servers should rate limit this route.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          description: An `id` from `auth.oauth`.
+          schema:
+            type: string
+        - name: origin
+          in: query
+          required: true
+          description: The origin of the app, for example `https://updraft.example.org`. Must match an allowed origin exactly.
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the provider's sign in page.
+        '400':
+          description: The origin is missing or not allowed.
+          $ref: '#/components/responses/Error'
+        '404':
+          description: The provider is not offered.
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /auth/callback:
+    get:
+      operationId: oauthCallback
+      summary: Finish an OAuth sign in
+      description: |
+        Where the provider redirects the popup to. Not called by the app directly. The server checks `state` against the
+        cookie, exchanges `code`, and matches the provider account to a server account: first by an earlier link, then
+        by the same email, which it then links. When nothing matches it creates an account only if `auth.signup` is true,
+        otherwise the sign in fails with the message `No account matches your <provider label> email. Ask the server admin to create one with that email.`
+
+        The answer is a small HTML page with a strict content security policy. Its script calls
+        `window.opener.postMessage(message, origin)` and `window.close()`. `origin` is the allowed app origin saved in
+        the cookie, never `*`. The app must check `event.origin` against the server's origin and `event.source` against
+        its popup before using the message. `message` is one of:
+
+        - `{ "type": "updraft-auth", "token": "...", "user": { "id": "...", "name": "..." } }`, the same session as a password sign in.
+        - `{ "type": "updraft-auth", "error": "..." }`, with a message that is safe to show.
+
+        When the cookie is missing, expired or does not match `state`, there is no trusted origin, so the server answers 400
+        with a page that posts nothing.
+      security: []
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The page that posts the message.
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: No valid sign in was started in this browser.
+          content:
+            text/html:
+              schema:
+                type: string
         '429':
           $ref: '#/components/responses/Error'
   /push:
@@ -307,8 +386,19 @@ components:
               type: boolean
             oauth:
               type: array
-              description: Reserved for redirect sign in providers. Always empty in v1 servers for now.
-              items: {}
+              description: |
+                Providers for the popup sign in. The PocketBase kit lists every OAuth2 provider enabled on the `users`
+                collection, and an empty array when `UPDRAFT_APP_ORIGINS` or `UPDRAFT_PUBLIC_URL` is not set.
+              items:
+                type: object
+                required: [id, label]
+                properties:
+                  id:
+                    type: string
+                    description: Pass it as `{provider}` to `GET /auth/redirect/{provider}`.
+                  label:
+                    type: string
+                    description: Display name for the sign in button.
         club:
           type: boolean
         limits:

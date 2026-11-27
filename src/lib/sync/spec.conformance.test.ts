@@ -1,9 +1,10 @@
 // Checks a server against the Updraft sync HTTP spec v1 with plain fetch, so it can test any implementation.
 // Runs only with SPEC_URL set to the base URL, for example SPEC_URL=http://127.0.0.1:8090.
 // The server needs signup enabled, because the test creates its own accounts.
+// SPEC_APP_ORIGIN is optional, set it to an origin the server allows to also check the unknown provider answer.
 import { beforeAll, describe, expect, it } from 'vitest';
 
-const { SPEC_URL } = process.env;
+const { SPEC_URL, SPEC_APP_ORIGIN } = process.env;
 const run = SPEC_URL ? describe : describe.skip;
 const BASE = `${(SPEC_URL ?? '').replace(/\/$/, '')}/api/updraft/v1`;
 const PASSWORD = 'pilot-password-1';
@@ -27,7 +28,7 @@ interface Body {
   token: string;
   user: { id: string; name: string };
   version: number;
-  auth: { password: boolean; signup: boolean; oauth: unknown[] };
+  auth: { password: boolean; signup: boolean; oauth: { id: string; label: string }[] };
   club: boolean;
   limits: { maxChanges: number; maxPull: number };
   changes: Change[];
@@ -58,6 +59,17 @@ async function authCall(path: string, body: unknown): Promise<Res> {
   for (let i = 0; i < 10; i++) {
     const r = await call('POST', path, undefined, body);
     if (r.status !== 429) return r;
+    await new Promise((resolve) => setTimeout(resolve, 3200));
+  }
+
+  throw new Error('Still rate limited.');
+}
+
+// A plain GET that does not follow redirects, for the browser flow routes.
+async function browserGet(path: string) {
+  for (let i = 0; i < 10; i++) {
+    const res = await fetch(BASE + path, { redirect: 'manual' });
+    if (res.status !== 429) return res;
     await new Promise((resolve) => setTimeout(resolve, 3200));
   }
 
@@ -112,6 +124,24 @@ run('sync spec v1', { timeout: 60000 }, () => {
     expect(typeof caps.club).toBe('boolean');
     expect(caps.limits.maxChanges).toBeGreaterThan(0);
     expect(caps.limits.maxPull).toBeGreaterThan(0);
+  });
+
+  it('refuses the oauth redirect for an origin that is not allowed', async () => {
+    const res = await browserGet('/auth/redirect/any?origin=https://not-allowed.invalid');
+    expect(res.status).toBe(400);
+    expect((await browserGet('/auth/redirect/any')).status).toBe(400);
+  });
+
+  it.runIf(SPEC_APP_ORIGIN)('answers 404 for an unknown oauth provider', async () => {
+    const res = await browserGet(`/auth/redirect/no-such-provider?origin=${encodeURIComponent(SPEC_APP_ORIGIN ?? '')}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('refuses the oauth callback without the cookie of a started sign in', async () => {
+    const res = await browserGet('/auth/callback?code=abc&state=def');
+    expect(res.status).toBe(400);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(await res.text()).not.toContain('postMessage');
   });
 
   it('signs in with a password and rejects a wrong one', async () => {
