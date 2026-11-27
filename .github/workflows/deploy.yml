@@ -1,8 +1,9 @@
 name: Deploy
 
+# Only releases go live. The manual run must start from a tag, the github-pages environment refuses branches.
 on:
   push:
-    branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:

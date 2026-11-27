@@ -27,9 +27,9 @@ The dependency direction is `domain → storage / cesium / ui`. The domain layer
 
 ## Deployment
 
-Every push to `main` runs `.github/workflows/deploy.yml`: check, test, build, then deploy `build/` to GitHub Pages at https://updraft.linogics.io (`static/CNAME`).
+Pushing a `v*` tag runs `.github/workflows/deploy.yml`: check, test, build, then deploy `build/` to GitHub Pages at https://updraft.linogics.io (`static/CNAME`). `gh release create vX.Y.Z` pushes the tag. Merges to `main` do not deploy. To redeploy a version, run the workflow by hand and pick its tag.
 
-One-time setup: in the repository settings set Pages source to "GitHub Actions", custom domain `updraft.linogics.io` and enforce HTTPS. In DNS add `CNAME updraft -> linogics.github.io`.
+One-time setup: in the repository settings set Pages source to "GitHub Actions", custom domain `updraft.linogics.io` and enforce HTTPS. In the `github-pages` environment allow only tags matching `v*` to deploy. In DNS add `CNAME updraft -> linogics.github.io`.
 
 ## Prepared for a backend
 
