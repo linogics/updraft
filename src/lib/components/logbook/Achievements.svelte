@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Medal from '@lucide/svelte/icons/medal';
-
+  import { formatBadgeValue, labelOf, TIER_LABELS } from '#lib/badges/labels';
   import { countsForBadges, localBadgeItems } from '#lib/badges/local';
   import { type BadgeItem, badgeProgress, TIERS } from '#lib/badges/progress';
-  import { type BadgeGroup, BUILTIN_BADGE_PLUGIN, loadBadgeGroups } from '#lib/badges/registry';
+  import { type BadgeGroup, loadBadgeGroups } from '#lib/badges/registry';
+  import TierMedal from '#lib/components/badges/TierMedal.svelte';
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
   import { announce } from '#lib/components/studio/panelActions.svelte';
   import { m } from '#lib/paraglide/messages';
@@ -16,8 +16,7 @@
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { studioHref } from '#lib/storage/importFlights';
   import { flash, scrollToSelector, sortByName } from '#lib/ui/attention';
-  import { formatAirtime, formatDate, formatNumber } from '#lib/ui/format';
-  import { formatAlt, formatDistance, formatSpeed, formatVario } from '#lib/ui/units';
+  import { formatDate } from '#lib/ui/format';
 
   let { flights }: { flights: FlightSummary[] } = $props();
 
@@ -36,54 +35,7 @@
     )
   );
 
-  const TIER_LABELS = {
-    bronze: () => m.tier_bronze(),
-    silver: () => m.tier_silver(),
-    gold: () => m.tier_gold(),
-    platinum: () => m.tier_platinum(),
-    diamond: () => m.tier_diamond(),
-    cloudbase: () => m.tier_cloudbase(),
-    stratos: () => m.tier_stratos(),
-    legend: () => m.tier_legend()
-  };
-  // Only the bundled plugin is translated, a plugin brings its own label.
-  const BADGE_LABELS: Record<string, () => string> = {
-    'free-distance': () => m.badge_free_distance(),
-    'xc-speed': () => m.badge_xc_speed(),
-    'longest-flight': () => m.badge_longest_flight(),
-    'total-airtime': () => m.badge_total_airtime(),
-    flights: () => m.badge_flights(),
-    'max-altitude': () => m.badge_max_altitude(),
-    'max-gain': () => m.badge_max_gain(),
-    'max-agl': () => m.badge_max_agl(),
-    'best-climb': () => m.badge_best_climb(),
-    'best-thermal-gain': () => m.badge_best_thermal_gain(),
-    sites: () => m.badge_sites(),
-    'biggest-triangle': () => m.badge_biggest_triangle(),
-    triangles: () => m.badge_triangles(),
-    'flight-days': () => m.badge_flight_days(),
-    gliders: () => m.badge_gliders()
-  };
-
-  const labelOf = (g: BadgeGroup, b: BadgeDef) =>
-    (g.id === BUILTIN_BADGE_PLUGIN ? BADGE_LABELS[b.id]?.() : undefined) ?? b.label;
-
-  function format(unit: BadgeDef['unit'], v: number): string {
-    switch (unit) {
-      case 'distance':
-        return formatDistance(v, u);
-      case 'speed':
-        return formatSpeed(v, u);
-      case 'duration':
-        return formatAirtime(v * 1000);
-      case 'altitude':
-        return formatAlt(v, u);
-      case 'vario':
-        return formatVario(v, u);
-      case 'count':
-        return formatNumber(v);
-    }
-  }
+  const format = (unit: BadgeDef['unit'], v: number) => formatBadgeValue(unit, v, u);
 
   const cards = $derived(
     items
@@ -134,7 +86,7 @@
         {@const tier = p.tier}
         {@const at = tier ? TIERS.indexOf(tier) : -1}
         <li class="card" class:locked={!tier} style:--tier="var(--tier-{tier ?? 'none'})">
-          <Medal aria-hidden="true" size={28} />
+          <TierMedal {tier} size={28} aria-hidden="true" />
           <div class="body">
             <span class="tier">{tier ? TIER_LABELS[tier]() : m.achievements_locked()}</span>
             <h3>{label}</h3>
@@ -189,15 +141,6 @@
   .achievements {
     display: grid;
     gap: 16px;
-    --tier-none: var(--border);
-    --tier-bronze: #b87333;
-    --tier-silver: #9aa4ae;
-    --tier-gold: #e0a800;
-    --tier-platinum: #5fb3c9;
-    --tier-diamond: #3ea8f0;
-    --tier-cloudbase: #6f86ff;
-    --tier-stratos: #a46bf0;
-    --tier-legend: #f0506e;
   }
   .grid {
     display: grid;
@@ -219,7 +162,6 @@
   }
   .card > :global(svg) {
     flex: none;
-    color: var(--tier);
   }
   .locked {
     opacity: 0.6;

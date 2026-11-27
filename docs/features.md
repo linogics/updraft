@@ -103,6 +103,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 - Opt-in sharing per flight with everyone on the same sync server, and unsharing again.
 - Club page with all-time rankings (gold, silver, bronze) in eleven categories and a list of shared flights.
+- Badges tab: every pilot with shared flights and a medal per badge reached (Bronze or better, from your installed badge plugins), sorted by badge score. Only shared flights count.
 - Shared flights open read-only in the studio, nothing is saved locally.
 
 ## Settings and app
