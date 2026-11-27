@@ -74,7 +74,7 @@ Fields of every kind:
 | `name`     | `string`                                                                       | Not blank. Shown to the user, for example as the panel title.                                                                                                                                                          |
 | `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter' \| 'xc-planner' \| 'badge'` | What the plugin extends.                                                                                                                                                                                               |
 | `apiVersion` | `number`                                                                     | Per kind, see [Versioning](#versioning).                                                                                                                                                                               |
-| `provides` | `Record<string, (ctx) => object>`                                              | Optional. Services this plugin offers, see [service](service/README.md).                                                                                                                                               |
+| `provides` | `Record<string, { schema, create }>`                                           | Optional. Services this plugin offers, see [service](service/README.md).                                                                                                                                               |
 | `requires` | `string[]`                                                                     | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                                                                                                                   |
 
 The fields of each kind are listed in its guide. Common checks that apply to all kinds:
@@ -82,7 +82,7 @@ The fields of each kind are listed in its guide. Common checks that apply to all
 - `"id" must look like "vendor/name", each part 1 to 40 characters from a-z, 0-9 and "-".`
 - `"name" must be a non-empty string.`
 - `"kind" must be one of "studio", "service", "backend", "converter", "xc-planner", "badge".`
-- `"provides" must be an object of service factories.` and `The factory of "x" must be a function.`
+- `"provides" must be an object of services, each with a schema and a create factory.` and `The factory "create" of "x" must be a function.`
 - `The service name "x" must look like "vendor/service@1", with a-z, 0-9 and "-".`
 - `"requires" must be a list of service names like "vendor/service@1".`
 

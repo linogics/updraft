@@ -1,4 +1,5 @@
 import type { PluginFlight, StudioEvent, StudioService } from '#lib/plugins/api';
+import { studioSchema } from '#lib/plugins/coreSchemas';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import { altRefPrefs } from '#lib/state/altRefPrefs.svelte';
@@ -145,7 +146,8 @@ export function provideStudioService(studio: Host) {
         viewer: () => (studio.viewer && !studio.viewer.isDestroyed() ? studio.viewer : null)
       });
     },
-    'updraft'
+    'updraft',
+    studioSchema
   );
 }
 

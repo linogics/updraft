@@ -44,6 +44,8 @@
   <form method="dialog" {onsubmit}>
     <p class="warning" id="add-plugin-warning">{m.plugin_trust_warning()}</p>
 
+    <p><a href="/api" target="_blank" rel="noopener">{m.api_link()}</a></p>
+
     <label for="add-plugin-url">{m.plugin_url_label()}</label>
     <!-- svelte-ignore a11y_autofocus -->
     <input

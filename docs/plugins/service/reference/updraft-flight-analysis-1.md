@@ -13,10 +13,12 @@ Subscribe with `on(event: AnalysisEvent, fn: () => void): () => void`.
 
 ## Members
 
-| Member | Description |
-| --- | --- |
-| `stats(id: string): FlightStats \| null` | Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight. |
-| `transitions(id: string, ref: AltRef): TransitionSummary \| null` | Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values are null until ground heights have loaded, so hold `ctx.need('ground')` while asking for them. |
+Methods marked `write` change state, the others only read.
+
+| Member | Access | Description |
+| --- | --- | --- |
+| `stats(id: string): FlightStats \| null` | read | Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight. |
+| `transitions(id: string, ref: AltRef): TransitionSummary \| null` | read | Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values are null until ground heights have loaded, so hold `ctx.need('ground')` while asking for them. |
 
 ## Types
 

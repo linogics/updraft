@@ -576,5 +576,18 @@
   "badge_biggest_triangle": "Größtes Dreieck",
   "badge_triangles": "Dreiecke",
   "badge_flight_days": "Flugtage",
-  "badge_gliders": "Gleitschirme"
+  "badge_gliders": "Gleitschirme",
+  "api_title": "API-Referenz",
+  "api_intro": "Alle Dienste, die Plugins nutzen können, mit Methoden, Ereignissen und Typen. Installierte Plugins erscheinen hier, wenn sie einen Dienst anbieten.",
+  "api_provider_app": "Von der App bereitgestellt",
+  "api_provider_plugin": "Bereitgestellt vom Plugin {id}",
+  "api_events": "Ereignisse",
+  "api_methods": "Methoden",
+  "api_params": "Parameter",
+  "api_returns": "Rückgabe",
+  "api_none": "keine",
+  "api_types": "Typen",
+  "api_read": "lesen",
+  "api_write": "schreiben",
+  "api_link": "API-Referenz"
 }

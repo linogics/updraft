@@ -1,0 +1,192 @@
+{
+  "name": "updraft/plan@1",
+  "description": "Provided by the planner while it is open, not by the studio. Everything is read through functions, so it is always current.",
+  "methods": {
+    "points": {
+      "description": "The route. The same frozen array until the route changes.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "type": "number"
+            },
+            "lon": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "lat",
+            "lon"
+          ]
+        }
+      }
+    },
+    "distance": {
+      "description": "Route length in m.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "number"
+      }
+    },
+    "speed": {
+      "description": "Planned speed in km/h.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "number"
+      }
+    },
+    "units": {
+      "description": "The same frozen object until the user changes units.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "$ref": "#/$defs/Units"
+      }
+    },
+    "setRoute": {
+      "description": "Replaces the whole route. The user can undo it in the planner, as one step. An empty array clears the route. Throws when the argument is not an array, has more than 100 points, or a point lacks a finite `lat` in [-90, 90] or `lon` in [-180, 180]. The points are copied.",
+      "access": "write",
+      "params": [
+        {
+          "name": "points",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat": {
+                  "type": "number"
+                },
+                "lon": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lat",
+                "lon"
+              ]
+            }
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "league": {
+      "description": "Id of the active XC scoring league. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "string"
+      }
+    },
+    "leagues": {
+      "description": "The leagues the user can pick. The same frozen array until the list changes.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ]
+        }
+      }
+    },
+    "setLeague": {
+      "description": "Switches the XC league for the whole app, it is a global preference. An unknown id throws `Unknown league \"x\".`.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    }
+  },
+  "events": {
+    "route": {
+      "description": "The route changed."
+    },
+    "speed": {
+      "description": "The planned speed changed."
+    },
+    "units": {
+      "description": "The user changed the display units."
+    },
+    "league": {
+      "description": "The XC scoring league changed."
+    }
+  },
+  "$defs": {
+    "Units": {
+      "description": "The four display units. Values from the studio are always SI, convert them for display.",
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "string",
+          "enum": [
+            "km",
+            "mi",
+            "nm"
+          ],
+          "description": "Distances: kilometres, miles or nautical miles."
+        },
+        "alt": {
+          "type": "string",
+          "enum": [
+            "m",
+            "ft"
+          ],
+          "description": "Altitudes: metres or feet."
+        },
+        "vario": {
+          "type": "string",
+          "enum": [
+            "ms",
+            "fpm",
+            "kt"
+          ],
+          "description": "Climb and sink rates: m/s, feet per minute or knots."
+        },
+        "speed": {
+          "type": "string",
+          "enum": [
+            "kmh",
+            "mph",
+            "kt"
+          ],
+          "description": "Speeds: km/h, mph or knots."
+        }
+      },
+      "required": [
+        "distance",
+        "alt",
+        "vario",
+        "speed"
+      ]
+    }
+  }
+}

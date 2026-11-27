@@ -576,5 +576,18 @@
   "badge_biggest_triangle": "Biggest triangle",
   "badge_triangles": "Triangles",
   "badge_flight_days": "Flight days",
-  "badge_gliders": "Gliders"
+  "badge_gliders": "Gliders",
+  "api_title": "API reference",
+  "api_intro": "Every service that plugins can use, with its methods, events and types. Installed plugins appear here when they provide a service.",
+  "api_provider_app": "Provided by the app",
+  "api_provider_plugin": "Provided by plugin {id}",
+  "api_events": "Events",
+  "api_methods": "Methods",
+  "api_params": "Parameters",
+  "api_returns": "Returns",
+  "api_none": "none",
+  "api_types": "Types",
+  "api_read": "read",
+  "api_write": "write",
+  "api_link": "API reference"
 }

@@ -1,0 +1,395 @@
+{
+  "name": "updraft/studio@1",
+  "description": "Provided by the studio while it is open, not by the planner. Every value is read through a function, so it is always current. Call the function again instead of keeping its result.",
+  "methods": {
+    "flights": {
+      "description": "All pilots in the studio, in list order. The same frozen array until flights, colors or visibility change.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/PluginFlight"
+        }
+      }
+    },
+    "time": {
+      "description": "Playback time in ms on the studio clock.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "number"
+      }
+    },
+    "selectedId": {
+      "description": "Id of the selected pilot, or null.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "units": {
+      "description": "The display units the user chose. The same frozen object until the user changes them.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "$ref": "#/$defs/Units"
+      }
+    },
+    "altRef": {
+      "description": "The altitude reference the user chose for transition altitudes.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "$ref": "#/$defs/AltRef"
+      }
+    },
+    "seek": {
+      "description": "Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.",
+      "access": "write",
+      "params": [
+        {
+          "name": "ms",
+          "schema": {
+            "type": "number"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "select": {
+      "description": "Selects the pilot with that flight id. An unknown id is ignored.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "setVisible": {
+      "description": "Shows or hides the pilot with that flight id. An unknown id is ignored. Anything but a boolean throws `Visible must be true or false.`. Fires `flights`.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "visible",
+          "schema": {
+            "type": "boolean"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "league": {
+      "description": "Id of the scoring league in use. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "string"
+      }
+    },
+    "leagues": {
+      "description": "All scoring leagues, bundled and from plugins. The same frozen array until the list changes.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ]
+        }
+      }
+    },
+    "setLeague": {
+      "description": "Switches the scoring league like the user would, so scores of the old league are dropped and scoring restarts. An unknown id throws `Unknown league \"x\".`. The current league is a no-op.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "play": {
+      "description": "Starts playback. A no-op while playing. At the end it starts again from the beginning.",
+      "access": "write",
+      "params": [],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "pause": {
+      "description": "Stops playback. A no-op while paused.",
+      "access": "write",
+      "params": [],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "playing": {
+      "description": "Whether playback is running.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "boolean"
+      }
+    },
+    "range": {
+      "description": "The in and out marks of the timeline, which set the video export range, in ms on the studio clock. Unset marks read as the studio start and end. The same frozen object until a mark or the studio range changes.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number"
+          },
+          "end": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ]
+      }
+    },
+    "setRange": {
+      "description": "Sets both marks. Both must be finite numbers with `start` before `end`, otherwise it throws `Range start and end must be finite numbers.` or `Range start must be before end.`. Values outside the studio range are clamped into it first, and the clamped values must still be in order, so a range entirely outside the studio throws `Range start must be before end.` too.",
+      "access": "write",
+      "params": [
+        {
+          "name": "start",
+          "schema": {
+            "type": "number"
+          }
+        },
+        {
+          "name": "end",
+          "schema": {
+            "type": "number"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "clearRange": {
+      "description": "Removes both marks, so the export covers the whole studio range.",
+      "access": "write",
+      "params": [],
+      "returns": {
+        "x-kind": "void"
+      }
+    },
+    "viewer": {
+      "description": "The Cesium viewer. Null while there is no 3D view, for example in the 2D map. The `viewer` event fires when it changes.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "anyOf": [
+          {
+            "x-kind": "opaque"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "events": {
+    "time": {
+      "description": "The playback time changed."
+    },
+    "flights": {
+      "description": "The pilot list changed: a flight was added or removed, or a color, visibility (also `setVisible`) or time shift changed."
+    },
+    "selection": {
+      "description": "The selected pilot changed."
+    },
+    "units": {
+      "description": "The user changed the display units."
+    },
+    "altRef": {
+      "description": "The user changed the altitude reference."
+    },
+    "league": {
+      "description": "The scoring league changed."
+    },
+    "playing": {
+      "description": "Playback started or stopped."
+    },
+    "range": {
+      "description": "The effective range changed: the timeline marks, or the studio start and end while they are unset."
+    },
+    "viewer": {
+      "description": "The 3D view appeared or went away, so `viewer()` returns a different value."
+    }
+  },
+  "$defs": {
+    "PluginFlight": {
+      "description": "One pilot in the studio.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Flight id, the value for `StudioService.selectedId()` and `select()`."
+        },
+        "pilot": {
+          "type": "string",
+          "description": "Pilot name."
+        },
+        "glider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Glider, if the file has one."
+        },
+        "color": {
+          "type": "string",
+          "description": "The pilot colour as a CSS colour."
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Whether the pilot is shown."
+        },
+        "fixes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "number"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              },
+              "alt": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "t",
+              "lat",
+              "lon",
+              "alt"
+            ]
+          },
+          "description": "Track points sorted by time. `t` is in ms on the studio clock, so time shifts of the pilot are already applied.\n`lat` and `lon` are degrees, `alt` is metres. Shared with the studio, do not modify it or its objects."
+        }
+      },
+      "required": [
+        "id",
+        "pilot",
+        "glider",
+        "color",
+        "visible",
+        "fixes"
+      ]
+    },
+    "Units": {
+      "description": "The four display units. Values from the studio are always SI, convert them for display.",
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "string",
+          "enum": [
+            "km",
+            "mi",
+            "nm"
+          ],
+          "description": "Distances: kilometres, miles or nautical miles."
+        },
+        "alt": {
+          "type": "string",
+          "enum": [
+            "m",
+            "ft"
+          ],
+          "description": "Altitudes: metres or feet."
+        },
+        "vario": {
+          "type": "string",
+          "enum": [
+            "ms",
+            "fpm",
+            "kt"
+          ],
+          "description": "Climb and sink rates: m/s, feet per minute or knots."
+        },
+        "speed": {
+          "type": "string",
+          "enum": [
+            "kmh",
+            "mph",
+            "kt"
+          ],
+          "description": "Speeds: km/h, mph or knots."
+        }
+      },
+      "required": [
+        "distance",
+        "alt",
+        "vario",
+        "speed"
+      ]
+    },
+    "AltRef": {
+      "description": "The altitude reference for transition altitudes.",
+      "type": "string",
+      "enum": [
+        "msl",
+        "agl"
+      ]
+    }
+  }
+}

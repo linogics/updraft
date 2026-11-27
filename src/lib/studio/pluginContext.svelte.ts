@@ -56,7 +56,7 @@ export function createPluginContext(
         throw new Error(`Service "${name}" is internal to bundled plugins.`);
       }
 
-      const service = services.use<T>(name) as T & { on?: (event: string, fn: () => void) => () => void };
+      const service = services.use<T>(name, pluginId) as T & { on?: (event: string, fn: () => void) => () => void };
       const on = service.on;
       if (typeof on !== 'function') return service;
       let wrapped = wrappers.get(service);
