@@ -19,6 +19,8 @@ const def = (
   scale = 1
 ): BadgeDef => ({ id, label, unit, thresholds: thresholds.map((t) => t * scale), value });
 
+// Best-flight tiers follow the share of pilots reaching them (90/75/60/45/30/15/5/1 %), from about 300
+// pilots' flight lists on a public XC server, 2026-11. Count and total tiers are hand set, public servers miss most logbook flights.
 const gain = [300, 600, 1000, 1500, 2000, 2500, 3000, 4000];
 
 export default {
@@ -31,16 +33,16 @@ export default {
       'free-distance',
       'Free distance',
       'distance',
-      [5, 15, 30, 50, 100, 150, 250, 400],
+      [10, 15, 30, 50, 70, 100, 200, 250],
       (l) => max(l, (x) => x.freeDistance),
       KM
     ),
-    def('xc-speed', 'XC speed', 'speed', [10, 15, 20, 25, 30, 35, 40, 45], (l) => max(l, (x) => x.xc?.speed), 1 / 3.6),
+    def('xc-speed', 'XC speed', 'speed', [10, 15, 20, 25, 30, 40, 50, 60], (l) => max(l, (x) => x.xc?.speed), 1 / 3.6),
     def(
       'longest-flight',
       'Longest flight',
       'duration',
-      [0.5, 1, 2, 3, 4, 5, 7, 9],
+      [1, 2, 2.5, 4, 5, 6, 7, 10],
       (l) => max(l, (x) => x.durationS),
       H
     ),
@@ -67,7 +69,7 @@ export default {
       'biggest-triangle',
       'Biggest triangle',
       'distance',
-      [5, 10, 25, 50, 100, 150, 200, 300],
+      [5, 10, 15, 30, 50, 100, 150, 200],
       (l) => max(l.filter(isTriangle), (x) => x.xc?.distance),
       KM
     ),
