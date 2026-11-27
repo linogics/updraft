@@ -29,7 +29,7 @@ Open the `users` collection settings in the dashboard, go to Options, enable OAu
 
 In the provider's console use `<UPDRAFT_PUBLIC_URL>/api/updraft/v1/auth/callback` as the redirect URL. The app lists the enabled providers next to the password form. The sign in opens a popup, so it must be started by a click, and the app needs the page `/oauth-callback.html` that ships with it.
 
-The provider is linked to the account whose email matches the provider's primary email. With `UPDRAFT_SIGNUP` unset an OAuth sign in only works for an existing account, so create it with exactly that email. Set `UPDRAFT_SIGNUP=true` to let people create accounts by signing in.
+The provider is linked to the account whose email matches the provider's primary email. With `UPDRAFT_SIGNUP` unset an OAuth sign in only works for an existing account, so create it with exactly that email. Set `UPDRAFT_SIGNUP=true` to let people create accounts by signing in. It also lets the app offer **Create account** next to the password form.
 
 ## Club sharing
 

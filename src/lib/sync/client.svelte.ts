@@ -43,6 +43,8 @@ export class SyncClient {
   engine = $state.raw<SyncEngine | null>(null);
   error = $state<string | null>(null);
   busy = $state(false);
+  /** True when the server allows creating an account. Known once the methods are loaded. */
+  canSignUp = $state(false);
 
   private adapter: BackendAdapter | null = null;
   private started: Promise<void> | undefined;
@@ -94,6 +96,7 @@ export class SyncClient {
     this.config = null;
     this.session = null;
     this.methods = null;
+    this.canSignUp = false;
     this.error = null;
   }
 
@@ -115,6 +118,16 @@ export class SyncClient {
     }
 
     return this.finishSignIn(adapter, signing);
+  }
+
+  /** Creates an account and signs in, like the password path of `signIn`. */
+  signUp(input: { email: string; password: string }): Promise<void> {
+    const adapter = this.adapter;
+    if (!adapter?.signUp || this.busy) return Promise.resolve();
+
+    this.busy = true;
+    this.error = null;
+    return this.finishSignIn(adapter, adapter.signUp(input));
   }
 
   async signOut(): Promise<void> {
@@ -187,6 +200,7 @@ export class SyncClient {
     this.config = config;
     this.session = null;
     this.methods = null;
+    this.canSignUp = false;
     this.error = null;
 
     try {
@@ -206,6 +220,7 @@ export class SyncClient {
 
   private async loadMethods() {
     this.methods = await this.adapter!.authMethods();
+    this.canSignUp = !!this.adapter!.signUp;
   }
 
   private startEngine(adapter: BackendAdapter) {

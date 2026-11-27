@@ -21,7 +21,6 @@ interface Capabilities {
   password: boolean;
   oauth: { id: string; label: string }[];
   club: boolean;
-  // Kept for later, signup is not offered by the app yet.
   signup: boolean;
 }
 
@@ -74,6 +73,7 @@ export function createHttp({ url }: HttpConfig): BackendAdapter {
   const key = `updraft_http_auth:${url}`;
   let caps: Promise<Capabilities> | null = null;
   let clubOffered = false;
+  let signupOffered = false;
 
   const read = (): Stored | null => {
     try {
@@ -140,6 +140,7 @@ export function createHttp({ url }: HttpConfig): BackendAdapter {
       .then(parseCapabilities)
       .then((c) => {
         clubOffered = c.club;
+        signupOffered = c.signup;
         return c;
       })
       .catch((err: unknown) => {
@@ -221,6 +222,16 @@ export function createHttp({ url }: HttpConfig): BackendAdapter {
     // Only there when the server announced it, so the capabilities must have been asked before.
     get club() {
       return clubOffered ? club : undefined;
+    },
+
+    // Only there when the server announced it, like club.
+    get signUp() {
+      return signupOffered
+        ? async (input: { email: string; password: string }) =>
+            accept(
+              await call('/auth/signup', { method: 'POST', body: { email: input.email, password: input.password } })
+            )
+        : undefined;
     },
 
     async authMethods() {

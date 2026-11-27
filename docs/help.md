@@ -170,7 +170,7 @@ Sync keeps your logbook the same on several devices. It needs a server you run y
 
 1. Open the logbook and find the **Sync** section above Backup.
 2. Enter the server address and click **Connect**. Use `https`. Plain `http` only works for `localhost`. If the site you use already has a server set up, it is filled in for you.
-3. Sign in with your email or username and password, or with one of the providers the server offers.
+3. Sign in with your email or username and password, or with one of the providers the server offers. If the server allows it, click **Create account** to sign up from the app.
 4. The status line shows the last sync. Changes upload a few seconds after you make them. Click **Sync now** to sync at once.
 
 What syncs:

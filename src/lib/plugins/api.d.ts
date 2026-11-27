@@ -387,6 +387,8 @@ export interface BackendAdapter extends SyncTransport {
   authMethods(): Promise<AuthMethod[]>;
   /** A `redirect` method opens a popup, so call this from a user gesture. */
   signIn(method: AuthMethod, input?: Record<string, string>): Promise<BackendSession>;
+  /** Creates an account and signs in, same result as `signIn`. Leave it out when the server does not allow signup. */
+  signUp?(input: { email: string; password: string }): Promise<BackendSession>;
   /** Ends the session and forgets the token. */
   signOut(): Promise<void>;
   /** The stored session, survives a reload. */
