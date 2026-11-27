@@ -16,7 +16,7 @@ The first start applies `server/pb_migrations`. It creates the `records` collect
 
 ## HTTPS and CORS
 
-Run a reverse proxy such as Caddy or nginx in front of port 8090 and serve it over HTTPS. A page served over HTTPS cannot call a plain HTTP server. With Caddy: `sync.example.com { reverse_proxy localhost:8090 }`.
+Run a reverse proxy such as Caddy or nginx on the same host in front of port 8090 and serve it over HTTPS. The compose file only publishes port 8090 on localhost. A page served over HTTPS cannot call a plain HTTP server. With Caddy: `sync.example.com { reverse_proxy localhost:8090 }`. Login attempts are rate limited per client, read from the last `X-Forwarded-For` entry. Caddy sets it by default, with nginx add `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`.
 
 PocketBase allows every origin by default. To only allow the app, add `--origins=https://your-app.example` to the `serve` command.
 
