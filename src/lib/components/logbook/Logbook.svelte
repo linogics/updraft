@@ -10,6 +10,7 @@
   import PanelColumn from '#lib/components/panels/PanelColumn.svelte';
   import { panelStatus } from '#lib/components/studio/panelActions.svelte';
   import { buildDemoFlights } from '#lib/demo/demoFlights';
+  import { localDate } from '#lib/domain/formats/common';
   import { breakdown, monthlyHours, totals, totalXcPoints, yearlyHours } from '#lib/domain/logbook';
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
@@ -43,7 +44,7 @@
   let draft = $state({ pilot: '', site: '', glider: '', notes: '' });
   let adding = $state(false);
   const manual = $state({
-    date: new Date().toISOString().slice(0, 10),
+    date: localDate(Date.now()),
     durationMin: 60,
     pilot: '',
     site: '',

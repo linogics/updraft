@@ -7,10 +7,25 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
   performance.mark('updraft:import-start');
   const ids: string[] = [];
   const errors: string[] = [];
+  // The same track imported again opens the stored flight instead of adding a copy.
+  const trackKey = (start: number, end: number, count: number) => `${start}|${end}|${count}`;
+  const known = new Map(
+    (await flightRepository.list()).map((s) => [trackKey(s.startTime, s.endTime, s.fixCount), s.id])
+  );
+
   for (const file of files) {
     try {
       const flight = await readTrack(file);
+      const { fixes } = flight;
+      const key = trackKey(fixes[0].t, fixes[fixes.length - 1].t, fixes.length);
+      const existing = known.get(key);
+      if (existing) {
+        ids.push(existing);
+        continue;
+      }
+
       await flightRepository.save(flight);
+      known.set(key, flight.id);
       ids.push(flight.id);
     } catch (err) {
       errors.push(`${file.name}: ${err instanceof Error ? err.message : String(err)}`);

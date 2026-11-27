@@ -203,7 +203,8 @@
       seekTo(e);
     });
     over.addEventListener('mousemove', (e) => dragging && seekTo(e));
-    window.addEventListener('mouseup', () => (dragging = false));
+    over.addEventListener('mouseup', () => (dragging = false));
+    over.addEventListener('mouseleave', () => (dragging = false));
   }
 
   onMount(() => {

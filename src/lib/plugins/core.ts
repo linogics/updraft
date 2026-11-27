@@ -24,13 +24,18 @@ const validators: Record<PluginKind, (mod: Record<string, unknown>) => AnyPlugin
   'xc-planner': validateXcPlannerPlugin
 };
 
-/** Only http(s) pages can be imported. Returns the normalised URL or null. */
+/** Hosts on this machine, the only ones allowed over plain http. */
+export const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
+
+/** https pages, plain http only from this machine since a plugin runs with full trust. Returns the normalised URL or null. */
 export function pluginUrl(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
 
   try {
     const url = new URL(raw.trim());
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+    return url.protocol === 'https:' || (url.protocol === 'http:' && LOCAL_HOSTS.includes(url.hostname))
+      ? url.href
+      : null;
   } catch {
     return null;
   }

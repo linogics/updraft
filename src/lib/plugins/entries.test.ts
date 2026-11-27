@@ -131,10 +131,18 @@ describe('parsePlugins xc-planner leagues', () => {
 });
 
 describe('pluginUrl', () => {
-  it('accepts http and https only', () => {
+  it('accepts https and local http only', () => {
     expect(pluginUrl(' https://a.test/x.js ')).toBe('https://a.test/x.js');
     expect(pluginUrl('http://localhost:5000/x.js')).toBe('http://localhost:5000/x.js');
-    for (const raw of ['data:text/javascript,1', 'blob:https://a.test/1', 'ftp://a.test/x', '/x.js', 5, null]) {
+    for (const raw of [
+      'data:text/javascript,1',
+      'blob:https://a.test/1',
+      'ftp://a.test/x',
+      'http://a.test/x.js',
+      '/x.js',
+      5,
+      null
+    ]) {
       expect(pluginUrl(raw)).toBeNull();
     }
   });

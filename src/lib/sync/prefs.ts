@@ -21,7 +21,7 @@ const OPT_IN_KEY = 'syncKeys';
 type Known = SyncState['prefs'];
 
 // Storage can throw (private mode, blocked site data) or be missing (node), so every access is guarded.
-function read(key: string): string | null {
+export function read(key: string): string | null {
   try {
     return typeof localStorage === 'undefined' ? null : localStorage.getItem(key);
   } catch {
@@ -29,7 +29,7 @@ function read(key: string): string | null {
   }
 }
 
-function write(key: string, value: string | null) {
+export function write(key: string, value: string | null) {
   try {
     if (typeof localStorage === 'undefined') return;
     if (value === null) localStorage.removeItem(key);

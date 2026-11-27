@@ -1,4 +1,4 @@
-import { PLUGIN_ID } from '#lib/plugins/core';
+import { LOCAL_HOSTS, PLUGIN_ID } from '#lib/plugins/core';
 
 export interface SyncConfig {
   /** Backend plugin id. */
@@ -7,7 +7,6 @@ export interface SyncConfig {
 }
 
 const KEY = 'syncConfig';
-const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
 
 /** Config files and stored values are untrusted, so every field is checked. Returns null when unusable. */
 export function parseSyncConfig(raw: unknown): SyncConfig | null {
