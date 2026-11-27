@@ -7,6 +7,7 @@
   import PlanMap from '#lib/components/PlanMap.svelte';
   import SidebarHeader from '#lib/components/SidebarHeader.svelte';
   import SideDrawer from '#lib/components/SideDrawer.svelte';
+  import Splitter from '#lib/components/Splitter.svelte';
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
   import { announce, panelStatus } from '#lib/components/studio/panelActions.svelte';
   import PanelHost from '#lib/components/studio/PanelHost.svelte';
@@ -15,12 +16,12 @@
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
   import { m } from '#lib/paraglide/messages';
-  import { planExports, type PlannerExport } from '#lib/plan/exports';
   import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
   import { planRegistry } from '#lib/plan/registry.svelte';
   import type { PluginEntry } from '#lib/plugins/entries';
   import { PlanState } from '#lib/state/plan.svelte';
   import { LEGS_PANEL, planLayout } from '#lib/state/planLayout.svelte';
+  import { PLAN_SIDEBAR, planSidebar } from '#lib/state/planSidebar.svelte';
   import { unitPrefs } from '#lib/state/units.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
   import type { PluginHostEnv } from '#lib/studio/pluginContext.svelte';
@@ -112,27 +113,6 @@
     setTimeout(() => (copied = false), 1500);
   }
 
-  let exportError = $state('');
-
-  async function download(e: PlannerExport) {
-    exportError = '';
-    let bytes: Uint8Array;
-    try {
-      bytes = await e.write({ points: plan.points, speed: plan.speed });
-    } catch (err) {
-      exportError = err instanceof Error ? err.message : String(err);
-      return;
-    }
-
-    const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: e.mime }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `updraft-route-${new Date().toISOString().slice(0, 10)}.${e.extension}`;
-    a.click();
-    // Revoking at once can cancel the download in some browsers.
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
   const panels = $derived([
     ...planRegistry.list.map((p) => ({ id: p.id, title: p.title, removable: !!pluginEntry(p.id), body })),
     ...(plan.legs.length ? [{ id: LEGS_PANEL, title: () => m.plan_legs(), body }] : [])
@@ -168,70 +148,78 @@
 
 <svelte:window onkeydown={onkey} />
 
-<div class="page">
-  <SideDrawer label={m.plan_title()}>
-    {#snippet header()}
-      <SidebarHeader title={m.home_planner_title()}>
-        {#snippet actions()}<PlanPanelsMenu
-            onadd={(el) => {
-              opener = el;
-              addPlugin.open();
-            }}
-          />{/snippet}
-      </SidebarHeader>
-    {/snippet}
-    <div class="side">
-      <p class="hint">{m.plan_hint()}</p>
+<div class="page" style:--sidebar="{planSidebar.open ? planSidebar.width : 0}px">
+  <div class="sidebar" class:closed={!planSidebar.open}>
+    <SideDrawer label={m.plan_title()}>
+      {#snippet header()}
+        <SidebarHeader title={m.home_planner_title()}>
+          {#snippet actions()}<PlanPanelsMenu
+              onadd={(el) => {
+                opener = el;
+                addPlugin.open();
+              }}
+            />{/snippet}
+        </SidebarHeader>
+      {/snippet}
+      <div class="side">
+        <p class="hint">{m.plan_hint()}</p>
 
-      <div class="row">
-        <button onclick={undo} disabled={!plan.history.length}>{m.timeline_undo()}</button>
-        <button onclick={remove} disabled={plan.selected === null}>{m.plan_remove_point()}</button>
-        <button onclick={() => commit([])} disabled={!plan.points.length}>{m.common_clear()}</button>
-        <button onclick={copy} disabled={!plan.points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
-      </div>
+        <div class="row">
+          <button onclick={undo} disabled={!plan.history.length}>{m.timeline_undo()}</button>
+          <button onclick={remove} disabled={plan.selected === null}>{m.plan_remove_point()}</button>
+          <button onclick={() => commit([])} disabled={!plan.points.length}>{m.common_clear()}</button>
+          <button onclick={copy} disabled={!plan.points.length}>{copied ? m.plan_copied() : m.plan_copy_link()}</button>
+        </div>
 
-      <div class="row">
-        {#each planExports() as e (e.id)}
-          <button onclick={() => download(e)} disabled={plan.points.length < 2}>{e.title()}</button>
-        {/each}
-      </div>
-      {#if exportError}<p class="error" role="alert">{exportError}</p>{/if}
-
-      <label>
-        {m.plan_base_map()}
-        <select bind:value={basemap}>
-          {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
-        </select>
-      </label>
-
-      <div class="readout">
-        <span class="big">{formatDistance(plan.total, unitPrefs.units)}</span>
-        <span class="unit">{m.plan_total_distance()}</span>
-      </div>
-
-      <div class="row">
         <label>
-          {m.plan_speed()}
+          {m.plan_base_map()}
+          <select bind:value={basemap}>
+            {#each BASEMAP_IDS as id (id)}<option value={id}>{BASEMAPS[id].label()}</option>{/each}
+          </select>
+        </label>
+
+        <label class="inline">
+          {m.plan_speed()}:
           <input type="number" min="1" max="300" bind:value={plan.speed} onchange={syncUrl} />
         </label>
+
+        <div class="readout">
+          <span class="big">{formatDistance(plan.total, unitPrefs.units)}</span>
+          <span class="unit">{m.plan_total_distance()}</span>
+        </div>
+
         <div class="readout">
           <span class="big">
             {plan.speed > 0 && plan.total ? formatDuration((plan.total / 1000 / plan.speed) * 3600) : '–'}
           </span>
           <span class="unit">{m.plan_estimated_time()}</span>
         </div>
-      </div>
 
-      <PanelColumn
-        layout={planLayout}
-        column="main"
-        label={m.panels_menu()}
-        labels={{ main: m.panels_menu() }}
-        {panels}
-      />
-      <p class="sr" role="status">{panelStatus.text}</p>
-    </div>
-  </SideDrawer>
+        <PanelColumn
+          layout={planLayout}
+          column="main"
+          label={m.panels_menu()}
+          labels={{ main: m.panels_menu() }}
+          {panels}
+        />
+        <p class="sr" role="status">{panelStatus.text}</p>
+      </div>
+    </SideDrawer>
+  </div>
+
+  <div class="handle">
+    <Splitter
+      label={m.plan_sidebar()}
+      axis="x"
+      value={planSidebar.width}
+      min={PLAN_SIDEBAR.min}
+      max={PLAN_SIDEBAR.max}
+      open={planSidebar.open}
+      onchange={(v) => planSidebar.resize(v)}
+      onreset={() => planSidebar.reset()}
+      ontoggle={() => planSidebar.toggle()}
+    />
+  </div>
 
   <main class="mapbox" bind:this={mapEl}>
     <h1 class="sr">{m.home_planner_title()}</h1>
@@ -267,15 +255,24 @@
 {/snippet}
 
 <style>
-  .error {
-    color: var(--danger);
-    margin: 0;
-    font-size: 0.85rem;
-  }
   .page {
     display: grid;
-    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+    grid-template-columns: var(--sidebar) auto minmax(0, 1fr);
     height: 100dvh;
+  }
+  .sidebar {
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* A folded sidebar leaves the tab order and the accessibility tree. */
+  .sidebar.closed {
+    visibility: hidden;
+  }
+  .handle {
+    display: flex;
+  }
+  .handle > :global(*) {
+    flex: 1;
   }
   .mapbox {
     position: relative;
@@ -315,6 +312,11 @@
     font-size: 13px;
     color: var(--muted);
   }
+  label.inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   input {
     width: 90px;
   }
@@ -344,6 +346,15 @@
     .page {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
+    }
+    /* The drawer takes over below this width, so there is no resizing. */
+    .sidebar,
+    .sidebar.closed {
+      display: contents;
+      visibility: visible;
+    }
+    .handle {
+      display: none;
     }
   }
 </style>

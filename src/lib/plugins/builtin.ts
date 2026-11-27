@@ -66,6 +66,13 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     load: () => import('./builtin/plan-xc')
   },
   {
+    id: 'updraft/plan-export',
+    title: () => m.export_menu(),
+    dock: 'right',
+    hosts: ['plan'],
+    load: () => import('./builtin/plan-export')
+  },
+  {
     id: 'updraft/export',
     title: () => m.export_menu(),
     dock: 'right',

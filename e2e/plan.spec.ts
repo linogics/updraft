@@ -6,7 +6,7 @@ const titles = (page: import('@playwright/test').Page) =>
 
 test('planner panels start collapsed, move, persist and reset', async ({ page }) => {
   await page.goto('/plan');
-  await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace']);
+  await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace', 'Export']);
   for (const name of ['Thermal overlay', 'XC score', 'Airspace']) {
     await expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-expanded', 'false');
   }
@@ -15,15 +15,15 @@ test('planner panels start collapsed, move, persist and reset', async ({ page })
   await expect(page.getByRole('menuitem', { name: /^Move to/ })).toHaveCount(0);
   await expect(page.getByRole('menuitem', { name: 'Remove' })).toHaveCount(0);
   await page.getByRole('menuitem', { name: 'Move down' }).click();
-  await expect.poll(() => titles(page)).toEqual(['XC score', 'Thermal overlay', 'Airspace']);
+  await expect.poll(() => titles(page)).toEqual(['XC score', 'Thermal overlay', 'Airspace', 'Export']);
 
   await page.reload();
-  await expect.poll(() => titles(page)).toEqual(['XC score', 'Thermal overlay', 'Airspace']);
+  await expect.poll(() => titles(page)).toEqual(['XC score', 'Thermal overlay', 'Airspace', 'Export']);
 
   await page.getByRole('button', { name: 'Airspace', exact: true }).click();
   await page.getByRole('button', { name: 'XC score panel actions' }).click();
   await page.getByRole('menuitem', { name: 'Reset layout' }).click();
-  await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace']);
+  await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace', 'Export']);
   await expect(page.getByRole('button', { name: 'Airspace', exact: true })).toHaveAttribute('aria-expanded', 'false');
 });
 
@@ -90,7 +90,7 @@ test.describe('plugins', () => {
     await dialog.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(dialog).toBeHidden();
 
-    await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace', 'Legs', 'Plan Hello']);
+    await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace', 'Export', 'Legs', 'Plan Hello']);
     const panel = page.getByRole('region', { name: 'Plan Hello' });
     // Not collapsed, so it is mounted.
     await expect(panel).toContainText('points=2');

@@ -370,6 +370,7 @@
   "plan_point": "Point {n}",
   "plan_points": "{points} points",
   "plan_remove_point": "Supprimer le point",
+  "plan_sidebar": "Barre latérale du planificateur",
   "plan_speed": "Vitesse (km/h)",
   "plan_thermal_overlay": "Calque thermique",
   "plan_title": "Planificateur XC | updraft",
