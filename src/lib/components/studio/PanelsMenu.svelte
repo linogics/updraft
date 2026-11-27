@@ -11,6 +11,7 @@
   import Popover from '../Popover.svelte';
   import AddPluginDialog from './AddPluginDialog.svelte';
   import { announce } from './panelActions.svelte';
+  import PluginGrants from './PluginGrants.svelte';
 
   let addPlugin: AddPluginDialog;
   let trigger = $state<HTMLButtonElement>();
@@ -48,6 +49,7 @@
           >
             {m.plugin_uninstall()}
           </button>
+          <PluginGrants id={p.id.slice(PLUGIN_PREFIX.length)} />
         {/if}
       </li>
     {/each}
@@ -72,6 +74,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 8px;
   }
   .actions {

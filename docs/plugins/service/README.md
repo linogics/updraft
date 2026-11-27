@@ -52,6 +52,8 @@ A checked call validates the parameters before and the result after (the resolve
 
 The app lists every service with its schema on the API page (`/api`), linked from the Add plugin dialog. The schemas of the app's own services are generated from `src/lib/plugins/api.d.ts` and live in `src/lib/plugins/schemas/`.
 
+Write methods are also gated by consent. An installed plugin that calls a write method of a service it does not provide needs a grant for that service, see Permissions in the [plugin overview](../README.md). Without it the call throws `Error('<plugin id> may not change <service>. Allow it in the plugin settings.')`. Reads of required services are always allowed.
+
 ## Events
 
 Services with state that changes have `on(event, fn)`. It calls `fn` after the named event fired, at most once per animation frame. `fn` gets no payload, read the current values through the service functions. It does not fire for the state at the time you subscribe, so call your draw once yourself. It returns a function that stops it. Every subscription made through a service from `ctx.use` also stops on its own when the plugin unmounts. An unknown event throws `Unknown event "x" of updraft/studio@1.`. A handler that throws is shown in the panel's error box. The events of each service are listed on its reference page.

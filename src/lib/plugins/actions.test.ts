@@ -98,6 +98,18 @@ describe('addPlugin', () => {
     });
   });
 
+  it('asks for consent on write services and stores the grants, declining adds nothing', async () => {
+    const before = pluginPrefs.list.length;
+    loaded.current = { ...loaded.current, id: 'acme/w', requires: ['updraft/flights@1'] };
+    await expect(addPlugin('https://a.test/w.js', { consent: async () => null })).rejects.toThrow('not added');
+    expect(pluginPrefs.list).toHaveLength(before);
+    const e = await addPlugin('https://a.test/w.js', { consent: async (w) => w.map((x) => x.name) });
+    expect(e.grants).toEqual(['updraft/flights@1']);
+    expect(e.requires).toEqual(['updraft/flights@1']);
+    pluginPrefs.setGrant('acme/w', 'updraft/flights@1', false);
+    expect(pluginPrefs.list.find((x) => x.id === 'acme/w')?.grants).toEqual([]);
+  });
+
   it('refuses a kind the page does not accept and stores nothing', async () => {
     const before = pluginPrefs.list.length;
     loaded.current = { ...conv(['zzz']), id: 'acme/zzz' };

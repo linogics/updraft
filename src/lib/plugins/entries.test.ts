@@ -167,3 +167,14 @@ describe('parsePlugins badge entries', () => {
     expect(parsePlugins([{ ...entry, ...bad }])).toEqual([]);
   });
 });
+
+describe('parsePlugins grants', () => {
+  it('keeps requires and grants and drops stray values', () => {
+    const e = { ...ok, requires: ['updraft/flights@1'], grants: ['updraft/flights@1', 3] };
+    expect(parsePlugins([e])).toEqual([{ ...ok, requires: ['updraft/flights@1'], grants: ['updraft/flights@1'] }]);
+  });
+
+  it('treats a missing grants field as no grants', () => {
+    expect(parsePlugins([ok])[0].grants).toBeUndefined();
+  });
+});

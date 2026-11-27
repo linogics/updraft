@@ -8,6 +8,7 @@ import { BUILTIN_BACKENDS, BUILTIN_BADGES, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, 
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
 import type { PluginEntry } from './entries';
+import { type WriteService, writeServices } from './grants';
 import { pluginPrefs } from './pluginPrefs.svelte';
 import { assertNotReserved, registerProvides, services } from './services';
 import { parseLeagues } from './xcPlannerKind';
@@ -17,7 +18,10 @@ import { parseLeagues } from './xcPlannerKind';
  * Throws an Error with a message for the user and changes nothing when anything is wrong.
  * With `kinds`, a plugin of another kind is refused, for pages that only take one kind.
  */
-export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] } = {}): Promise<PluginEntry> {
+export async function addPlugin(
+  raw: string,
+  { kinds, consent }: { kinds?: PluginKind[]; consent?: (writes: WriteService[]) => Promise<string[] | null> } = {}
+): Promise<PluginEntry> {
   const url = pluginUrl(raw);
   if (!url) throw new Error('The address must be a valid http or https URL.');
   if (pluginPrefs.list.some((e) => e.url === url)) throw new Error('This plugin is already added.');
@@ -36,6 +40,10 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
   assertNotReserved(plugin);
   const { id, kind } = plugin;
   const name = plugin.name.trim();
+  // Asked before anything is stored. Declining adds nothing.
+  const writes = writeServices(plugin.requires);
+  const grants = writes.length && consent ? await consent(writes) : [];
+  if (!grants) throw new Error('The plugin was not added.');
   // Before anything is stored, a duplicate service name makes this throw.
   registerProvides(plugin);
   switch (plugin.kind) {
@@ -89,6 +97,8 @@ export async function addPlugin(raw: string, { kinds }: { kinds?: PluginKind[] }
       pluginPrefs.add({ url, id, name, kind });
       break;
   }
+
+  if (plugin.requires?.length) pluginPrefs.setAccess(id, [...plugin.requires], grants);
 
   await cachePlugin(url);
   return pluginPrefs.list.find((e) => e.id === id)!;
