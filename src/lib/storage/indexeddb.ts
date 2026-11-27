@@ -7,6 +7,7 @@ import {
   type StoreNames
 } from 'idb';
 
+import type { ClubStats } from '../club/stats';
 import { type CameraTracks, parseTracks } from '../domain/cameraPath';
 import type { Flight } from '../domain/model';
 import type { SyncChange, SyncState, SyncType } from '../sync/types';
@@ -29,6 +30,13 @@ interface XcRecord {
   score: XcScore | null;
 }
 
+interface BadgeStatsRecord {
+  /** `${flightId}|${league}`. */
+  key: string;
+  flightId: string;
+  stats: ClubStats;
+}
+
 /** Sync bookkeeping per record. Dirty records still have to be pushed. */
 interface SyncMeta {
   /** `${type}:${id}`. */
@@ -47,6 +55,7 @@ interface FlightDb extends DBSchema {
   summaries: { key: string; value: FlightSummary };
   cameraPaths: { key: string; value: CameraPath };
   xcScores: { key: string; value: XcRecord; indexes: { flightId: string } };
+  badgeStats: { key: string; value: BadgeStatsRecord; indexes: { flightId: string } };
   sync: { key: string; value: SyncMeta };
   syncState: { key: string; value: SyncState };
 }
@@ -70,8 +79,9 @@ export class IndexedDbFlightRepository {
   private db: Promise<IDBPDatabase<FlightDb>>;
 
   constructor(name = 'updraft') {
-    // Version 2 added cameraPaths, version 3 xcScores, version 4 the sync stores. Each step only runs on older databases.
-    this.db = openDB<FlightDb>(name, 4, {
+    // Version 2 added cameraPaths, version 3 xcScores, version 4 the sync stores,
+    // version 5 badgeStats. Each step only runs on older databases.
+    this.db = openDB<FlightDb>(name, 5, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           db.createObjectStore('flights', { keyPath: 'id' });
@@ -85,6 +95,8 @@ export class IndexedDbFlightRepository {
           db.createObjectStore('sync', { keyPath: 'key' });
           db.createObjectStore('syncState');
         }
+
+        if (oldVersion < 5) db.createObjectStore('badgeStats', { keyPath: 'key' }).createIndex('flightId', 'flightId');
       }
     });
   }
@@ -116,6 +128,15 @@ export class IndexedDbFlightRepository {
     await (await this.db).put('xcScores', { key: xcKey(flightId, league), flightId, score });
   }
 
+  /** Cached club stats of a flight for the local badges. Undefined when never computed. Dropped with the flight. */
+  async getBadgeStats(flightId: string, league: string): Promise<ClubStats | undefined> {
+    return (await (await this.db).get('badgeStats', xcKey(flightId, league)))?.stats;
+  }
+
+  async putBadgeStats(flightId: string, league: string, stats: ClubStats): Promise<void> {
+    await (await this.db).put('badgeStats', { key: xcKey(flightId, league), flightId, stats });
+  }
+
   async list(): Promise<FlightSummary[]> {
     const all = await (await this.db).getAll('summaries');
     return all.sort((a, b) => b.date.localeCompare(a.date) || b.startTime - a.startTime);
@@ -137,14 +158,17 @@ export class IndexedDbFlightRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const tx = (await this.db).transaction(['flights', 'summaries', 'xcScores', 'sync'], 'readwrite');
+    const tx = (await this.db).transaction(['flights', 'summaries', 'xcScores', 'badgeStats', 'sync'], 'readwrite');
     const scores = tx.objectStore('xcScores');
     const keys = await scores.index('flightId').getAllKeys(id);
+    const stats = tx.objectStore('badgeStats');
+    const statKeys = await stats.index('flightId').getAllKeys(id);
     const summary = await tx.objectStore('summaries').get(id);
     const ops: Promise<unknown>[] = [
       tx.objectStore('flights').delete(id),
       tx.objectStore('summaries').delete(id),
       ...keys.map((k) => scores.delete(k)),
+      ...statKeys.map((k) => stats.delete(k)),
       tx.done
     ];
     if (summary) ops.push(markDirty(tx.objectStore('sync'), summary.manual ? 'manual' : 'flight', id, true));
@@ -215,7 +239,7 @@ export class IndexedDbFlightRepository {
   }
 
   async importAll(backup: Backup, mode: 'merge' | 'replace'): Promise<void> {
-    const names = ['flights', 'summaries', 'cameraPaths', 'xcScores', 'sync'] as const;
+    const names = ['flights', 'summaries', 'cameraPaths', 'xcScores', 'badgeStats', 'sync'] as const;
     const tx = (await this.db).transaction(names, 'readwrite');
     const sync = tx.objectStore('sync');
     const ops: Promise<unknown>[] = [tx.done];
@@ -236,7 +260,9 @@ export class IndexedDbFlightRepository {
         if (!kept.has(`cameraPath:${key}`)) ops.push(markDirty(sync, 'cameraPath', key, true));
       }
 
-      for (const n of ['flights', 'summaries', 'cameraPaths', 'xcScores'] as const) ops.push(tx.objectStore(n).clear());
+      for (const n of ['flights', 'summaries', 'cameraPaths', 'xcScores', 'badgeStats'] as const) {
+        ops.push(tx.objectStore(n).clear());
+      }
     }
 
     // Notes live on the flight record, so rebuilt summaries keep them.
@@ -296,7 +322,10 @@ export class IndexedDbFlightRepository {
 
   /** Writes pulled changes without marking them dirty. Newer wins, invalid ones are counted and skipped. */
   async applyRemote(changes: SyncChange[]): Promise<{ applied: number; invalid: number }> {
-    const tx = (await this.db).transaction(['flights', 'summaries', 'cameraPaths', 'xcScores', 'sync'], 'readwrite');
+    const tx = (await this.db).transaction(
+      ['flights', 'summaries', 'cameraPaths', 'xcScores', 'badgeStats', 'sync'],
+      'readwrite'
+    );
     let applied = 0;
     let invalid = 0;
     for (const c of changes) {
@@ -377,7 +406,11 @@ export class IndexedDbFlightRepository {
   }
 
   private async removeRecord(
-    tx: IDBPTransaction<FlightDb, ['flights', 'summaries', 'cameraPaths', 'xcScores', 'sync'], 'readwrite'>,
+    tx: IDBPTransaction<
+      FlightDb,
+      ['flights', 'summaries', 'cameraPaths', 'xcScores', 'badgeStats', 'sync'],
+      'readwrite'
+    >,
     c: SyncChange
   ) {
     if (c.type === 'cameraPath') {
@@ -387,10 +420,13 @@ export class IndexedDbFlightRepository {
 
     const scores = tx.objectStore('xcScores');
     const keys = c.type === 'flight' ? await scores.index('flightId').getAllKeys(c.id) : [];
+    const stats = tx.objectStore('badgeStats');
+    const statKeys = c.type === 'flight' ? await stats.index('flightId').getAllKeys(c.id) : [];
     await Promise.all([
       tx.objectStore('flights').delete(c.id),
       tx.objectStore('summaries').delete(c.id),
-      ...keys.map((k) => scores.delete(k))
+      ...keys.map((k) => scores.delete(k)),
+      ...statKeys.map((k) => stats.delete(k))
     ]);
   }
 }

@@ -205,4 +205,33 @@ describe('manual entries, meta and backup', () => {
     await repo.delete('a');
     expect(await repo.getXcScore('a', 'FFVL')).toBeUndefined();
   });
+
+  it('caches badge stats per league and drops them with the flight or on replace', async () => {
+    const stats = {
+      v: 1 as const,
+      pilot: 'P',
+      date: '2026-07-15',
+      site: null,
+      glider: null,
+      durationS: 60,
+      freeDistanceKm: 1,
+      maxAltMsl: 1000,
+      maxGain: 10,
+      bestClimb: 1,
+      bestThermalGain: 10
+    };
+    const repo = fresh();
+    await repo.save(flight('a'));
+    await repo.putBadgeStats('a', 'FFVL', stats);
+
+    expect(await repo.getBadgeStats('a', 'FFVL')).toEqual(stats);
+    expect(await repo.getBadgeStats('a', 'FAI')).toBeUndefined();
+
+    await repo.importAll(await repo.exportAll(), 'replace');
+    expect(await repo.getBadgeStats('a', 'FFVL')).toBeUndefined();
+
+    await repo.putBadgeStats('a', 'FFVL', stats);
+    await repo.delete('a');
+    expect(await repo.getBadgeStats('a', 'FFVL')).toBeUndefined();
+  });
 });

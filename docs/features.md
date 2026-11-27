@@ -79,7 +79,8 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 - Editable pilot, site, glider and notes. Flights entered by hand without a track.
 - XC type and points per flight and in total, scored in the background for the chosen league.
 - Pick flights and open them together in the studio.
-- Panels like in the studio: Charts, Flights and Breakdown in the main column, Upload, Sync and Backup in the side column (first on phones). Drag a panel by its grip or use its actions menu to move it between columns, click its title to fold it, or reset the layout. Sync, Backup and Breakdown start folded. The layout is kept per browser.
+- Achievements panel: 15 tiered badges (Bronze to Legend) such as free distance, XC speed, longest flight, total airtime, max altitude and gain, sites and triangles. One card per badge shows the value in your units, the progress to the next tier, the date the tier was reached and a link to the flight that set it. Every track flight counts, manual entries and the demo flights do not. Badges are computed on the fly, only the per-flight figures are cached in this browser. Height above ground counts only for flights shared with the club, because terrain is not fetched for the whole logbook. Badge plugins are added and removed in the panel.
+- Panels like in the studio: Charts, Achievements, Flights and Breakdown in the main column, Upload, Sync and Backup in the side column (first on phones). Drag a panel by its grip or use its actions menu to move it between columns, click its title to fold it, or reset the layout. Sync, Backup and Breakdown start folded. The layout is kept per browser.
 
 ## Export
 
