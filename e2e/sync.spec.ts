@@ -78,3 +78,48 @@ test('rejects a plain http server that is not local', async ({ page }) => {
 
   await expect(sync.getByText('Enter an https address')).toBeVisible();
 });
+
+test('creates an account on a server that allows signup', async ({ page }) => {
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-headers': '*',
+    'access-control-allow-methods': '*'
+  };
+  let signup: unknown;
+
+  await page.route(`${SERVER}/**`, async (route) => {
+    const req = route.request();
+    const { pathname } = new URL(req.url());
+    const json = (body: unknown, status = 200) =>
+      route.fulfill({ status, headers: cors, contentType: 'application/json', body: JSON.stringify(body) });
+
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+
+    if (pathname === '/api/updraft/v1') {
+      return json({ version: 1, auth: { password: true, signup: true, oauth: [] }, club: false });
+    }
+
+    if (pathname === '/api/updraft/v1/auth/signup') {
+      signup = req.postDataJSON();
+      return json({ token: 'new-token', user: { id: 'u2', name: EMAIL } });
+    }
+
+    if (pathname === '/api/updraft/v1/pull') return json({ changes: [], cursor: null, more: false });
+    if (pathname === '/api/updraft/v1/push') return json({});
+    return json({ message: 'Not mocked.' }, 404);
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Sync', exact: true }).click();
+  const sync = page.getByRole('region', { name: 'Sync' });
+  await sync.getByLabel('Server address').fill(SERVER);
+  await sync.getByRole('button', { name: 'Connect' }).click();
+
+  await sync.getByRole('button', { name: 'Create account' }).click();
+  await sync.getByLabel('Email', { exact: true }).fill(EMAIL);
+  await sync.getByLabel('Password').fill('secret-pass-1');
+  await sync.getByRole('button', { name: 'Create account' }).last().click();
+
+  await expect(sync.getByText(`Signed in as ${EMAIL}`)).toBeVisible();
+  expect(signup).toEqual({ email: EMAIL, password: 'secret-pass-1' });
+});

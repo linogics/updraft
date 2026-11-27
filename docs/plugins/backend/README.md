@@ -29,6 +29,7 @@ The app also refuses to use a module whose id or kind differs from the stored on
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `authMethods()` | Lists what the server offers. `{ kind: 'password' }` makes the app show an identity and password form and pass `{ identity, password }` as `input`. `{ kind: 'redirect', id, label }` is OAuth or SSO, the adapter runs the popup or redirect itself, so `signIn` is called from a click. `{ kind: 'code', label }` is reserved for one time codes and not used yet. |
 | `signIn(method, input?)` | Returns a `BackendSession` `{ user }`.                                                                                                            |
+| `signUp?(input)` | Optional. Creates an account from `{ email, password }` and returns the same `BackendSession` as `signIn`. Offer it only when the server allows signup. |
 | `signOut()`     | Ends the session.                                                                                                                                          |
 | `session()`     | The stored session or `null`.                                                                                                                              |
 | `push(changes)` | Stores the changes.                                                                                                                                        |

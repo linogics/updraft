@@ -84,6 +84,7 @@ A transport that also owns login. The adapter keeps its own token, the app never
 | --- | --- | --- |
 | `authMethods` | `(): Promise<AuthMethod[]>` | What the server offers for signing in. |
 | `signIn` | `(method: AuthMethod, input?: Record<string, string>): Promise<BackendSession>` | A `redirect` method opens a popup, so call this from a user gesture. |
+| `signUp?` | `?(input: { email: string; password: string }): Promise<BackendSession>` | Creates an account and signs in, same result as `signIn`. Leave it out when the server does not allow signup. |
 | `signOut` | `(): Promise<void>` | Ends the session and forgets the token. |
 | `session` | `(): BackendSession \| null` | The stored session, survives a reload. |
 | `club?` | `ClubAccess` | Shared flights of all pilots. Leave it out when the backend has no club. |

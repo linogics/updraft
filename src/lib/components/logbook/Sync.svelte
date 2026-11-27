@@ -16,6 +16,7 @@
   let invalid = $state(false);
   let identity = $state('');
   let password = $state('');
+  let signingUp = $state(false);
   let keys = $state(syncKeysEnabled());
 
   const backends = $derived([
@@ -53,6 +54,12 @@
   function signInPassword(e: SubmitEvent) {
     e.preventDefault();
     void client.signIn({ kind: 'password' }, { identity, password });
+    password = '';
+  }
+
+  function signUpPassword(e: SubmitEvent) {
+    e.preventDefault();
+    void client.signUp({ email: identity, password });
     password = '';
   }
 
@@ -120,12 +127,14 @@
       {#if !client.error}<p class="muted">{m.sync_asking_methods()}</p>{/if}
     {:else}
       {#if passwordMethod}
-        <form onsubmit={signInPassword}>
+        {@const up = signingUp && client.canSignUp}
+        <form onsubmit={up ? signUpPassword : signInPassword}>
           <label>
-            {m.sync_identity()}
+            {up ? m.sync_email() : m.sync_identity()}
             <input
-              name="identity"
-              autocomplete="username"
+              type={up ? 'email' : 'text'}
+              name={up ? 'email' : 'identity'}
+              autocomplete={up ? 'email' : 'username'}
               autocapitalize="none"
               spellcheck="false"
               required
@@ -134,10 +143,24 @@
           </label>
           <label>
             {m.sync_password()}
-            <input type="password" name="password" autocomplete="current-password" required bind:value={password} />
+            <input
+              type="password"
+              name="password"
+              autocomplete={up ? 'new-password' : 'current-password'}
+              minlength={up ? 8 : undefined}
+              required
+              bind:value={password}
+            />
           </label>
-          <div class="row"><button type="submit" disabled={client.busy}>{m.sync_sign_in()}</button></div>
+          <div class="row">
+            <button type="submit" disabled={client.busy}>{up ? m.sync_create_account() : m.sync_sign_in()}</button>
+          </div>
         </form>
+        {#if client.canSignUp}
+          <button type="button" class="link" onclick={() => (signingUp = !signingUp)}>
+            {up ? m.sync_have_account() : m.sync_create_account()}
+          </button>
+        {/if}
       {/if}
       {#if redirects.length}
         <div class="row">

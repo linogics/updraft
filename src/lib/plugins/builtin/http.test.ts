@@ -94,6 +94,47 @@ describe('http sign in', () => {
   });
 });
 
+describe('http sign up', () => {
+  const offer = (signup: boolean) => {
+    fetchMock = vi.fn(async (url: string) =>
+      url === API ? reply({ ...CAPS, auth: { ...CAPS.auth, signup } }) : reply({}, 404)
+    );
+    vi.stubGlobal('fetch', fetchMock);
+  };
+
+  it('has no signUp when the server does not allow it', async () => {
+    offer(false);
+    const a = createHttp({ url: URL });
+    expect(typeof a.signUp).toBe('undefined');
+    await a.authMethods();
+    expect(typeof a.signUp).toBe('undefined');
+  });
+
+  it('creates an account and stores the session', async () => {
+    offer(true);
+    const a = createHttp({ url: URL });
+    await a.authMethods();
+    fetchMock.mockResolvedValueOnce(reply({ token: 'tok', user: { id: 'u1', name: 'new@test.local' } }));
+
+    expect(await a.signUp?.({ email: 'new@test.local', password: 'longenough' })).toEqual({ user: 'new@test.local' });
+    expect(calls().at(-1)?.[0]).toBe(`${API}/auth/signup`);
+    expect(JSON.parse(calls().at(-1)?.[1].body ?? '')).toEqual({ email: 'new@test.local', password: 'longenough' });
+    expect(JSON.parse(store.get(KEY) ?? '')).toEqual({ token: 'tok', user: 'new@test.local' });
+  });
+
+  it('passes the server message on', async () => {
+    offer(true);
+    const a = createHttp({ url: URL });
+    await a.authMethods();
+    fetchMock.mockResolvedValueOnce(reply({ message: 'Could not create the account.' }, 400));
+
+    await expect(a.signUp?.({ email: 'x@test.local', password: 'longenough' })).rejects.toThrow(
+      'Could not create the account.'
+    );
+    expect(a.session()).toBeNull();
+  });
+});
+
 describe('http sync', () => {
   it('clears the session and asks for a new sign in on 401', async () => {
     signedIn();
