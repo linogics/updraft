@@ -90,7 +90,9 @@ test.describe('plugins', () => {
     await dialog.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(dialog).toBeHidden();
 
-    await expect.poll(() => titles(page)).toEqual(['Thermal overlay', 'XC score', 'Airspace', 'Export', 'Legs', 'Plan Hello']);
+    await expect
+      .poll(() => titles(page))
+      .toEqual(['Thermal overlay', 'XC score', 'Airspace', 'Export', 'Legs', 'Plan Hello']);
     const panel = page.getByRole('region', { name: 'Plan Hello' });
     // Not collapsed, so it is mounted.
     await expect(panel).toContainText('points=2');
