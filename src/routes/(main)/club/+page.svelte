@@ -78,7 +78,7 @@
 </script>
 
 <svelte:head>
-  <title>{m.club_title()}</title>
+  <title>{m.club_title()} | updraft</title>
 </svelte:head>
 
 <div class="club">

@@ -19,7 +19,7 @@
   import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights, studioHref } from '#lib/storage/importFlights';
   import { syncClient } from '#lib/sync/client.svelte';
-  import { formatAirtime, formatNumber } from '#lib/ui/format';
+  import { formatAirtime, formatDate, formatNumber } from '#lib/ui/format';
   import { formatAlt, formatDistance } from '#lib/ui/units';
   import { leagues } from '#lib/xc/leagues';
   import { scoreFlight } from '#lib/xc/score';
@@ -342,7 +342,7 @@
                   aria-label={m.logbook_select_aria({ pilot: f.pilot, date: f.date })}
                 />
               </td>
-              <td>{f.date}</td>
+              <td>{formatDate(f.date)}</td>
               <td>
                 {#if f.manual}{f.pilot}{:else}<a href={studioHref([f.id])}>{f.pilot}</a>{/if}
               </td>

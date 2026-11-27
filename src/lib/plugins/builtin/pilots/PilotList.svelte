@@ -181,6 +181,7 @@
   .live {
     display: grid;
     grid-template-columns: auto auto;
+    column-gap: 8px;
     justify-items: end;
     font-size: 12px;
     font-variant-numeric: tabular-nums;
