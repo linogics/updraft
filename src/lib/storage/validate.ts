@@ -30,8 +30,12 @@ export const isClubStats = (v: unknown): v is ClubStats => {
 export const isFlight = (v: unknown) =>
   isObj(v) &&
   typeof v.id === 'string' &&
+  typeof v.date === 'string' &&
+  typeof v.pilot === 'string' &&
   Array.isArray(v.fixes) &&
   v.fixes.length > 0 &&
+  isObj(v.fixes[0]) &&
+  Number.isFinite(v.fixes[0].t) &&
   (v.shared === undefined || typeof v.shared === 'boolean') &&
   (v.club === undefined || isClubStats(v.club));
 

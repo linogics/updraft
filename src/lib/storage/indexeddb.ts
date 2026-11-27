@@ -183,7 +183,18 @@ export class IndexedDbFlightRepository implements FlightRepository {
     const summary = await tx.objectStore('summaries').get(id);
     const flight = await tx.objectStore('flights').get(id);
     if (summary) await tx.objectStore('summaries').put({ ...summary, ...patch });
-    if (flight) await tx.objectStore('flights').put({ ...flight, ...patch });
+
+    if (flight) {
+      const { pilot, glider, site } = patch;
+      const club = flight.club && {
+        ...flight.club,
+        ...(pilot !== undefined && { pilot }),
+        ...(glider !== undefined && { glider }),
+        ...(site !== undefined && { site })
+      };
+      await tx.objectStore('flights').put({ ...flight, ...patch, ...(club && { club }) });
+    }
+
     if (summary) await markDirty(tx.objectStore('sync'), flight ? 'flight' : 'manual', id);
     await tx.done;
     if (summary) notifyLocalChange();

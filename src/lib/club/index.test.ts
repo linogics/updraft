@@ -34,7 +34,7 @@ describe('club loading', () => {
   });
 
   it('accepts only a valid flight', async () => {
-    const flight = { id: 'f', fixes: [{ t: 0, lat: 1, lon: 1, alt: 1 }] };
+    const flight = { id: 'f', pilot: 'P', date: '2026-01-01', fixes: [{ t: 0, lat: 1, lon: 1, alt: 1 }] };
     const club = (data: unknown) => ({ list: async () => [], flight: async () => data });
 
     expect(await loadClubFlight(adapter(club(flight)), 'k')).toEqual(flight);

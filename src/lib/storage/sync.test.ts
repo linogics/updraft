@@ -150,6 +150,7 @@ describe('applyRemote', () => {
     const bad = [
       { type: 'flight', id: 'x', updatedAt: 1, data: { id: 'x', fixes: [] } },
       { type: 'flight', id: 'x', updatedAt: 1, data: flight('other') },
+      { type: 'flight', id: 'nodate', updatedAt: 1, data: { ...flight('nodate'), date: undefined } },
       { type: 'manual', id: 'm', updatedAt: 1, data: { id: 'm', date: 'd' } },
       { type: 'cameraPath', id: 'c', updatedAt: 1, data: { key: 5 } },
       { type: 'flight', id: 'x', updatedAt: NaN, data: flight('x') },
@@ -159,7 +160,7 @@ describe('applyRemote', () => {
 
     const result = await repo.applyRemote([...bad, remote('ok', 5)]);
 
-    expect(result).toEqual({ applied: 1, invalid: 7 });
+    expect(result).toEqual({ applied: 1, invalid: 8 });
     expect(await repo.get('ok')).toBeDefined();
   });
 
