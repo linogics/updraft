@@ -17,6 +17,7 @@ Subscribe with `on(event: StudioEvent, fn: () => void): () => void`.
 | `league` | The scoring league changed. |
 | `playing` | Playback started or stopped. |
 | `range` | The effective range changed: the timeline marks, or the studio start and end while they are unset. |
+| `viewer` | The 3D view appeared or went away, so `viewer()` returns a different value. |
 
 ## Members
 
@@ -39,7 +40,7 @@ Subscribe with `on(event: StudioEvent, fn: () => void): () => void`.
 | `range(): Readonly<{ start: number; end: number }>` | The in and out marks of the timeline, which set the video export range, in ms on the studio clock. Unset marks read as the studio start and end. The same frozen object until a mark or the studio range changes. |
 | `setRange(start: number, end: number): void` | Sets both marks. Both must be finite numbers with `start` before `end`, otherwise it throws `Range start and end must be finite numbers.` or `Range start must be before end.`. Values outside the studio range are clamped into it first, and the clamped values must still be in order, so a range entirely outside the studio throws `Range start must be before end.` too. |
 | `clearRange(): void` | Removes both marks, so the export covers the whole studio range. |
-| `viewer(): Viewer \| null` | The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time. |
+| `viewer(): Viewer \| null` | The Cesium viewer. Null while there is no 3D view, for example in the 2D map. The `viewer` event fires when it changes. |
 
 ## Types
 

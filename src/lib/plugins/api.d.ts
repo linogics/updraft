@@ -349,7 +349,9 @@ export type StudioEvent =
   /** Playback started or stopped. */
   | 'playing'
   /** The effective range changed: the timeline marks, or the studio start and end while they are unset. */
-  | 'range';
+  | 'range'
+  /** The 3D view appeared or went away, so `viewer()` returns a different value. */
+  | 'viewer';
 
 /**
  * Service `updraft/studio@1`. Provided by the studio while it is open, not by the planner.
@@ -411,7 +413,7 @@ export interface StudioService {
   setRange(start: number, end: number): void;
   /** Removes both marks, so the export covers the whole studio range. */
   clearRange(): void;
-  /** The Cesium viewer. Null while there is no 3D view, for example in the 2D map, so check it every time. */
+  /** The Cesium viewer. Null while there is no 3D view, for example in the 2D map. The `viewer` event fires when it changes. */
   viewer(): Viewer | null;
 }
 
