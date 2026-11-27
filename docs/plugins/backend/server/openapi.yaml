@@ -301,7 +301,8 @@ paths:
                           type: boolean
                           description: True when the signed in account owns the flight.
                         stats:
-                          description: Small summary the owner's client attached to the flight.
+                          description: Small summary the owner's client attached to the flight, or `null` when it sent none.
+                          type: [object, "null"]
         '401':
           $ref: '#/components/responses/Error'
         '403':

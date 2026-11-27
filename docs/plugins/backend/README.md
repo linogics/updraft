@@ -1,5 +1,7 @@
 # Backend plugins
 
+Running your own server? If it follows the [sync server spec](server/README.md), the bundled `updraft/http` backend works with it and you need no plugin. Write a backend plugin only for a server that speaks something else.
+
 A `backend` plugin connects the sync engine to a server. `create({ url })` returns a `BackendAdapter`, which is a `SyncTransport` (`push(changes)` and `pull(cursor)`, see Sync in [development.md](../../development.md)) plus login.
 
 - Where it runs: in the page, when the user connects sync. The module is imported when the backend is used.
