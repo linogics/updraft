@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: User guide
+    url: https://github.com/linogics/updraft/blob/main/docs/help.md
+    about: How to use the app.
+  - name: Plugin docs
+    url: https://github.com/linogics/updraft/blob/main/docs/plugins.md
+    about: Writing and installing plugins.
+  - name: Self-hosting sync
+    url: https://github.com/linogics/updraft/blob/main/docs/self-hosting-sync.md
+    about: Running your own sync server.

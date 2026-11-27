@@ -1,0 +1,29 @@
+name: Accessibility issue
+description: A barrier for people using a keyboard, screen reader, zoom or other assistive tech.
+labels:
+  - accessibility
+body:
+  - type: textarea
+    id: barrier
+    attributes:
+      label: What is the barrier?
+      description: What can you not do, and where in the app?
+    validations:
+      required: true
+  - type: input
+    id: tech
+    attributes:
+      label: Assistive tech, browser and OS
+      placeholder: NVDA 2024.4 with Firefox on Windows 11, VoiceOver on iOS 18, keyboard only, ...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?

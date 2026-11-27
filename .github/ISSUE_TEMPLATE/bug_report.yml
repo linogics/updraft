@@ -1,0 +1,64 @@
+name: Bug report
+description: Something does not work as expected.
+labels:
+  - bug
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Describe the problem. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Import flight ...
+        2. Open studio ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Updraft version
+      description: Release tag for self-hosted builds, or "hosted" for the public app.
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: Firefox 133 on Windows 11, Safari on iOS 18, ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Import / export
+        - Logbook
+        - Studio (3D view, video, photo)
+        - Planner
+        - Sync
+        - Plugins
+        - Install / offline (PWA)
+        - Other
+  - type: textarea
+    id: track
+    attributes:
+      label: Flight file
+      description: If the bug depends on a track, attach the file (IGC, GPX, KML, FIT, TRK, GeoJSON). Remove anything you do not want public.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output
+      description: Errors from the browser dev tools console, if any.
+      render: text
