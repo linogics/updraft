@@ -45,6 +45,8 @@ Then open the studio, choose **Panels**, **Add plugin...**, paste `http://localh
 
 A larger, commented example is in [static/plugins/example.js](../static/plugins/example.js). The app serves it itself at `/plugins/example.js`, so you can add `https://<host>/plugins/example.js` to try it. It shows the altitude and the climb of the selected pilot, a label in the overlay, and draws the pilot name and altitude into exports.
 
+A second example is [static/plugins/compass.js](../static/plugins/compass.js), served at `/plugins/compass.js`. It reads the Cesium viewer with `viewer()` and shows the camera heading as a rose in the overlay that turns with the 3D camera. A 3x3 picker sets where the rose sits, and the same rose is painted into exports.
+
 ## Module contract
 
 The default export is an object. The studio checks it when you add the plugin and shows the message of the first problem in the dialog.
