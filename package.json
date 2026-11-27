@@ -20,7 +20,8 @@
     "bench:ui": "PERF=1 playwright test perf --reporter=line",
     "lint": "npm run sync && prettier --check . && eslint .",
     "format": "npm run sync && prettier --write . && eslint --fix .",
-    "docs:api": "node scripts/gen-plugin-docs.mjs src/lib/plugins/api.d.ts docs/plugins src/lib/plugins/schemas"
+    "contract": "node scripts/contract.mjs",
+    "docs:api": "node scripts/gen-plugin-docs.mjs src/lib/plugins/api.d.ts docs/plugins src/lib/plugins/schemas && node scripts/gen-sync-docs.mjs docs/server/openapi.yaml docs/server/reference.md && openapi-typescript docs/server/openapi.yaml -o src/lib/sync/v2/openapi.d.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -43,6 +44,7 @@
     "eslint-plugin-svelte": "^3.24.1",
     "fake-indexeddb": "^6.2.8",
     "globals": "^17.14.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.10.1",
     "prettier-plugin-svelte": "^4.2.0",
     "svelte": "^5.59.1",
@@ -50,7 +52,8 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.74.0",
     "vite": "^8.3.8",
-    "vitest": "^5.1.1"
+    "vitest": "^5.1.1",
+    "yaml": "^2.9.1"
   },
   "dependencies": {
     "@lucide/svelte": "^1.80.0",
@@ -64,5 +67,10 @@
     "mediabunny": "1.66.2",
     "pbf": "^5.2.0",
     "uplot": "^1.6.32"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

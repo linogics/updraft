@@ -23,6 +23,7 @@ export default ts.config(
       'playwright-report',
       '.codegraph',
       'docs',
+      'src/lib/sync/v2/openapi.d.ts',
       'server/pb_migrations',
       'server/pb_hooks'
     ]

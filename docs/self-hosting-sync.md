@@ -1,6 +1,6 @@
 # Self-hosting sync
 
-updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/http` speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml). To run a server of your own in another language, see the [sync server guide](plugins/backend/server/README.md). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
+updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/http` speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml). To run a server of your own in another language, see the [sync server guide](plugins/backend/server/README.md). The sync HTTP spec v2 is a draft, the app still uses v1, see the [v2 guide](server/README.md). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
 
 Users connect from the Sync section of the logbook, see [Point the app at the server](#point-the-app-at-the-server).
 
