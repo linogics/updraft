@@ -9,9 +9,10 @@ describe('planner registry', () => {
     expect(planRegistry.bundled).toEqual([
       'plugin:updraft/thermal-overlay',
       'plugin:updraft/plan-xc',
-      'plugin:updraft/airspace'
+      'plugin:updraft/airspace',
+      'plugin:updraft/plan-export'
     ]);
-    expect(planRegistry.collapsed).toEqual(planRegistry.bundled);
+    expect(planRegistry.collapsed).toEqual(planRegistry.bundled.slice(0, 3));
   });
 
   it('keeps planner only plugins out of the studio', () => {

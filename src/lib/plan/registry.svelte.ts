@@ -4,7 +4,7 @@ import type { PanelDef } from '#lib/studio/panels';
 import { builtinPanel, pluginPanel } from '#lib/studio/registry.svelte';
 
 /** Default order of the bundled planner panels. */
-const ORDER = ['updraft/thermal-overlay', 'updraft/plan-xc', 'updraft/airspace'];
+const ORDER = ['updraft/thermal-overlay', 'updraft/plan-xc', 'updraft/airspace', 'updraft/plan-export'];
 
 const BUILTINS: PanelDef[] = BUILTIN_PLUGINS.filter((b) => b.hosts?.includes('plan'))
   .sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id))
