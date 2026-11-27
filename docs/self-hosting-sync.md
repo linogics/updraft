@@ -1,6 +1,6 @@
 # Self-hosting sync
 
-updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/http` speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml). To run a server of your own in another language, see the [sync server guide](plugins/backend/server/README.md). The sync HTTP spec v2 is a draft, the app still uses v1, see the [v2 guide](server/README.md). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
+updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The app now speaks the [sync spec v2](server/README.md). The PocketBase kit below still implements v1 and moves to v2 in the next release, so until then it does not work with this version of the app. To run a server of your own in another language, see the [sync server guide](server/README.md). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
 
 Users connect from the Sync section of the logbook, see [Point the app at the server](#point-the-app-at-the-server).
 
@@ -72,7 +72,7 @@ Users enter the address in the Sync section of the logbook. Use `https`. Plain `
 To fill it in for everyone who opens your hosted app, serve a `config.json` at the root of the site:
 
 ```json
-{ "sync": { "backend": "updraft/http", "url": "https://sync.example.com" } }
+{ "sync": { "url": "https://sync.example.com" } }
 ```
 
 When you build the app yourself, put the file at `static/config.json` before `npm run build`. Otherwise add it next to `index.html` on the web server. The app reads it on every start and the service worker never caches it, so edits apply on the next load. A missing or invalid file means no preset. An address a user typed in always wins over the file. The sync server must allow the origin of your app, see the CORS section above.

@@ -4,7 +4,7 @@ import { addPlugin } from './actions';
 import { pluginPrefs } from './pluginPrefs.svelte';
 
 const loaded = vi.hoisted((): { current: object } => ({
-  current: { id: 'acme/be', name: 'Be', kind: 'backend', apiVersion: 1, create: () => ({}) }
+  current: {}
 }));
 const move = vi.hoisted(() => vi.fn());
 
@@ -16,12 +16,6 @@ vi.mock('./cache', () => ({ cachePlugin: async () => {}, uncachePlugin: async ()
 vi.mock('#lib/state/studioLayout.svelte', () => ({ studioLayout: { move, forget: () => {} } }));
 
 describe('addPlugin', () => {
-  it('stores a backend by URL without touching the layout', async () => {
-    await addPlugin('https://a.test/be.js');
-    expect(pluginPrefs.list).toEqual([{ url: 'https://a.test/be.js', id: 'acme/be', name: 'Be', kind: 'backend' }]);
-    expect(move).not.toHaveBeenCalled();
-  });
-
   const conv = (extensions: string[]) => ({
     id: 'acme/csv',
     name: 'CSV',

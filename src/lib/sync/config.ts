@@ -1,8 +1,6 @@
-import { LOCAL_HOSTS, PLUGIN_ID } from '#lib/plugins/core';
+import { LOCAL_HOSTS } from '#lib/plugins/core';
 
 export interface SyncConfig {
-  /** Backend plugin id. */
-  backend: string;
   url: string;
 }
 
@@ -11,12 +9,10 @@ const KEY = 'syncConfig';
 /** Config files and stored values are untrusted, so every field is checked. Returns null when unusable. */
 export function parseSyncConfig(raw: unknown): SyncConfig | null {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  if (typeof o.backend !== 'string' || !PLUGIN_ID.test(o.backend) || typeof o.url !== 'string') return null;
+  if (typeof o.url !== 'string') return null;
 
   const url = syncUrl(o.url);
-  // The old PocketBase plugin is gone, the same server speaks the HTTP spec.
-  const backend = o.backend === 'updraft/pocketbase' ? 'updraft/http' : o.backend;
-  return url ? { backend, url } : null;
+  return url ? { url } : null;
 }
 
 /** https only, plain http just for a server on this machine. Returns the URL without a trailing slash. */

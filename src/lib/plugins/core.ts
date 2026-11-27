@@ -1,6 +1,5 @@
 import { type StudioPlugin, validateStudioPlugin } from '#lib/studio/plugins';
 
-import { type BackendPlugin, validateBackendPlugin } from './backendKind';
 import { type BadgePlugin, validateBadgePlugin } from './badgeKind';
 import { type ConverterPlugin, validateConverterPlugin } from './converterKind';
 import { type ServicePlugin, validateServicePlugin } from './serviceKind';
@@ -8,11 +7,11 @@ import { validateServiceFields } from './services';
 import { validateXcPlannerPlugin, type XcPlannerPlugin } from './xcPlannerKind';
 
 /** Grows with every new kind of plugin. Add its validator to `validators` below. */
-export type PluginKind = 'studio' | 'service' | 'backend' | 'converter' | 'xc-planner' | 'badge';
-export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service', 'backend', 'converter', 'xc-planner', 'badge'];
+export type PluginKind = 'studio' | 'service' | 'converter' | 'xc-planner' | 'badge';
+export const PLUGIN_KINDS: readonly PluginKind[] = ['studio', 'service', 'converter', 'xc-planner', 'badge'];
 
 /** A validated plugin module of any kind. */
-export type AnyPlugin = StudioPlugin | ServicePlugin | BackendPlugin | ConverterPlugin | XcPlannerPlugin | BadgePlugin;
+export type AnyPlugin = StudioPlugin | ServicePlugin | ConverterPlugin | XcPlannerPlugin | BadgePlugin;
 
 export const PLUGIN_ID = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}$/;
 
@@ -20,7 +19,6 @@ export const PLUGIN_ID = /^[a-z0-9-]{1,40}\/[a-z0-9-]{1,40}$/;
 const validators: Record<PluginKind, (mod: Record<string, unknown>) => AnyPlugin> = {
   studio: validateStudioPlugin,
   service: validateServicePlugin,
-  backend: validateBackendPlugin,
   converter: validateConverterPlugin,
   'xc-planner': validateXcPlannerPlugin,
   badge: validateBadgePlugin

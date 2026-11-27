@@ -42,7 +42,7 @@
       }
     },
     "track": {
-      "description": "The track points of a flight, sorted by time. Null for a manual entry or an unknown id.",
+      "description": "The track points of a flight, sorted by time. Downloaded from the sync server when this device has none yet. Null for a manual entry, an unknown id, or when the download fails.",
       "access": "read",
       "params": [
         {
@@ -220,13 +220,20 @@
           "type": "number",
           "description": "Track length in km."
         },
+        "hasTrack": {
+          "type": "boolean",
+          "description": "False for an entry logged by hand. A flight from another device has it true before its track is downloaded."
+        },
         "manual": {
           "const": true,
-          "description": "Logged by hand, no track stored."
+          "description": "Logged by hand, no track stored. Same as `hasTrack` being false."
         },
-        "shared": {
-          "type": "boolean",
-          "description": "Opted in to the club list."
+        "clubs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ids of the clubs of the sync server this entry is shared with."
         }
       },
       "required": [
@@ -238,7 +245,8 @@
         "date",
         "fixCount",
         "startTime",
-        "endTime"
+        "endTime",
+        "hasTrack"
       ]
     },
     "Fix": {
@@ -315,9 +323,12 @@
           "type": "string",
           "description": "Free text notes."
         },
-        "shared": {
-          "type": "boolean",
-          "description": "Opted in to the club list of the sync server."
+        "clubs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ids of the clubs of the sync server this flight is shared with."
         },
         "fixes": {
           "type": "array",
@@ -426,6 +437,13 @@
         "notes": {
           "type": "string",
           "description": "Free text notes."
+        },
+        "clubs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ids of the clubs to share the entry with. An empty list stops sharing."
         }
       }
     }

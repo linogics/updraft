@@ -19,7 +19,7 @@ Methods marked `write` change state, the others only read.
 | --- | --- | --- |
 | `list(): Promise<readonly FlightSummary[]>` | read | All entries, manual ones included, newest first. |
 | `get(id: string): Promise<FlightSummary \| null>` | read | One entry by id, or null when there is none. |
-| `track(id: string): Promise<readonly Fix[] \| null>` | read | The track points of a flight, sorted by time. Null for a manual entry or an unknown id. |
+| `track(id: string): Promise<readonly Fix[] \| null>` | read | The track points of a flight, sorted by time. Downloaded from the sync server when this device has none yet. Null for a manual entry, an unknown id, or when the download fails. |
 | `save(flight: Flight): Promise<string>` | write | Stores a flight, or replaces the one with the same id. Resolves to the flight id. Rejects when the flight has no fixes. |
 | `saveManual(entry: ManualEntry): Promise<string>` | write | Stores a manual entry, or replaces the one with the same `id`. Resolves to the entry id. |
 | `updateMeta(id: string, patch: MetaPatch): Promise<void>` | write | Changes the pilot, glider, site or notes of an entry. An unknown id does nothing. |
@@ -51,7 +51,7 @@ A parsed flight with its track.
 | `site` | `string \| null` | Launch site, if known. |
 | `date` | `string` | Flight date, ISO 8601 (YYYY-MM-DD). |
 | `notes?` | `string` | Free text notes. |
-| `shared?` | `boolean` | Opted in to the club list of the sync server. |
+| `clubs?` | `string[]` | Ids of the clubs of the sync server this flight is shared with. |
 | `fixes` | `Fix[]` | Track points sorted by time. Not empty. |
 
 ### FlightSummary
@@ -72,8 +72,9 @@ A logbook entry without its track, for listings.
 | `notes?` | `string` | Free text notes. |
 | `maxAlt?` | `number` | Highest fix altitude in metres. |
 | `trackKm?` | `number` | Track length in km. |
-| `manual?` | `true` | Logged by hand, no track stored. |
-| `shared?` | `boolean` | Opted in to the club list. |
+| `hasTrack` | `boolean` | False for an entry logged by hand. A flight from another device has it true before its track is downloaded. |
+| `manual?` | `true` | Logged by hand, no track stored. Same as `hasTrack` being false. |
+| `clubs?` | `string[]` | Ids of the clubs of the sync server this entry is shared with. |
 
 ### ManualEntry
 
@@ -99,3 +100,4 @@ The fields of a logbook entry that can be changed. A field that is left out stay
 | `glider?` | `string \| null` | Glider, null clears it. |
 | `site?` | `string \| null` | Launch site, null clears it. |
 | `notes?` | `string` | Free text notes. |
+| `clubs?` | `string[]` | Ids of the clubs to share the entry with. An empty list stops sharing. |

@@ -46,7 +46,8 @@
   const layout = $derived(studioLayout.value);
   const docked = (d: 'left' | 'right' | 'bottom') => layout.docks[d].length > 0;
   // Set for a flight opened from the club. It is never saved and the URL keeps pointing at the server copy.
-  const clubKey = page.url.searchParams.get('club');
+  const clubId = page.url.searchParams.get('club');
+  const clubKey = page.url.searchParams.get('key');
   const paint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
 
   onMount(async () => {
@@ -68,7 +69,7 @@
     studio.terrain = resolveTerrain(scene.terrain, studio.ionAvailable);
 
     let flights: Flight[];
-    if (clubKey) {
+    if (clubId && clubKey) {
       studio.readOnly = true;
       await syncClient.init();
       if (!syncClient.hasClub) {
@@ -77,7 +78,7 @@
       }
 
       try {
-        flights = [await syncClient.clubFlight(clubKey)];
+        flights = [await syncClient.clubFlight(clubId, clubKey)];
       } catch (err) {
         console.error('Could not load club flight', err);
         error = m.club_studio_not_found();
@@ -101,7 +102,7 @@
       colors: scene.colors
     });
     step = 2;
-    if (!clubKey) await studio.loadCameraTracks();
+    if (!clubId) await studio.loadCameraTracks();
     // Flights from different days need aligning, so open the timeline first.
     if (studio.multiDay) studioLayout.setTab(pluginPanelId('updraft/timeline'), false);
     loaded = true;
@@ -176,7 +177,7 @@
       lighting: studio.lighting,
       labels: studio.labels
     });
-    void goto(`?${query}${clubKey ? `&club=${encodeURIComponent(clubKey)}` : ''}`, {
+    void goto(`?${query}${clubId && clubKey ? `&${new URLSearchParams({ club: clubId, key: clubKey })}` : ''}`, {
       shallow: true,
       replace: true,
       reset: false

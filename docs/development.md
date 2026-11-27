@@ -41,15 +41,17 @@ One-time setup: in the repository settings set Pages source to "GitHub Actions",
 
 ## Sync
 
-Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engine.svelte.ts`) mirrors it through a `SyncTransport`. The app-wide `syncClient` (`src/lib/sync/client.svelte.ts`) loads the configured backend, signs in and runs the engine.
+Local-first: IndexedDB stays the main copy and `SyncEngine` (`src/lib/sync/engine.svelte.ts`) mirrors it to a server that speaks the [sync spec v2](server/README.md). The typed HTTP client is `src/lib/sync/v2/http.ts`. The app-wide `syncClient` (`src/lib/sync/client.svelte.ts`) holds the server address and the session, signs in and runs the engine.
 
-- Every repository write marks its record dirty in the `sync` store (`type:id`, `updatedAt` in ms, tombstone on delete). XC scores are a cache and never sync.
-- `syncNow()` pushes `pendingChanges()` in pages of 50, then pulls until `more` is false and stores the cursor. `markPushed` leaves a record dirty when it was rewritten during the push.
-- Conflicts: the higher `updatedAt` wins per whole record. `applyRemote` validates every change (invalid ones are skipped and counted), ignores equal or older ones and does not mark anything dirty, so nothing echoes back.
-- Prefs in localStorage are detected at push time by comparing the raw value with the last pushed one. Remote prefs are written to localStorage and apply after a reload. `studioLayout` and the plugin list never sync, API keys only when `syncKeys` is `'1'`.
+- A flight is stored as metadata (the summary, `hasTrack`, `clubs`, `club`), its track (`tracks`) and the imported file (`originals`). The synced item `data` is the metadata. Manual entries are flights with `hasTrack: false`.
+- Every repository write marks the item dirty in the `sync` store (`collection:id`) and sets `times[field]` for each changed field. XC scores are a cache and never sync.
+- A run goes through `flights`, `camera-paths` and `prefs`. Each collection is pulled from its stored cursor, page by page, then the dirty items are pushed. A create sends `If-None-Match: *`, an update `If-Match` with the stored version. On a 412 the server's item is merged field by field (`src/lib/sync/merge.ts`, newer time wins, a tie keeps the remote value) and the write is tried again. A delete wins over a conflict.
+- After a flight item is stored, the original file and the parsed `track.json` are uploaded once. A pulled flight shows in the logbook from its metadata, its fixes are fetched on first use.
+- Prefs in localStorage are detected after the prefs pull by comparing the raw value with the last one seen. A pref the server never gave a copy of is sent with time 0, so it cannot beat the server copy. Remote prefs apply after a reload. `studioLayout` and the plugin list never sync, API keys only when `syncKeys` is `'1'`.
 - `start()` syncs on start, on `focus`, on `online` and 3 s after a local change. `stop()` removes the listeners.
+- Tests run the engine and client against `createMemoryServer` (`src/lib/sync/v2/memory-server.ts`), the e2e tests serve it through `page.route`.
 
-Transport contract (`src/lib/sync/types.ts`): `push(changes)` stores the changes. `pull(cursor)` returns the changes after the opaque `cursor`, the new cursor and `more`. A `SyncChange` is `{ type: 'flight' | 'manual' | 'cameraPath' | 'pref', id, updatedAt, deleted?, data? }`. Login is the transport's own business, see the backend kind in [backend plugins](plugins/backend/README.md). The bundled backend `updraft/http` is `src/lib/plugins/builtin/http.ts`. It speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml), explained in the [sync server guide](plugins/backend/server/README.md), the reference server is in `server/` and described in [self-hosting-sync.md](self-hosting-sync.md). The [sync HTTP spec v2](server/README.md) is a draft, the app still uses v1.
+The server contract is [server/openapi.yaml](server/openapi.yaml), explained in the [sync server guide](server/README.md). The PocketBase reference server in `server/` is described in [self-hosting-sync.md](self-hosting-sync.md).
 
 ### Known limits
 

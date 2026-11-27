@@ -381,99 +381,6 @@ export interface BadgePlugin extends PluginBase {
   badges: BadgeDef[];
 }
 
-// Backend kind
-
-/** Kind `backend`. A sync backend, apiVersion 1: headless, the app picks one and syncs through the adapter it creates. */
-export interface BackendPlugin extends PluginBase {
-  /** `vendor/name`, each part matching `[a-z0-9-]{1,40}`. Unique among plugins. The vendor `updraft` is reserved for bundled plugins. */
-  id: string;
-  /** Not blank. */
-  name: string;
-  /** Must be `'backend'`. */
-  kind: 'backend';
-  /** Must be `1`. */
-  apiVersion: 1;
-  /** Builds the adapter for the server at `config.url`. */
-  create(config: { url: string }): BackendAdapter;
-}
-
-export type SyncType = 'flight' | 'manual' | 'cameraPath' | 'pref';
-
-/** One record version. `data` is the Flight, the manual FlightSummary, `{ key, tracks }` or the pref value. */
-export interface SyncChange {
-  /** What the record is. */
-  type: SyncType;
-  /** Record id, unique within its `type`. */
-  id: string;
-  /** Client clock in ms. The higher value wins per whole record. */
-  updatedAt: number;
-  /** Set for a deleted record, which has no `data`. */
-  deleted?: true;
-  /** The record content, absent when `deleted` is set. */
-  data?: unknown;
-}
-
-/** Login and auth are the transport's own business. */
-export interface SyncTransport {
-  /** Stores the changes. A change only replaces the stored record when its `updatedAt` is higher. */
-  push(changes: SyncChange[]): Promise<void>;
-  /**
-   * Returns the changes after an opaque `cursor`, `null` for the start, in a stable order. `more` is true while
-   * there are further pages. Only the signed in account's own records, never shared flights of other pilots.
-   */
-  pull(cursor: string | null): Promise<{ changes: SyncChange[]; cursor: string | null; more?: boolean }>;
-}
-
-/** How a user can sign in to a backend. The adapter reports what its server offers. */
-export type AuthMethod =
-  /** The app shows a generic identity and password form. */
-  | { kind: 'password' }
-  /** OAuth or SSO. The adapter runs the popup or redirect itself. */
-  | { kind: 'redirect'; id: string; label: string }
-  /** One time code in two steps. Reserved, no adapter implements it yet. */
-  | { kind: 'code'; label: string };
-
-export interface BackendSession {
-  /** Display name or email. */
-  user: string;
-}
-
-/** One shared flight in the club list. `stats` comes from the server and must be validated before use. */
-export interface ClubEntry {
-  /** Server row id, pass it to `club.flight`. */
-  key: string;
-  /** Opaque account id. All flights of one pilot share it. */
-  owner: string;
-  /** Whether the flight belongs to the signed in account. */
-  mine: boolean;
-  /** The club summary of the flight record. Untrusted. */
-  stats: unknown;
-}
-
-/** Optional: lists flights that pilots shared with everyone on the server. */
-export interface ClubAccess {
-  /** Every shared flight of every pilot, without the tracks. */
-  list(): Promise<ClubEntry[]>;
-  /** The full record of one shared flight. Untrusted, validate it. */
-  flight(key: string): Promise<unknown>;
-}
-
-/** A transport that also owns login. The adapter keeps its own token, the app never sees one. */
-export interface BackendAdapter extends SyncTransport {
-  /** What the server offers for signing in. */
-  authMethods(): Promise<AuthMethod[]>;
-  /** A `redirect` method opens a popup, so call this from a user gesture. */
-  signIn(method: AuthMethod, input?: Record<string, string>): Promise<BackendSession>;
-  /** Creates an account and signs in, same result as `signIn`. Leave it out when the server does not allow signup. */
-  signUp?(input: { email: string; password: string }): Promise<BackendSession>;
-  /** Ends the session and forgets the token. */
-  signOut(): Promise<void>;
-  /** The stored session, survives a reload. */
-  session(): BackendSession | null;
-  /** Shared flights of all pilots. Leave it out when the backend has no club. */
-  club?: ClubAccess;
-}
-
 /** The four display units. Values from the studio are always SI, convert them for display. */
 export interface Units {
   /** Distances: kilometres, miles or nautical miles. */
@@ -757,8 +664,8 @@ export interface Flight {
   date: string;
   /** Free text notes. */
   notes?: string;
-  /** Opted in to the club list of the sync server. */
-  shared?: boolean;
+  /** Ids of the clubs of the sync server this flight is shared with. */
+  clubs?: string[];
   /** Track points sorted by time. Not empty. */
   fixes: Fix[];
 }
@@ -789,10 +696,12 @@ export interface FlightSummary {
   maxAlt?: number;
   /** Track length in km. */
   trackKm?: number;
-  /** Logged by hand, no track stored. */
+  /** False for an entry logged by hand. A flight from another device has it true before its track is downloaded. */
+  hasTrack: boolean;
+  /** Logged by hand, no track stored. Same as `hasTrack` being false. */
   manual?: true;
-  /** Opted in to the club list. */
-  shared?: boolean;
+  /** Ids of the clubs of the sync server this entry is shared with. */
+  clubs?: string[];
 }
 
 /** A flight logged by hand, without a track. */
@@ -823,6 +732,8 @@ export interface MetaPatch {
   site?: string | null;
   /** Free text notes. */
   notes?: string;
+  /** Ids of the clubs to share the entry with. An empty list stops sharing. */
+  clubs?: string[];
 }
 
 /** Events of `FlightsService.on`. */
@@ -846,7 +757,7 @@ export interface FlightsService {
   list(): Promise<readonly FlightSummary[]>;
   /** One entry by id, or null when there is none. */
   get(id: string): Promise<FlightSummary | null>;
-  /** The track points of a flight, sorted by time. Null for a manual entry or an unknown id. */
+  /** The track points of a flight, sorted by time. Downloaded from the sync server when this device has none yet. Null for a manual entry, an unknown id, or when the download fails. */
   track(id: string): Promise<readonly Fix[] | null>;
   /**
    * Stores a flight, or replaces the one with the same id. Resolves to the flight id.

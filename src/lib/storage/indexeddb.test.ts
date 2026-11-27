@@ -47,7 +47,7 @@ describe('IndexedDbFlightRepository', () => {
       bestClimb: 1,
       bestThermalGain: 10
     };
-    await repo.save({ ...flight('a'), shared: true, club });
+    await repo.save({ ...flight('a'), clubs: ['c1'], club });
 
     await repo.updateMeta('a', { pilot: 'New', notes: 'n' });
 
@@ -97,7 +97,7 @@ describe('IndexedDbFlightRepository', () => {
     expect(await repo.getCameraTracks(['a'])).toEqual(DEFAULT_TRACKS);
   });
 
-  it('keeps flights when upgrading a version 1 database', async () => {
+  it('recreates an older database instead of converting it', async () => {
     const name = `db-${crypto.randomUUID()}`;
     const old = await openDB(name, 1, {
       upgrade(db) {
@@ -109,9 +109,21 @@ describe('IndexedDbFlightRepository', () => {
     old.close();
 
     const repo = new IndexedDbFlightRepository(name);
-    expect(await repo.get('a')).toEqual(flight('a'));
-    await repo.saveCameraTracks(['a'], tracks());
-    expect(await repo.getCameraTracks(['a'])).toEqual(tracks());
+    expect(await repo.get('a')).toBeUndefined();
+    await repo.save(flight('b'));
+    expect(await repo.get('b')).toEqual(flight('b'));
+    await repo.saveCameraTracks(['b'], tracks());
+    expect(await repo.getCameraTracks(['b'])).toEqual(tracks());
+  });
+
+  it('keeps the original file with the flight and drops it on delete', async () => {
+    const repo = new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
+    const bytes = new TextEncoder().encode('HFDTE').buffer;
+    await repo.save(flight('a'), { id: 'a', type: 'application/vnd.fai.igc', bytes });
+
+    expect((await repo.trackUpload('a'))?.original?.type).toBe('application/vnd.fai.igc');
+    await repo.delete('a');
+    expect(await repo.trackUpload('a')).toBeUndefined();
   });
 });
 
@@ -124,7 +136,7 @@ describe('manual entries, meta and backup', () => {
     await repo.saveManual({ ...entry, id: 'm' });
     const [s] = await repo.list();
 
-    expect(s).toMatchObject({ id: 'm', manual: true, fixCount: 0, sourceName: '' });
+    expect(s).toMatchObject({ id: 'm', manual: true, hasTrack: false, fixCount: 0, sourceName: '' });
     expect(s.endTime - s.startTime).toBe(90 * 60_000);
     expect(await repo.get('m')).toBeUndefined();
   });

@@ -430,7 +430,6 @@
   "studio_tab_altitude": "Höhe",
   "studio_title": "Studio | updraft",
   "sync_asking_methods": "Frage den Server nach den Anmeldearten...",
-  "sync_backend": "Backend",
   "sync_change_server": "Server ändern",
   "sync_connect": "Verbinden",
   "sync_connecting": "Verbinde...",
@@ -593,5 +592,8 @@
   "plugin_consent_title": "Änderungen erlauben?",
   "plugin_consent_item": "{service} ändern ({methods})",
   "plugin_consent_allow": "Installieren",
-  "plugin_grants_label": "Berechtigungen von {name}"
+  "plugin_grants_label": "Berechtigungen von {name}",
+  "club_none": "Du bist noch in keinem Club. Bitte die Serveradministration, dich zu einem hinzuzufügen.",
+  "club_pick": "Club",
+  "club_share_with": "Mit {club} teilen"
 }

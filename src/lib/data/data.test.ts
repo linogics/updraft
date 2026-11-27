@@ -20,6 +20,7 @@ const summary = (id: string, extra: Partial<FlightSummary> = {}): FlightSummary 
   fixCount: 1,
   startTime: 0,
   endTime: 1,
+  hasTrack: true,
   ...extra
 });
 
@@ -31,6 +32,7 @@ function fakeRepo() {
     saved,
     list: async () => [summary('a'), summary('m', { manual: true })],
     get: async (id: string) => (id === 'a' ? ({ id, fixes } as unknown as Flight) : undefined),
+    summary: async (id: string) => (id === 'm' ? summary('m', { manual: true, hasTrack: false }) : undefined),
     save: async (f: Flight) => void saved.push(f),
     saveManual: async (e: unknown) => void saved.push(e),
     updateMeta: async () => {},
