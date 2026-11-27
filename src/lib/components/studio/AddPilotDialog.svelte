@@ -1,7 +1,8 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
+  import type { FlightsService, FlightSummary } from '#lib/plugins/api';
+  import { services } from '#lib/plugins/services';
   import type { StudioState } from '#lib/state/studio.svelte';
-  import { flightRepository, type FlightSummary } from '#lib/storage';
   import { importFlights } from '#lib/storage/importFlights';
   import { addStored } from '#lib/studio/addPilots';
   import { formatAirtime } from '#lib/ui/format';
@@ -28,7 +29,7 @@
 
   async function refresh() {
     try {
-      const all = await flightRepository.list();
+      const all = await services.use<FlightsService>('updraft/flights@1').list();
       flights = all.filter((f) => !f.manual).sort((a, b) => b.startTime - a.startTime);
     } catch (err) {
       console.error('Could not list flights', err);

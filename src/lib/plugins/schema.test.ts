@@ -37,6 +37,8 @@ describe('validate', () => {
     ['function wrong', { 'x-kind': 'function' }, 1, 'v: expected function'],
     ['opaque', { 'x-kind': 'opaque' }, 1, null],
     ['void', { 'x-kind': 'void' }, 1, 'v: expected no value'],
+    ['promise', { 'x-kind': 'promise' }, Promise.resolve(1), null],
+    ['promise wrong', { 'x-kind': 'promise' }, 1, 'v: expected promise'],
     ['unknown', {}, 1, null],
     ['unknown ref', { $ref: '#/$defs/Nope' }, 1, 'v: unknown reference #/$defs/Nope'],
     ['no extra', { type: 'object', additionalProperties: false }, { a: 1 }, 'v.a: unexpected field'],
@@ -96,6 +98,38 @@ describe('checkService', () => {
   it('throws when the result does not fit', () => {
     const s = checkService(schema, { all: () => [{ fixes: [{ lat: 'x' }] }], set: () => {}, on: () => () => {} });
     expect(() => s.all()).toThrow('a/x@1.all: all()[0].fixes[0].lat: expected number');
+  });
+});
+
+describe('checkService with promises', () => {
+  const schema: ServiceSchema = {
+    name: 'a/y@1',
+    description: '',
+    methods: {
+      names: {
+        description: '',
+        access: 'read',
+        params: [],
+        returns: { 'x-kind': 'promise', resolves: { type: 'array', items: { type: 'string' } } }
+      }
+    }
+  };
+
+  it('checks the resolved value', async () => {
+    const ok = checkService(schema, { names: () => Promise.resolve(['a']) });
+    await expect(ok.names()).resolves.toEqual(['a']);
+
+    const bad = checkService(schema, { names: () => Promise.resolve([1]) });
+    await expect(bad.names()).rejects.toThrow('a/y@1.names: names()[0]: expected string');
+  });
+
+  it('passes a rejection through and rejects a non promise', async () => {
+    const boom = new Error('boom');
+    const s = checkService(schema, { names: () => Promise.reject(boom) });
+    await expect(s.names()).rejects.toBe(boom);
+
+    const sync = checkService(schema, { names: () => ['a'] });
+    expect(() => sync.names()).toThrow('a/y@1.names: names(): expected promise');
   });
 });
 

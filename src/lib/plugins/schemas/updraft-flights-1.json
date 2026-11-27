@@ -1,0 +1,433 @@
+{
+  "name": "updraft/flights@1",
+  "description": "The logbook stored in this browser, provided by the app on every page. Listings carry no track points, read them with `track`.",
+  "methods": {
+    "list": {
+      "description": "All entries, manual ones included, newest first.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlightSummary"
+          }
+        }
+      }
+    },
+    "get": {
+      "description": "One entry by id, or null when there is none.",
+      "access": "read",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlightSummary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "track": {
+      "description": "The track points of a flight, sorted by time. Null for a manual entry or an unknown id.",
+      "access": "read",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Fix"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "save": {
+      "description": "Stores a flight, or replaces the one with the same id. Resolves to the flight id. Rejects when the flight has no fixes.",
+      "access": "write",
+      "params": [
+        {
+          "name": "flight",
+          "schema": {
+            "$ref": "#/$defs/Flight"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "type": "string"
+        }
+      }
+    },
+    "saveManual": {
+      "description": "Stores a manual entry, or replaces the one with the same `id`. Resolves to the entry id.",
+      "access": "write",
+      "params": [
+        {
+          "name": "entry",
+          "schema": {
+            "$ref": "#/$defs/ManualEntry"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "type": "string"
+        }
+      }
+    },
+    "updateMeta": {
+      "description": "Changes the pilot, glider, site or notes of an entry. An unknown id does nothing.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "patch",
+          "schema": {
+            "$ref": "#/$defs/MetaPatch"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "x-kind": "void"
+        }
+      }
+    },
+    "delete": {
+      "description": "Deletes a flight or manual entry with its cached scores. An unknown id does nothing.",
+      "access": "write",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "x-kind": "void"
+        }
+      }
+    }
+  },
+  "events": {
+    "changed": {
+      "description": "The logbook changed: a flight or manual entry was saved, edited, deleted, imported or restored, or a sync pulled changes. Also fires for other local writes that sync, such as camera paths."
+    }
+  },
+  "$defs": {
+    "FlightSummary": {
+      "description": "A logbook entry without its track, for listings.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Flight id."
+        },
+        "sourceName": {
+          "type": "string",
+          "description": "Name of the file or source the flight came from. Empty for a manual entry."
+        },
+        "pilot": {
+          "type": "string",
+          "description": "Pilot name."
+        },
+        "glider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Glider, if known."
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Launch site, if known."
+        },
+        "date": {
+          "type": "string",
+          "description": "Flight date, ISO 8601 (YYYY-MM-DD)."
+        },
+        "fixCount": {
+          "type": "number",
+          "description": "Number of track points, 0 for a manual entry."
+        },
+        "startTime": {
+          "type": "number",
+          "description": "Time of the first fix in epoch ms. For a manual entry, noon of the date."
+        },
+        "endTime": {
+          "type": "number",
+          "description": "Time of the last fix in epoch ms."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free text notes."
+        },
+        "maxAlt": {
+          "type": "number",
+          "description": "Highest fix altitude in metres."
+        },
+        "trackKm": {
+          "type": "number",
+          "description": "Track length in km."
+        },
+        "manual": {
+          "const": true,
+          "description": "Logged by hand, no track stored."
+        },
+        "shared": {
+          "type": "boolean",
+          "description": "Opted in to the club list."
+        }
+      },
+      "required": [
+        "id",
+        "sourceName",
+        "pilot",
+        "glider",
+        "site",
+        "date",
+        "fixCount",
+        "startTime",
+        "endTime"
+      ]
+    },
+    "Fix": {
+      "description": "One track point.",
+      "type": "object",
+      "properties": {
+        "t": {
+          "type": "number",
+          "description": "Unix epoch milliseconds (UTC)."
+        },
+        "lat": {
+          "type": "number",
+          "description": "Latitude in degrees."
+        },
+        "lon": {
+          "type": "number",
+          "description": "Longitude in degrees."
+        },
+        "alt": {
+          "type": "number",
+          "description": "Altitude in metres as recorded, GPS or pressure altitude."
+        }
+      },
+      "required": [
+        "t",
+        "lat",
+        "lon",
+        "alt"
+      ]
+    },
+    "Flight": {
+      "description": "A parsed flight with its track.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Flight id."
+        },
+        "sourceName": {
+          "type": "string",
+          "description": "Name of the file or source the flight came from."
+        },
+        "pilot": {
+          "type": "string",
+          "description": "Pilot name."
+        },
+        "glider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Glider, if known."
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Launch site, if known."
+        },
+        "date": {
+          "type": "string",
+          "description": "Flight date, ISO 8601 (YYYY-MM-DD)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free text notes."
+        },
+        "shared": {
+          "type": "boolean",
+          "description": "Opted in to the club list of the sync server."
+        },
+        "fixes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Fix"
+          },
+          "description": "Track points sorted by time. Not empty."
+        }
+      },
+      "required": [
+        "id",
+        "sourceName",
+        "pilot",
+        "glider",
+        "site",
+        "date",
+        "fixes"
+      ]
+    },
+    "ManualEntry": {
+      "description": "A flight logged by hand, without a track.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "An existing id replaces that entry, leave it out for a new one."
+        },
+        "date": {
+          "type": "string",
+          "description": "Flight date, ISO 8601 (YYYY-MM-DD)."
+        },
+        "pilot": {
+          "type": "string",
+          "description": "Pilot name."
+        },
+        "glider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Glider, if known."
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Launch site, if known."
+        },
+        "durationMin": {
+          "type": "number",
+          "description": "Airtime in minutes."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free text notes."
+        }
+      },
+      "required": [
+        "date",
+        "pilot",
+        "glider",
+        "site",
+        "durationMin",
+        "notes"
+      ]
+    },
+    "MetaPatch": {
+      "description": "The fields of a logbook entry that can be changed. A field that is left out stays as it is.",
+      "type": "object",
+      "properties": {
+        "pilot": {
+          "type": "string",
+          "description": "Pilot name."
+        },
+        "glider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Glider, null clears it."
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Launch site, null clears it."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free text notes."
+        }
+      }
+    }
+  }
+}

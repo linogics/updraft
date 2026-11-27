@@ -12,7 +12,7 @@
 // - A service member whose TSDoc has the tag `@write` changes state, every other one only reads.
 // - With [schemaDir], every service also gets <schemaDir>/vendor-name-major.json, a `ServiceSchema` (see api.d.ts)
 //   that the app uses to check calls. The mapping is syntactic: string literal unions become enums, local interfaces and
-//   aliases become $defs, functions become x-kind function and any type from another file becomes x-kind opaque.
+//   aliases become $defs, functions become x-kind function, Promise<T> becomes x-kind promise with the schema of T in resolves and any type from another file becomes x-kind opaque.
 // - Every member needs a TSDoc comment, otherwise the generator fails. The `on(event: XEvent, fn)` member is described in the Events table.
 // - XEvent is a string-literal union and each member has its own comment, which becomes "when it fires".
 // - Exported interfaces and type aliases of the same file that the members use are listed under Types.
@@ -125,6 +125,7 @@ function schemaOfType(node, defs) {
       const name = node.typeName.getText(sf);
       const args = node.typeArguments ?? [];
       if (name === 'Readonly') return S(args[0]);
+      if (name === 'Promise') return { 'x-kind': 'promise', resolves: S(args[0]) };
       if (name === 'Array' || name === 'ReadonlyArray') return { type: 'array', items: S(args[0]) };
 
       if (name === 'Record') {

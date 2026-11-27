@@ -10,6 +10,7 @@ export function typeText(schema: JsonSchema): string {
   if (kind === 'function') return 'function';
   if (kind === 'opaque') return 'opaque';
   if (kind === 'void') return 'void';
+  if (kind === 'promise') return `Promise<${schema.resolves ? typeText(schema.resolves) : 'unknown'}>`;
 
   if (schema.anyOf) return schema.anyOf.map(typeText).join(' | ');
   if ('const' in schema) return JSON.stringify(schema.const);

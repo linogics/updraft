@@ -13,6 +13,9 @@ it('renders readable types', () => {
   expect(typeText({ anyOf: [{ $ref: '#/$defs/Wind' }, { type: 'null' }] })).toBe('Wind | null');
   expect(typeText({ type: 'array', items: { type: 'string', enum: ['a', 'b'] } })).toBe('("a" | "b")[]');
   expect(typeText({ 'x-kind': 'void' })).toBe('void');
+  expect(typeText({ 'x-kind': 'promise', resolves: { type: 'array', items: { type: 'string' } } })).toBe(
+    'Promise<string[]>'
+  );
   expect(typeText({})).toBe('unknown');
 });
 

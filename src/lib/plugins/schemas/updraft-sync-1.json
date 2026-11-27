@@ -1,0 +1,74 @@
+{
+  "name": "updraft/sync@1",
+  "description": "The sync of the logbook with a server, provided by the app on every page. Signing in and out stays with the user.",
+  "methods": {
+    "status": {
+      "description": "The current sync state. A new object on every call.",
+      "access": "read",
+      "params": [],
+      "returns": {
+        "$ref": "#/$defs/SyncInfo"
+      }
+    },
+    "syncNow": {
+      "description": "Runs a sync now. Resolves when it ended, also when nothing ran because the user is not signed in or a sync just ran. Failures show in the sync panel of the app and never reject.",
+      "access": "write",
+      "params": [],
+      "returns": {
+        "x-kind": "promise",
+        "resolves": {
+          "x-kind": "void"
+        }
+      }
+    }
+  },
+  "events": {
+    "status": {
+      "description": "The status changed: signed in or out, a server was chosen or forgotten, a sync started or ended."
+    }
+  },
+  "$defs": {
+    "SyncInfo": {
+      "description": "The state of the sync with a server.",
+      "type": "object",
+      "properties": {
+        "signedIn": {
+          "type": "boolean",
+          "description": "Whether the user is signed in to a server."
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Address of the chosen server, or null when none is chosen."
+        },
+        "lastSyncAt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Time of the last finished sync in epoch ms, or null when none ran yet."
+        },
+        "busy": {
+          "type": "boolean",
+          "description": "Whether a sync is running right now."
+        }
+      },
+      "required": [
+        "signedIn",
+        "url",
+        "lastSyncAt",
+        "busy"
+      ]
+    }
+  }
+}

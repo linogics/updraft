@@ -13,6 +13,7 @@
   import { drag } from '#lib/components/studio/panelDrag.svelte';
   import Toolbar from '#lib/components/Toolbar.svelte';
   import { loadRuntimeConfig } from '#lib/config';
+  import { loadFlights } from '#lib/data/loadFlights';
   import type { Flight } from '#lib/domain/model';
   import { decodeScene, encodeScene, resolveTerrain } from '#lib/domain/scene';
   import { m } from '#lib/paraglide/messages';
@@ -21,7 +22,6 @@
   import { studioLayout } from '#lib/state/studioLayout.svelte';
   import { useNeed } from '#lib/state/useNeed.svelte';
   import { xcPrefs } from '#lib/state/xcPrefs.svelte';
-  import { flightRepository } from '#lib/storage';
   import { importAndAdd } from '#lib/studio/addPilots';
   import { provideAnalysisService } from '#lib/studio/analysisService.svelte';
   import { DOCK_LABELS, DOCKS } from '#lib/studio/panels';
@@ -84,9 +84,7 @@
         return;
       }
     } else {
-      flights = (await Promise.all(scene.flightIds.map((id) => flightRepository.get(id)))).filter(
-        (f): f is Flight => !!f
-      );
+      flights = await loadFlights(scene.flightIds);
     }
 
     if (!flights.length) {

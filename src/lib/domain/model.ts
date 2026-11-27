@@ -2,31 +2,14 @@
 // in IndexedDB now and sent to / computed on a server later.
 
 import type { ClubStats } from '../club/stats';
+import type { Fix, Flight as PublicFlight } from '../plugins/api';
 
-export interface Fix {
-  /** Unix epoch milliseconds (UTC). */
-  t: number;
-  lat: number;
-  lon: number;
-  /** Altitude in metres as recorded (GPS, or pressure altitude as fallback). */
-  alt: number;
-}
+export type { Fix };
 
-export interface Flight {
-  id: string;
-  sourceName: string;
-  pilot: string;
-  glider: string | null;
-  site: string | null;
-  /** Flight date, ISO 8601 (YYYY-MM-DD). */
-  date: string;
-  /** Free text, edited in the logbook. */
-  notes?: string;
-  /** Opted in to the club list of the sync server. */
-  shared?: boolean;
+/** The stored flight. The shape plugins see, plus the club figures the app computes. */
+export interface Flight extends PublicFlight {
   /** Figures the club shows without the track. Present while `shared` is true. */
   club?: ClubStats;
-  fixes: Fix[];
 }
 
 export type PhaseKind = 'thermalling' | 'gliding' | 'searching';
