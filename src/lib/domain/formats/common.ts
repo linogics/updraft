@@ -41,12 +41,20 @@ const xmlUnescape = (s: string) =>
 
 const cdata = (s: string) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, t: string) => xmlEscape(t));
 
+// matchAll clones the regex, so sharing the global one keeps lastIndex untouched.
+const tagRegexes = new Map<string, RegExp>();
+
 /**
  * Inner text of every `<tag>` element, in document order. Any namespace prefix (also on `tag`) is ignored
  * and CDATA is unwrapped. Regex instead of DOMParser so it also runs under node.
  */
 export function xmlTexts(xml: string, tag: string): string[] {
-  const name = `(?:[\\w.-]+:)?${tag.replace(/^.*:/, '')}`;
-  const re = new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, 'g');
+  let re = tagRegexes.get(tag);
+  if (!re) {
+    const name = `(?:[\\w.-]+:)?${tag.replace(/^.*:/, '')}`;
+    re = new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, 'g');
+    tagRegexes.set(tag, re);
+  }
+
   return [...xml.matchAll(re)].map((m) => xmlUnescape(cdata(m[1]).trim()));
 }

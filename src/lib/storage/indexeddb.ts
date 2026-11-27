@@ -13,14 +13,7 @@ import type { SyncChange, SyncState, SyncType } from '../sync/types';
 import { leagueCacheId } from '../xc/leagues';
 import type { XcScore } from '../xc/types';
 import { notifyLocalChange } from './localChange';
-import {
-  type Backup,
-  type FlightRepository,
-  type FlightSummary,
-  type ManualEntry,
-  type MetaPatch,
-  summarize
-} from './repository';
+import { type Backup, type FlightSummary, type ManualEntry, type MetaPatch, summarize } from './repository';
 import { isCameraPath, isFlight, isManual, isObj } from './validate';
 
 interface CameraPath {
@@ -73,7 +66,7 @@ const xcKey = (flightId: string, league: string) => `${flightId}|${leagueCacheId
 
 const pathKey = (flightIds: string[]) => [...flightIds].sort().join('|');
 
-export class IndexedDbFlightRepository implements FlightRepository {
+export class IndexedDbFlightRepository {
   private db: Promise<IDBPDatabase<FlightDb>>;
 
   constructor(name = 'updraft') {
@@ -96,6 +89,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     });
   }
 
+  /** Camera tracks for a set of flights. The order of ids does not matter. Defaults when none saved. */
   async getCameraTracks(flightIds: string[]): Promise<CameraTracks> {
     // Records of the old keyframe format have no tracks and fall back to the defaults.
     const record: { tracks?: unknown } | undefined = await (await this.db).get('cameraPaths', pathKey(flightIds));
@@ -113,6 +107,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     notifyLocalChange();
   }
 
+  /** Cached XC score. Undefined when never computed, null when computed but nothing scored. Dropped with the flight. */
   async getXcScore(flightId: string, league: string): Promise<XcScore | null | undefined> {
     return (await (await this.db).get('xcScores', xcKey(flightId, league)))?.score;
   }
@@ -200,6 +195,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     if (summary) notifyLocalChange();
   }
 
+  /** Flights, manual entries and camera paths. Prefs and token are added by the backup layer. */
   async exportAll(): Promise<Backup> {
     const db = await this.db;
     const [flights, summaries, cameraPaths] = await Promise.all([
@@ -262,6 +258,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     notifyLocalChange();
   }
 
+  /** Local changes not yet pushed. Prefs are not included, the sync engine detects them itself. */
   async pendingChanges(): Promise<SyncChange[]> {
     const tx = (await this.db).transaction(['flights', 'summaries', 'cameraPaths', 'sync'], 'readonly');
     const changes: SyncChange[] = [];
@@ -286,6 +283,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     return changes;
   }
 
+  /** Clears the dirty flag, but not for records that were written again since. */
   async markPushed(changes: SyncChange[]): Promise<void> {
     const tx = (await this.db).transaction('sync', 'readwrite');
     for (const c of changes) {
@@ -296,6 +294,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     await tx.done;
   }
 
+  /** Writes pulled changes without marking them dirty. Newer wins, invalid ones are counted and skipped. */
   async applyRemote(changes: SyncChange[]): Promise<{ applied: number; invalid: number }> {
     const tx = (await this.db).transaction(['flights', 'summaries', 'cameraPaths', 'xcScores', 'sync'], 'readwrite');
     let applied = 0;
@@ -338,6 +337,7 @@ export class IndexedDbFlightRepository implements FlightRepository {
     return { applied, invalid };
   }
 
+  /** Marks every record dirty, tombstones included, so the next push uploads everything. Keeps updatedAt. */
   async markAllDirty(): Promise<void> {
     const tx = (await this.db).transaction(['flights', 'summaries', 'cameraPaths', 'sync'], 'readwrite');
     const sync = tx.objectStore('sync');

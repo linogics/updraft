@@ -1,5 +1,5 @@
+import type { IndexedDbFlightRepository } from '../storage/indexeddb';
 import { onLocalChange } from '../storage/localChange';
-import type { FlightRepository } from '../storage/repository';
 import { applyRemotePrefs, collectPrefChanges } from './prefs';
 import type { SyncTransport } from './types';
 
@@ -31,7 +31,7 @@ export class SyncEngine {
   private readonly onApplied?: (count: number) => void;
 
   constructor(
-    private repo: FlightRepository,
+    private repo: IndexedDbFlightRepository,
     private transport: SyncTransport,
     opts: SyncOptions = {}
   ) {

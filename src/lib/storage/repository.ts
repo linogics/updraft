@@ -1,8 +1,6 @@
 import type { CameraTracks } from '../domain/cameraPath';
 import { distance } from '../domain/geo';
 import type { Flight } from '../domain/model';
-import type { SyncChange, SyncState } from '../sync/types';
-import type { XcScore } from '../xc/types';
 
 /** Flight metadata without fixes, for listings. */
 export interface FlightSummary {
@@ -47,38 +45,6 @@ export interface Backup {
   prefs: Record<string, unknown>;
   ionToken?: string;
   openaipKey?: string;
-}
-
-/**
- * Persistence boundary. V1 stores flights in the browser (IndexedDB);
- * a later HTTP implementation talks to the backend with the same contract.
- */
-export interface FlightRepository {
-  list(): Promise<FlightSummary[]>;
-  get(id: string): Promise<Flight | undefined>;
-  save(flight: Flight): Promise<void>;
-  delete(id: string): Promise<void>;
-  /** Camera tracks for a set of flights. The order of ids does not matter. Defaults when none saved. */
-  getCameraTracks(flightIds: string[]): Promise<CameraTracks>;
-  saveCameraTracks(flightIds: string[], tracks: CameraTracks): Promise<void>;
-  /** Cached XC score. Undefined when never computed, null when computed but nothing scored. Dropped with the flight. */
-  getXcScore(flightId: string, league: string): Promise<XcScore | null | undefined>;
-  putXcScore(flightId: string, league: string, score: XcScore | null): Promise<void>;
-  saveManual(entry: ManualEntry): Promise<void>;
-  updateMeta(id: string, patch: MetaPatch): Promise<void>;
-  /** Flights, manual entries and camera paths. Prefs and token are added by the backup layer. */
-  exportAll(): Promise<Backup>;
-  importAll(backup: Backup, mode: 'merge' | 'replace'): Promise<void>;
-  /** Local changes not yet pushed. Prefs are not included, the sync engine detects them itself. */
-  pendingChanges(): Promise<SyncChange[]>;
-  /** Clears the dirty flag, but not for records that were written again since. */
-  markPushed(changes: SyncChange[]): Promise<void>;
-  /** Writes pulled changes without marking them dirty. Newer wins, invalid ones are counted and skipped. */
-  applyRemote(changes: SyncChange[]): Promise<{ applied: number; invalid: number }>;
-  /** Marks every record dirty, tombstones included, so the next push uploads everything. Keeps updatedAt. */
-  markAllDirty(): Promise<void>;
-  getSyncState(): Promise<SyncState>;
-  setSyncState(state: SyncState): Promise<void>;
 }
 
 export function summarize(flight: Flight): FlightSummary {
