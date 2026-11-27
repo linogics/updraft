@@ -1,6 +1,7 @@
 import type { TransitionSummary } from '#lib/domain/analysis/transitions';
 import type { FlightStats } from '#lib/domain/model';
 import type { AnalysisEvent, AnalysisService } from '#lib/plugins/api';
+import { analysisSchema } from '#lib/plugins/coreSchemas';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { StudioState } from '#lib/state/studio.svelte';
@@ -27,6 +28,7 @@ export function provideAnalysisService(studio: Host) {
           return lf ? studio.transitionSummary(lf, ref === 'agl') : null;
         }
       }),
-    'updraft'
+    'updraft',
+    analysisSchema
   );
 }

@@ -77,7 +77,7 @@ describe('updraft/studio@1', () => {
       s.setVisible('nope', false);
       expect(studio.setVisible).toHaveBeenCalledTimes(1);
       expect(studio.setVisible).toHaveBeenCalledWith('a', false);
-      expect(() => s.setVisible('a', 0 as never)).toThrow('Visible must be true or false.');
+      expect(() => s.setVisible('a', 0 as never)).toThrow('visible: expected boolean');
     });
 
     it('switches the league through the studio', () => {
@@ -130,7 +130,8 @@ describe('updraft/studio@1', () => {
 
     it('refuses a bad range and leaves the marks alone', () => {
       const { studio, s } = setup();
-      const finite = 'Range start and end must be finite numbers.';
+      // The schema check runs first, the service's own messages only reach unchecked callers.
+      const finite = /expected number/;
       expect(() => s.setRange(NaN, 3000)).toThrow(finite);
       expect(() => s.setRange(1000, Infinity)).toThrow(finite);
       expect(() => s.setRange('1' as never, 3000)).toThrow(finite);

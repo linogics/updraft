@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { validatePlugin } from './core';
 
+const prov = (name: string) => ({ schema: { name, description: '', methods: {} }, create: () => ({}) });
 const ok = { id: 'acme/wind', name: 'Wind', kind: 'studio', apiVersion: 2, dock: 'right', mount: () => {} };
 
 describe('validatePlugin', () => {
@@ -35,9 +36,32 @@ describe('validatePlugin', () => {
     ['mount not a function', { ...ok, mount: 'x' }, /"mount"/],
     ['drawExport not a function', { ...ok, drawExport: 1 }, /"drawExport"/],
     ['provides not an object', { ...ok, provides: 'x' }, /"provides"/],
-    ['bad service name', { ...ok, provides: { wind: () => ({}) } }, /service name/],
-    ['service major 0', { ...ok, provides: { 'acme/wind@0': () => ({}) } }, /service name/],
-    ['factory not a function', { ...ok, provides: { 'acme/wind@1': {} } }, /factory/],
+    ['bad service name', { ...ok, provides: { wind: prov('wind') } }, /service name/],
+    ['service major 0', { ...ok, provides: { 'acme/wind@0': prov('acme/wind@0') } }, /service name/],
+    [
+      'factory not a function',
+      { ...ok, provides: { 'acme/wind@1': { schema: prov('acme/wind@1').schema } } },
+      /factory/
+    ],
+    ['schema missing', { ...ok, provides: { 'acme/wind@1': { create: () => ({}) } } }, /"schema"/],
+    [
+      'schema name differs',
+      { ...ok, provides: { 'acme/wind@1': { ...prov('acme/wind@1'), schema: { ...prov('acme/x@1').schema } } } },
+      /must be "acme\/wind@1"/
+    ],
+    [
+      'method without access',
+      {
+        ...ok,
+        provides: {
+          'acme/wind@1': {
+            create: () => ({}),
+            schema: { name: 'acme/wind@1', description: '', methods: { at: { params: [], returns: {} } } }
+          }
+        }
+      },
+      /"access"/
+    ],
     ['requires not a list', { ...ok, requires: 'updraft/studio@1' }, /"requires"/],
     ['bad required name', { ...ok, requires: ['studio'] }, /"requires"/]
   ])('rejects %s', (_, mod, message) => {
@@ -45,7 +69,7 @@ describe('validatePlugin', () => {
   });
 
   it('accepts provides and requires', () => {
-    const withServices = { ...ok, provides: { 'acme/wind@1': () => ({}) }, requires: ['updraft/studio@1'] };
+    const withServices = { ...ok, provides: { 'acme/wind@1': prov('acme/wind@1') }, requires: ['updraft/studio@1'] };
     expect(validatePlugin(withServices)).toBe(withServices);
   });
 
@@ -225,7 +249,13 @@ describe('validatePlugin', () => {
   });
 
   describe('service kind', () => {
-    const svc = { id: 'acme/svc', name: 'Svc', kind: 'service', apiVersion: 1, provides: { 'acme/svc@1': () => ({}) } };
+    const svc = {
+      id: 'acme/svc',
+      name: 'Svc',
+      kind: 'service',
+      apiVersion: 1,
+      provides: { 'acme/svc@1': prov('acme/svc@1') }
+    };
 
     it('accepts a headless plugin that provides a service', () => {
       expect(validatePlugin(svc)).toBe(svc);

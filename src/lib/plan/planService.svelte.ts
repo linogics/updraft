@@ -1,6 +1,7 @@
 import type { LatLon } from '#lib/domain/geo';
 import { MAX_ROUTE_POINTS } from '#lib/domain/route';
 import type { PlanEvent, PlanService } from '#lib/plugins/api';
+import { planSchema } from '#lib/plugins/coreSchemas';
 import { eventsOf } from '#lib/plugins/events.svelte';
 import { services } from '#lib/plugins/services';
 import type { PlanState } from '#lib/state/plan.svelte';
@@ -94,7 +95,8 @@ export function providePlanService(
         }
       });
     },
-    'updraft'
+    'updraft',
+    planSchema
   );
 }
 

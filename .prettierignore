@@ -11,3 +11,4 @@ playwright-report
 docs
 package-lock.json
 project.inlang/cache
+src/lib/plugins/schemas

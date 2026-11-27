@@ -8,18 +8,39 @@ describe('updraft/flight-analysis@1', () => {
   afterEach(() => services.unregisterOwner('updraft'));
 
   it('looks up stats and transitions by id and returns null for unknown ids', () => {
-    const stats = { duration: 1 };
+    const stats = {
+      duration: 1,
+      trackLength: 1,
+      straightDistance: 1,
+      maxDistanceFromTakeoff: 1,
+      maxAlt: 1,
+      minAlt: 1,
+      takeoffAlt: 1,
+      landingAlt: 1,
+      maxClimb: 1,
+      maxSink: -1,
+      phaseShare: { thermalling: 0.3, gliding: 0.5, searching: 0.2 },
+      glideRatio: null
+    };
+    const summary = (count: number) => ({
+      count,
+      avgStartAlt: null,
+      avgEndAlt: null,
+      lowestArrival: null,
+      avgGlideRatio: null,
+      avgSpeed: null
+    });
     const studio = {
       flights: [{ flight: { id: 'a' }, analysis: { stats } }],
-      transitionSummary: (_lf: unknown, agl: boolean) => ({ count: agl ? 2 : 1 })
+      transitionSummary: (_lf: unknown, agl: boolean) => summary(agl ? 2 : 1)
     };
     provideAnalysisService(studio as never);
     const s = services.use<AnalysisService>(ANALYSIS_SERVICE);
 
     expect(s.stats('a')).toBe(stats);
     expect(s.stats('x')).toBeNull();
-    expect(s.transitions('a', 'msl')).toEqual({ count: 1 });
-    expect(s.transitions('a', 'agl')).toEqual({ count: 2 });
+    expect(s.transitions('a', 'msl')).toEqual(summary(1));
+    expect(s.transitions('a', 'agl')).toEqual(summary(2));
     expect(s.transitions('x', 'msl')).toBeNull();
   });
 

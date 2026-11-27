@@ -32,14 +32,88 @@ export interface ServiceContext {
  */
 export type ServiceFactory = (ctx: ServiceContext) => object;
 
+/**
+ * The JSON Schema subset that describes values in a service schema. Numbers must be finite.
+ * `$ref` only points into `$defs` of the same service schema, as `#/$defs/Name`.
+ */
+export interface JsonSchema {
+  /** The JSON type. `number` rejects `NaN` and infinities, `integer` is a whole number. */
+  type?: 'string' | 'number' | 'integer' | 'boolean' | 'null' | 'object' | 'array';
+  /** The value must be one of these. */
+  enum?: (string | number | boolean | null)[];
+  /** The value must equal this. */
+  const?: unknown;
+  /** Schemas of the named fields of an object. Extra fields are allowed. */
+  properties?: Record<string, JsonSchema>;
+  /** Names of the fields that must be present, which means not `undefined`. */
+  required?: string[];
+  /** `false` forbids extra fields, a schema checks every field that is not in `properties`. */
+  additionalProperties?: boolean | JsonSchema;
+  /** Schema of every item of an array. */
+  items?: JsonSchema;
+  /** The value must match at least one of these. */
+  anyOf?: JsonSchema[];
+  /** Reference to a shared schema, `#/$defs/Name`. */
+  $ref?: string;
+  /** Lower bound of a number, inclusive. */
+  minimum?: number;
+  /** Upper bound of a number, inclusive. */
+  maximum?: number;
+  /** Human readable text, shown in the API explorer. */
+  description?: string;
+  /**
+   * `function` is a callback or a function value, `opaque` is a host object that cannot be described and is
+   * not checked, for example the Cesium viewer, `void` is the absence of a value.
+   */
+  'x-kind'?: 'function' | 'opaque' | 'void';
+}
+
+/** One method of a service. */
+export interface ServiceMethodSchema {
+  /** What the method does. Shown in the API explorer. */
+  description: string;
+  /** `read` returns data and changes nothing, `write` changes state. Generated from the `@write` TSDoc tag. */
+  access: 'read' | 'write';
+  /** The parameters in call order. */
+  params: { name: string; optional?: boolean; schema: JsonSchema }[];
+  /** The result. A method without a result returns `{ "x-kind": "void" }`. */
+  returns: JsonSchema;
+}
+
+/**
+ * The machine readable description of one service: methods with parameters, results and whether they write,
+ * and events. Plugins ship it next to the factory. Generate it from your own `.d.ts` with `scripts/gen-plugin-docs.mjs`.
+ * Calls across an installed plugin are checked against it, a call or result that does not match throws.
+ */
+export interface ServiceSchema {
+  /** The service name, the same as the key in `provides`. */
+  name: string;
+  /** What the service is for. Shown in the API explorer. */
+  description: string;
+  /** The methods by name. A function `on(event, fn)` is not listed, declare `events` instead. */
+  methods: Record<string, ServiceMethodSchema>;
+  /** The events `on` accepts, by name. Leave it out for a service without `on`. */
+  events?: Record<string, { description: string }>;
+  /** Shared schemas that `$ref` points to. */
+  $defs?: Record<string, JsonSchema>;
+}
+
+/** What a plugin offers under one service name. */
+export interface ServiceProvision {
+  /** Describes the service, see `ServiceSchema`. */
+  schema: ServiceSchema;
+  /** Builds the service on its first use. */
+  create: ServiceFactory;
+}
+
 /** Fields every plugin kind may have. */
 export interface PluginBase {
   /**
    * Services this plugin offers, by name `vendor/service@major`, each part matching `[a-z0-9-]{1,40}`.
-   * The first provider of a name wins, a second one is refused. The vendor `updraft` is reserved.
+   * Each comes with its `schema`. The first provider of a name wins, a second one is refused. The vendor `updraft` is reserved.
    * Removing the plugin removes its services.
    */
-  provides?: Record<string, ServiceFactory>;
+  provides?: Record<string, ServiceProvision>;
   /** Services this plugin uses. `ctx.use` only hands out these. */
   requires?: string[];
 }
@@ -109,7 +183,7 @@ export interface ServicePlugin extends PluginBase {
   /** Must be `1`. */
   apiVersion: 1;
   /** Must not be empty. */
-  provides: Record<string, ServiceFactory>;
+  provides: Record<string, ServiceProvision>;
 }
 
 // Converter kind
@@ -472,13 +546,20 @@ export interface StudioService {
   units(): Readonly<Units>;
   /** The altitude reference the user chose for transition altitudes. */
   altRef(): AltRef;
-  /** Moves playback to `ms` on the studio clock. The studio clamps it to the playable range. */
+  /**
+   * Moves playback to `ms` on the studio clock. The studio clamps it to the playable range.
+   * @write
+   */
   seek(ms: number): void;
-  /** Selects the pilot with that flight id. An unknown id is ignored. */
+  /**
+   * Selects the pilot with that flight id. An unknown id is ignored.
+   * @write
+   */
   select(id: string): void;
   /**
    * Shows or hides the pilot with that flight id. An unknown id is ignored. Anything but a boolean throws
    * `Visible must be true or false.`. Fires `flights`.
+   * @write
    */
   setVisible(id: string, visible: boolean): void;
   /** Id of the scoring league in use. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed. */
@@ -488,11 +569,18 @@ export interface StudioService {
   /**
    * Switches the scoring league like the user would, so scores of the old league are dropped and scoring restarts.
    * An unknown id throws `Unknown league "x".`. The current league is a no-op.
+   * @write
    */
   setLeague(id: string): void;
-  /** Starts playback. A no-op while playing. At the end it starts again from the beginning. */
+  /**
+   * Starts playback. A no-op while playing. At the end it starts again from the beginning.
+   * @write
+   */
   play(): void;
-  /** Stops playback. A no-op while paused. */
+  /**
+   * Stops playback. A no-op while paused.
+   * @write
+   */
   pause(): void;
   /** Whether playback is running. */
   playing(): boolean;
@@ -505,9 +593,13 @@ export interface StudioService {
    * Sets both marks. Both must be finite numbers with `start` before `end`, otherwise it throws
    * `Range start and end must be finite numbers.` or `Range start must be before end.`.
    * Values outside the studio range are clamped into it first, and the clamped values must still be in order, so a range entirely outside the studio throws `Range start must be before end.` too.
+   * @write
    */
   setRange(start: number, end: number): void;
-  /** Removes both marks, so the export covers the whole studio range. */
+  /**
+   * Removes both marks, so the export covers the whole studio range.
+   * @write
+   */
   clearRange(): void;
   /** The Cesium viewer. Null while there is no 3D view, for example in the 2D map. The `viewer` event fires when it changes. */
   viewer(): Viewer | null;
@@ -620,12 +712,16 @@ export interface PlanService {
    * Replaces the whole route. The user can undo it in the planner, as one step. An empty array clears the route.
    * Throws when the argument is not an array, has more than 100 points, or a point lacks a finite `lat` in
    * [-90, 90] or `lon` in [-180, 180]. The points are copied.
+   * @write
    */
   setRoute(points: readonly { lat: number; lon: number }[]): void;
   /** Id of the active XC scoring league. Plugin leagues are `<plugin id>:<league id>`. `XContest` when the chosen one was removed. */
   league(): string;
   /** The leagues the user can pick. The same frozen array until the list changes. */
   leagues(): readonly Readonly<{ id: string; label: string }>[];
-  /** Switches the XC league for the whole app, it is a global preference. An unknown id throws `Unknown league "x".`. */
+  /**
+   * Switches the XC league for the whole app, it is a global preference. An unknown id throws `Unknown league "x".`.
+   * @write
+   */
   setLeague(id: string): void;
 }

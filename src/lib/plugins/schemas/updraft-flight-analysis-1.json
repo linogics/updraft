@@ -1,0 +1,235 @@
+{
+  "name": "updraft/flight-analysis@1",
+  "description": "Provided by the studio while it is open, not by the planner. Lookups are by flight id and return null for an unknown id. Results are the studio's own objects, read only.",
+  "methods": {
+    "stats": {
+      "description": "Duration, distances, altitudes, max climb and sink, glide ratio and phase shares of the flight.",
+      "access": "read",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "returns": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/FlightStats"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "transitions": {
+      "description": "Summary of the glides between climbs, with altitudes in `'msl'` or `'agl'`. AGL values are null until ground heights have loaded, so hold `ctx.need('ground')` while asking for them.",
+      "access": "read",
+      "params": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "ref",
+          "schema": {
+            "$ref": "#/$defs/AltRef"
+          }
+        }
+      ],
+      "returns": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/TransitionSummary"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "events": {
+    "changed": {
+      "description": "Flights changed or ground heights arrived, so stats and transitions may differ."
+    }
+  },
+  "$defs": {
+    "FlightStats": {
+      "description": "Statistics of one flight. All values are SI.",
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "number",
+          "description": "Seconds."
+        },
+        "trackLength": {
+          "type": "number",
+          "description": "Metres along the track."
+        },
+        "straightDistance": {
+          "type": "number",
+          "description": "Metres, straight line takeoff to landing."
+        },
+        "maxDistanceFromTakeoff": {
+          "type": "number",
+          "description": "Metres, furthest point from takeoff."
+        },
+        "maxAlt": {
+          "type": "number",
+          "description": "Highest altitude in metres."
+        },
+        "minAlt": {
+          "type": "number",
+          "description": "Lowest altitude in metres."
+        },
+        "takeoffAlt": {
+          "type": "number",
+          "description": "Altitude at takeoff in metres."
+        },
+        "landingAlt": {
+          "type": "number",
+          "description": "Altitude at landing in metres."
+        },
+        "maxClimb": {
+          "type": "number",
+          "description": "Best climb rate in m/s."
+        },
+        "maxSink": {
+          "type": "number",
+          "description": "Worst sink rate in m/s, a negative number."
+        },
+        "phaseShare": {
+          "type": "object",
+          "properties": {
+            "thermalling": {
+              "type": "number"
+            },
+            "gliding": {
+              "type": "number"
+            },
+            "searching": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "thermalling",
+            "gliding",
+            "searching"
+          ],
+          "description": "Share of time per phase, 0..1."
+        },
+        "glideRatio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Average glide ratio over gliding phases, null if none."
+        }
+      },
+      "required": [
+        "duration",
+        "trackLength",
+        "straightDistance",
+        "maxDistanceFromTakeoff",
+        "maxAlt",
+        "minAlt",
+        "takeoffAlt",
+        "landingAlt",
+        "maxClimb",
+        "maxSink",
+        "phaseShare",
+        "glideRatio"
+      ]
+    },
+    "AltRef": {
+      "description": "The altitude reference for transition altitudes.",
+      "type": "string",
+      "enum": [
+        "msl",
+        "agl"
+      ]
+    },
+    "TransitionSummary": {
+      "description": "Transition altitudes: where climbs were left and the next one found. Glides only.",
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "number",
+          "description": "Number of glides."
+        },
+        "avgStartAlt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Average altitude where the glides started, in metres. Null when there is none."
+        },
+        "avgEndAlt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Average altitude where the glides ended, in metres. Null when there is none."
+        },
+        "lowestArrival": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Lowest altitude where a glide ended, in metres. Null when there is none."
+        },
+        "avgGlideRatio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Average glide ratio of the glides. Null when there is none."
+        },
+        "avgSpeed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "m/s."
+        }
+      },
+      "required": [
+        "count",
+        "avgStartAlt",
+        "avgEndAlt",
+        "lowestArrival",
+        "avgGlideRatio",
+        "avgSpeed"
+      ]
+    }
+  }
+}

@@ -19,7 +19,7 @@ A `studio` plugin adds a panel to a dock of the studio. With `hosts` it can also
 | `drawExport` | `(ctx2d: CanvasRenderingContext2D, time: number) => void` | Optional. Paints onto image and video exports. See [Exports](#exports).                                                         |
 | `hosts`      | `('studio' \| 'plan')[]`                                  | Optional, defaults to `['studio']`. A non-empty list without duplicates. `'plan'` also shows the panel in the XC planner.       |
 | `requires`   | `string[]`                                                | Optional. The services the panel uses, for example `updraft/studio@1`.                                                          |
-| `provides`   | `Record<string, ServiceFactory>`                          | Optional. Services the panel offers, registered when the panel is loaded. See [service](../service/README.md).                  |
+| `provides`   | `Record<string, ServiceProvision>`                       | Optional. Services the panel offers, registered when the panel is loaded. See [service](../service/README.md).                  |
 
 The `id` is unique among plugins and built-in panels. It identifies the panel in the saved layout. The vendor `updraft` is reserved for bundled plugins.
 
