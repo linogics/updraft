@@ -1,6 +1,10 @@
 import { m } from '../../paraglide/messages';
 import type { Fix, Flight } from '../model';
 
+/** YYYY-MM-DD in the browser's time zone, so a flight after local midnight keeps its local date. */
+export const localDate = (t: number) =>
+  new Date(t - new Date(t).getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+
 export const baseName = (name: string) => name.replace(/\.[^.]*$/, '');
 
 /**
@@ -23,7 +27,7 @@ export function toFlight(sourceName: string, fixes: Fix[]): Flight {
     pilot: baseName(sourceName),
     glider: null,
     site: null,
-    date: new Date(valid[0].t).toISOString().slice(0, 10),
+    date: localDate(valid[0].t),
     fixes: valid
   };
 }

@@ -1,29 +1,12 @@
+import { read, SYNC_PREF_KEYS, write } from '../sync/prefs';
 import { flightRepository } from './index';
 import type { Backup } from './repository';
 import { isCameraPath, isFlight, isManual, isObj } from './validate';
 
-const PREF_KEYS = ['units', 'thermalPrefs', 'panels', 'airspacePrefs', 'thermalOverlayPrefs', 'xcEnabled'];
+// The studio layout never syncs but belongs in a backup.
+const PREF_KEYS = [...SYNC_PREF_KEYS, 'studioLayout'];
 const TOKEN_KEY = 'cesiumIonToken';
 const OPENAIP_KEY = 'openaipKey';
-
-// Storage can throw (private mode, blocked site data) or be missing (node), so every access is guarded.
-function read(key: string): string | null {
-  try {
-    return typeof localStorage === 'undefined' ? null : localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: string | null) {
-  try {
-    if (typeof localStorage === 'undefined') return;
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, value);
-  } catch {
-    // Not persisted.
-  }
-}
 
 export async function buildBackup(includeToken: boolean): Promise<Backup> {
   const backup = await flightRepository.exportAll();

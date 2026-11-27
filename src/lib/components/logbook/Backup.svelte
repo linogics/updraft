@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { localDate } from '#lib/domain/formats/common';
   import { m } from '#lib/paraglide/messages';
   import { buildBackup, restoreBackup } from '#lib/storage/backup';
 
@@ -23,7 +24,7 @@
       const url = URL.createObjectURL(new Blob([JSON.stringify(backup)], { type: 'application/json' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = `updraft-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `updraft-backup-${localDate(Date.now())}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       say(m.backup_exported({ count: backup.flights.length + backup.manual.length }));
