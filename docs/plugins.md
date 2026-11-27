@@ -383,7 +383,7 @@ Rule fields, all distances in km:
 
 ## Badge plugins
 
-A `badge` plugin adds tiered achievements. Each badge reads the summaries of a pilot's flights and returns one number. The tier is the highest threshold that number reaches. Badge plugins are managed from the logbook Achievements panel. The types are in `src/lib/plugins/api.d.ts`.
+A `badge` plugin adds tiered achievements. Each badge reads the summaries of a pilot's flights and returns one number. The tier is the highest threshold that number reaches. Badge plugins are added with "Add badge plugin" and removed with "Uninstall" in the logbook Achievements panel. Every track flight of the logbook counts, manual entries and demo flights do not. `maxAgl` is only set for flights shared with the club, because terrain heights are not fetched for the whole logbook. The types are in `src/lib/plugins/api.d.ts`.
 
 ```js
 export default {

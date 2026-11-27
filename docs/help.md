@@ -133,6 +133,8 @@ The logbook is the start page.
 - "Add flight without a track" logs a flight you have no file for.
 - Tick flights and click "Open selected in Studio" to open them together.
 - XC type and points are scored in the background for the chosen league.
+- The Achievements panel shows tiered badges from Bronze to Legend, for example for distance, speed, airtime and altitude. Each card shows your best value, the progress to the next tier and the flight that set it. While the flights are analysed the panel shows its progress. Manual entries and the demo flights do not count. Height above ground only counts flights you shared with the club.
+- "Add badge plugin" at the bottom of the panel adds more badges from a plugin URL, "Uninstall" removes it again.
 
 ## Convert
 

@@ -2,8 +2,10 @@
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
 
+  import { countsForBadges } from '#lib/badges/local';
   import { shareFlight } from '#lib/club/share';
   import Dropzone from '#lib/components/Dropzone.svelte';
+  import Achievements from '#lib/components/logbook/Achievements.svelte';
   import Backup from '#lib/components/logbook/Backup.svelte';
   import BarChart from '#lib/components/logbook/BarChart.svelte';
   import Sync from '#lib/components/logbook/Sync.svelte';
@@ -84,6 +86,9 @@
   const COLUMN_LABELS = { main: m.logbook_column_main(), side: m.logbook_column_side() };
   const panels = $derived([
     ...(flights.length ? [{ id: 'charts', title: () => m.logbook_charts(), body: chartsBody }] : []),
+    ...(flights.some(countsForBadges)
+      ? [{ id: 'achievements', title: () => m.achievements_title(), body: achievementsBody }]
+      : []),
     { id: 'flights', title: () => m.logbook_col_flights(), body: flightsBody },
     ...(flights.length ? [{ id: 'breakdown', title: () => m.logbook_breakdown(), body: breakdownBody }] : []),
     { id: 'upload', title: () => m.logbook_upload(), body: uploadBody },
@@ -226,6 +231,10 @@
     <BarChart bars={months} label={m.home_bars_label()} />
     <BarChart bars={years} label={m.logbook_hours_per_year()} />
   </div>
+{/snippet}
+
+{#snippet achievementsBody()}
+  <Achievements {flights} />
 {/snippet}
 
 {#snippet breakdownBody()}
