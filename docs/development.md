@@ -64,7 +64,7 @@ Each one is fine for a club-sized server and marked with a `shortcut:` comment i
 - Club free distance uses the XC route only when the best scored route is a free route. When a triangle scores best, the furthest point from takeoff is used, so the free distance can be too short.
 - The club pilot filter is page state and is lost on reload.
 
-Not yet tested end to end: sharing and the club page against a real server (the server is covered by the conformance test, the UI only against a mocked server), a second pilot opening a shared flight, the side menu at phone width, and the Docker image in `server/`.
+Not yet tested end to end: sharing and the club page against a real server (the server is covered by the contract suite, the UI only against a mocked server), a second pilot opening a shared flight, the side menu at phone width.
 
 ### Possible next steps
 
