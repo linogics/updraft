@@ -55,7 +55,8 @@ export function provideStudioService(studio: Host) {
         altRef: () => void altRefPrefs.ref,
         league: () => void xcPrefs.league,
         playing: () => void studio.playing,
-        range: () => void [studio.exportIn ?? studio.start, studio.exportOut ?? studio.end]
+        range: () => void [studio.exportIn ?? studio.start, studio.exportOut ?? studio.end],
+        viewer: () => void studio.viewer
       });
 
       return Object.freeze<StudioService>({

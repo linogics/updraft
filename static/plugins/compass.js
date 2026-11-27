@@ -170,7 +170,7 @@ export default {
       text.textContent = `${deg}° ${cardinal(deg)}`;
     };
 
-    // The viewer can be replaced or disappear, so re-attach the render listener when its identity changes.
+    // The viewer comes and goes with the 2D/3D switch, so re-attach the render listener on the viewer event.
     /** @type {object | null} */
     let attached = null;
     let detach = () => {};
@@ -188,11 +188,10 @@ export default {
 
     place();
     sync();
-    // The studio has no viewer event, so a slow poll catches the 2D/3D switch. postRender does the per-frame work.
-    const timer = setInterval(sync, 500);
+    // postRender does the per-frame work. The subscription stops on its own on unmount.
+    studio.on('viewer', sync);
 
     return () => {
-      clearInterval(timer);
       detach();
       current = null;
     };

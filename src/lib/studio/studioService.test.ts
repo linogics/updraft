@@ -32,7 +32,17 @@ describe('updraft/studio@1', () => {
   it('has events and refuses unknown ones', () => {
     provideStudioService({ flights: [], time: 0, selected: undefined } as never);
     const s = services.use<StudioService>(STUDIO_SERVICE);
-    for (const e of ['time', 'flights', 'selection', 'units', 'altRef', 'league', 'playing', 'range'] as const) {
+    for (const e of [
+      'time',
+      'flights',
+      'selection',
+      'units',
+      'altRef',
+      'league',
+      'playing',
+      'range',
+      'viewer'
+    ] as const) {
       s.on(e, () => {})();
     }
 
