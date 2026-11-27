@@ -31,6 +31,7 @@ export function summarize(flight: Flight): FlightSummary {
     startTime: fixes[0].t,
     endTime: fixes[fixes.length - 1].t,
     maxAlt,
-    trackKm: m / 1000
+    trackKm: m / 1000,
+    hasTrack: true
   };
 }

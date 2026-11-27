@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import type { BackendPlugin, ConverterPlugin, PluginTrack } from './api';
+import type { ConverterPlugin, PluginTrack } from './api';
 import { validatePlugin } from './core';
 
 const ROOT = join(process.cwd(), 'docs/plugins');
@@ -19,7 +19,7 @@ const examples = (kind: string) =>
 describe('plugin examples', () => {
   const cases: [string, string[]][] = [
     ['studio', [join(STATIC, 'example.js'), join(STATIC, 'compass.js')]],
-    ...['service', 'converter', 'xc-planner', 'badge', 'backend'].map((k): [string, string[]] => [k, examples(k)])
+    ...['service', 'converter', 'xc-planner', 'badge'].map((k): [string, string[]] => [k, examples(k)])
   ];
 
   for (const [kind, files] of cases) {
@@ -42,26 +42,5 @@ describe('plugin examples', () => {
     const text = plugin.write?.(track) as string;
     const back = await plugin.read?.(new File([text], 'p.csv'));
     expect(back).toEqual(track);
-  });
-
-  it('backend example signs in and round trips a change', async () => {
-    const plugin = (await load(join(ROOT, 'backend/examples/memory.js'))) as BackendPlugin;
-    const adapter = plugin.create({ url: 'http://localhost' });
-    await expect(adapter.signIn({ kind: 'password' }, { identity: 'x', password: 'y' })).rejects.toThrow();
-    expect(await adapter.signIn({ kind: 'password' }, { identity: 'demo@example.com', password: 'demo' })).toEqual({
-      user: 'demo@example.com'
-    });
-    expect(adapter.session()).not.toBeNull();
-
-    await adapter.push([{ type: 'pref', id: 'a', updatedAt: 2, data: 'new' }]);
-    await adapter.push([{ type: 'pref', id: 'a', updatedAt: 1, data: 'old' }]);
-    const first = await adapter.pull(null);
-    expect(first.changes).toEqual([{ type: 'pref', id: 'a', updatedAt: 2, data: 'new' }]);
-    expect(first.more).toBe(false);
-
-    const next = await adapter.pull(first.cursor);
-    expect(next.changes).toEqual([]);
-    await adapter.signOut();
-    expect(adapter.session()).toBeNull();
   });
 });

@@ -19,9 +19,8 @@ The `kind` field says what a plugin extends. Each kind has its own guide, its ow
 | `converter`  | A track file format the app can read or write.  | [converter](converter/README.md)     | [api](converter/api.md)                 |
 | `xc-planner` | Export buttons and scoring leagues.             | [xc-planner](xc-planner/README.md)   | [api](xc-planner/api.md)                |
 | `badge`      | Tiered achievements for the logbook.            | [badge](badge/README.md)             | [api](badge/api.md)                     |
-| `backend`    | A sync server the app can connect to.           | [backend](backend/README.md)         | [api](backend/api.md)                   |
 
-Your own sync server does not need a backend plugin if it follows the [sync server spec](backend/server/README.md) (sync HTTP spec v2 is a draft, the app still uses v1, see [v2 guide](../server/README.md)).
+A sync server is not a plugin. Any server that follows the [sync server spec v2](../server/README.md) works with the app as is.
 
 The full typed contract is `/updraft-plugin.d.ts` on the deployed app (source `src/lib/plugins/api.d.ts`). JavaScript plugins can use it in JSDoc, for example `/** @param {import('./updraft-plugin.d.ts').PluginContext} ctx */`. The API reference pages are generated from it, so they cannot drift from the contract.
 
@@ -72,7 +71,7 @@ Fields of every kind:
 | ---------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`       | `string`                                                                       | `vendor/name`, each part matches `[a-z0-9-]{1,40}`, for example `acme/wind-panel`. Unique among plugins of all kinds and bundled plugins. Stable. The vendor `updraft` is reserved for bundled plugins, added plugins cannot use it. |
 | `name`     | `string`                                                                       | Not blank. Shown to the user, for example as the panel title.                                                                                                                                                          |
-| `kind`     | `'studio' \| 'service' \| 'backend' \| 'converter' \| 'xc-planner' \| 'badge'` | What the plugin extends.                                                                                                                                                                                               |
+| `kind`     | `'studio' \| 'service' \| 'converter' \| 'xc-planner' \| 'badge'` | What the plugin extends.                                                                                                                                                                                               |
 | `apiVersion` | `number`                                                                     | Per kind, see [Versioning](#versioning).                                                                                                                                                                               |
 | `provides` | `Record<string, { schema, create }>`                                           | Optional. Services this plugin offers, see [service](service/README.md).                                                                                                                                               |
 | `requires` | `string[]`                                                                     | Optional. Services this plugin uses. `ctx.use` only hands out these.                                                                                                                                                   |
@@ -81,7 +80,7 @@ The fields of each kind are listed in its guide. Common checks that apply to all
 
 - `"id" must look like "vendor/name", each part 1 to 40 characters from a-z, 0-9 and "-".`
 - `"name" must be a non-empty string.`
-- `"kind" must be one of "studio", "service", "backend", "converter", "xc-planner", "badge".`
+- `"kind" must be one of "studio", "service", "converter", "xc-planner", "badge".`
 - `"provides" must be an object of services, each with a schema and a create factory.` and `The factory "create" of "x" must be a function.`
 - `The service name "x" must look like "vendor/service@1", with a-z, 0-9 and "-".`
 - `"requires" must be a list of service names like "vendor/service@1".`
@@ -92,7 +91,7 @@ Only a studio panel gets a `ctx`. It has `use(name)`, `overlay` and `need(kind)`
 
 ## Lifecycle
 
-- An added plugin is known by its URL, id, name and the fields the app needs to list it, for example the dock of a panel or the extensions of a converter. The module is imported when it is needed, so an unused plugin costs nothing. Service plugins and backends are imported when the app starts or when the backend is used. Details are in each guide.
+- An added plugin is known by its URL, id, name and the fields the app needs to list it, for example the dock of a panel or the extensions of a converter. The module is imported when it is needed, so an unused plugin costs nothing. Service plugins are imported when the app starts. Details are in each guide.
 - The module is imported once per page load. After you change the file, reload the page to pick up the new version.
 - Removing a plugin removes its entry, its layout slot, its services and its stored copy.
 
@@ -126,7 +125,7 @@ A plugin that was added earlier but fails to load later, for example because the
 
 ## Versioning
 
-Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, backend, converter, xc-planner and badge kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused, for example with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 studio plugins are not supported.
+Every kind of plugin has its own `apiVersion`. The studio kind is at `2`, the service, converter, xc-planner and badge kinds at `1`. The app supports exactly these values. A plugin with any other value, or none, is refused, for example with "Unsupported apiVersion X, this studio supports 2." It is not mounted. Version 2 of the studio kind replaced the data members of `ctx` (`flights`, `time`, `selectedId`, `units`, `seek`, `select`, `viewer`) with `ctx.use('updraft/studio@1')`. Version 1 studio plugins are not supported.
 
 ## Permissions
 

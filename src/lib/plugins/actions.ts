@@ -4,7 +4,7 @@ import { studioLayout } from '#lib/state/studioLayout.svelte';
 import { pluginPanelId } from '#lib/studio/registry.svelte';
 
 import { badgeMetas } from './badgeKind';
-import { BUILTIN_BACKENDS, BUILTIN_BADGES, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, BUILTIN_XC_PLANNERS } from './builtin';
+import { BUILTIN_BADGES, BUILTIN_CONVERTERS, BUILTIN_PLUGINS, BUILTIN_XC_PLANNERS } from './builtin';
 import { cachePlugin, uncachePlugin } from './cache';
 import { forgetPluginModule, loadPlugin, type PluginKind, pluginUrl } from './core';
 import type { PluginEntry } from './entries';
@@ -29,7 +29,6 @@ export async function addPlugin(
   // Ids are unique across all kinds. Bundled plugin ids are refused too.
   const taken = [
     ...BUILTIN_PLUGINS.map((p) => p.id),
-    ...BUILTIN_BACKENDS.map((p) => p.id),
     ...BUILTIN_CONVERTERS.map((p) => p.id),
     ...BUILTIN_XC_PLANNERS.map((p) => p.id),
     ...BUILTIN_BADGES.map((p) => p.id),
@@ -93,7 +92,6 @@ export async function addPlugin(
       break;
 
     case 'service':
-    case 'backend':
       pluginPrefs.add({ url, id, name, kind });
       break;
   }

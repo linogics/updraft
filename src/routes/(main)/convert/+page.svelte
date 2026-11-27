@@ -10,6 +10,7 @@
   import { BUILTIN_CONVERTERS } from '#lib/plugins/builtin';
   import type { PluginEntry } from '#lib/plugins/entries';
   import { flightRepository } from '#lib/storage';
+  import { originalOf } from '#lib/storage/importFlights';
   import { flash, scrollToSelector, sortByName } from '#lib/ui/attention';
 
   type Row = { name: string; format?: string; flight?: Flight; error?: string };
@@ -37,7 +38,7 @@
       const format = formatOf(file.name);
       try {
         const flight = await readTrack(file);
-        if (save) await flightRepository.save(flight);
+        if (save) await flightRepository.save(flight, await originalOf(file, flight.id));
         next.push({ name: file.name, format, flight });
       } catch (err) {
         next.push({ name: file.name, format, error: err instanceof Error ? err.message : String(err) });

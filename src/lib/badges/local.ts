@@ -27,10 +27,11 @@ export interface LocalBadgeOptions {
 async function statsOf(s: FlightSummary, league: string, repo: BadgeRepo): Promise<ClubStats | null> {
   // A shared flight keeps stats with ground heights. A cached record without them is re-read once it is shared.
   const cached = await repo.getBadgeStats(s.id, league);
-  if (cached && (!s.shared || cached.maxAgl !== undefined)) return cached;
+  if (cached && (!s.clubs?.length || cached.maxAgl !== undefined)) return cached;
 
   const flight = await repo.get(s.id);
-  if (!flight) return null;
+  // A flight from another device without its track still carries the summary it shared.
+  if (!flight) return (s as { club?: ClubStats }).club ?? null;
 
   if (flight.club) {
     await repo.putBadgeStats(s.id, league, flight.club);

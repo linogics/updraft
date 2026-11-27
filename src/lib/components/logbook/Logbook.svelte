@@ -174,11 +174,11 @@
     await refresh();
   }
 
-  async function toggleShare(f: FlightSummary) {
+  async function setShare(f: FlightSummary, clubIds: string[]) {
     sharing = f.id;
     shareError = '';
     try {
-      await shareFlight(f.id, !f.shared);
+      await shareFlight(f.id, clubIds);
       await refresh();
     } catch (err) {
       shareError = m.club_share_error({ error: err instanceof Error ? err.message : String(err) });
@@ -389,15 +389,40 @@
                 {#if f.notes}<span aria-label={m.logbook_has_notes()}>✎</span>{/if}
               </td>
               <td class="actions">
-                {#if syncClient.hasClub && !f.manual}
-                  <button
-                    aria-pressed={!!f.shared}
-                    disabled={sharing !== null}
-                    onclick={() => toggleShare(f)}
-                    aria-label={m.club_share_aria({ pilot: f.pilot, date: f.date })}
-                  >
-                    {sharing === f.id ? m.club_sharing() : f.shared ? m.club_shared() : m.club_share()}
-                  </button>
+                {#if syncClient.clubs.length && !f.manual}
+                  {@const shared = f.clubs ?? []}
+                  {#if syncClient.clubs.length === 1}
+                    {@const only = syncClient.clubs[0].id}
+                    <button
+                      aria-pressed={shared.includes(only)}
+                      disabled={sharing !== null}
+                      onclick={() => setShare(f, shared.includes(only) ? [] : [only])}
+                      aria-label={m.club_share_aria({ pilot: f.pilot, date: f.date })}
+                    >
+                      {sharing === f.id ? m.club_sharing() : shared.includes(only) ? m.club_shared() : m.club_share()}
+                    </button>
+                  {:else}
+                    <details class="share">
+                      <summary aria-label={m.club_share_aria({ pilot: f.pilot, date: f.date })}>
+                        {sharing === f.id ? m.club_sharing() : shared.length ? m.club_shared() : m.club_share()}
+                      </summary>
+                      {#each syncClient.clubs as c (c.id)}
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={shared.includes(c.id)}
+                            disabled={sharing !== null}
+                            onchange={(e) =>
+                              setShare(
+                                f,
+                                e.currentTarget.checked ? [...shared, c.id] : shared.filter((x) => x !== c.id)
+                              )}
+                          />
+                          {m.club_share_with({ club: c.name })}
+                        </label>
+                      {/each}
+                    </details>
+                  {/if}
                 {/if}
                 <button onclick={() => edit(f)} aria-label={m.logbook_edit_aria({ pilot: f.pilot, date: f.date })}>
                   {m.common_edit()}
@@ -617,6 +642,15 @@
   td.actions button[aria-pressed='true'] {
     border-color: var(--primary-hi);
     color: var(--primary-hi);
+  }
+  details.share summary {
+    cursor: pointer;
+  }
+  details.share label {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    white-space: nowrap;
   }
   .sr {
     position: absolute;

@@ -22,31 +22,37 @@ async function groundOrUndefined(fixes: Parameters<typeof groundSeries>[0]) {
   }
 }
 
-/** Shares a flight with the club or takes it back. The repository marks the flight dirty, so sync pushes it. */
+/**
+ * Sets the clubs a flight is shared with. The repository marks the flight dirty, so sync pushes it.
+ * The club summary is computed when the flight goes from no club to one, and dropped when it goes back to none.
+ */
 export async function shareFlight(
   id: string,
-  on: boolean,
+  clubs: string[],
   {
     repo = flightRepository,
     ground = groundOrUndefined
   }: { repo?: IndexedDbFlightRepository; ground?: typeof groundOrUndefined } = {}
 ): Promise<void> {
-  const flight = await repo.get(id);
-  if (!flight) throw new Error(`Flight ${id} not found.`);
+  const summary = await repo.summary(id);
+  if (!summary) throw new Error(`Flight ${id} not found.`);
 
-  if (!on) {
-    const off = { ...flight, shared: false };
-    delete off.club;
-    await repo.save(off);
+  if (!clubs.length) {
+    await repo.updateMeta(id, { clubs: [], club: null });
     return;
   }
+
+  if (summary.club) {
+    await repo.updateMeta(id, { clubs });
+    return;
+  }
+
+  const flight = await repo.get(id);
+  if (!flight) throw new Error('Open the flight once to load its track, then share it.');
 
   const league = xcPrefs.league;
   // A solver failure only costs the XC figures, the rest of the stats still count.
   const xc = (await repo.getXcScore(id, league)) ?? (await scoreFlight(flight.fixes, league).catch(() => null));
-  await repo.save({
-    ...flight,
-    shared: true,
-    club: await computeClubStats(flight, { league, ground: await ground(flight.fixes), xc })
-  });
+  const club = await computeClubStats(flight, { league, ground: await ground(flight.fixes), xc });
+  await repo.updateMeta(id, { clubs, club });
 }

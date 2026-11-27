@@ -1,6 +1,19 @@
 import { readTrack } from '../convert/registry';
 import { DEFAULT_SCENE, encodeScene } from '../domain/scene';
+import type { Original } from '../sync/types';
 import { flightRepository } from './index';
+
+const TYPES: Record<string, string> = {
+  igc: 'application/vnd.fai.igc',
+  gpx: 'application/gpx+xml',
+  kml: 'application/vnd.google-earth.kml+xml'
+};
+
+/** The file as it was imported, so another device can parse it again. */
+export async function originalOf(file: File, id: string): Promise<Original> {
+  const type = TYPES[file.name.split('.').pop()?.toLowerCase() ?? ''] ?? (file.type || 'application/octet-stream');
+  return { id, type, bytes: await file.arrayBuffer() };
+}
 
 /** Parses and stores track files of any supported format. Bad files are reported, the rest are still saved. */
 export async function importFlights(files: File[]): Promise<{ ids: string[]; errors: string[] }> {
@@ -24,7 +37,7 @@ export async function importFlights(files: File[]): Promise<{ ids: string[]; err
         continue;
       }
 
-      await flightRepository.save(flight);
+      await flightRepository.save(flight, await originalOf(file, flight.id));
       known.set(key, flight.id);
       ids.push(flight.id);
     } catch (err) {

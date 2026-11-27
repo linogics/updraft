@@ -10,9 +10,9 @@ export async function loadFlights(ids: string[]): Promise<Flight[]> {
       const [meta, fixes] = await Promise.all([flights.get(id), flights.track(id)]);
       if (!meta || !fixes) return null;
 
-      const { sourceName, pilot, glider, site, date, notes, shared } = meta;
+      const { sourceName, pilot, glider, site, date, notes, clubs } = meta;
       // The service returns shared data, the studio gets its own list.
-      return { id, sourceName, pilot, glider, site, date, notes, shared, fixes: [...fixes] };
+      return { id, sourceName, pilot, glider, site, date, notes, clubs, fixes: [...fixes] };
     })
   );
 

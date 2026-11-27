@@ -1,6 +1,6 @@
 # Sync server spec v2 (draft)
 
-You can write your own sync server in any language. If it follows this spec, a client that speaks v2 works with it as is. The bundled app still uses [v1](../plugins/backend/server/README.md) until the client is switched over.
+You can write your own sync server in any language. If it follows this spec, a client that speaks v2 works with it as is. The app speaks v2. The older [v1](../plugins/backend/server/README.md) is only kept for the PocketBase kit until it moves to v2.
 
 ## Overview
 

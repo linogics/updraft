@@ -24,6 +24,10 @@
   let view = $state<'rankings' | 'flights' | 'badges'>('rankings');
   // Owner id the Flights tab is limited to, empty for all pilots.
   let owner = $state('');
+  // The club shown, the first one until the pilot picks another.
+  let picked = $state('');
+  const clubs = $derived(syncClient.clubs);
+  const clubId = $derived(clubs.some((c) => c.id === picked) ? picked : (clubs[0]?.id ?? ''));
 
   const u = $derived(unitPrefs.units);
   const league = $derived(leagueLabel(xcPrefs.league));
@@ -80,12 +84,19 @@
     error = '';
     try {
       await syncClient.init();
-      if (syncClient.hasClub) entries = await syncClient.clubEntries();
+      if (syncClient.hasClub) await syncClient.refreshClubs();
+      entries = clubId ? await syncClient.clubEntries(clubId) : [];
     } catch (e) {
       error = m.club_error({ error: e instanceof Error ? e.message : String(e) });
     } finally {
       loading = false;
     }
+  }
+
+  function pickClub(id: string) {
+    picked = id;
+    owner = '';
+    void load();
   }
 
   function showFlightsOf(o: string) {
@@ -110,6 +121,16 @@
             <button class:on={view === k} aria-pressed={view === k} onclick={() => (view = k)}>{VIEWS[k]()}</button>
           {/each}
         </div>
+        {#if clubs.length > 1}
+          <span class="clubs">
+            <label for="club-pick">{m.club_pick()}</label>
+            <select id="club-pick" value={clubId} disabled={loading} onchange={(e) => pickClub(e.currentTarget.value)}>
+              {#each clubs as c (c.id)}
+                <option value={c.id}>{c.name}</option>
+              {/each}
+            </select>
+          </span>
+        {/if}
         <button onclick={load} disabled={loading}>{m.club_refresh()}</button>
       </div>
     {/if}
@@ -121,6 +142,8 @@
     <p class="muted" role="status">{m.club_loading()}</p>
   {:else if !syncClient.hasClub}
     <p class="muted">{m.home_club_signin()}</p>
+  {:else if !clubs.length}
+    <p class="muted">{m.club_none()}</p>
   {:else if !entries.length}
     <p class="muted">{m.club_empty()}</p>
   {:else if view === 'rankings'}
@@ -138,7 +161,7 @@
                 <span class="who">
                   <span>
                     {#if e}
-                      <a href={clubStudioHref(e.key)}>{r.pilot}<span class="sr"> {e.stats.date}</span></a>
+                      <a href={clubStudioHref(clubId, e.key)}>{r.pilot}<span class="sr"> {e.stats.date}</span></a>
                     {:else}
                       <button class="link" onclick={() => showFlightsOf(r.owner)}>{r.pilot}</button>
                     {/if}{#if mine.has(r.owner)}<em>{m.club_you()}</em>{/if}
@@ -190,7 +213,9 @@
         {#each newest as e (e.key)}
           <tr>
             <td>
-              <a href={clubStudioHref(e.key)}>{e.stats.pilot}<span class="sr"> {e.stats.date}</span></a>{#if e.mine}<em>
+              <a href={clubStudioHref(clubId, e.key)}>
+                {e.stats.pilot}<span class="sr"> {e.stats.date}</span>
+              </a>{#if e.mine}<em>
                   {m.club_you()}
                 </em>{/if}
             </td>
@@ -251,6 +276,11 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+  }
+  .clubs {
+    display: flex;
+    gap: 6px;
+    align-items: center;
   }
   .seg {
     display: flex;

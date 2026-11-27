@@ -17,7 +17,7 @@ const flight = (id: string, club?: ClubStats): Flight => ({
     { t: 0, lat: 47, lon: 11, alt: 1000 },
     { t: 60_000, lat: 47.001, lon: 11, alt: 1100 }
   ],
-  ...(club && { club, shared: true })
+  ...(club && { club, clubs: ['c1'] })
 });
 
 const summary = (id: string, extra: Partial<FlightSummary> = {}): FlightSummary => ({
@@ -30,6 +30,7 @@ const summary = (id: string, extra: Partial<FlightSummary> = {}): FlightSummary 
   fixCount: 2,
   startTime: 0,
   endTime: 60_000,
+  hasTrack: true,
   ...extra
 });
 
@@ -92,7 +93,7 @@ describe('localBadgeItems', () => {
   it('uses the club stats of a shared flight, with ground heights', async () => {
     const { repo, cache } = fakeRepo([flight('a', club(900))]);
     cache.set('a', club());
-    const [item] = (await localBadgeItems([summary('a', { shared: true })], 'XContest', { repo }))!;
+    const [item] = (await localBadgeItems([summary('a', { clubs: ['c1'] })], 'XContest', { repo }))!;
 
     expect(item.flight.maxAgl).toBe(900);
   });

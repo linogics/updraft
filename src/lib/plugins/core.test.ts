@@ -270,22 +270,6 @@ describe('validatePlugin', () => {
     });
   });
 
-  describe('backend kind', () => {
-    const be = { id: 'acme/be', name: 'Be', kind: 'backend', apiVersion: 1, create: () => ({}) };
-
-    it('accepts a backend with a create function', () => {
-      expect(validatePlugin(be)).toBe(be);
-    });
-
-    it.each([
-      ['no create', { ...be, create: undefined }, /"create"/],
-      ['create not a function', { ...be, create: {} }, /"create"/],
-      ['wrong apiVersion', { ...be, apiVersion: 2 }, /Unsupported apiVersion 2/]
-    ])('rejects %s', (_, mod, message) => {
-      expect(() => validatePlugin(mod)).toThrow(message);
-    });
-  });
-
   it('rejects an id that is taken, whatever the kind of the other plugin', () => {
     // The taken list holds ids only, so a plugin of another kind clashes the same way.
     expect(() => validatePlugin(ok, ['acme/wind'])).toThrow(/already in use/);

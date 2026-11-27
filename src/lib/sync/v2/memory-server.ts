@@ -1,11 +1,16 @@
 // A minimal in-memory implementation of the sync HTTP spec v2. It is a test fixture that proves the spec can be
-// implemented and runs the contract suite in normal CI. Auth routes and CORS are left out on purpose.
+// implemented and runs the contract suite in normal CI. Only password sign in of one fixed account and a signup that gives a fixed token are there.
+// OAuth and CORS are left out on purpose.
 
 export interface MemoryServerOptions {
   /** Maps a bearer token to an account id. */
   tokens: Record<string, string>;
   /** Clubs by id, each with the account ids that are members. */
   clubs?: Record<string, { name: string; members: string[] }>;
+  /** Turns on `POST /auth/password` for one account. The token must be one of `tokens`. */
+  password?: { identity: string; password: string; token: string; name?: string };
+  /** Turns on `POST /auth/signup`, every valid sign up gets this token. The token must be one of `tokens`. */
+  signup?: { token: string };
 }
 
 interface Stored {
@@ -190,9 +195,33 @@ export function createMemoryServer(options: MemoryServerOptions): (req: Request)
       const oauth: unknown[] = [];
       return json(200, {
         version: 2,
-        auth: { password: false, signup: false, oauth },
+        auth: { password: !!options.password, signup: !!options.signup, oauth },
         clubs: Object.keys(clubs).length > 0,
         limits: LIMITS
+      });
+    }
+
+    if (a === 'auth' && b === 'password' && req.method === 'POST' && options.password) {
+      const body = (await req.json().catch(() => null)) as { identity?: unknown; password?: unknown } | null;
+      if (typeof body?.identity !== 'string' || typeof body.password !== 'string') return fail(400, 'Missing field');
+
+      const p = options.password;
+      if (body.identity !== p.identity || body.password !== p.password) return fail(401, 'Wrong email or password');
+      return json(200, { token: p.token, user: { id: options.tokens[p.token], name: p.name ?? p.identity } });
+    }
+
+    if (a === 'auth' && b === 'signup' && req.method === 'POST') {
+      if (!options.signup) return fail(403, 'Signup is off');
+
+      const body = (await req.json().catch(() => null)) as { email?: unknown; password?: unknown } | null;
+      const email = typeof body?.email === 'string' ? body.email : '';
+      if (!/^[^@\s]+@[^@\s]+$/.test(email) || typeof body?.password !== 'string' || body.password.length < 8) {
+        return fail(400, 'Invalid email or password');
+      }
+
+      return json(200, {
+        token: options.signup.token,
+        user: { id: options.tokens[options.signup.token], name: email }
       });
     }
 

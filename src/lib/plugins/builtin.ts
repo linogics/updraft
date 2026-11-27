@@ -109,18 +109,6 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
   }
 ];
 
-/** A backend that ships with the app. Imported only when the user picks it. */
-export interface BuiltinBackend {
-  id: string;
-  name: string;
-  /** Module whose default export is a backend plugin. */
-  load: () => Promise<{ default: unknown }>;
-}
-
-export const BUILTIN_BACKENDS: readonly BuiltinBackend[] = [
-  { id: 'updraft/http', name: 'Updraft sync server', load: () => import('./builtin/http') }
-];
-
 /** A bundled track format. The metadata is here so the module is only imported when a file needs it. */
 export interface BuiltinConverter extends ConverterMeta {
   id: string;

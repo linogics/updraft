@@ -1,62 +1,87 @@
-import { loadClub, loadClubFlight } from '#lib/club';
-import type { BackendPlugin } from '#lib/plugins/backendKind';
-import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
-import { loadPlugin, validatePlugin } from '#lib/plugins/core';
-import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
+import { clubFlightOf, loadClubFeed, type ValidClubEntry } from '#lib/club';
+import type { Fix, Flight } from '#lib/domain/model';
 import { flightRepository } from '#lib/storage';
 import type { IndexedDbFlightRepository } from '#lib/storage/indexeddb';
 
 import { loadSyncConfig, parseSyncConfig, type SyncConfig, writeOverride } from './config';
 import { SyncEngine, type SyncOptions } from './engine.svelte';
-import type { AuthMethod, BackendAdapter, BackendSession } from './types';
+import type { AuthMethod } from './types';
+import { SessionStore, signInWithPopup, type StoredSession } from './v2/auth';
+import { type Capabilities, type Club, SyncApi } from './v2/http';
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-
-/** Finds a backend plugin by id, bundled ones first, then installed ones. Throws an Error for the user. */
-async function loadBackend(id: string): Promise<BackendPlugin> {
-  const bundled = BUILTIN_BACKENDS.find((b) => b.id === id);
-  const entry = pluginPrefs.list.find((e) => e.kind === 'backend' && e.id === id);
-  if (!bundled && !entry) throw new Error(`The backend "${id}" is not installed.`);
-
-  const plugin = bundled ? validatePlugin((await bundled.load()).default) : await loadPlugin(entry!.url);
-  if (plugin.kind !== 'backend' || plugin.id !== id) throw new Error(`"${id}" is not a sync backend.`);
-  return plugin;
-}
+const SIGNED_OUT = 'Signed out, sign in again.';
 
 export interface ClientDeps {
   repo?: IndexedDbFlightRepository;
-  loadBackend?: (id: string) => Promise<BackendPlugin>;
   engine?: SyncOptions;
+  /** Replaced in tests, for the fetch and the retry wait of the HTTP client. */
+  api?: Pick<ConstructorParameters<typeof SyncApi>[0], 'fetch' | 'sleep'>;
 }
 
-/** Owns the one adapter and the one engine of the app, and what the sync UI shows. */
+/** Fixes of a track file come from the network, so each one is checked. */
+export function parseFixes(raw: unknown[]): Fix[] {
+  const fixes = raw.map((f) => {
+    const o = f as Record<string, unknown> | null;
+    if (!o || ![o.t, o.lat, o.lon, o.alt].every((n) => typeof n === 'number' && Number.isFinite(n))) {
+      throw new Error('The track is not valid.');
+    }
+
+    return { t: o.t as number, lat: o.lat as number, lon: o.lon as number, alt: o.alt as number };
+  });
+  if (!fixes.length) throw new Error('The track is not valid.');
+  return fixes.sort((a, b) => a.t - b.t);
+}
+
+/** Owns the one server connection and the one engine of the app, and what the sync UI shows. */
 export class SyncClient {
   /** False until `init` has looked for a config. */
   ready = $state(false);
   config = $state.raw<SyncConfig | null>(null);
   /** The deploy preset from /config.json, prefills the connect form. */
   preset = $state.raw<SyncConfig | null>(null);
-  session = $state.raw<BackendSession | null>(null);
+  session = $state.raw<{ user: string } | null>(null);
   /** Null until the server answered. */
-  methods = $state.raw<AuthMethod[] | null>(null);
+  capabilities = $state.raw<Capabilities | null>(null);
+  /** The clubs of the signed in pilot. Empty without club support. */
+  clubs = $state.raw<Club[]>([]);
   /** Reactive status of the running engine. */
   engine = $state.raw<SyncEngine | null>(null);
   error = $state<string | null>(null);
   busy = $state(false);
-  /** True when the server allows creating an account. Known once the methods are loaded. */
-  canSignUp = $state(false);
 
-  private adapter: BackendAdapter | null = null;
+  private api: SyncApi | null = null;
+  private store: SessionStore | null = null;
   private started: Promise<void> | undefined;
   private listeners: ((count: number) => void)[] = [];
   private readonly repo: IndexedDbFlightRepository;
-  private readonly load: (id: string) => Promise<BackendPlugin>;
   private readonly engineOpts: SyncOptions;
+  private readonly apiOpts: ClientDeps['api'];
 
   constructor(deps: ClientDeps = {}) {
     this.repo = deps.repo ?? flightRepository;
-    this.load = deps.loadBackend ?? loadBackend;
     this.engineOpts = deps.engine ?? {};
+    this.apiOpts = deps.api;
+  }
+
+  /** How a pilot can sign in, from the capabilities. Null until the server answered. */
+  get methods(): AuthMethod[] | null {
+    const auth = this.capabilities?.auth;
+    if (!auth) return null;
+
+    const out: AuthMethod[] = [];
+    if (auth.password) out.push({ kind: 'password' });
+    for (const p of auth.oauth) out.push({ kind: 'redirect', id: p.id, label: p.label });
+    return out;
+  }
+
+  get canSignUp(): boolean {
+    return this.capabilities?.auth.signup === true;
+  }
+
+  /** True when signed in to a server that offers clubs. The pilot may still belong to none. */
+  get hasClub(): boolean {
+    return !!this.session && this.capabilities?.clubs === true;
   }
 
   /** Never throws, call once at startup. */
@@ -79,7 +104,7 @@ export class SyncClient {
   async connect(input: SyncConfig): Promise<void> {
     const config = parseSyncConfig(input);
     if (!config) {
-      this.error = 'The backend or the server address is not valid.';
+      this.error = 'The server address is not valid.';
       return;
     }
 
@@ -88,73 +113,51 @@ export class SyncClient {
   }
 
   /** Forgets the server. Local data stays. */
-  async disconnect(): Promise<void> {
+  disconnect(): void {
     this.stopEngine();
-    await this.adapter?.signOut().catch(() => {});
+    this.store?.set(null);
     writeOverride(null);
-    this.adapter = null;
-    this.config = null;
-    this.session = null;
-    this.methods = null;
-    this.canSignUp = false;
-    this.error = null;
+    this.reset(null);
   }
 
   /**
-   * `adapter.signIn` is called before the first await on purpose: an OAuth popup is only allowed
+   * The popup of an OAuth sign in is started before the first await on purpose: it is only allowed
    * while the click that started it is still the user gesture.
    */
   signIn(method: AuthMethod, input?: Record<string, string>): Promise<void> {
-    const adapter = this.adapter;
-    if (!adapter || this.busy) return Promise.resolve();
+    const api = this.api;
+    if (!api || this.busy) return Promise.resolve();
 
     this.busy = true;
     this.error = null;
-    let signing: Promise<BackendSession>;
+    let signing: Promise<StoredSession>;
     try {
-      signing = adapter.signIn(method, input);
+      signing =
+        method.kind === 'redirect'
+          ? signInWithPopup(api, method.id)
+          : api.signInWithPassword(input?.identity ?? '', input?.password ?? '').then(toStored);
     } catch (e) {
       signing = Promise.reject(e instanceof Error ? e : new Error(String(e)));
     }
 
-    return this.finishSignIn(adapter, signing);
+    return this.finishSignIn(signing);
   }
 
   /** Creates an account and signs in, like the password path of `signIn`. */
   signUp(input: { email: string; password: string }): Promise<void> {
-    const adapter = this.adapter;
-    if (!adapter?.signUp || this.busy) return Promise.resolve();
+    const api = this.api;
+    if (!api || !this.canSignUp || this.busy) return Promise.resolve();
 
     this.busy = true;
     this.error = null;
-    return this.finishSignIn(adapter, adapter.signUp(input));
+    return this.finishSignIn(api.signUp(input.email, input.password).then(toStored));
   }
 
-  async signOut(): Promise<void> {
+  signOut(): void {
     this.stopEngine();
-    try {
-      await this.adapter?.signOut();
-      this.session = null;
-      await this.loadMethods();
-    } catch (e) {
-      this.error = message(e);
-    }
-  }
-
-  /** True when signed in to a server that has a club list. */
-  get hasClub(): boolean {
-    return !!this.session && !!this.adapter?.club;
-  }
-
-  /** Throws when not signed in. */
-  clubEntries() {
-    if (!this.adapter || !this.session) throw new Error('Sign in to a sync server first.');
-    return loadClub(this.adapter);
-  }
-
-  clubFlight(key: string) {
-    if (!this.adapter || !this.session) throw new Error('Sign in to a sync server first.');
-    return loadClubFlight(this.adapter, key);
+    this.store?.set(null);
+    this.session = null;
+    this.clubs = [];
   }
 
   syncNow(): Promise<void> {
@@ -167,14 +170,47 @@ export class SyncClient {
     return () => void (this.listeners = this.listeners.filter((l) => l !== fn));
   }
 
-  private async finishSignIn(adapter: BackendAdapter, signing: Promise<BackendSession>) {
+  /** The shared flights of one club, read from the start. Throws when not signed in. */
+  clubEntries(clubId: string): Promise<ValidClubEntry[]> {
+    const api = this.signedInApi();
+    return loadClubFeed((since) => api.listClubFlights(clubId, since, this.maxPage()));
+  }
+
+  /** One shared flight with its track, for the studio. */
+  async clubFlight(clubId: string, key: string): Promise<Flight> {
+    const api = this.signedInApi();
+    const entry = (await this.clubEntries(clubId)).find((e) => e.key === key);
+    if (!entry) throw new Error('The shared flight was not found.');
+
+    return clubFlightOf(entry, parseFixes(await api.getClubTrackJson(clubId, key)));
+  }
+
+  /** Downloads the track of a flight that came from another device and keeps it. Throws when it cannot. */
+  async fetchTrack(id: string): Promise<Fix[]> {
+    const fixes = parseFixes(await this.signedInApi().getTrackJson(id));
+    await this.repo.storeTrack(id, fixes);
+    return fixes;
+  }
+
+  private signedInApi(): SyncApi {
+    if (!this.api || !this.session) throw new Error('Sign in to a sync server first.');
+    return this.api;
+  }
+
+  private maxPage() {
+    return this.capabilities?.limits.maxPage ?? 100;
+  }
+
+  private async finishSignIn(signing: Promise<StoredSession>) {
     try {
       const session = await signing;
+      this.store?.set(session);
       await this.switchAccount(session);
       // Keeps a preset server after sign in, /config.json is not cached, so an offline start would lose it.
       writeOverride(this.config);
-      this.session = session;
-      this.startEngine(adapter);
+      this.session = { user: session.user };
+      await this.refreshClubs();
+      this.startEngine();
       await this.engine?.syncNow();
     } catch (e) {
       this.error = message(e);
@@ -184,48 +220,83 @@ export class SyncClient {
   }
 
   /** A different account must get everything from this device and start pulling from the beginning. */
-  private async switchAccount(session: BackendSession) {
-    const config = this.config!;
-    const account = `${config.backend}|${config.url}|${session.user}`;
+  private async switchAccount(session: StoredSession) {
+    const account = `${this.config!.url}|${session.user}`;
     const state = await this.repo.getSyncState();
     if (state.account === account) return;
 
     await this.repo.markAllDirty();
-    await this.repo.setSyncState({ cursor: null, prefs: {}, account });
+    await this.repo.setSyncState({ cursors: {}, account });
+  }
+
+  private reset(config: SyncConfig | null) {
+    this.stopEngine();
+    this.config = config;
+    this.session = null;
+    this.capabilities = null;
+    this.clubs = [];
+    this.error = null;
+    if (!config) {
+      this.api = null;
+      this.store = null;
+    }
   }
 
   private async setup(config: SyncConfig) {
-    this.stopEngine();
-    this.adapter = null;
-    this.config = config;
-    this.session = null;
-    this.methods = null;
-    this.canSignUp = false;
-    this.error = null;
+    this.reset(config);
+    const store = new SessionStore(config.url);
+    this.store = store;
+    this.api = new SyncApi({
+      ...this.apiOpts,
+      url: config.url,
+      token: () => store.get()?.token ?? null,
+      onUnauthorized: () => this.signedOut()
+    });
 
     try {
-      const adapter = (await this.load(config.backend)).create({ url: config.url });
-      this.adapter = adapter;
-      const session = adapter.session();
-      if (session) {
+      const stored = store.get();
+      if (stored) {
         // The club offer is part of the capabilities, so ask before the UI looks for it. Offline is fine.
-        await adapter.authMethods().catch(() => {});
-        this.session = session;
-        this.startEngine(adapter);
-      } else await this.loadMethods();
+        this.capabilities = await this.api.capabilities().catch(() => null);
+        this.session = { user: stored.user };
+        await this.refreshClubs();
+        this.startEngine();
+      } else {
+        this.capabilities = await this.api.capabilities();
+      }
     } catch (e) {
       this.error = message(e);
     }
   }
 
-  private async loadMethods() {
-    this.methods = await this.adapter!.authMethods();
-    this.canSignUp = !!this.adapter!.signUp;
+  /** The server refused the token, so it is forgotten and the pilot signs in again. */
+  private signedOut() {
+    this.stopEngine();
+    this.store?.set(null);
+    this.session = null;
+    this.clubs = [];
+    this.error = SIGNED_OUT;
+    void this.api
+      ?.capabilities()
+      .then((c) => (this.capabilities = c))
+      .catch(() => {});
   }
 
-  private startEngine(adapter: BackendAdapter) {
+  /** Asks the server for the clubs of the pilot. */
+  async refreshClubs() {
+    if (!this.session || this.capabilities?.clubs !== true) {
+      this.clubs = [];
+      return;
+    }
+
+    // A server that fails here still syncs, the club just stays hidden.
+    this.clubs = await this.api!.listClubs().catch(() => []);
+  }
+
+  private startEngine() {
     this.stopEngine();
-    this.engine = new SyncEngine(this.repo, adapter, {
+    this.engine = new SyncEngine(this.repo, this.api!, {
+      maxPage: this.maxPage(),
       ...this.engineOpts,
       onApplied: (n) => this.listeners.forEach((fn) => fn(n))
     });
@@ -237,5 +308,10 @@ export class SyncClient {
     this.engine = null;
   }
 }
+
+const toStored = (s: { token: string; user: { name: string } }): StoredSession => ({
+  token: s.token,
+  user: s.user.name
+});
 
 export const syncClient = new SyncClient();

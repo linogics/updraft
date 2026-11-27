@@ -1,17 +1,12 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages';
   import { getLocale } from '#lib/paraglide/runtime';
-  import { BUILTIN_BACKENDS } from '#lib/plugins/builtin';
-  import { pluginPrefs } from '#lib/plugins/pluginPrefs.svelte';
   import { setSyncKeys, syncKeysEnabled } from '#lib/sync';
   import { syncClient as client } from '#lib/sync/client.svelte';
   import { syncUrl } from '#lib/sync/config';
   import type { AuthMethod } from '#lib/sync/types';
 
-  const DEFAULT_BACKEND = 'updraft/http';
-
   // Null means untouched, so the form follows the deploy preset until the user types.
-  let backendDraft = $state<string | null>(null);
   let urlDraft = $state<string | null>(null);
   let invalid = $state(false);
   let identity = $state('');
@@ -19,11 +14,6 @@
   let signingUp = $state(false);
   let keys = $state(syncKeysEnabled());
 
-  const backends = $derived([
-    ...BUILTIN_BACKENDS.map((b) => ({ id: b.id, name: b.name })),
-    ...pluginPrefs.list.filter((e) => e.kind === 'backend').map((e) => ({ id: e.id, name: e.name }))
-  ]);
-  const backend = $derived(backendDraft ?? client.preset?.backend ?? DEFAULT_BACKEND);
   const url = $derived(urlDraft ?? client.preset?.url ?? '');
   const passwordMethod = $derived(client.methods?.some((x) => x.kind === 'password') ?? false);
   const redirects = $derived(
@@ -47,7 +37,7 @@
     invalid = syncUrl(url) === null;
     if (invalid) return;
 
-    await client.connect({ backend, url });
+    await client.connect({ url });
   }
 
   // Called straight from the click, an OAuth popup needs the user gesture.
@@ -74,16 +64,6 @@
   {:else if !client.config}
     <p class="muted">{m.sync_intro()}</p>
     <form onsubmit={connect}>
-      {#if backends.length > 1}
-        <label>
-          {m.sync_backend()}
-          <select value={backend} onchange={(e) => (backendDraft = e.currentTarget.value)}>
-            {#each backends as b (b.id)}
-              <option value={b.id}>{b.name}</option>
-            {/each}
-          </select>
-        </label>
-      {/if}
       <label>
         {m.sync_server()}
         <input

@@ -21,7 +21,7 @@ const flight: Flight = {
 const setup = async () => {
   const repo = new IndexedDbFlightRepository(`db-${crypto.randomUUID()}`);
   await repo.save(flight);
-  await repo.markPushed(await repo.pendingChanges());
+  await repo.markPushed('flights', 'f', (await repo.getMeta('flights', 'f'))!.rev, '1');
   return repo;
 };
 
@@ -29,31 +29,33 @@ describe('shareFlight', () => {
   it('stores the club stats, marks the flight dirty and drops them again on unshare', async () => {
     const repo = await setup();
 
-    await shareFlight('f', true, { repo, ground: async () => undefined });
+    await shareFlight('f', ['c1'], { repo, ground: async () => undefined });
     const shared = await repo.get('f');
-    expect(shared?.shared).toBe(true);
+    expect(shared?.clubs).toEqual(['c1']);
     expect(shared?.club).toMatchObject({ v: 1, pilot: 'P', durationS: 60 });
     expect(shared?.club?.maxAgl).toBeUndefined();
     expect(isFlight(shared)).toBe(true);
-    expect((await repo.pendingChanges()).map((c) => c.id)).toEqual(['f']);
+    expect(await repo.getMeta('flights', 'f')).toMatchObject({ dirty: true });
+    expect((await repo.getMeta('flights', 'f'))?.times).toHaveProperty('clubs');
 
-    await repo.markPushed(await repo.pendingChanges());
-    await shareFlight('f', false, { repo });
+    await shareFlight('f', ['c1', 'c2'], { repo });
+    expect((await repo.get('f'))?.clubs).toEqual(['c1', 'c2']);
+
+    await shareFlight('f', [], { repo });
     const off = await repo.get('f');
-    expect(off?.shared).toBe(false);
+    expect(off?.clubs).toEqual([]);
     expect(off && 'club' in off).toBe(false);
-    expect((await repo.pendingChanges()).map((c) => c.id)).toEqual(['f']);
   });
 
   it('adds AGL when ground heights are available', async () => {
     const repo = await setup();
 
-    await shareFlight('f', true, { repo, ground: async (fx) => Float32Array.from(fx, () => 1250) });
+    await shareFlight('f', ['c1'], { repo, ground: async (fx) => Float32Array.from(fx, () => 1250) });
 
     expect((await repo.get('f'))?.club?.maxAgl).toBe(250);
   });
 
   it('throws for an unknown flight', async () => {
-    await expect(shareFlight('nope', true, { repo: await setup() })).rejects.toThrow(/not found/);
+    await expect(shareFlight('nope', ['c1'], { repo: await setup() })).rejects.toThrow(/not found/);
   });
 });

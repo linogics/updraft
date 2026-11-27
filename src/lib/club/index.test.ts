@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BackendAdapter } from '../sync/types';
-import { loadClub, loadClubFlight } from './index';
+import type { ClubFlight } from '../sync/v2/http';
+import { clubFlightOf, clubStudioHref, loadClubFeed } from './index';
 
 const good = {
   v: 1,
@@ -16,29 +16,42 @@ const good = {
   bestClimb: 1,
   bestThermalGain: 1
 };
-const adapter = (club?: BackendAdapter['club']) => ({ club }) as BackendAdapter;
+const row = (key: string, extra: Partial<ClubFlight> = {}): ClubFlight => ({
+  key,
+  owner: 'o',
+  mine: false,
+  version: '1',
+  deleted: false,
+  hasTrack: true,
+  summary: good,
+  ...extra
+});
 
-describe('club loading', () => {
-  it('drops entries with a bad summary and is empty without club support', async () => {
-    const club = {
-      list: async () => [
-        { key: '1', owner: 'o', mine: false, stats: good },
-        { key: '2', owner: 'o', mine: false, stats: { ...good, durationS: 'x' } },
-        { key: '3', owner: 'o', mine: false, stats: null }
-      ],
-      flight: async () => null
-    };
+describe('club feed', () => {
+  it('pages from the start and drops deleted rows and bad summaries', async () => {
+    const pages = [
+      {
+        items: [row('1'), row('2', { summary: { ...good, durationS: 'x' } }), row('3', { summary: null })],
+        cursor: 'a',
+        more: true
+      },
+      { items: [row('4'), row('1', { deleted: true, summary: undefined })], cursor: 'b', more: false }
+    ];
+    const seen: (string | null)[] = [];
 
-    expect((await loadClub(adapter(club))).map((e) => e.key)).toEqual(['1']);
-    expect(await loadClub(adapter())).toEqual([]);
+    const entries = await loadClubFeed(async (since) => {
+      seen.push(since);
+      return pages[seen.length - 1];
+    });
+
+    expect(seen).toEqual([null, 'a']);
+    expect(entries.map((e) => e.key)).toEqual(['4']);
   });
 
-  it('accepts only a valid flight', async () => {
-    const flight = { id: 'f', pilot: 'P', date: '2026-01-01', fixes: [{ t: 0, lat: 1, lon: 1, alt: 1 }] };
-    const club = (data: unknown) => ({ list: async () => [], flight: async () => data });
+  it('builds a studio flight and a link with both ids', () => {
+    const entry = { key: 'k 1', owner: 'o', mine: false, stats: { ...good, v: 1 as const } };
 
-    expect(await loadClubFlight(adapter(club(flight)), 'k')).toEqual(flight);
-    await expect(loadClubFlight(adapter(club({ id: 'f' })), 'k')).rejects.toThrow(/not valid/);
-    await expect(loadClubFlight(adapter(), 'k')).rejects.toThrow(/not valid/);
+    expect(clubFlightOf(entry, [{ t: 0, lat: 1, lon: 1, alt: 1 }])).toMatchObject({ id: 'k 1', pilot: 'P' });
+    expect(clubStudioHref('c1', 'k 1')).toBe('/studio?club=c1&key=k+1');
   });
 });
