@@ -163,7 +163,7 @@
       {#each sortByName(converters(), (c) => c.label) as c (c.id)}
         <li data-id={c.id}>
           <strong>{c.label}</strong>
-          <span class="muted">{c.extensions.map((e) => `.${e}`).join(' ')}</span>
+          <span class="muted">{c.extensions.map((e) => `.${e}`).join(', ')}</span>
           <span class="muted">
             {[c.canRead && m.convert_reads(), c.canWrite && m.convert_writes()].filter(Boolean).join(', ')}
           </span>
@@ -239,18 +239,21 @@
     margin: 0;
     font-size: 16px;
   }
+  /* Each row spans the list's 4 columns through subgrid, so the columns line up like a table. */
   ul {
     display: grid;
-    gap: 4px;
+    grid-template-columns: repeat(4, auto);
+    gap: 4px 16px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
   li {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: center;
-    gap: 4px 12px;
+    justify-items: start;
   }
   .badge {
     padding: 0 6px;
