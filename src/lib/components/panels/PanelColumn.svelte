@@ -2,6 +2,7 @@
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import { type Snippet, tick } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
 
   import { m } from '#lib/paraglide/messages';
   import type { PageLayout } from '#lib/state/pageLayout.svelte';
@@ -17,6 +18,8 @@
     body: Snippet<[string]>;
     /** Adds a Remove item to the actions menu. */
     removable?: boolean;
+    /** Folds the panel until the user opens it. Not stored in the layout. */
+    empty?: boolean;
   }
 
   /** One column of draggable, collapsible panels. `labels` names every column for the move menu. */
@@ -29,6 +32,13 @@
   }: { layout: PageLayout; column: string; label: string; labels: Record<string, string>; panels: Panel[] } = $props();
 
   const shown = $derived(layout.value.columns[column].flatMap((id) => panels.find((p) => p.id === id) ?? []));
+  /** Empty panels the user opened. Kept out of the layout, so opening one never changes what is stored. */
+  const opened = new SvelteSet<string>();
+  const isCollapsed = (p: Panel) => (p.empty ? !opened.has(p.id) : layout.value.collapsed.includes(p.id));
+  function toggle(p: Panel) {
+    if (!p.empty) layout.toggleCollapsed(p.id);
+    else if (!opened.delete(p.id)) opened.add(p.id);
+  }
   const marker = $derived(drag.dock === column ? drag.marker : null);
   // Plugin ids hold characters that are not valid in a CSS identifier.
   const viewName = (id: string) => `panel-page-${id.replace(/[^\w-]/g, '-')}`;
@@ -96,7 +106,7 @@
   style:--drop-w={marker && `${marker.w}px`}
 >
   {#each shown as p, i (p.id)}
-    {@const collapsed = layout.value.collapsed.includes(p.id)}
+    {@const collapsed = isCollapsed(p)}
     {@const ids = shown.map((s) => s.id)}
     {#if drag.id === p.id}
       <!-- Keeps the lifted panel's place, so nothing jumps while it is dragged. -->
@@ -121,7 +131,7 @@
           <GripVertical size={14} aria-hidden="true" />
         </button>
         <h2 id="panel-title-{p.id}">
-          <button type="button" class="fold" aria-expanded={!collapsed} onclick={() => layout.toggleCollapsed(p.id)}>
+          <button type="button" class="fold" aria-expanded={!collapsed} onclick={() => toggle(p)}>
             <ChevronDown size={14} aria-hidden="true" />{p.title()}
           </button>
         </h2>
