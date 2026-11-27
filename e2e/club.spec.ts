@@ -6,10 +6,6 @@ const SERVER = 'http://localhost:8090';
 const EMAIL = 'pilot@test.local';
 const KEY = 'club1';
 
-// A JWT the SDK accepts as unexpired. The signature is never checked on the client.
-const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
-const token = `${b64({ alg: 'HS256' })}.${b64({ exp: Math.floor(Date.now() / 1000) + 3600, id: 'u1' })}.sig`;
-
 const STATS = {
   v: 1,
   pilot: 'Ranked Pilot',
@@ -42,7 +38,7 @@ const FLIGHT = {
   club: STATS
 };
 
-/** A PocketBase server with one shared flight of another pilot. Collects what the app writes. */
+/** A sync server with one shared flight of another pilot. Collects what the app writes. */
 async function mockServer(page: Page) {
   const writes: Record<string, unknown>[] = [];
   const cors = {
@@ -56,41 +52,41 @@ async function mockServer(page: Page) {
     const url = new URL(req.url());
     const json = (body: unknown, status = 200) =>
       route.fulfill({ status, headers: cors, contentType: 'application/json', body: JSON.stringify(body) });
-    const list = (items: unknown[]) => json({ page: 1, perPage: 200, totalItems: -1, totalPages: -1, items });
-
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
 
-    if (url.pathname === '/api/collections/users/auth-methods') {
+    if (url.pathname === '/api/updraft/v1') {
       return json({
-        password: { enabled: true, identityFields: ['email'] },
-        oauth2: { enabled: false, providers: [] },
-        mfa: { enabled: false, duration: 0 },
-        otp: { enabled: false, duration: 0 }
+        version: 1,
+        auth: { password: true, signup: false, oauth: [] },
+        club: true,
+        limits: { maxChanges: 200, maxPull: 1000 }
       });
     }
 
-    if (url.pathname === '/api/collections/users/auth-with-password') {
-      return json({ token, record: { id: 'u1', collectionName: 'users', email: EMAIL } });
+    if (url.pathname === '/api/updraft/v1/auth/password') {
+      return json({ token: 'test-token', user: { id: 'u1', name: EMAIL } });
     }
 
-    if (url.pathname === `/api/collections/records/records/${KEY}`) {
-      return json({ id: KEY, shared: true, data: FLIGHT });
+    if (url.pathname === '/api/updraft/v1/pull') {
+      return json({ changes: [], cursor: null, more: false });
     }
 
-    if (url.pathname === '/api/updraft/push') {
+    if (url.pathname === `/api/updraft/v1/club/${KEY}`) {
+      return json({ data: FLIGHT });
+    }
+
+    if (url.pathname === '/api/updraft/v1/club') {
+      return json({ flights: [{ key: KEY, owner: 'u2', mine: false, stats: STATS }] });
+    }
+
+    if (url.pathname === '/api/updraft/v1/push') {
       const body = req.postDataJSON() as { changes: Array<{ type: string; deleted?: boolean; data?: unknown }> };
       for (const c of body.changes) {
         const data = c.data as { shared?: boolean } | undefined;
         writes.push({ ...c, shared: c.type === 'flight' && !c.deleted && data?.shared === true });
       }
 
-      return json({ ok: true });
-    }
-
-    if (url.pathname === '/api/collections/records/records') {
-      return list(
-        url.searchParams.get('filter')?.includes('shared = true') ? [{ id: KEY, owner: 'u2', summary: STATS }] : []
-      );
+      return json({});
     }
 
     return json({ message: 'Not mocked.' }, 404);

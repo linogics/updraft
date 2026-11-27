@@ -132,8 +132,22 @@ run('sync spec v1', { timeout: 60000 }, () => {
     expect((await browserGet('/auth/redirect/any')).status).toBe(400);
   });
 
+  it.runIf(SPEC_APP_ORIGIN)('requires a valid app_state for the oauth redirect', async () => {
+    const origin = encodeURIComponent(SPEC_APP_ORIGIN ?? '');
+    for (const bad of [
+      '',
+      '&app_state=short',
+      `&app_state=${'a'.repeat(129)}`,
+      '&app_state=has%20space-aaaaaaaaaaaaaaaaaaaa'
+    ]) {
+      expect((await browserGet(`/auth/redirect/any?origin=${origin}${bad}`)).status).toBe(400);
+    }
+  });
+
   it.runIf(SPEC_APP_ORIGIN)('answers 404 for an unknown oauth provider', async () => {
-    const res = await browserGet(`/auth/redirect/no-such-provider?origin=${encodeURIComponent(SPEC_APP_ORIGIN ?? '')}`);
+    const res = await browserGet(
+      `/auth/redirect/no-such-provider?origin=${encodeURIComponent(SPEC_APP_ORIGIN ?? '')}&app_state=${'a'.repeat(32)}`
+    );
     expect(res.status).toBe(404);
   });
 
@@ -141,7 +155,7 @@ run('sync spec v1', { timeout: 60000 }, () => {
     const res = await browserGet('/auth/callback?code=abc&state=def');
     expect(res.status).toBe(400);
     expect(res.headers.get('content-type')).toContain('text/html');
-    expect(await res.text()).not.toContain('postMessage');
+    expect(res.headers.get('location')).toBeNull();
   });
 
   it('signs in with a password and rejects a wrong one', async () => {

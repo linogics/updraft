@@ -31,10 +31,14 @@ describe('syncUrl', () => {
 
 describe('parseSyncConfig', () => {
   it('accepts a plugin id and a valid url', () => {
-    expect(parseSyncConfig({ backend: 'updraft/pocketbase', url: 'https://a.example' })).toEqual({
-      backend: 'updraft/pocketbase',
+    expect(parseSyncConfig({ backend: 'updraft/http', url: 'https://a.example' })).toEqual({
+      backend: 'updraft/http',
       url: 'https://a.example'
     });
+  });
+
+  it('maps the removed PocketBase plugin id to the HTTP one', () => {
+    expect(parseSyncConfig({ backend: 'updraft/pocketbase', url: 'https://a.example' })?.backend).toBe('updraft/http');
   });
 
   it.each([null, 'x', {}, { backend: 'nope', url: 'https://a.example' }, { backend: 'a/b', url: 'http://a.example' }])(
@@ -44,7 +48,7 @@ describe('parseSyncConfig', () => {
 });
 
 describe('preset and override', () => {
-  const preset = { backend: 'updraft/pocketbase', url: 'https://preset.example' };
+  const preset = { backend: 'updraft/http', url: 'https://preset.example' };
 
   it('reads the sync key of config.json', async () => {
     answer({ sync: preset });
@@ -62,7 +66,7 @@ describe('preset and override', () => {
     );
     expect(await fetchPreset()).toBeNull();
 
-    answer({ sync: { backend: 'updraft/pocketbase', url: 'http://evil.example' } });
+    answer({ sync: { backend: 'updraft/http', url: 'http://evil.example' } });
     expect(await fetchPreset()).toBeNull();
 
     vi.stubGlobal(
@@ -76,7 +80,7 @@ describe('preset and override', () => {
     answer({ sync: preset });
     expect((await loadSyncConfig()).config).toEqual(preset);
 
-    const own = { backend: 'updraft/pocketbase', url: 'http://localhost:8090' };
+    const own = { backend: 'updraft/http', url: 'http://localhost:8090' };
     writeOverride(own);
     expect(await loadSyncConfig()).toEqual({ config: own, preset });
 

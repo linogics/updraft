@@ -111,7 +111,7 @@ export interface BuiltinBackend {
 }
 
 export const BUILTIN_BACKENDS: readonly BuiltinBackend[] = [
-  { id: 'updraft/pocketbase', name: 'PocketBase', load: () => import('./builtin/pocketbase') }
+  { id: 'updraft/http', name: 'Updraft sync server', load: () => import('./builtin/http') }
 ];
 
 /** A bundled track format. The metadata is here so the module is only imported when a file needs it. */

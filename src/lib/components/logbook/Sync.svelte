@@ -8,7 +8,7 @@
   import { syncUrl } from '#lib/sync/config';
   import type { AuthMethod } from '#lib/sync/types';
 
-  const DEFAULT_BACKEND = 'updraft/pocketbase';
+  const DEFAULT_BACKEND = 'updraft/http';
 
   // Null means untouched, so the form follows the deploy preset until the user types.
   let backendDraft = $state<string | null>(null);

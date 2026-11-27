@@ -192,9 +192,13 @@ export class SyncClient {
     try {
       const adapter = (await this.load(config.backend)).create({ url: config.url });
       this.adapter = adapter;
-      this.session = adapter.session();
-      if (this.session) this.startEngine(adapter);
-      else await this.loadMethods();
+      const session = adapter.session();
+      if (session) {
+        // The club offer is part of the capabilities, so ask before the UI looks for it. Offline is fine.
+        await adapter.authMethods().catch(() => {});
+        this.session = session;
+        this.startEngine(adapter);
+      } else await this.loadMethods();
     } catch (e) {
       this.error = message(e);
     }

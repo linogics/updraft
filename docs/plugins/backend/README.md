@@ -3,7 +3,7 @@
 A `backend` plugin connects the sync engine to a server. `create({ url })` returns a `BackendAdapter`, which is a `SyncTransport` (`push(changes)` and `pull(cursor)`, see Sync in [development.md](../../development.md)) plus login.
 
 - Where it runs: in the page, when the user connects sync. The module is imported when the backend is used.
-- How to load it: **Panels**, **Add plugin...** in the studio, then pick it in the backend list of the logbook Sync panel. The bundled backend is `updraft/pocketbase`, see [self-hosting-sync.md](../../self-hosting-sync.md).
+- How to load it: **Panels**, **Add plugin...** in the studio, then pick it in the backend list of the logbook Sync panel. The bundled backend is `updraft/http`, see [self-hosting-sync.md](../../self-hosting-sync.md).
 - Reference: [API reference](api.md).
 
 ## Fields
