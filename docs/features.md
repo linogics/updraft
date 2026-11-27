@@ -94,7 +94,7 @@ Everything updraft can do today, grouped by area. A short guide to using it is i
 
 ## Sync
 
-- Optional, local-first sync of flights, manual entries, camera keys and settings through a server you host (bundled PocketBase backend, or a backend plugin).
+- Optional, local-first sync of flights, manual entries, camera keys and settings through a server you host (bundled `updraft/http` backend, or a backend plugin).
 - Password and OAuth sign in, automatic sync after changes and on focus, "Sync now", newest change wins per record.
 - API keys sync only on request. Layout and plugin list stay per device.
 - A hosted app can preset the server with `/config.json`.

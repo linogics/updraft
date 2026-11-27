@@ -111,27 +111,16 @@ function oauthProviders() {
   return list;
 }
 
-// Safe inside an inline script and a JSON string.
-function scriptJson(value) {
-  return JSON.stringify(value).replace(
-    /[<>&\u2028\u2029]/g,
-    (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')
-  );
-}
+// Sends the popup back to the app. The result travels in the URL fragment, which no server or proxy sees.
+// The app page hands it to the opener tab on a BroadcastChannel, because providers' COOP headers cut window.opener.
+const APP_CALLBACK = '/oauth-callback.html';
 
-// Hands the result to the window that opened the popup, and only to the origin saved before the redirect.
-function resultPage(e, origin, message) {
-  const nonce = $security.randomString(24);
-  const script = `window.opener&&window.opener.postMessage(${scriptJson({ type: 'updraft-auth', ...message })},${scriptJson(origin)});window.close();`;
+function resultRedirect(e, saved, message) {
+  const result = encodeURIComponent(JSON.stringify({ type: 'updraft-auth', state: saved.appState, ...message }));
   const h = e.response.header();
-  h.set('Content-Security-Policy', `default-src 'none'; base-uri 'none'; script-src 'nonce-${nonce}'`);
   h.set('Cache-Control', 'no-store');
   h.set('Referrer-Policy', 'no-referrer');
-  h.set('X-Content-Type-Options', 'nosniff');
-  return e.html(
-    200,
-    `<!doctype html><meta charset="utf-8"><title>Updraft</title><p>You can close this window.</p><script nonce="${nonce}">${script}</script>`
-  );
+  return e.redirect(302, `${saved.origin}${APP_CALLBACK}#${result}`);
 }
 
 module.exports = {
@@ -141,7 +130,7 @@ module.exports = {
   appOrigins,
   publicUrl,
   oauthProviders,
-  resultPage,
+  resultRedirect,
   OAUTH_COOKIE,
   OAUTH_PATH,
   MAX_CHANGES,

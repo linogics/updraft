@@ -3,11 +3,7 @@ import { expect, test } from './fixtures';
 const SERVER = 'http://localhost:8090';
 const EMAIL = 'pilot@test.local';
 
-// A JWT the SDK accepts as unexpired. The signature is never checked on the client.
-const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
-const token = `${b64({ alg: 'HS256' })}.${b64({ exp: Math.floor(Date.now() / 1000) + 3600, id: 'u1' })}.sig`;
-
-test('connect, sign in and sync a record to a PocketBase server', async ({ page }) => {
+test('connect, sign in and sync a record to a sync server', async ({ page }) => {
   const pushed: { type: string; rid: string }[] = [];
   const cors = {
     'access-control-allow-origin': '*',
@@ -23,27 +19,27 @@ test('connect, sign in and sync a record to a PocketBase server', async ({ page 
 
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
 
-    if (pathname === '/api/collections/users/auth-methods') {
+    if (pathname === '/api/updraft/v1') {
       return json({
-        password: { enabled: true, identityFields: ['email'] },
-        oauth2: { enabled: false, providers: [] },
-        mfa: { enabled: false, duration: 0 },
-        otp: { enabled: false, duration: 0 }
+        version: 1,
+        auth: { password: true, signup: false, oauth: [] },
+        club: false,
+        limits: { maxChanges: 200, maxPull: 1000 }
       });
     }
 
-    if (pathname === '/api/collections/users/auth-with-password') {
-      return json({ token, record: { id: 'u1', collectionName: 'users', email: EMAIL } });
+    if (pathname === '/api/updraft/v1/auth/password') {
+      return json({ token: 'test-token', user: { id: 'u1', name: EMAIL } });
     }
 
-    if (pathname === '/api/updraft/push') {
+    if (pathname === '/api/updraft/v1/pull') {
+      return json({ changes: [], cursor: null, more: false });
+    }
+
+    if (pathname === '/api/updraft/v1/push') {
       const body = req.postDataJSON() as { changes: Array<{ type: string; id: string }> };
       for (const c of body.changes) pushed.push({ type: c.type, rid: c.id });
-      return json({ ok: true });
-    }
-
-    if (pathname === '/api/collections/records/records') {
-      return json({ page: 1, perPage: 200, totalItems: -1, totalPages: -1, items: [] });
+      return json({});
     }
 
     return json({ message: 'Not mocked.' }, 404);

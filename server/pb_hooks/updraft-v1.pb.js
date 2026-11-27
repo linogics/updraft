@@ -56,6 +56,9 @@ routerAdd('GET', `${BASE}/auth/redirect/{provider}`, (e) => {
   const { appOrigins, publicUrl, oauthProviders, OAUTH_COOKIE, OAUTH_PATH } = require(`${__hooks}/updraft.js`);
   const origin = e.request.url.query().get('origin') || '';
   if (appOrigins().indexOf(origin) < 0) throw new BadRequestError('origin is not allowed.');
+  // The app's own random value, echoed back so the app can tell its result from an injected one.
+  const appState = e.request.url.query().get('app_state') || '';
+  if (!/^[A-Za-z0-9_-]{22,128}$/.test(appState)) throw new BadRequestError('app_state is not valid.');
   const id = e.request.pathValue('provider');
   const found = oauthProviders().find((p) => p.id === id);
   if (!found) throw new NotFoundError('Unknown provider.');
@@ -76,7 +79,7 @@ routerAdd('GET', `${BASE}/auth/redirect/{provider}`, (e) => {
   e.setCookie(
     new Cookie({
       name: OAUTH_COOKIE,
-      value: encodeURIComponent(JSON.stringify({ state, verifier, origin, provider: id })),
+      value: encodeURIComponent(JSON.stringify({ state, verifier, origin, appState, provider: id })),
       path: OAUTH_PATH,
       maxAge: 600,
       httpOnly: true,
@@ -88,9 +91,9 @@ routerAdd('GET', `${BASE}/auth/redirect/{provider}`, (e) => {
   return e.redirect(302, url);
 });
 
-// OAuth sign in, step two. Always answers with a page that posts the result to the opener.
+// OAuth sign in, step two. Redirects the popup to the app page with the result in the fragment.
 routerAdd('GET', `${BASE}/auth/callback`, (e) => {
-  const { appOrigins, publicUrl, oauthProviders, resultPage, session, OAUTH_COOKIE, OAUTH_PATH } = require(
+  const { appOrigins, publicUrl, oauthProviders, resultRedirect, session, OAUTH_COOKIE, OAUTH_PATH } = require(
     `${__hooks}/updraft.js`
   );
   const q = e.request.url.query();
@@ -103,13 +106,14 @@ routerAdd('GET', `${BASE}/auth/callback`, (e) => {
   }
   e.setCookie(new Cookie({ name: OAUTH_COOKIE, value: '', path: OAUTH_PATH, maxAge: -1, httpOnly: true }));
 
-  // Without a trusted cookie there is no origin to answer to, so nothing is posted anywhere.
+  // Without a trusted cookie there is no origin to answer to, so there is no redirect.
   const state = q.get('state') || '';
   if (
     !saved ||
     typeof saved !== 'object' ||
     typeof saved.origin !== 'string' ||
     appOrigins().indexOf(saved.origin) < 0 ||
+    typeof saved.appState !== 'string' ||
     typeof saved.state !== 'string' ||
     state === '' ||
     saved.state !== state
@@ -119,7 +123,7 @@ routerAdd('GET', `${BASE}/auth/callback`, (e) => {
       '<!doctype html><meta charset="utf-8"><title>Updraft</title><p>Sign in failed. Start again from the app.</p>'
     );
 
-  const fail = (message) => resultPage(e, saved.origin, { error: message });
+  const fail = (message) => resultRedirect(e, saved, { error: message });
   if (q.get('error') || !q.get('code')) return fail('Sign in was cancelled.');
   const found = oauthProviders().find((p) => p.id === saved.provider);
   if (!found) return fail('Unknown provider.');
@@ -208,7 +212,7 @@ routerAdd('GET', `${BASE}/auth/callback`, (e) => {
       return fail('Sign in failed.');
     }
   }
-  return resultPage(e, saved.origin, session(user));
+  return resultRedirect(e, saved, session(user));
 });
 
 routerAdd(

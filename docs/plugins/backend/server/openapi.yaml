@@ -121,11 +121,18 @@ paths:
           description: The origin of the app, for example `https://updraft.example.org`. Must match an allowed origin exactly.
           schema:
             type: string
+        - name: app_state
+          in: query
+          required: true
+          description: A random value the app made for this sign in, at least 22 base64url characters. The server echoes it as `state` in the result, so the app can ignore any result that is not its own.
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9_-]{22,128}$'
       responses:
         '302':
           description: Redirect to the provider's sign in page.
         '400':
-          description: The origin is missing or not allowed.
+          description: The origin is not allowed, or `app_state` is missing or malformed.
           $ref: '#/components/responses/Error'
         '404':
           description: The provider is not offered.
@@ -142,16 +149,19 @@ paths:
         by the same email, which it then links. When nothing matches it creates an account only if `auth.signup` is true,
         otherwise the sign in fails with the message `No account matches your <provider label> email. Ask the server admin to create one with that email.`
 
-        The answer is a small HTML page with a strict content security policy. Its script calls
-        `window.opener.postMessage(message, origin)` and `window.close()`. `origin` is the allowed app origin saved in
-        the cookie, never `*`. The app must check `event.origin` against the server's origin and `event.source` against
-        its popup before using the message. `message` is one of:
+        The answer is a redirect (302) to `<origin>/oauth-callback.html#<result>` with `Referrer-Policy: no-referrer` and
+        `Cache-Control: no-store`. `origin` is the allowed app origin saved in the cookie, never anything from the
+        query. `<result>` is `encodeURIComponent(JSON.stringify(message))`, in the fragment so no server or proxy sees
+        it. The app page reads it, removes the fragment from the address bar and hands it to the app tab. It does not
+        use `window.opener`, because providers send `Cross-Origin-Opener-Policy` and cut it. `message` is one of:
 
-        - `{ "type": "updraft-auth", "token": "...", "user": { "id": "...", "name": "..." } }`, the same session as a password sign in.
-        - `{ "type": "updraft-auth", "error": "..." }`, with a message that is safe to show.
+        - `{ "type": "updraft-auth", "state": "...", "token": "...", "user": { "id": "...", "name": "..." } }`, the same session as a password sign in.
+        - `{ "type": "updraft-auth", "state": "...", "error": "..." }`, with a message that is safe to show.
+
+        `state` is the `app_state` of the start request. The app must ignore a result with another value.
 
         When the cookie is missing, expired or does not match `state`, there is no trusted origin, so the server answers 400
-        with a page that posts nothing.
+        with a plain page and no redirect.
       security: []
       parameters:
         - name: code
@@ -163,12 +173,8 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: The page that posts the message.
-          content:
-            text/html:
-              schema:
-                type: string
+        '302':
+          description: Redirect to the app with the result in the fragment.
         '400':
           description: No valid sign in was started in this browser.
           content:

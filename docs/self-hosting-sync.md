@@ -1,6 +1,6 @@
 # Self-hosting sync
 
-updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/pocketbase` talks to [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
+updraft stays local-first. Sync is optional and mirrors your flights, manual entries, camera paths and settings to a server you run yourself. The bundled backend `updraft/http` speaks the [sync HTTP spec](plugins/backend/server/openapi.yaml). The reference server runs on [PocketBase](https://pocketbase.io), one small binary with SQLite inside. The `server/` folder in this repository is everything it needs.
 
 Users connect from the Sync section of the logbook, see [Point the app at the server](#point-the-app-at-the-server).
 
@@ -22,9 +22,14 @@ PocketBase allows every origin by default. To only allow the app, add `--origins
 
 ## Sign in with Google, GitHub and others
 
-Open the `users` collection settings in the dashboard, go to Options, enable OAuth2 and add a provider. In the provider's console use `https://<pocketbase-host>/api/oauth2-redirect` as the redirect URL. The app lists the enabled providers next to the password form. The sign in opens a popup, so it must be started by a click.
+Open the `users` collection settings in the dashboard, go to Options, enable OAuth2 and add a provider. Set these environment variables on the server:
 
-Public signup is off, so an OAuth sign in only works for an existing account. PocketBase links the provider to the account whose email matches the provider's primary email. Create the account with exactly that email. Otherwise PocketBase tries to create a new account and refuses with "Only superusers can perform this action", which the app shows as a missing account.
+- `UPDRAFT_PUBLIC_URL`: the address of the server, for example `https://sync.example.com`.
+- `UPDRAFT_APP_ORIGINS`: the exact origins of the app, comma separated, for example `https://updraft.example.org`. The sign in result is only sent to these.
+
+In the provider's console use `<UPDRAFT_PUBLIC_URL>/api/updraft/v1/auth/callback` as the redirect URL. The app lists the enabled providers next to the password form. The sign in opens a popup, so it must be started by a click, and the app needs the page `/oauth-callback.html` that ships with it.
+
+The provider is linked to the account whose email matches the provider's primary email. With `UPDRAFT_SIGNUP` unset an OAuth sign in only works for an existing account, so create it with exactly that email. Set `UPDRAFT_SIGNUP=true` to let people create accounts by signing in.
 
 ## Club sharing
 
@@ -47,20 +52,19 @@ Users enter the address in the Sync section of the logbook. Use `https`. Plain `
 To fill it in for everyone who opens your hosted app, serve a `config.json` at the root of the site:
 
 ```json
-{ "sync": { "backend": "updraft/pocketbase", "url": "https://sync.example.com" } }
+{ "sync": { "backend": "updraft/http", "url": "https://sync.example.com" } }
 ```
 
-When you build the app yourself, put the file at `static/config.json` before `npm run build`. Otherwise add it next to `index.html` on the web server. The app reads it on every start and the service worker never caches it, so edits apply on the next load. A missing or invalid file means no preset. An address a user typed in always wins over the file. The PocketBase server must allow the origin of your app, see the CORS section above.
+When you build the app yourself, put the file at `static/config.json` before `npm run build`. Otherwise add it next to `index.html` on the web server. The app reads it on every start and the service worker never caches it, so edits apply on the next load. A missing or invalid file means no preset. An address a user typed in always wins over the file. The sync server must allow the origin of your app, see the CORS section above.
 
 ## Development
 
-The integration test runs against a real server and is skipped without `PB_URL`:
+The conformance test runs against a real server and is skipped without `SPEC_URL`:
 
 ```sh
-./pocketbase superuser upsert admin@test.local adminpass123 --dir /tmp/pb --migrationsDir server/pb_migrations
-./pocketbase serve --dir /tmp/pb --migrationsDir server/pb_migrations --hooksDir server/pb_hooks --http=127.0.0.1:8090 --automigrate=false
-PB_URL=http://127.0.0.1:8090 PB_ADMIN_EMAIL=admin@test.local PB_ADMIN_PASSWORD=adminpass123 \
-  npm test -- pocketbase.integration
+UPDRAFT_SIGNUP=true UPDRAFT_APP_ORIGINS=http://localhost:5173 UPDRAFT_PUBLIC_URL=http://127.0.0.1:8090 \
+  ./pocketbase serve --dir /tmp/pb --migrationsDir server/pb_migrations --hooksDir server/pb_hooks --http=127.0.0.1:8090 --automigrate=false
+SPEC_URL=http://127.0.0.1:8090 SPEC_APP_ORIGIN=http://localhost:5173 npm test -- spec.conformance
 ```
 
 Pass `--migrationsDir server/pb_migrations` to every command that opens the data folder.

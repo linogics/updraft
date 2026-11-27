@@ -14,7 +14,9 @@ export function parseSyncConfig(raw: unknown): SyncConfig | null {
   if (typeof o.backend !== 'string' || !PLUGIN_ID.test(o.backend) || typeof o.url !== 'string') return null;
 
   const url = syncUrl(o.url);
-  return url ? { backend: o.backend, url } : null;
+  // The old PocketBase plugin is gone, the same server speaks the HTTP spec.
+  const backend = o.backend === 'updraft/pocketbase' ? 'updraft/http' : o.backend;
+  return url ? { backend, url } : null;
 }
 
 /** https only, plain http just for a server on this machine. Returns the URL without a trailing slash. */
