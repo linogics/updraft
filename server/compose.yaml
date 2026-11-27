@@ -5,6 +5,9 @@ services:
     build:
       context: .
     restart: unless-stopped
+    environment:
+      # Set to true to let anyone create an account through POST /api/updraft/v1/auth/signup.
+      UPDRAFT_SIGNUP: ${UPDRAFT_SIGNUP:-false}
     ports:
       - '127.0.0.1:8090:8090'
     volumes:
