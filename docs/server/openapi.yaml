@@ -987,22 +987,25 @@ components:
       properties:
         fixes:
           type: array
+          minItems: 1
+          description: At least one fix. A client rejects the whole track when one fix is missing a field.
           items:
             type: object
             description: One GPS fix.
+            required: [t, lat, lon, alt]
             properties:
               t:
                 type: number
-                description: Time in milliseconds.
+                description: Unix time in milliseconds, UTC.
               lat:
                 type: number
-                description: Latitude in degrees.
+                description: Latitude in decimal degrees.
               lon:
                 type: number
-                description: Longitude in degrees.
+                description: Longitude in decimal degrees.
               alt:
                 type: number
-                description: Altitude.
+                description: Altitude in metres as recorded. GPS altitude when the file has it, otherwise pressure altitude.
       example:
         fixes:
           - t: 1784023331000

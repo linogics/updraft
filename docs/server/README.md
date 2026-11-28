@@ -63,7 +63,7 @@ Two devices that change different fields of one flight both keep their change. T
 
 ### Cursors, not offsets
 
-An offset moves while items are written, so a feed would skip or repeat items. A cursor is a position that stays correct. A server can answer it with an index seek and does not count rows. The cursor is opaque, so a server may change its format or lose its history. The client treats a 400 on a stored cursor as "start again from the beginning". Merging is safe, so replaying the feed costs time but never data. See [`GET /{collection}`](reference.md#listchanges).
+An offset moves while items are written, so a feed would skip or repeat items. A cursor is a position that stays correct. A server can answer it with an index seek and does not count rows. The cursor is opaque, so a server may change its format or lose its history. The client treats a 400 on a stored cursor as "start again from the beginning". Replaying is safe: a clean local item takes the server copy, and an unsynced local edit merges field by field by `times`. A replay costs time, not edits. See [`GET /{collection}`](reference.md#listchanges).
 
 ### Tracks are written once
 
