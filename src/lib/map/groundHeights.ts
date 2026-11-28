@@ -31,10 +31,10 @@ export function sampleBilinear(map: Float32Array, size: number, x: number, y: nu
   return top * (1 - fy) + bottom * fy;
 }
 
-async function fetchTile(x: number, y: number): Promise<Float32Array> {
-  const url = TERRARIUM_URL.replace('{z}', String(GROUND_ZOOM)).replace('{x}', String(x)).replace('{y}', String(y));
+async function fetchTile(x: number, y: number, z: number): Promise<Float32Array> {
+  const url = TERRARIUM_URL.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y));
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Terrarium tile ${GROUND_ZOOM}/${x}/${y}: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`Terrarium tile ${z}/${x}/${y}: HTTP ${res.status}`);
   const bitmap = await createImageBitmap(await res.blob());
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
@@ -48,11 +48,11 @@ async function fetchTile(x: number, y: number): Promise<Float32Array> {
  * Ground height in metres MSL under each fix, same order as the input. Rejects when tiles cannot load.
  * Tiles are not kept after the call (256 KB each), the browser HTTP cache covers repeat loads.
  */
-export async function groundSeries(fixes: LatLon[]): Promise<Float32Array> {
-  const at = fixes.map((f) => locate(f.lat, f.lon, GROUND_ZOOM));
+export async function groundSeries(fixes: LatLon[], zoom = GROUND_ZOOM): Promise<Float32Array> {
+  const at = fixes.map((f) => locate(f.lat, f.lon, zoom));
   const unique = new Map(at.map((p) => [`${p.x}/${p.y}`, p]));
   const loaded = new Map(
-    await Promise.all([...unique].map(async ([key, p]) => [key, await fetchTile(p.x, p.y)] as const))
+    await Promise.all([...unique].map(async ([key, p]) => [key, await fetchTile(p.x, p.y, zoom)] as const))
   );
   return Float32Array.from(at, (p) => sampleBilinear(loaded.get(`${p.x}/${p.y}`)!, TILE, p.px, p.py));
 }

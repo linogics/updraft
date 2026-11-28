@@ -66,6 +66,14 @@ export const BUILTIN_PLUGINS: readonly BuiltinPlugin[] = [
     load: () => import('./builtin/plan-xc')
   },
   {
+    id: 'updraft/glide',
+    title: () => m.glide_title(),
+    dock: 'right',
+    collapsed: true,
+    hosts: ['plan'],
+    load: () => import('./builtin/glide')
+  },
+  {
     id: 'updraft/plan-export',
     title: () => m.export_menu(),
     dock: 'right',

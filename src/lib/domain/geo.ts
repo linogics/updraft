@@ -28,3 +28,14 @@ export function bearing(a: LatLon, b: LatLon): number {
 export function headingDelta(a: number, b: number): number {
   return ((b - a + 540) % 360) - 180;
 }
+
+/** Point `dist` metres from `from` along an initial bearing (degrees, 0 = north). */
+export function destination(from: LatLon, bearingDeg: number, dist: number): LatLon {
+  const δ = dist / EARTH_RADIUS;
+  const θ = bearingDeg * RAD;
+  const φ1 = from.lat * RAD;
+  const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ));
+  const λ2 =
+    from.lon * RAD + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
+  return { lat: φ2 / RAD, lon: ((λ2 / RAD + 540) % 360) - 180 };
+}

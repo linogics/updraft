@@ -11,14 +11,17 @@
   import AddPluginDialog from '#lib/components/studio/AddPluginDialog.svelte';
   import { announce, panelStatus } from '#lib/components/studio/panelActions.svelte';
   import PanelHost from '#lib/components/studio/PanelHost.svelte';
-  import type { LatLon } from '#lib/domain/geo';
+  import { bearing, type LatLon } from '#lib/domain/geo';
+  import { heightNeeded } from '#lib/domain/glide';
   import { decodeRoute, DEFAULT_SPEED, densify, encodeRoute, MAX_ROUTE_POINTS } from '#lib/domain/route';
   import { BASEMAP_IDS, type BasemapId } from '#lib/domain/scene';
   import { BASEMAPS } from '#lib/map/basemaps';
+  import { computeReach } from '#lib/map/reach';
   import { m } from '#lib/paraglide/messages';
   import { providePlanService, providePlanState } from '#lib/plan/planService.svelte';
   import { planRegistry } from '#lib/plan/registry.svelte';
   import type { PluginEntry } from '#lib/plugins/entries';
+  import { glide } from '#lib/state/glide.svelte';
   import { PlanState } from '#lib/state/plan.svelte';
   import { LEGS_PANEL, planLayout } from '#lib/state/planLayout.svelte';
   import { PLAN_SIDEBAR, planSidebar } from '#lib/state/planSidebar.svelte';
@@ -28,7 +31,7 @@
   import { pluginEntry, pluginPanelId } from '#lib/studio/registry.svelte';
   import { flash, scrollToPanel } from '#lib/ui/attention';
   import { formatDuration } from '#lib/ui/format';
-  import { formatDistance } from '#lib/ui/units';
+  import { formatAlt, formatDistance } from '#lib/ui/units';
   import { scoreFlight } from '#lib/xc/score';
 
   const plan = new PlanState();
@@ -140,6 +143,33 @@
     }, 400);
     return () => clearTimeout(timer);
   });
+
+  let reachRun = 0;
+  $effect(() => {
+    const { start } = glide;
+    const { altitude, ...params } = glide.inputs;
+    const id = ++reachRun;
+    if (!start) {
+      glide.reach = null;
+      glide.ground = null;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void computeReach(start, altitude, params)
+        .then((r) => {
+          if (id !== reachRun) return;
+          glide.reach = r.polygon;
+          glide.ground = r.ground;
+        })
+        .catch(() => {
+          if (id !== reachRun) return;
+          glide.reach = null;
+          glide.ground = null;
+        });
+    }, 400);
+    return () => clearTimeout(timer);
+  });
 </script>
 
 <svelte:head>
@@ -232,6 +262,13 @@
         onmove={move}
         oninsert={insert}
         onselect={(i) => (plan.selected = i)}
+        reach={glide.reach}
+        start={glide.start}
+        armed={glide.armed}
+        onstart={(p) => {
+          glide.start = p;
+          glide.armed = false;
+        }}
       />
     {/if}
   </main>
@@ -242,9 +279,15 @@
 {#snippet body(id: string)}
   {#if id === LEGS_PANEL}
     <ol>
+      <li class="head">
+        <span>{m.glide_leg()}</span><span>{m.logbook_col_distance()}</span><span>{m.glide_needed()}</span>
+      </li>
       {#each plan.legs as d, i (i)}
+        {@const need = heightNeeded(d, bearing(plan.points[i], plan.points[i + 1]), glide.inputs)}
         <li>
-          <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span><span>{formatDistance(d, unitPrefs.units)}</span>
+          <span>{m.plan_leg({ from: i + 1, to: i + 2 })}</span>
+          <span>{formatDistance(d, unitPrefs.units)}</span>
+          <span title={m.glide_needed()}>{need === null ? '–' : formatAlt(need, unitPrefs.units)}</span>
         </li>
       {/each}
     </ol>
@@ -337,10 +380,18 @@
     font-size: 13px;
   }
   li {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 5em;
+    gap: 8px;
+    text-align: right;
     padding: 4px 0;
     border-bottom: 1px solid var(--border);
+  }
+  li.head {
+    color: var(--muted);
+  }
+  li > :first-child {
+    text-align: left;
   }
   @media (max-width: 800px) {
     .page {

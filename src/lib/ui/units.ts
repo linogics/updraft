@@ -46,6 +46,7 @@ export const fromAlt = (v: number, u: AltUnit) => v / ALT_FACTOR[u];
 export const toVario = (ms: number, u: VarioUnit) => ms * VARIO_FACTOR[u];
 export const fromVario = (v: number, u: VarioUnit) => v / VARIO_FACTOR[u];
 export const toSpeed = (ms: number, u: SpeedUnit) => ms * SPEED_FACTOR[u];
+export const fromSpeed = (v: number, u: SpeedUnit) => v / SPEED_FACTOR[u];
 export const toDistance = (m: number, u: DistanceUnit) => m * DISTANCE_FACTOR[u];
 
 /** Rounds and drops the sign of zero, so tiny negatives read as 0 rather than -0. */

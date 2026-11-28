@@ -23,7 +23,11 @@
     onadd,
     onmove,
     oninsert,
-    onselect
+    onselect,
+    reach,
+    start,
+    armed,
+    onstart
   }: {
     points: LatLon[];
     selected: number | null;
@@ -34,6 +38,13 @@
     /** Insert a point at index i. */
     oninsert: (i: number, p: LatLon) => void;
     onselect: (i: number | null) => void;
+    /** Ring of the glide reach area. */
+    reach: LatLon[] | null;
+    /** Glide start point. */
+    start: LatLon | null;
+    /** The next click sets the glide start point instead of adding a route point. */
+    armed: boolean;
+    onstart: (p: LatLon) => void;
   } = $props();
 
   function baseStyle(active: BasemapId): StyleSpecification {
@@ -74,6 +85,17 @@
     properties: {},
     geometry: { type: 'LineString' as const, coordinates: pts.map((p) => [p.lon, p.lat]) }
   });
+
+  const polygon = (ring: LatLon[] | null) => ({
+    type: 'Feature' as const,
+    properties: {},
+    geometry: {
+      type: 'Polygon' as const,
+      coordinates: ring ? [[...ring, ring[0]].map((p) => [p.lon, p.lat])] : []
+    }
+  });
+
+  let startMarker: maplibregl.Marker | undefined;
 
   function marker(el: HTMLElement, p: LatLon, draggable: boolean) {
     const mk = new maplibregl.Marker({ element: el, draggable }).setLngLat([p.lon, p.lat]).addTo(map!);
@@ -138,6 +160,19 @@
     const m = map;
     m.on('load', () => {
       m.addSource('route', { type: 'geojson', data: line(points) });
+      m.addSource('reach', { type: 'geojson', data: polygon(reach) });
+      m.addLayer({
+        id: 'reach-fill',
+        type: 'fill',
+        source: 'reach',
+        paint: { 'fill-color': '#2ea8ff', 'fill-opacity': 0.2 }
+      });
+      m.addLayer({
+        id: 'reach-line',
+        type: 'line',
+        source: 'reach',
+        paint: { 'line-color': '#2ea8ff', 'line-width': 2 }
+      });
       m.addLayer({
         id: 'route-casing',
         type: 'line',
@@ -156,6 +191,7 @@
     });
     m.on('click', (e) => {
       onselect(null);
+      if (armed) return onstart({ lat: e.lngLat.lat, lon: e.lngLat.lng });
       onadd({ lat: e.lngLat.lat, lon: e.lngLat.lng });
     });
     const resize = new ResizeObserver(() => m.resize());
@@ -171,6 +207,27 @@
     void (map.getSource('route') as GeoJSONSource).setData(line(points));
     void selected;
     rebuild();
+  });
+
+  $effect(() => {
+    if (!ready || !map) return;
+    void (map.getSource('reach') as GeoJSONSource).setData(polygon(reach));
+  });
+
+  $effect(() => {
+    if (!ready || !map) return;
+    map.getCanvas().style.cursor = armed ? 'crosshair' : '';
+  });
+
+  $effect(() => {
+    startMarker?.remove();
+    startMarker = undefined;
+    if (!ready || !map || !start) return;
+    const el = document.createElement('div');
+    el.className = 'glide-start';
+    el.role = 'img';
+    el.ariaLabel = m.glide_start_marker();
+    startMarker = new maplibregl.Marker({ element: el }).setLngLat([start.lon, start.lat]).addTo(map);
   });
 
   $effect(() => {
@@ -215,6 +272,14 @@
   .map :global(.pt:focus-visible) {
     background: #fff;
     outline: 2px solid #ffd400;
+  }
+  .map :global(.glide-start) {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: #2ea8ff;
+    box-shadow: 0 0 0 2px #0b0c0f;
   }
   .map :global(.mid) {
     width: 12px;
