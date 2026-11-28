@@ -117,6 +117,7 @@ Open "XC Planner" in the navigation.
 - Undo and Clear fix mistakes.
 - Set a speed in km/h for a duration estimate.
 - Thermal overlay, XC score, Airspace and Legs are panels below the route controls. Drag them by the grip, fold them or open their actions menu to move them or reset the layout.
+- The Glide panel shows where you can glide to. Click the crosshair button, then click the map to set the start point. Enter start altitude (MSL, the height above ground follows), glide ratio, trim airspeed, wind speed and the direction the wind comes from, and a safety margin. The blue area is the ground you reach with that margin above terrain. Pick a glider from your logbook to fill glide ratio and airspeed from its straight glides, you can still edit them. The Legs panel shows the height needed at the start of each leg with these values, over flat ground.
 - The XC score panel starts switched off. Turn on "Score flights" to see the score for the chosen league.
 - The Panels menu next to the title adds plugins and lists the ones you added.
 - **Copy link** copies a URL with the route, ready to share.
