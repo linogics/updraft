@@ -13,7 +13,8 @@ export interface paths {
         };
         /**
          * Capabilities
-         * @description Tells the client what this server supports. Needs no token. The client calls it first.
+         * @description Tells the client what this server supports. The client calls it first and only uses what the server announces.
+         *     A server needs at least one way to sign in, `auth.password` or an entry in `auth.oauth`.
          */
         get: operations["getCapabilities"];
         put?: never;
@@ -35,7 +36,9 @@ export interface paths {
         put?: never;
         /**
          * Sign in with a password
-         * @description Only available when `auth.password` is true. Servers should rate limit this route.
+         * @description Only available when `auth.password` is true. Servers must rate limit this route.
+         *     `identity` is the email of the account. Answer an unknown email exactly like a wrong password, so nobody can
+         *     learn which emails exist.
          */
         post: operations["signInWithPassword"];
         delete?: never;
@@ -55,7 +58,8 @@ export interface paths {
         put?: never;
         /**
          * Create an account
-         * @description Only available when `auth.signup` is true, otherwise the server answers 403.
+         * @description Only available when `auth.signup` is true, otherwise the server answers 403. Servers must rate limit this route.
+         *     The password needs at least 8 characters.
          */
         post: operations["signUp"];
         delete?: never;
@@ -73,10 +77,19 @@ export interface paths {
         };
         /**
          * Start an OAuth sign in
-         * @description Only for providers listed in `auth.oauth`. The app opens this URL in a popup. The server checks `origin` against
-         *     its allow list of exact app origins, saves the sign in state in a short lived cookie on the server's own path
-         *     `/api/updraft/v2/auth` and redirects (302) to the provider. The provider returns to `GET /auth/callback`.
-         *     Servers should rate limit this route.
+         * @description Only for providers listed in `auth.oauth`. The app opens this URL in a popup. Servers must rate limit this route.
+         *
+         *     1. The server checks `origin` against its allow list of exact app origins and `app_state` against
+         *        `^[A-Za-z0-9_-]{22,128}$`. It answers 400 for either and 404 for an unknown provider.
+         *     2. The server makes its own random `state` and a PKCE verifier. It saves `state`, the verifier, `origin`,
+         *        `app_state` and the provider in a cookie. The cookie has path `/api/updraft/v2/auth`, `HttpOnly`,
+         *        `SameSite=Lax`, `Secure` on https and a lifetime of 10 minutes. `Lax` is needed so the cookie comes back
+         *        on the provider's redirect.
+         *     3. The server redirects (302) to the provider with `state` and a PKCE challenge (method `S256`).
+         *
+         *     The redirect URL registered at the provider is `<public url>/api/updraft/v2/auth/callback`. The public url is
+         *     configured on the server and never read from the request, so a forged `Host` header cannot steer the redirect.
+         *     The provider then returns to `GET /auth/callback`.
          */
         get: operations["oauthRedirect"];
         put?: never;
@@ -96,24 +109,30 @@ export interface paths {
         };
         /**
          * Finish an OAuth sign in
-         * @description Where the provider redirects the popup to. Not called by the app directly. The server checks `state` against the
-         *     cookie, exchanges `code`, and matches the provider account to a server account: first by an earlier link, then
-         *     by the same email, which it then links. When nothing matches it creates an account only if `auth.signup` is true,
-         *     otherwise the sign in fails with the message `No account matches your <provider label> email. Ask the server admin to create one with that email.`
+         * @description Where the provider redirects the popup to. Not called by the app directly. Servers must rate limit this route.
          *
-         *     The answer is a redirect (302) to `<origin>/oauth-callback.html#<result>` with `Referrer-Policy: no-referrer` and
-         *     `Cache-Control: no-store`. `origin` is the allowed app origin saved in the cookie, never anything from the
-         *     query. `<result>` is `encodeURIComponent(JSON.stringify(message))`, in the fragment so no server or proxy sees
-         *     it. The app page reads it, removes the fragment from the address bar and hands it to the app tab. It does not
-         *     use `window.opener`, because providers send `Cross-Origin-Opener-Policy` and cut it. `message` is one of:
+         *     1. The server reads the cookie and deletes it, then compares `state`. When the cookie is missing, expired or
+         *        does not match, there is no trusted origin. Answer 400 with a plain page and do not redirect.
+         *     2. The server exchanges `code` for a token with the PKCE verifier and fetches the provider account.
+         *     3. The server matches a server account, first by an earlier link of that provider account, then by the same
+         *        email, which it then links. When nothing matches it creates an account only if `auth.signup` is true.
+         *        Otherwise the sign in fails with the message `No account matches your <provider label> email. Ask the server admin to create one with that email.`
+         *     4. The server redirects (302) to `<origin>/oauth-callback.html#<result>` with `Referrer-Policy: no-referrer`
+         *        and `Cache-Control: no-store`. `origin` is the allowed app origin saved in the cookie, never anything from
+         *        the query. `<result>` is `encodeURIComponent(JSON.stringify(message))`. It is in the fragment so no server,
+         *        proxy or log sees the token.
+         *
+         *     `message` is one of:
          *
          *     - `{ "type": "updraft-auth", "state": "...", "token": "...", "user": { "id": "...", "name": "..." } }`, the same session as a password sign in.
          *     - `{ "type": "updraft-auth", "state": "...", "error": "..." }`, with a message that is safe to show.
          *
-         *     `state` is the `app_state` of the start request. The app must ignore a result with another value.
+         *     `state` is the `app_state` of the start request. The app accepts a message only if `type` is `updraft-auth` and
+         *     `state` equals its own `app_state`.
          *
-         *     When the cookie is missing, expired or does not match `state`, there is no trusted origin, so the server answers 400
-         *     with a plain page and no redirect.
+         *     The page `/oauth-callback.html` ships with the app. It reads the fragment, removes it from the address bar,
+         *     posts the message on a `BroadcastChannel` named `updraft-auth` and closes the popup. It does not use
+         *     `window.opener`, because providers send `Cross-Origin-Opener-Policy` headers that cut it.
          */
         get: operations["oauthCallback"];
         put?: never;
@@ -134,12 +153,17 @@ export interface paths {
         /**
          * Catch up on a collection
          * @description Returns the items of the signed in account that changed after `since`, in a stable server order, deleted
-         *     items as tombstones. Items carry `data` and `times` but never track bytes. Keep calling with the returned
-         *     `cursor` while `more` is true. Without `since` the feed starts at the beginning.
+         *     items as tombstones. Items carry `data` and `times` but never track bytes. The cursor is an opaque string.
+         *     The client stores it and sends it back as `since`. Keep calling with the returned `cursor` while `more` is
+         *     true. Without `since` the feed starts at the beginning.
          *
          *     An empty page returns the sent cursor, or `null` when none was sent. `more` is true when the page is full.
-         *     A malformed cursor, a cursor the server does not know and a bad `limit` answer 400. After a 400 on a stored
-         *     cursor the client starts again from the beginning.
+         *     `limit` is 1 to `limits.maxPage` and defaults to `limits.maxPage`.
+         *
+         *     A malformed cursor, a cursor the server does not know and a bad `limit` all answer 400. After a 400 on a stored
+         *     cursor the client starts again from the beginning, so a server may change its cursor format or lose its
+         *     history. Use cursors, never offsets. A cursor stays correct while items are written, and a server can answer
+         *     it with an index seek.
          */
         get: operations["listChanges"];
         put?: never;
@@ -164,26 +188,32 @@ export interface paths {
         };
         /**
          * Fetch one item
-         * @description The `ETag` header is the item version in double quotes. A deleted item answers 200 with the tombstone.
+         * @description The `ETag` header is the item version in double quotes. It answers 404 only when the item never existed.
+         *     A deleted item answers 200 with the tombstone, which has no `data` and no `times`.
          */
         get: operations["getItem"];
         /**
          * Create or update an item
-         * @description Create needs `If-None-Match: *`. Update needs `If-Match` with the current version. A request with neither
-         *     answers 428. When the version does not match, or the item exists on create, the server answers 412 with the
-         *     current item. An `If-Match` on an item that never existed answers 404.
-         *     Writing a tombstone with `If-Match` on the tombstone version revives it.
+         * @description Create needs `If-None-Match: *`. It fails with 412 when the item exists, also as a tombstone. Update needs
+         *     `If-Match` with the current version. It fails with 412 when the version is not the current one. A request with
+         *     neither header answers 428. An `If-Match` on an item that never existed answers 404. The 412 body is the
+         *     current item, so the client does not need another request. Writing a tombstone with `If-Match` on the
+         *     tombstone version revives the item.
          *
          *     The server stores `data` and `times` as is. It reads only the known fields of `flights`, see `FlightData`.
-         *     `secret` is for `prefs`. The client sets it on `cesiumIonToken` and `openaipKey` after the pilot opted in to
-         *     syncing them. A server must keep such items out of its logs and out of every other route.
+         *     Manual logbook flights live in `flights` too.
+         *
+         *     `secret` is for `prefs`. The client sets it on `cesiumIonToken` and `openaipKey`, and only after the pilot
+         *     opted in to syncing them. A server must keep such items out of its logs and never expose them in another
+         *     route, for example a club feed or an admin export.
          */
         put: operations["putItem"];
         post?: never;
         /**
          * Delete an item
-         * @description Needs `If-Match`. The server keeps a tombstone that shows in the feed, so other devices learn about the
-         *     delete. Deleting a flight also deletes its tracks.
+         * @description Needs `If-Match` with the current version. The server keeps a tombstone that shows in the feed, so other
+         *     devices learn about the delete. The tombstone has a new version, no `data` and no `times`. Deleting a flight
+         *     also deletes its tracks.
          */
         delete: operations["deleteItem"];
         options?: never;
@@ -203,13 +233,15 @@ export interface paths {
         };
         /**
          * Fetch the original track file
-         * @description Answers the bytes with the `Content-Type` they were stored with.
+         * @description Answers the bytes with the `Content-Type` they were stored with. A deleted flight has no tracks.
          */
         get: operations["getTrack"];
         /**
          * Upload the original track file
          * @description The raw bytes of the file the pilot imported (IGC, GPX, FIT, KML and more), with any `Content-Type`.
-         *     The server stores and serves it back as is and never parses it. A track is written once and is immutable.
+         *     The server stores and serves it back with that type, and never parses it. A track is written once and is
+         *     immutable. A second upload answers 412 and a missing `If-None-Match: *` answers 428. The flight item must
+         *     exist and not be deleted, otherwise 404. A body over `limits.maxTrackBytes` answers 413.
          */
         put: operations["putTrack"];
         post?: never;
@@ -234,7 +266,9 @@ export interface paths {
         /**
          * Upload the parsed track
          * @description The fixes the app parsed from the original file. It saves other devices the work of parsing. The server
-         *     stores it as is and never looks inside. A parsed track is written once and is immutable.
+         *     stores it as is and never looks inside. A parsed track is written once and is immutable. A second upload
+         *     answers 412 and a missing `If-None-Match: *` answers 428. The flight item must exist and not be deleted,
+         *     otherwise 404. A body over `limits.maxTrackBytes` answers 413.
          */
         put: operations["putTrackJson"];
         post?: never;
@@ -253,7 +287,8 @@ export interface paths {
         };
         /**
          * List my clubs
-         * @description Only available when `clubs` is true, otherwise the server answers 403 or 404.
+         * @description Only available when `clubs` is true, otherwise the server answers 403 or 404. Creating clubs and managing
+         *     members is the server's business, the app only reads.
          */
         get: operations["listClubs"];
         put?: never;
@@ -273,10 +308,12 @@ export interface paths {
         };
         /**
          * Catch up on the flights of a club
-         * @description The flights shared with the club, with the same cursor rules as the collection feed. An unshare, a delete
-         *     and a member who left show as `deleted: true`, so the client can drop them. A club flight carries a summary
-         *     and never the flight data. The pilot must be a member, otherwise the answer is 404, the same as for an
-         *     unknown club.
+         * @description The flights shared with the club, with the same cursor rules as the collection feed. A flight is shared with a
+         *     club when its `data.clubs` lists the club id. The server keeps the club id and the `data.club` summary next to
+         *     the flight, so a club feed never has to load the heavy `data`. An unshare, a delete and a member who left show
+         *     as `deleted: true`, so the client can drop them. The pilot must be a member, otherwise the answer is 404, the
+         *     same 404 as for an unknown club, an unknown, unshared or deleted flight. All cases must look the same, so
+         *     nobody learns what exists.
          */
         get: operations["listClubFlights"];
         put?: never;
@@ -292,8 +329,9 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
+                /** @description The id of a club from `GET /clubs`. */
                 clubId: components["parameters"]["ClubId"];
-                /** @description The opaque `key` of a club flight. */
+                /** @description The opaque `key` of a club flight, not the id of the owner's item. */
                 key: components["parameters"]["Key"];
             };
             cookie?: never;
@@ -313,8 +351,9 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
+                /** @description The id of a club from `GET /clubs`. */
                 clubId: components["parameters"]["ClubId"];
-                /** @description The opaque `key` of a club flight. */
+                /** @description The opaque `key` of a club flight, not the id of the owner's item. */
                 key: components["parameters"]["Key"];
             };
             cookie?: never;
@@ -333,18 +372,43 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description The body of a password sign in.
+         * @example {
+         *       "identity": "pilot@example.org",
+         *       "password": "a-long-password"
+         *     }
+         */
         PasswordLogin: {
             /** @description The email of the account. */
             identity: string;
             password: string;
         };
+        /**
+         * @description The body of an account creation.
+         * @example {
+         *       "email": "pilot@example.org",
+         *       "password": "a-long-password"
+         *     }
+         */
         SignUp: {
             /** Format: email */
             email: string;
             /** @description At least 8 characters. */
             password: string;
         };
+        /**
+         * @description The answer of a sign in. The token lifetime is the server's choice and there is no refresh.
+         * @example {
+         *       "token": "eyJhbGciOi...",
+         *       "user": {
+         *         "id": "k3m9x2q7w1p5z8a",
+         *         "name": "pilot@example.org"
+         *       }
+         *     }
+         */
         Session: {
+            /** @description Opaque. Sent as `Authorization Bearer` on every other route. */
             token: string;
             user: {
                 id: string;
@@ -352,18 +416,51 @@ export interface components {
                 name: string;
             };
         };
+        /**
+         * @description The body of every error answer. Extra fields are ignored and the app shows `message` as is.
+         * @example {
+         *       "message": "The version does not match."
+         *     }
+         */
         Error: {
             message: string;
         } & {
             [key: string]: unknown;
         };
+        /**
+         * @description What the server supports.
+         * @example {
+         *       "version": 2,
+         *       "auth": {
+         *         "password": true,
+         *         "signup": false,
+         *         "oauth": [
+         *           {
+         *             "id": "github",
+         *             "label": "GitHub"
+         *           }
+         *         ]
+         *       },
+         *       "clubs": true,
+         *       "limits": {
+         *         "maxPage": 200,
+         *         "maxItemBytes": 20000000,
+         *         "maxTrackBytes": 50000000
+         *       }
+         *     }
+         */
         Capabilities: {
-            /** @constant */
+            /**
+             * @description Must be 2. The client refuses any other value.
+             * @constant
+             */
             version: 2;
             auth: {
+                /** @description The client shows the email and password form. */
                 password: boolean;
+                /** @description The client shows Create account next to the form. It also allows OAuth to create accounts. */
                 signup: boolean;
-                /** @description Providers for the popup sign in. An empty array when the server offers none. */
+                /** @description Providers for the popup sign in, one sign in button per entry. An empty array when the server offers none. */
                 oauth: {
                     /** @description Pass it as `{provider}` to `GET /auth/redirect/{provider}`. */
                     id: string;
@@ -371,63 +468,200 @@ export interface components {
                     label: string;
                 }[];
             };
-            /** @description True when the club routes work. */
+            /** @description True when the club routes work. Without it the app has no club. */
             clubs: boolean;
             limits: {
-                /** @description Largest page of a feed. */
+                /** @description Largest feed page. The client asks for at most this many. */
                 maxPage: number;
                 /** @description Largest body of an item write. */
                 maxItemBytes: number;
-                /** @description Largest body of a track upload. */
+                /** @description Largest body of a track upload. Bigger bodies answer 413. */
                 maxTrackBytes: number;
             };
         };
+        /**
+         * @description One stored record of a collection, or its tombstone.
+         * @example {
+         *       "id": "2026-07-14T10-02-11",
+         *       "version": "42",
+         *       "deleted": false,
+         *       "data": {
+         *         "name": "Bassano",
+         *         "hasTrack": true
+         *       },
+         *       "times": {
+         *         "name": 1784023331000,
+         *         "hasTrack": 1784023331000
+         *       }
+         *     }
+         */
         Item: {
+            /** @description Chosen by the client. 1 to 200 characters. For `prefs` it is the pref key. */
             id: string;
             /** @description Opaque. Changes on every write, also on a delete. It is the value of the `ETag` header without quotes. */
             version: string;
-            /** @description True for a tombstone. */
+            /** @description True for a tombstone. A tombstone has no `data` and no `times`. */
             deleted: boolean;
-            /** @description The record, opaque to the server. Absent on a tombstone. */
+            /** @description The record, opaque to the server, store it as is. Absent on a tombstone. */
             data?: Record<string, never>;
             times?: components["schemas"]["Times"];
             /** @description Only on `prefs`. True when the value is a secret, such as an API key. */
             secret?: boolean;
         };
-        /** @description Maps a top level field of `data` to the client clock in milliseconds when it last changed. Absent on a tombstone. */
+        /**
+         * @description Maps a top level field of `data` to the client clock in milliseconds when it last changed. Absent on a tombstone.
+         * @example {
+         *       "name": 1784023331000
+         *     }
+         */
         Times: {
             [key: string]: number;
         };
+        /**
+         * @description The body of an item write.
+         * @example {
+         *       "data": {
+         *         "name": "Bassano",
+         *         "hasTrack": true
+         *       },
+         *       "times": {
+         *         "name": 1784023331000,
+         *         "hasTrack": 1784023331000
+         *       }
+         *     }
+         */
         ItemWrite: {
+            /** @description The record. The server stores it as is. */
             data: Record<string, never>;
             times: components["schemas"]["Times"];
             /** @description Only for `prefs`. Marks the item as a secret. */
             secret?: boolean;
         };
+        /**
+         * @description One page of a collection feed.
+         * @example {
+         *       "items": [
+         *         {
+         *           "id": "2026-07-14T10-02-11",
+         *           "version": "42",
+         *           "deleted": false,
+         *           "data": {
+         *             "name": "Bassano",
+         *             "hasTrack": true
+         *           },
+         *           "times": {
+         *             "name": 1784023331000,
+         *             "hasTrack": 1784023331000
+         *           }
+         *         },
+         *         {
+         *           "id": "2026-06-30T09-15-40",
+         *           "version": "43",
+         *           "deleted": true
+         *         }
+         *       ],
+         *       "cursor": "43",
+         *       "more": false
+         *     }
+         */
         ItemPage: {
+            /** @description The changed and the deleted items of the signed in account, in a stable server order. */
             items: components["schemas"]["Item"][];
             /** @description Opaque. Send it back as `since`. On an empty page it is the cursor that was sent, or null when none was. */
             cursor: string | null;
             /** @description True when the page was full, so there may be more items. */
             more: boolean;
         };
-        /** @description The fields of a `flights` item that the server reads. Every other field is opaque. Not enforced on write. */
+        /**
+         * @description The fields of a `flights` item that the server reads. Every other field is opaque. Not enforced on write.
+         * @example {
+         *       "clubs": [
+         *         "c8h2d1"
+         *       ],
+         *       "club": {
+         *         "km": 42.1
+         *       },
+         *       "hasTrack": true
+         *     }
+         */
         FlightData: {
             /** @description Ids of the clubs the flight is shared with. */
             clubs?: string[];
-            /** @description Opaque summary shown in club feeds, for example `{ km }`. */
+            /** @description Opaque summary shown in club feeds, for example `{ "km": 42.1 }`. */
             club?: Record<string, never>;
             /** @description False for a manual logbook flight without a track. */
             hasTrack?: boolean;
         };
-        /** @description The parsed fixes. The server never looks inside. */
+        /**
+         * @description The parsed fixes. The server never looks inside.
+         * @example {
+         *       "fixes": [
+         *         {
+         *           "t": 1784023331000,
+         *           "lat": 45.9,
+         *           "lon": 11.7,
+         *           "alt": 1320
+         *         },
+         *         {
+         *           "t": 1784023332000,
+         *           "lat": 45.9001,
+         *           "lon": 11.7002,
+         *           "alt": 1322
+         *         }
+         *       ]
+         *     }
+         */
         TrackJson: {
-            fixes: Record<string, never>[];
+            fixes: {
+                /** @description Time in milliseconds. */
+                t?: number;
+                /** @description Latitude in degrees. */
+                lat?: number;
+                /** @description Longitude in degrees. */
+                lon?: number;
+                /** @description Altitude. */
+                alt?: number;
+            }[];
         };
+        /**
+         * @description The clubs of the signed in pilot.
+         * @example {
+         *       "clubs": [
+         *         {
+         *           "id": "c8h2d1",
+         *           "name": "Bassano Flyers"
+         *         }
+         *       ]
+         *     }
+         */
+        ClubList: {
+            clubs: components["schemas"]["Club"][];
+        };
+        /**
+         * @description A club the signed in pilot belongs to.
+         * @example {
+         *       "id": "c8h2d1",
+         *       "name": "Bassano Flyers"
+         *     }
+         */
         Club: {
             id: string;
             name: string;
         };
+        /**
+         * @description A flight shared with a club. It carries a summary and never the flight data.
+         * @example {
+         *       "key": "r4t9k2",
+         *       "owner": "u7p3m1",
+         *       "mine": false,
+         *       "version": "57",
+         *       "deleted": false,
+         *       "summary": {
+         *         "km": 42.1
+         *       },
+         *       "hasTrack": true
+         *     }
+         */
         ClubFlight: {
             /** @description Opaque id for the track routes. It is not the id of the owner's item. */
             key: string;
@@ -441,18 +675,49 @@ export interface components {
             deleted: boolean;
             /** @description The `club` field of the flight data, or null. Absent when deleted. */
             summary?: Record<string, never> | null;
+            /** @description False for a manual flight without a track. */
             hasTrack: boolean;
         };
+        /**
+         * @description One page of a club feed.
+         * @example {
+         *       "items": [
+         *         {
+         *           "key": "r4t9k2",
+         *           "owner": "u7p3m1",
+         *           "mine": false,
+         *           "version": "57",
+         *           "deleted": false,
+         *           "summary": {
+         *             "km": 42.1
+         *           },
+         *           "hasTrack": true
+         *         }
+         *       ],
+         *       "cursor": "57",
+         *       "more": false
+         *     }
+         */
         ClubFlightPage: {
             items: components["schemas"]["ClubFlight"][];
             /** @description Opaque. Send it back as `since`. On an empty page it is the cursor that was sent, or null when none was. */
             cursor: string | null;
+            /** @description True when the page was full, so there may be more items. */
             more: boolean;
         };
     };
     responses: {
         /** @description An error. The body has at least `message`. */
         Error: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description The token is missing, wrong or expired. The client forgets the token and asks the pilot to sign in again. */
+        Unauthorized: {
             headers: {
                 [name: string]: unknown;
             };
@@ -505,8 +770,9 @@ export interface components {
         Collection: "flights" | "camera-paths" | "prefs";
         /** @description The item id, 1 to 200 characters. For `prefs` it is the pref key. */
         Id: string;
+        /** @description The id of a club from `GET /clubs`. */
         ClubId: string;
-        /** @description The opaque `key` of a club flight. */
+        /** @description The opaque `key` of a club flight, not the id of the owner's item. */
         Key: string;
         /** @description The `cursor` of the previous page. Absent starts from the beginning. */
         Since: string;
@@ -564,7 +830,9 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["Session"];
+            /** @description A field is missing. */
             400: components["responses"]["Error"];
+            /** @description The email or the password is wrong. */
             401: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
         };
@@ -585,6 +853,7 @@ export interface operations {
             200: components["responses"]["Session"];
             /** @description The email is invalid or taken, or the password is shorter than 8 characters. */
             400: components["responses"]["Error"];
+            /** @description Sign up is off. */
             403: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
         };
@@ -594,7 +863,7 @@ export interface operations {
             query: {
                 /** @description The origin of the app, for example `https://updraft.example.org`. Must match an allowed origin exactly. */
                 origin: string;
-                /** @description A random value the app made for this sign in, at least 22 base64url characters. The server echoes it as `state` in the result, so the app can ignore any result that is not its own. */
+                /** @description A random value the app made for this sign in, 22 to 128 base64url characters. The server echoes it as `state` in the result, so the app can ignore any result that is not its own. */
                 app_state: string;
             };
             header?: never;
@@ -623,7 +892,9 @@ export interface operations {
     oauthCallback: {
         parameters: {
             query?: {
+                /** @description The authorization code from the provider. */
                 code?: string;
+                /** @description The `state` the server sent to the provider. */
                 state?: string;
             };
             header?: never;
@@ -635,11 +906,15 @@ export interface operations {
             /** @description Redirect to the app with the result in the fragment. */
             302: {
                 headers: {
+                    /** @description Always `no-referrer`. */
+                    "Referrer-Policy"?: string;
+                    /** @description Always `no-store`. */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description No valid sign in was started in this browser. */
+            /** @description No valid sign in was started in this browser. The body is a plain page. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -679,7 +954,7 @@ export interface operations {
             };
             /** @description Bad cursor or limit. */
             400: components["responses"]["Error"];
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["Unavailable"];
         };
@@ -708,7 +983,7 @@ export interface operations {
                     "application/json": components["schemas"]["Item"];
                 };
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description The item never existed. */
             404: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
@@ -750,10 +1025,11 @@ export interface operations {
             };
             /** @description The body is not a valid `ItemWrite`. */
             400: components["responses"]["Error"];
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description `If-Match` was sent for an item that never existed. */
             404: components["responses"]["Error"];
             412: components["responses"]["Conflict"];
+            /** @description The body is larger than `limits.maxItemBytes`. */
             413: components["responses"]["Error"];
             /** @description Neither `If-Match` nor `If-None-Match` was sent. */
             428: components["responses"]["Error"];
@@ -778,14 +1054,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Deleted. */
+            /** @description Deleted. The tombstone stays. */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description The item never existed. */
             404: components["responses"]["Error"];
             412: components["responses"]["Conflict"];
@@ -816,7 +1092,7 @@ export interface operations {
                     "*/*": string;
                 };
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description There is no such flight or it has no track. */
             404: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
@@ -842,14 +1118,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Stored. */
+            /** @description Stored. The track is now immutable. */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description The flight does not exist or is deleted. */
             404: components["responses"]["Error"];
             /** @description The track is already there. */
@@ -883,7 +1159,7 @@ export interface operations {
                     "application/json": components["schemas"]["TrackJson"];
                 };
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description There is no such flight or it has no parsed track. */
             404: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
@@ -909,14 +1185,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Stored. */
+            /** @description Stored. The track is now immutable. */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description The flight does not exist or is deleted. */
             404: components["responses"]["Error"];
             /** @description The parsed track is already there. */
@@ -944,13 +1220,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        clubs: components["schemas"]["Club"][];
-                    };
+                    "application/json": components["schemas"]["ClubList"];
                 };
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Clubs are off. */
             403: components["responses"]["Error"];
+            /** @description Clubs are off. */
             404: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["Unavailable"];
@@ -966,6 +1242,7 @@ export interface operations {
             };
             header?: never;
             path: {
+                /** @description The id of a club from `GET /clubs`. */
                 clubId: components["parameters"]["ClubId"];
             };
             cookie?: never;
@@ -983,7 +1260,7 @@ export interface operations {
             };
             /** @description Bad cursor or limit. */
             400: components["responses"]["Error"];
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description Clubs are off. */
             403: components["responses"]["Error"];
             /** @description Unknown club, or the pilot is not a member. */
@@ -997,8 +1274,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description The id of a club from `GET /clubs`. */
                 clubId: components["parameters"]["ClubId"];
-                /** @description The opaque `key` of a club flight. */
+                /** @description The opaque `key` of a club flight, not the id of the owner's item. */
                 key: components["parameters"]["Key"];
             };
             cookie?: never;
@@ -1014,7 +1292,7 @@ export interface operations {
                     "*/*": string;
                 };
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description Unknown, unshared or deleted flight, or the pilot is not a member. All look the same. */
             404: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
@@ -1026,8 +1304,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description The id of a club from `GET /clubs`. */
                 clubId: components["parameters"]["ClubId"];
-                /** @description The opaque `key` of a club flight. */
+                /** @description The opaque `key` of a club flight, not the id of the owner's item. */
                 key: components["parameters"]["Key"];
             };
             cookie?: never;
@@ -1043,7 +1322,7 @@ export interface operations {
                     "application/json": components["schemas"]["TrackJson"];
                 };
             };
-            401: components["responses"]["Error"];
+            401: components["responses"]["Unauthorized"];
             /** @description Unknown, unshared or deleted flight, or the pilot is not a member. All look the same. */
             404: components["responses"]["Error"];
             429: components["responses"]["RateLimited"];
