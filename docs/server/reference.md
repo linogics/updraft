@@ -1126,11 +1126,11 @@ The server never looks inside.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `fixes` | `object`[] | yes |  |
-| `fixes[].t` | `number` | no | Time in milliseconds. |
-| `fixes[].lat` | `number` | no | Latitude in degrees. |
-| `fixes[].lon` | `number` | no | Longitude in degrees. |
-| `fixes[].alt` | `number` | no | Altitude. |
+| `fixes` | `object`[] | yes | At least one fix. A client rejects the whole track when one fix is missing a field. |
+| `fixes[].t` | `number` | yes | Unix time in milliseconds, UTC. |
+| `fixes[].lat` | `number` | yes | Latitude in decimal degrees. |
+| `fixes[].lon` | `number` | yes | Longitude in decimal degrees. |
+| `fixes[].alt` | `number` | yes | Altitude in metres as recorded. GPS altitude when the file has it, otherwise pressure altitude. |
 
 ```json
 {

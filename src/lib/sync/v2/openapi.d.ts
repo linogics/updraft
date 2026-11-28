@@ -612,15 +612,16 @@ export interface components {
          *     }
          */
         TrackJson: {
+            /** @description At least one fix. A client rejects the whole track when one fix is missing a field. */
             fixes: {
-                /** @description Time in milliseconds. */
-                t?: number;
-                /** @description Latitude in degrees. */
-                lat?: number;
-                /** @description Longitude in degrees. */
-                lon?: number;
-                /** @description Altitude. */
-                alt?: number;
+                /** @description Unix time in milliseconds, UTC. */
+                t: number;
+                /** @description Latitude in decimal degrees. */
+                lat: number;
+                /** @description Longitude in decimal degrees. */
+                lon: number;
+                /** @description Altitude in metres as recorded. GPS altitude when the file has it, otherwise pressure altitude. */
+                alt: number;
             }[];
         };
         /**
