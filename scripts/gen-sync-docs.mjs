@@ -210,13 +210,6 @@ for (const tag of spec.tags) {
   parts.push('');
 }
 
-parts.push(
-  '## Common responses',
-  '',
-  'These answers can come from the operations below. Each operation lists the ones it uses.',
-  ''
-);
-parts.push('| Status | Description | Headers | Body |', '| --- | --- | --- | --- |');
 const common = new Map();
 for (const { op } of ops) {
   for (const [status, raw] of Object.entries(op.responses)) {
@@ -224,14 +217,25 @@ for (const { op } of ops) {
   }
 }
 
-for (const [status, raw] of [...common].sort(([a], [b]) => a.localeCompare(b))) {
-  const r = resolve(raw);
+if (common.size) {
   parts.push(
-    `| ${status} | ${cell(r.description)} | ${headerList(r) || 'none'} | ${cell(body(r.content)) || 'none'} |`
+    '## Common responses',
+    '',
+    'These answers can come from the operations below. Each operation lists the ones it uses.',
+    '',
+    '| Status | Description | Headers | Body |',
+    '| --- | --- | --- | --- |'
   );
-}
 
-parts.push('');
+  for (const [status, raw] of [...common].sort(([a], [b]) => a.localeCompare(b))) {
+    const r = resolve(raw);
+    parts.push(
+      `| ${status} | ${cell(r.description)} | ${headerList(r) || 'none'} | ${cell(body(r.content)) || 'none'} |`
+    );
+  }
+
+  parts.push('');
+}
 
 for (const tag of spec.tags) {
   parts.push(`## ${tag.name}`, '', tag.description, '');
